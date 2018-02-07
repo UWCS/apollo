@@ -24,6 +24,6 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     user_uid = Column(String(length=250), nullable=False)
     username = Column(String(length=50), nullable=False)
-    first_seen = Column(DateTime, nullable=False, default=datetime.now())
-    last_seen = Column(DateTime, nullable=False, default=datetime.now())
+    first_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
+    last_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
     uni_id = Column(String(length=20), nullable=True)
