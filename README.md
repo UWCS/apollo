@@ -2,7 +2,7 @@
 
 Apollo is a [Discord](https://discordapp.com/) bot for the [University of Warwick Computing Society](https://uwcs.co.uk). It is designed to augment our Discord server with a few of the user services available on our website.
 
-Apollo is based loosely on the development of [artemis](rhiannonmichelmore/artemis), another Discord bot produced by a member of UWCS.
+Apollo is based loosely on the development of [artemis](https://github.com/rhiannonmichelmore/artemis), another Discord bot produced by a member of UWCS.
 
 ### License
 
