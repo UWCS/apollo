@@ -6,6 +6,7 @@ discord.py==1.0.0a0
 idna==2.6
 multidict==4.1.0
 psycopg2==2.7.3.2
+pytz==2017.3
 requests==2.18.4
 SQLAlchemy==1.2.2
 urllib3==1.22
