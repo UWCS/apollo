@@ -10,6 +10,7 @@ db_session = Session(bind=engine)
 
 bot = Bot(command_prefix=when_mentioned_or('!'))
 
+
 # TODO: Add help string
 
 @bot.event
@@ -35,6 +36,8 @@ async def on_message(message):
         db_session.add(user)
 
     # TODO: Add karma scanning
+    # TODO: Update info on user last seen
+    # This will need to consider timezone differences (Europe/London vs. UTC)
 
     await bot.process_commands(message)
 
