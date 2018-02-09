@@ -11,7 +11,7 @@ def process_karma(message, db_session, timeout):
     reply = ''
 
     # Parse the message for karma modifications
-    raw_karma = parse_message(message.content)
+    raw_karma = parse_message(message.clean_content)
 
     # If no karma'd items, just return
     if not raw_karma:
