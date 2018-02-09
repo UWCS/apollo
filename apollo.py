@@ -1,17 +1,17 @@
 from discord.ext.commands import Bot, when_mentioned_or
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 
-import models
+from commands.verify import verify
 from config import CONFIG
+from models import User, db_session, init_tables, engine
 
-engine = create_engine(CONFIG['DATABASE_CONNECTION'], echo=CONFIG['SQL_LOGGING'])
-db_session = Session(bind=engine)
+DESCRIPTION = """
+Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
 
-bot = Bot(command_prefix=when_mentioned_or('!'))
+To verify your account please set your Discord tag (name and 4 digit number e.g.: Foo#1337) in account settings on the UWCS website and then PM the bot your university number.
+"""
 
+bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
-# TODO: Add help string
 
 @bot.event
 async def on_ready():
@@ -28,26 +28,24 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    user = db_session.query(models.User).filter(models.User.user_uid == message.author.id).first()
+    user = db_session.query(User).filter(User.user_uid == message.author.id).first()
     if not user:
-        user = models.User(user_uid=message.author.id,
-                           username='{username}#{number}'.format(username=message.author.name,
-                                                                 number=message.author.discriminator))
+        user = User(user_uid=message.author.id,
+                    username='{username}#{number}'.format(username=message.author.name,
+                                                          number=message.author.discriminator))
         db_session.add(user)
+    else:
+        user.last_seen = message.created_at
+        db_session.commit()
 
     # TODO: Add karma scanning
-    # TODO: Update info on user last seen
-    # This will need to consider timezone differences (Europe/London vs. UTC)
 
     await bot.process_commands(message)
-
-
-def init_tables(db_engine):
-    models.Base.metadata.create_all(db_engine)
 
 
 if __name__ == '__main__':
     # Initialise the tables
     init_tables(engine)
 
+    bot.add_command(verify)
     bot.run(CONFIG['DISCORD_TOKEN'])

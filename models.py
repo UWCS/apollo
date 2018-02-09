@@ -1,9 +1,19 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, DateTime
+from sqlalchemy import Column, String, Integer, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
+
+from config import CONFIG
 
 Base = declarative_base()
+
+engine = create_engine(CONFIG['DATABASE_CONNECTION'], echo=CONFIG['SQL_LOGGING'])
+db_session = Session(bind=engine)
+
+
+def init_tables(db_engine):
+    Base.metadata.create_all(db_engine)
 
 
 def auto_str(cls):
@@ -27,3 +37,4 @@ class User(Base):
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
     last_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
     uni_id = Column(String(length=20), nullable=True)
+    verified_at = Column(DateTime, nullable=True)
