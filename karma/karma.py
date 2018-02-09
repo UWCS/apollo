@@ -63,7 +63,7 @@ def process_karma(message, db_session, timeout):
                     mins_plural = ''
                 else:
                     mins_plural = 's'
-                error_str += f'Could not change **{karma_item.name}** since it is still on cooldown (last altered {mins_since_modified} minute{mins_plural} ago).\n'
+                error_str += f' - Could not change **{karma_item.name}** since it is still on cooldown (last altered {mins_since_modified} minute{mins_plural} ago).\n'
                 continue
 
         karma_item.score = karma_item.score + transaction.net_karma
