@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from discord import Message, Member
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
@@ -42,9 +44,7 @@ async def on_message(message: Message):
 
     user = db_session.query(User).filter(User.user_uid == message.author.id).first()
     if not user:
-        user = User(user_uid=message.author.id,
-                    username='{username}#{number}'.format(username=message.author.name,
-                                                          number=message.author.discriminator))
+        user = User(user_uid=message.author.id, username=str(message.author))
         db_session.add(user)
     else:
         user.last_seen = message.created_at
@@ -82,6 +82,15 @@ async def on_message_edit(before: Message, after: Message):
 
 @bot.event
 async def on_member_join(member: Member):
+    # Add the user to our database if they've never joined before
+    user = db_session.query(User).filter(User.user_uid == member.id).first()
+    if not user:
+        user = User(user_uid=member.id, username=str(member))
+        db_session.add(user)
+    else:
+        user.last_seen = datetime.utcnow()
+    db_session.commit()
+
     await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
 
