@@ -48,12 +48,10 @@ def process_karma(message, db_session, timeout):
 
         # Update or create the karma item
         if not karma_item:
-            print('Karma doesn\'t exist')
             karma_item = Karma(name=func.lower(transaction.name), score=0)
             db_session.add(karma_item)
             db_session.commit()
         else:
-            print('Karma exists')
             # If the item exists then we need to check its modifiable
             delta = datetime.utcnow() - karma_item.altered
 
