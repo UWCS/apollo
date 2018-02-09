@@ -40,10 +40,10 @@ def is_private_channel():
 @commands.command(ignore_extra=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
 @is_private_channel()
 async def verify(ctx: Context, uni_number: str):
-    # Check that the university ID provided is actually formatted correctly
+    # Check that the university number provided is actually formatted correctly
     uni_id_regex = re.compile(r'[0-9]{7}')
     if not re.match(uni_id_regex, uni_number):
-        raise VerifyError(message='\'{id}\' is not a valid university ID.'.format(id=uni_number))
+        raise VerifyError(message='\'{id}\' is not a valid university number.'.format(id=uni_number))
 
     # Get the discord data from our servers
     headers = {'Authorization': 'Token {token}'.format(token=CONFIG['UWCS_API_TOKEN'])}
@@ -63,6 +63,10 @@ async def verify(ctx: Context, uni_number: str):
             if not user:
                 raise VerifyError(
                     message='We\'ve hit a snag verifying your account - please try again in a few minutes!')
+
+            # Check if the user has already verified
+            if user.uni_id == uni_number:
+                raise VerifyError(message='You have already verified this university number.')
 
             # Check they are who they say they are
             if not api_username == str(ctx.message.author):
@@ -86,7 +90,7 @@ async def verify(ctx: Context, uni_number: str):
 
             # Give them the role and let them know
             await compsoc_member.add_roles(compsoc_role,
-                                           reason='User verified with the university ID of {uni_id}'.format(
+                                           reason='User verified with the university number of {uni_id}'.format(
                                                uni_id=uni_number))
             user.uni_id = uni_number
             user.verified_at = datetime.utcnow()
@@ -96,9 +100,9 @@ async def verify(ctx: Context, uni_number: str):
                 'You\'re all verified and ready to go! Welcome to the UWCS Discord.')
     else:
         raise VerifyError(
-            message='That university ID appears to be inactive or not exist - if you have just purchased membership '
-                    'please give the system 5 minutes to create an account. If you\'re not a member of the society you '
-                    'can purchase membership through the University of Warwick Student\'s union.')
+            message='That university number appears to be inactive or not exist - if you have just purchased '
+                    'membership please give the system 5 minutes to create an account. If you\'re not a member of the '
+                    'society you can purchase membership through the University of Warwick Student\'s union.')
 
 
 @verify.error
