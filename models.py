@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, relationship
 
@@ -44,7 +44,7 @@ class LoggedMessage(Base):
     __tablename__ = 'messages'
 
     id = Column(Integer, primary_key=True, nullable=False)
-    message_uid = Column(String(length=250), nullable=False)
+    message_uid = Column(BigInteger, nullable=False)
     message_content = Column(String(), nullable=False)
     author = Column(Integer, ForeignKey('users.id'), nullable=False)
     time_created = Column(DateTime, nullable=False)
@@ -90,7 +90,7 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, nullable=False)
-    user_uid = Column(String(length=250), nullable=False)
+    user_uid = Column(BigInteger, nullable=False)
     username = Column(String(length=50), nullable=False)
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
     last_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
