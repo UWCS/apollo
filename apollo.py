@@ -4,6 +4,7 @@ from discord.ext.commands import Bot, when_mentioned_or
 
 from commands.verify import verify
 from config import CONFIG
+from karma.karma import process_karma
 from models import User, db_session, init_tables, engine, LoggedMessage, MessageDiff
 
 DESCRIPTION = """
@@ -58,7 +59,9 @@ async def on_message(message: Message):
         db_session.add(logged_message)
         db_session.commit()
 
-    # TODO: Add karma scanning
+    reply = process_karma(message, db_session, CONFIG['KARMA_TIMEOUT'])
+    if reply:
+        await message.channel.send(reply)
 
     await bot.process_commands(message)
 

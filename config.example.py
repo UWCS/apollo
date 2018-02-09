@@ -3,6 +3,7 @@ CONFIG = {
     'DATABASE_CONNECTION': 'sqlite:///:memory:',
     'UWCS_DISCORD_ID': 1337,
     'UWCS_API_TOKEN': 'api_token',
+    'KARMA_TIMEOUT': 900,
     'DISCORD_TOKEN': 'discord_token',
     'SQL_LOGGING': True,
     'BOT_LOGGING': True,
