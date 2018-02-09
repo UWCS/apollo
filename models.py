@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, String, Integer, DateTime, create_engine
+from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -27,10 +27,29 @@ def auto_str(cls):
     return cls
 
 
+class LoggedMessage(Base):
+    __tablename__ = 'messages'
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    message_uid = Column(String(length=250), nullable=False)
+    message_content = Column(String(), nullable=False)
+    author = Column(Integer, ForeignKey('users.id'), nullable=False)
+    time_created = Column(DateTime, nullable=False)
+
+
+class MessageDiff(Base):
+    __tablename__ = 'message_edits'
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    message = Column(Integer, ForeignKey('messages.id'), nullable=False)
+    edit_content = Column(String(), nullable=False)
+    time_created = Column(DateTime, nullable=False)
+
+
 @auto_str
 class User(Base):
     __tablename__ = 'users'
-    # TODO: Add columns for ban counts/kick counts?
+
     id = Column(Integer, primary_key=True, nullable=False)
     user_uid = Column(String(length=250), nullable=False)
     username = Column(String(length=50), nullable=False)
