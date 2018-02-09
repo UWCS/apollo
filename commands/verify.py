@@ -82,7 +82,7 @@ async def verify(ctx: Context, uni_number: str):
                     message='It seems like you\'re not a member of the UWCS Discord yet. You can join us here: '
                             'https://discordapp.com/invite/qhnbSyh')
             try:
-                compsoc_role = [role for role in compsoc_guild.roles if role.name == CONFIG['UWCS_MEMBER_ROLE_NAME']][0]
+                compsoc_role = [role for role in compsoc_guild.roles if role.id == CONFIG['UWCS_MEMBER_ROLE_NAME']][0]
             except IndexError:
                 raise VerifyError(
                     message='I can\'t find the role to give you on the UWCS Discord. Let one of the exec or admins '
