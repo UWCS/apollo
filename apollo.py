@@ -1,4 +1,4 @@
-from discord import Message, abc
+from discord import Message, Member
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
 
@@ -11,6 +11,15 @@ Apollo is the Discord bot for the University of Warwick Computing Society, desig
 
 To verify your account please set your Discord tag (name and 4 digit number e.g.: Foo#1337) in account settings on the UWCS website and then PM the bot your university number.
 """
+WELCOME_MESSAGE = """
+Hey <@{user_id}>!
+
+I'm Apollo, this Discord's friendly bot. I'd like to welcome you to the University of Warwick Computer Society Discord server!
+
+If you are a member of the society then you can verify your account using the 'verify' command (use `!help verify` to find out more)! If you're not a member, you can join through the Warwick student's union website.
+
+GLHF! :rocket:
+"""
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
@@ -22,9 +31,6 @@ async def on_ready():
         print('Logged in as')
         print(str(bot.user))
         print('------')
-
-
-# TODO: Welcome a user when they join and tell them to verify their account
 
 
 @bot.event
@@ -69,6 +75,11 @@ async def on_message_edit(before: Message, after: Message):
                                        time_created=after.edited_at)
             db_session.add(message_diff)
             db_session.commit()
+
+
+@bot.event
+async def on_member_join(member: Member):
+    await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
 
 if __name__ == '__main__':
