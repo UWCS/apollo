@@ -181,3 +181,4 @@ pip-selfcheck.json
 # End of https://www.gitignore.io/api/python,virtualenv,pycharm+iml
 
 config.py
+alembic.ini
