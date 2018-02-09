@@ -59,8 +59,9 @@ class LoggedMessage(Base):
 class KarmaReason(Base):
     __tablename__ = 'karma_reasons'
 
-    karma_id = Column(Integer, ForeignKey('karma.id'), primary_key=True)
-    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    karma_id = Column(Integer, ForeignKey('karma.id'), primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True, nullable=False)
+    message_id = Column(Integer, ForeignKey('messages.id'), nullable=False)
     added = Column(EncryptedType(type_in=DateTime, key=CONFIG['BOT_SECRET_KEY']), nullable=False,
                    default=datetime.utcnow())
     reason = Column(EncryptedType(type_in=String, key=CONFIG['BOT_SECRET_KEY']), nullable=True)
