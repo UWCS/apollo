@@ -27,6 +27,7 @@ def auto_str(cls):
     return cls
 
 
+@auto_str
 class LoggedMessage(Base):
     __tablename__ = 'messages'
 
@@ -35,13 +36,15 @@ class LoggedMessage(Base):
     message_content = Column(String(), nullable=False)
     author = Column(Integer, ForeignKey('users.id'), nullable=False)
     time_created = Column(DateTime, nullable=False)
+    channel_name = Column(String(250), nullable=False)
 
 
+@auto_str
 class MessageDiff(Base):
     __tablename__ = 'message_edits'
 
     id = Column(Integer, primary_key=True, nullable=False)
-    message = Column(Integer, ForeignKey('messages.id'), nullable=False)
+    original_message = Column(Integer, ForeignKey('messages.id'), nullable=False)
     edit_content = Column(String(), nullable=False)
     time_created = Column(DateTime, nullable=False)
 

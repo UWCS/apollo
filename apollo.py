@@ -1,8 +1,10 @@
+from discord import Message, abc
+from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
 
 from commands.verify import verify
 from config import CONFIG
-from models import User, db_session, init_tables, engine
+from models import User, db_session, init_tables, engine, LoggedMessage, MessageDiff
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
@@ -22,8 +24,11 @@ async def on_ready():
         print('------')
 
 
+# TODO: Welcome a user when they join and tell them to verify their account
+
+
 @bot.event
-async def on_message(message):
+async def on_message(message: Message):
     # If the message is by a bot then ignore it
     if message.author.bot:
         return
@@ -36,11 +41,34 @@ async def on_message(message):
         db_session.add(user)
     else:
         user.last_seen = message.created_at
+    # Commit the session so the user is available now
+    db_session.commit()
+
+    # Only log messages that were in a public channel
+    if isinstance(message.channel, GuildChannel):
+        # Log the message to the database
+        logged_message = LoggedMessage(message_uid=message.id, message_content=message.content, author=user.id,
+                                       time_created=message.created_at, channel_name=message.channel.name)
+        db_session.add(logged_message)
         db_session.commit()
 
     # TODO: Add karma scanning
 
     await bot.process_commands(message)
+
+
+@bot.event
+async def on_message_edit(before: Message, after: Message):
+    # Only care about messages that are in public channels
+    if isinstance(before.channel, GuildChannel):
+        # Message wasn't pinned
+        if before.pinned == after.pinned:
+            # Log any edits to messages
+            original_message = db_session.query(LoggedMessage).filter(LoggedMessage.message_uid == before.id).first()
+            message_diff = MessageDiff(original_message=original_message.id, edit_content=after.content,
+                                       time_created=after.edited_at)
+            db_session.add(message_diff)
+            db_session.commit()
 
 
 if __name__ == '__main__':
