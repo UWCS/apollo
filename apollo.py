@@ -81,6 +81,12 @@ async def on_message_edit(before: Message, after: Message):
 
 
 @bot.event
+async def on_message_delete(message: Message):
+    # TODO: Deal with deleting messages on karma - add an opposite action to the karma DB
+    pass
+
+
+@bot.event
 async def on_member_join(member: Member):
     # Add the user to our database if they've never joined before
     user = db_session.query(User).filter(User.user_uid == member.id).first()

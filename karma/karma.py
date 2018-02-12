@@ -18,7 +18,7 @@ def process_karma(message, message_id, db_session, timeout):
         return reply
 
     # Process the raw karma tokens into a number of karma transactions
-    transactions = create_transactions(message.author.display_name.lower(), raw_karma)
+    transactions = create_transactions(message.author.name, message.author.display_name, raw_karma)
 
     if not transactions:
         return reply
@@ -113,6 +113,6 @@ def process_karma(message, message_id, db_session, timeout):
         reply = f'I have made changes to the following item(s) karma:\n{item_str}\nThere were some issues with the following item(s), too:\n\n{error_str}'
     # If all items were processed successfully
     else:
-        reply = f'I have made changes the following karma item{transaction_plural}:\n\n{item_str}'
+        reply = f'I have made changes to the following karma item{transaction_plural}:\n\n{item_str}'
 
     return reply.rstrip()

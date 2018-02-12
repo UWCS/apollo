@@ -49,7 +49,7 @@ def parse_message(message: str):
         return None
 
 
-def create_transactions(message_author: str, karma: List[RawKarma]):
+def create_transactions(message_author: str, message_nick: str, karma: List[RawKarma]):
     # Cover the case when nothing has been given to the function.
     if not message_author or not karma:
         return None
@@ -58,7 +58,8 @@ def create_transactions(message_author: str, karma: List[RawKarma]):
     raw_karma = karma
 
     # Filter out self-karma operations
-    self_karma = [x for x in raw_karma if x.name.lower() == message_author.lower()]
+    self_karma = [x for x in raw_karma if
+                  x.name.lower() == message_author.lower() or x.name.lower() == message_nick.lower()]
     transactions = []
 
     if self_karma:
