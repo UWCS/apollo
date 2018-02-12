@@ -75,7 +75,7 @@ async def on_message_edit(before: Message, after: Message):
             # Log any edits to messages
             original_message = db_session.query(LoggedMessage).filter(LoggedMessage.message_uid == before.id).first()
             message_diff = MessageDiff(original_message=original_message.id, new_content=after.clean_content,
-                                       created_at=after.edited_at)
+                                       created_at=(after.edited_at or datetime.utcnow()))
             db_session.add(message_diff)
             db_session.commit()
 
