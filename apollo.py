@@ -55,13 +55,13 @@ async def on_message(message: Message):
     if isinstance(message.channel, GuildChannel):
         # Log the message to the database
         logged_message = LoggedMessage(message_uid=message.id, message_content=message.clean_content, author=user.id,
-                                       time_created=message.created_at, channel_name=message.channel.name)
+                                       created_at=message.created_at, channel_name=message.channel.name)
         db_session.add(logged_message)
         db_session.commit()
 
-    reply = process_karma(message, db_session, CONFIG['KARMA_TIMEOUT'])
-    if reply:
-        await message.channel.send(reply)
+        reply = process_karma(message, logged_message.id, db_session, CONFIG['KARMA_TIMEOUT'])
+        if reply:
+            await message.channel.send(reply)
 
     await bot.process_commands(message)
 
@@ -74,8 +74,8 @@ async def on_message_edit(before: Message, after: Message):
         if before.pinned == after.pinned:
             # Log any edits to messages
             original_message = db_session.query(LoggedMessage).filter(LoggedMessage.message_uid == before.id).first()
-            message_diff = MessageDiff(original_message=original_message.id, edit_content=after.clean_content,
-                                       time_created=after.edited_at)
+            message_diff = MessageDiff(original_message=original_message.id, new_content=after.clean_content,
+                                       created_at=after.edited_at)
             db_session.add(message_diff)
             db_session.commit()
 
