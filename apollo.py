@@ -7,7 +7,7 @@ from discord.ext.commands import Bot, when_mentioned_or
 from commands.verify import verify
 from config import CONFIG
 from karma.karma import process_karma
-from models import User, db_session, init_tables, engine, LoggedMessage, MessageDiff
+from models import User, db_session, LoggedMessage, MessageDiff
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
