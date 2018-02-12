@@ -13,10 +13,6 @@ engine = create_engine(CONFIG['DATABASE_CONNECTION'], echo=CONFIG['SQL_LOGGING']
 db_session = Session(bind=engine)
 
 
-def init_tables(db_engine):
-    Base.metadata.create_all(db_engine)
-
-
 def auto_str(cls):
     def __str__(self):
         return '%s(%s)' % (

@@ -95,8 +95,5 @@ async def on_member_join(member: Member):
 
 
 if __name__ == '__main__':
-    # Initialise the tables
-    init_tables(engine)
-
     bot.add_command(verify)
     bot.run(CONFIG['DISCORD_TOKEN'])
