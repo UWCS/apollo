@@ -57,22 +57,9 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
     # Copy the karma so we don't make any unintended changes
     raw_karma = karma
 
-    # Filter out self-karma operations
-    self_karma = [x for x in raw_karma if
-                  x.name.lower() == message_author.lower() or x.name.lower() == message_nick.lower()]
-    transactions = []
-
-    if self_karma:
-        # If the user has karma'd themselves the same number of times tbere are karma'd items, no changes
-        # should be made. Otherwise, filter out the self-karma items
-        if len(self_karma) == len(raw_karma):
-            return [KarmaTransaction(name=message_author, self_karma=True, net_karma=0, reasons=[])]
-        else:
-            transactions.append(KarmaTransaction(name=message_author, self_karma=True, net_karma=0, reasons=[]))
-            raw_karma = [x for x in raw_karma if x not in self_karma]
-
     # Reformat the karma info to be per-karma item rather than per-token
     karma_ops = dict()
+    transactions = []
     for item in raw_karma:
         karma_ops.setdefault(item.name, []).append((Operation.from_str(item.op), item.reason))
 
@@ -92,6 +79,8 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
         elif net_karma > 1:
             net_karma = 1
 
-        transactions.append(KarmaTransaction(name=key, self_karma=False, net_karma=net_karma, reasons=reasons))
+        self_karma = (key.lower() == message_author.lower() or key.lower() == message_nick.lower())
+
+        transactions.append(KarmaTransaction(name=key, self_karma=self_karma, net_karma=net_karma, reasons=reasons))
 
     return transactions

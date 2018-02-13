@@ -38,8 +38,8 @@ def process_karma(message, message_id, db_session, timeout):
     # Iterate over the transactions to write them to the database
     for transaction in transactions:
         # Catch any self-karma transactions early
-        if transaction.self_karma:
-            error_str += f' - Could not change **{transaction.name}** because you cannot change your own karma, you *fool!*\n'
+        if transaction.self_karma and transaction.net_karma > -1:
+            error_str += f' • Could not change **{transaction.name}** because you cannot change your own karma! :angry:\n'
             continue
 
         # Get the karma item from the database if it exists
@@ -100,9 +100,15 @@ def process_karma(message, message_id, db_session, timeout):
                 reasons_plural = ''
                 reasons_has = 'has'
 
-            item_str += f' • **{transaction.name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded.\n'
+            if transaction.self_karma:
+                item_str += f' • **{transaction.name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp: Your reason{reasons_plural} {reasons_has} been recorded.\n'
+            else:
+                item_str += f' • **{transaction.name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded.\n'
         else:
-            item_str += f' • **{transaction.name}** (new score is {karma_change.score}).\n'
+            if transaction.self_karma:
+                item_str += f' • **{transaction.name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp:\n'
+            else:
+                item_str += f' • **{transaction.name}** (new score is {karma_change.score}).\n'
 
     # Construct the reply string in totality
     # If you have error(s) and no items processed successfully
