@@ -48,7 +48,7 @@ def process_karma(message, message_id, db_session, timeout):
 
         # Update or create the karma item
         if not karma_item:
-            karma_item = Karma(name=func.lower(transaction.name))
+            karma_item = Karma(name=transaction.name)
             db_session.add(karma_item)
             db_session.commit()
 
@@ -57,18 +57,30 @@ def process_karma(message, message_id, db_session, timeout):
             desc(KarmaChange.created_at)).first()
 
         if not last_change:
+            # If the bot is being downvoted then the karma can only go up
+            if transaction.name.lower() == 'apollo':
+                new_score = abs(transaction.net_karma)
+            else:
+                new_score = transaction.net_karma
+
             karma_change = KarmaChange(karma_id=karma_item.id, user_id=user.id, message_id=message_id,
-                                       reasons=transaction.reasons, change=transaction.net_karma,
-                                       score=transaction.net_karma, created_at=datetime.utcnow())
+                                       reasons=transaction.reasons, change=new_score, score=new_score,
+                                       created_at=datetime.utcnow())
             db_session.add(karma_change)
             db_session.commit()
         else:
             time_delta = datetime.utcnow() - last_change.created_at
 
             if time_delta.seconds >= timeout:
+                # If the bot is being downvoted then the karma can only go up
+                if transaction.name.lower() == 'apollo':
+                    new_score = last_change.score + abs(transaction.net_karma)
+                else:
+                    new_score = last_change.score + transaction.net_karma
+
                 karma_change = KarmaChange(karma_id=karma_item.id, user_id=user.id, message_id=message_id,
-                                           reasons=transaction.reasons, change=transaction.net_karma,
-                                           score=(last_change.score + transaction.net_karma),
+                                           reasons=transaction.reasons, score=new_score,
+                                           change=(new_score - last_change.score),
                                            created_at=datetime.utcnow())
                 db_session.add(karma_change)
                 db_session.commit()
@@ -91,6 +103,11 @@ def process_karma(message, message_id, db_session, timeout):
         elif transaction.net_karma == -1:
             karma_item.minuses = karma_item.minuses + 1
 
+        if transaction.name.lower() == 'apollo' and transaction.net_karma < 0:
+            apollo_response = ':wink:'
+        else:
+            apollo_response = ''
+
         # Build the karma item string
         if transaction.reasons:
             if len(transaction.reasons) > 1:
@@ -103,12 +120,12 @@ def process_karma(message, message_id, db_session, timeout):
             if transaction.self_karma:
                 item_str += f' • **{transaction.name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp: Your reason{reasons_plural} {reasons_has} been recorded.\n'
             else:
-                item_str += f' • **{transaction.name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded.\n'
+                item_str += f' • **{transaction.name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded. {apollo_response}\n'
         else:
             if transaction.self_karma:
                 item_str += f' • **{transaction.name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp:\n'
             else:
-                item_str += f' • **{transaction.name}** (new score is {karma_change.score}).\n'
+                item_str += f' • **{transaction.name}** (new score is {karma_change.score}). {apollo_response}\n'
 
     # Construct the reply string in totality
     # If you have error(s) and no items processed successfully
