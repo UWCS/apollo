@@ -89,6 +89,10 @@ class Karma(Base):
     def net_score(self):
         return self.pluses - self.minuses
 
+    @hybrid_property
+    def total_karma(self):
+        return self.pluses + self.minuses + self.neutrals
+
 
 @auto_str
 class User(Base):

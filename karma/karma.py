@@ -1,13 +1,15 @@
 from datetime import datetime
 from math import floor
 
+from discord import Message
 from sqlalchemy import func, desc
+from sqlalchemy.orm import Session
 
 from karma.parser import parse_message, create_transactions
 from models import User, Karma, KarmaChange
 
 
-def process_karma(message, message_id, db_session, timeout):
+def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):
     reply = ''
 
     # Parse the message for karma modifications
@@ -147,4 +149,6 @@ def process_karma(message, message_id, db_session, timeout):
     else:
         reply = f'I have made changes to the following karma item{transaction_plural}:\n\n{item_str}'
 
+    # Commit any changes (in case of any DB inconsistencies)
+    db_session.commit()
     return reply.rstrip()
