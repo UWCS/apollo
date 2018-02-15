@@ -4,7 +4,6 @@ from discord import Message, Member
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
 
-from commands.verify import verify
 from config import CONFIG
 from karma.karma import process_karma
 from models import User, db_session, LoggedMessage, MessageDiff
@@ -23,6 +22,9 @@ If you are a member of the society then you can verify your account using the 'v
 
 GLHF! :rocket:
 """
+
+# The command extensions to be loaded by the bot
+EXTENSIONS = ['commands.verify', 'commands.karma']
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
@@ -82,9 +84,14 @@ async def on_message_edit(before: Message, after: Message):
 
 @bot.event
 async def on_message_delete(message: Message):
-    # TODO: Deal with deleting messages on karma - add an opposite action to the karma DB
-    pass
+    # Get the message from the database
+    db_message = db_session.query(LoggedMessage).filter(LoggedMessage.message_uid == message.id).one_or_none()
 
+    # Can't really do anything if the message isn't in the logs so only handle when it is
+    if db_message:
+        # Update the message deleted_at and commit the changes made
+        db_message.deleted_at = datetime.utcnow()
+        db_session.commit()
 
 @bot.event
 async def on_member_join(member: Member):
@@ -101,5 +108,11 @@ async def on_member_join(member: Member):
 
 
 if __name__ == '__main__':
-    bot.add_command(verify)
+    for extension in EXTENSIONS:
+        try:
+            bot.load_extension(extension)
+        except Exception as e:
+            exc = '{}: {}'.format(type(e).__name__, e)
+            print('Failed to load extension {}\n{}'.format(extension, exc))
+
     bot.run(CONFIG['DISCORD_TOKEN'])

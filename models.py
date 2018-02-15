@@ -45,6 +45,7 @@ class LoggedMessage(Base):
     message_content = Column(EncryptedType(type_in=String, key=CONFIG['BOT_SECRET_KEY']), nullable=False)
     author = Column(Integer, ForeignKey('users.id'), nullable=False)
     created_at = Column(DateTime, nullable=False)
+    deleted_at = Column(DateTime, nullable=True)
     channel_name = Column(EncryptedType(type_in=String, key=CONFIG['BOT_SECRET_KEY']), nullable=False)
 
     user = relationship('User', back_populates='messages')
