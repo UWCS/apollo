@@ -17,7 +17,7 @@ To verify your account please set your Discord tag (name and 4 digit number e.g.
 WELCOME_MESSAGE = """
 Hey <@{user_id}>!
 
-I'm Apollo, this Discord's friendly bot. I'd like to welcome you to the University of Warwick Computer Society Discord server!
+I'm Apollo, the UWCS Discord's friendly bot. I'd like to welcome you to the University of Warwick Computing Society Discord server!
 
 If you are a member of the society then you can verify your account using the 'verify' command (use `!help verify` to find out more)! If you're not a member, you can join through the Warwick student's union website.
 
