@@ -37,7 +37,7 @@ def is_private_channel():
     return check(predicate)
 
 
-class Verify():
+class Verify:
     def __init__(self, bot: Bot):
         self.bot = bot
 
