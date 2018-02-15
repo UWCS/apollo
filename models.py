@@ -2,6 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy_utils import EncryptedType, ScalarListType
 
@@ -83,6 +84,10 @@ class Karma(Base):
     neutrals = Column(Integer, nullable=False, default=0)
 
     reasons = relationship('KarmaChange', back_populates='karma', order_by=KarmaChange.score)
+
+    @hybrid_property
+    def net_score(self):
+        return self.pluses - self.minuses
 
 
 @auto_str
