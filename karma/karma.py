@@ -17,6 +17,8 @@ def process_karma(message, message_id, db_session, timeout):
     if not raw_karma:
         return reply
 
+    # TODO: Protect from byte-limit length chars
+
     # Process the raw karma tokens into a number of karma transactions
     transactions = create_transactions(message.author.name, message.author.display_name, raw_karma)
 
@@ -85,6 +87,7 @@ def process_karma(message, message_id, db_session, timeout):
                 db_session.add(karma_change)
                 db_session.commit()
             else:
+                # Tell the user that the item is on cooldown
                 if time_delta.seconds < 60:
                     error_str += f' • Could not change **{karma_item.name}** since it is still on cooldown (last altered {time_delta.seconds} seconds ago).\n'
                 else:
@@ -96,13 +99,19 @@ def process_karma(message, message_id, db_session, timeout):
 
                 continue
 
+        # Update karma counts
         if transaction.net_karma == 0:
             karma_item.neutrals = karma_item.neutrals + 1
         elif transaction.net_karma == 1:
             karma_item.pluses = karma_item.pluses + 1
         elif transaction.net_karma == -1:
-            karma_item.minuses = karma_item.minuses + 1
+            # Make sure the changed operation is updated
+            if transaction.name.lower() == 'apollo':
+                karma_item.pluses = karma_item.pluses + 1
+            else:
+                karma_item.minuses = karma_item.minuses + 1
 
+        # Give some sass if someone is trying to downvote the bot
         if transaction.name.lower() == 'apollo' and transaction.net_karma < 0:
             apollo_response = ':wink:'
         else:
