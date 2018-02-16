@@ -1,9 +1,10 @@
 from datetime import datetime
 
 import matplotlib.pyplot as plt
+import matplotlib
 from discord import File
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError
+from discord.ext.commands import Context, Bot, CommandError, clean_content
 from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
     HourLocator, MinuteLocator
 from sqlalchemy import func
@@ -84,7 +85,7 @@ class Karma:
         await ctx.send('That command isn\'t implemented at the moment. :cry:')
 
     @karma.command(help='Plots the karma change over time of the specified karma', ignore_extra=True)
-    async def plot(self, ctx: Context, karma: str):
+    async def plot(self, ctx: Context, karma: clean_content):
         await ctx.trigger_typing()
 
         karma_item = db_session.query(KarmaModel).filter(func.lower(KarmaModel.name) == func.lower(karma)).first()
