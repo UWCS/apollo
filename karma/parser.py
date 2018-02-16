@@ -39,7 +39,7 @@ def parse_message(message: str):
 
     # Collate all matches into a list
     for item in items:
-        results.append(RawKarma(name=item.group('karma_target').replace('"', ''), op=item.group('karma_op'),
+        results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
                                 reason=item.group('karma_reason')))
 
     # If there are any results then return the list, otherwise give None

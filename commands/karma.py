@@ -1,10 +1,9 @@
 from datetime import datetime
 
 import matplotlib.pyplot as plt
-import matplotlib
 from discord import File
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, clean_content
+from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType
 from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
     HourLocator, MinuteLocator
 from sqlalchemy import func
@@ -85,10 +84,13 @@ class Karma:
         await ctx.send('That command isn\'t implemented at the moment. :cry:')
 
     @karma.command(help='Plots the karma change over time of the specified karma', ignore_extra=True)
+    @commands.cooldown(5, 60, BucketType.user)
     async def plot(self, ctx: Context, karma: clean_content):
         await ctx.trigger_typing()
 
-        karma_item = db_session.query(KarmaModel).filter(func.lower(KarmaModel.name) == func.lower(karma)).first()
+        karma_stripped = karma.lstrip('@')
+        karma_item = db_session.query(KarmaModel).filter(
+            func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
 
         if karma_item:
             changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id) \
@@ -135,7 +137,7 @@ class Karma:
             scores = list(map(lambda k: k.score, changes))
             time = date2num(list(map(lambda k: k.local_time, changes)))
 
-            filename = f'tmp/{karma}-{datetime.utcnow()}.png'
+            filename = f'tmp/{karma_stripped}-{datetime.utcnow()}.png'
 
             # Plot the graph and save it to a png
             plt.style.use(['seaborn-notebook', 'seaborn'])
@@ -155,7 +157,7 @@ class Karma:
             await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
         else:
             # The item hasn't been karma'd
-            result = f'"{karma}" hasn\'t been karma\'d yet. :cry:'
+            result = f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:'
             await ctx.send(result)
 
     @plot.error
@@ -163,9 +165,11 @@ class Karma:
         await ctx.send(error.message)
 
     @karma.command(help='Lists the reasons (if any) for the specific karma', ignore_extra=True)
-    async def reasons(self, ctx: Context, karma: str):
+    async def reasons(self, ctx: Context, karma: clean_content):
+        karma_stripped = karma.lstrip('@')
+
         # Get the karma from the database
-        karma_item = db_session.query(KarmaModel).filter(func.lower(KarmaModel.name) == func.lower(karma)).first()
+        karma_item = db_session.query(KarmaModel).filter(func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
 
         if karma_item:
             # Get all of the changes that have some reason
@@ -182,7 +186,7 @@ class Karma:
                 if len(reasons) > 1:
                     plural = 's'
 
-                result = f'The reason{plural} for **{karma}** are as follows:\n\n'
+                result = f'The reason{plural} for "{karma_stripped}" are as follows:\n\n'
                 for reason in reasons:
                     result += f' • {reason}\n'
             else:
@@ -191,7 +195,7 @@ class Karma:
             await ctx.send(result)
         else:
             # The item hasn't been karma'd
-            result = f'"{karma}" hasn\'t been karma\'d yet. :cry:'
+            result = f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:'
             await ctx.send(result)
 
 
