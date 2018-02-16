@@ -182,3 +182,4 @@ pip-selfcheck.json
 
 config.py
 alembic.ini
+tmp/

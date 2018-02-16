@@ -6,6 +6,8 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy_utils import EncryptedType, ScalarListType
 
+from pytz import timezone, utc
+
 from config import CONFIG
 
 Base = declarative_base()
@@ -69,6 +71,10 @@ class KarmaChange(Base):
     karma = relationship('Karma', back_populates='reasons')
     user = relationship('User', back_populates='karma_reasons')
     message = relationship('LoggedMessage', back_populates='karma')
+
+    @hybrid_property
+    def local_time(self):
+        return utc.localize(self.created_at).astimezone(timezone('Europe/London'))
 
 
 @auto_str

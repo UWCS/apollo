@@ -1,5 +1,11 @@
+from datetime import datetime
+
+import matplotlib.pyplot as plt
+from discord import File
 from discord.ext import commands
-from discord.ext.commands import Context, Bot
+from discord.ext.commands import Context, Bot, CommandError
+from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
+    HourLocator, MinuteLocator
 from sqlalchemy import func
 
 from models import db_session, Karma as KarmaModel, KarmaChange
@@ -8,6 +14,14 @@ LONG_HELP_TEXT = """
 Query and display the information about the karma topics on the UWCS discord server.
 """
 SHORT_HELP_TEXT = """View information about karma topics."""
+
+
+class KarmaError(CommandError):
+    message = None
+
+    def __init__(self, message=None, *args):
+        self.message = message
+        super().__init__(*args)
 
 
 class Karma:
@@ -67,11 +81,85 @@ class Karma:
 
     @karma.command(help='Gives information about specified karma topics')
     async def info(self, ctx: Context, *args):
-        pass
+        await ctx.send('That command isn\'t implemented at the moment. :cry:')
 
     @karma.command(help='Plots the karma change over time of the specified karma', ignore_extra=True)
     async def plot(self, ctx: Context, karma: str):
-        pass
+        await ctx.trigger_typing()
+
+        karma_item = db_session.query(KarmaModel).filter(func.lower(KarmaModel.name) == func.lower(karma)).first()
+
+        if karma_item:
+            changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id) \
+                .order_by(KarmaChange.created_at.asc()).all()
+
+            if len(changes) < 10:
+                plural = ''
+                if len(changes) > 1:
+                    plural = 's'
+
+                raise KarmaError(
+                    message=f'"{karma}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}). :chart_with_upwards_trend:')
+
+            highpoint = max(changes, key=lambda x: x.score)
+            lowpoint = min(changes, key=lambda x: x.score)
+
+            karma_timeline = changes[-1].local_time - changes[0].local_time
+
+            if karma_timeline.days == 0 and karma_timeline.seconds < 3600:
+                date_format = DateFormatter('%H:%M %d %b %Y')
+                date_locator_major = MinuteLocator(interval=15)
+                date_locator_minor = MinuteLocator()
+            elif karma_timeline.days == 0 and karma_timeline.seconds <= 21600:
+                date_format = DateFormatter('%H:%M %d %b %Y')
+                date_locator_major = HourLocator()
+                date_locator_minor = MinuteLocator(interval=15)
+            elif karma_timeline.days < 2:
+                date_format = DateFormatter('%d %b %Y')
+                date_locator_major = DayLocator()
+                date_locator_minor = HourLocator()
+            elif karma_timeline.days <= 30:
+                date_format = DateFormatter('%d %b %Y')
+                date_locator_major = WeekdayLocator()
+                date_locator_minor = DayLocator()
+            elif karma_timeline.days <= 365:
+                date_format = DateFormatter('%B %Y')
+                date_locator_major = MonthLocator()
+                date_locator_minor = WeekdayLocator()
+            else:
+                date_format = DateFormatter('%Y')
+                date_locator_major = YearLocator()
+                date_locator_minor = MonthLocator()
+
+            scores = list(map(lambda k: k.score, changes))
+            time = date2num(list(map(lambda k: k.local_time, changes)))
+
+            filename = f'tmp/{karma}-{datetime.utcnow()}.png'
+
+            # Plot the graph and save it to a png
+            plt.style.use(['seaborn-notebook', 'seaborn'])
+            plt.rcParams.update({'figure.autolayout': True})
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.xaxis.set_major_locator(date_locator_major)
+            ax.xaxis.set_minor_locator(date_locator_minor)
+            ax.xaxis.set_major_formatter(date_format)
+            ax.set(xlabel='Time', ylabel='Karma', ylim=[lowpoint.score - 10, highpoint.score + 10],
+                   xlim=[time[0], time[-1]])
+            ax.plot_date(time, scores, '-', xdate=True)
+            fig.savefig(filename, dpi=240, transparent=False)
+
+            # Open a file pointer to send it in Discord
+            plot_image = open(filename, mode='rb')
+            plot = File(plot_image)
+            await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+        else:
+            # The item hasn't been karma'd
+            result = f'"{karma}" hasn\'t been karma\'d yet. :cry:'
+            await ctx.send(result)
+
+    @plot.error
+    async def plot_error_handler(self, ctx: Context, error: KarmaError):
+        await ctx.send(error.message)
 
     @karma.command(help='Lists the reasons (if any) for the specific karma', ignore_extra=True)
     async def reasons(self, ctx: Context, karma: str):
