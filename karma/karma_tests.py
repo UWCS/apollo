@@ -230,7 +230,12 @@ class TestKarmaParser(unittest.TestCase):
                          [RawKarma(name='Foobar', op='++', reason=None)])
 
     def test_simple_positive_with_parenthesis_after(self):
-        self.assertEqual(parse_message('Foobar++ (hella cool)'), [RawKarma(name='Foobar', op='++', reason=None)])
+        self.assertEqual(parse_message('Foobar++ (hella cool)'),
+                         [RawKarma(name='Foobar', op='++', reason='hella cool')])
+
+    def test_simple_positive_with_compound_reason(self):
+        self.assertEqual(parse_message('Foobar++ because it is (hella cool)'),
+                         [RawKarma(name='Foobar', op='++', reason='it is (hella cool)')])
 
     def test_simple_positive_with_reason(self):
         self.assertEqual(parse_message('Foobar++ because baz'), [RawKarma(name='Foobar', op='++', reason='baz')])

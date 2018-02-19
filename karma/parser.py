@@ -33,14 +33,14 @@ def parse_message(message: str):
     # The regex for parsing karma messages
     # Hold on tight because this will be a doozy...
     karma_regex = re.compile(
-        r'(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+(?P<karma_reason>[^,]+)($|,)|\s\(.+\)+|,?\s|$)')
+        r'(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+(?P<karma_reason>[^,]+)($|,)|\s\((?P<karma_reason_2>.+)\)|,?\s|$)')
     items = karma_regex.finditer(filtered_message)
     results = []
 
     # Collate all matches into a list
     for item in items:
         results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
-                                reason=item.group('karma_reason')))
+                                reason=item.group('karma_reason') or item.group('karma_reason_2')))
 
     # If there are any results then return the list, otherwise give None
     if results:
