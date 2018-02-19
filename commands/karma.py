@@ -106,8 +106,6 @@ class Karma:
 
             karma_timeline = changes[-1].local_time - changes[0].local_time
 
-            print(karma_timeline)
-
             if karma_timeline < timedelta(hours=1):
                 date_format = DateFormatter('%H:%M %d %b %Y')
                 date_locator_major = MinuteLocator(interval=15)
