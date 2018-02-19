@@ -41,9 +41,12 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
     # Iterate over the transactions to write them to the database
     for transaction in transactions:
+        # Truncate the name safely so we 2000 char karmas can be used
+        truncated_name = (transaction.name[300:] + '.. (truncated to 300 chars)') if len(transaction.name) > 300 else transaction.name
+
         # Catch any self-karma transactions early
         if transaction.self_karma and transaction.net_karma > -1:
-            error_str += f' • Could not change **{transaction.name}** because you cannot change your own karma! :angry:\n'
+            error_str += f' • Could not change "{truncated_name}" because you cannot change your own karma! :angry:\n'
             continue
 
         # Get the karma item from the database if it exists
@@ -91,13 +94,13 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             else:
                 # Tell the user that the item is on cooldown
                 if time_delta.seconds < 60:
-                    error_str += f' • Could not change **{karma_item.name}** since it is still on cooldown (last altered {time_delta.seconds} seconds ago).\n'
+                    error_str += f' • Could not change "{truncated_name}" since it is still on cooldown (last altered {time_delta.seconds} seconds ago).\n'
                 else:
                     mins_plural = ''
                     mins = floor(time_delta.seconds / 60)
                     if time_delta.seconds >= 120:
                         mins_plural = 's'
-                    error_str += f' • Could not change **{karma_item.name}** since it is still on cooldown (last altered {mins} minute{mins_plural} ago).\n'
+                    error_str += f' • Could not change "{truncated_name}" since it is still on cooldown (last altered {mins} minute{mins_plural} ago).\n'
 
                 continue
 
@@ -129,14 +132,14 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 reasons_has = 'has'
 
             if transaction.self_karma:
-                item_str += f' • **{transaction.name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp: Your reason{reasons_plural} {reasons_has} been recorded.\n'
+                item_str += f' • **{truncated_name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded. *Fool!* that\'s less karma to you. :smiling_imp:\n'
             else:
-                item_str += f' • **{transaction.name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded. {apollo_response}\n'
+                item_str += f' • **{truncated_name}** (new score is {karma_change.score}) and your reason{reasons_plural} {reasons_has} been recorded. {apollo_response}\n'
         else:
             if transaction.self_karma:
-                item_str += f' • **{transaction.name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp:\n'
+                item_str += f' • **{truncated_name}** (new score is {karma_change.score}). *Fool!* that\'s less karma to you. :smiling_imp:\n'
             else:
-                item_str += f' • **{transaction.name}** (new score is {karma_change.score}). {apollo_response}\n'
+                item_str += f' • **{truncated_name}** (new score is {karma_change.score}). {apollo_response}\n'
 
     # Construct the reply string in totality
     # If you have error(s) and no items processed successfully
