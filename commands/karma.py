@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 from discord import File
@@ -104,31 +104,30 @@ class Karma:
                 raise KarmaError(
                     message=f'"{karma}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}). :chart_with_upwards_trend:')
 
-            highpoint = max(changes, key=lambda x: x.score)
-            lowpoint = min(changes, key=lambda x: x.score)
-
             karma_timeline = changes[-1].local_time - changes[0].local_time
 
-            if karma_timeline.days == 0 and karma_timeline.seconds < 3600:
+            print(karma_timeline)
+
+            if karma_timeline < timedelta(hours=1):
                 date_format = DateFormatter('%H:%M %d %b %Y')
                 date_locator_major = MinuteLocator(interval=15)
                 date_locator_minor = MinuteLocator()
-            elif karma_timeline.days == 0 and karma_timeline.seconds <= 21600:
+            elif karma_timeline < timedelta(hours=6):
                 date_format = DateFormatter('%H:%M %d %b %Y')
                 date_locator_major = HourLocator()
                 date_locator_minor = MinuteLocator(interval=15)
-            elif karma_timeline.days < 2:
+            elif karma_timeline < timedelta(days=7):
                 date_format = DateFormatter('%d %b %Y')
                 date_locator_major = DayLocator()
-                date_locator_minor = HourLocator()
-            elif karma_timeline.days <= 30:
+                date_locator_minor = HourLocator(interval=6)
+            elif karma_timeline < timedelta(days=30):
                 date_format = DateFormatter('%d %b %Y')
                 date_locator_major = WeekdayLocator()
                 date_locator_minor = DayLocator()
-            elif karma_timeline.days <= 365:
+            elif karma_timeline < timedelta(days=365):
                 date_format = DateFormatter('%B %Y')
                 date_locator_major = MonthLocator()
-                date_locator_minor = WeekdayLocator()
+                date_locator_minor = WeekdayLocator(interval=2)
             else:
                 date_format = DateFormatter('%Y')
                 date_locator_major = YearLocator()
@@ -140,15 +139,17 @@ class Karma:
             filename = f'tmp/{karma_stripped}-{datetime.utcnow()}.png'
 
             # Plot the graph and save it to a png
-            plt.style.use(['seaborn-notebook', 'seaborn'])
             plt.rcParams.update({'figure.autolayout': True})
             fig, ax = plt.subplots(figsize=(8, 6))
             ax.xaxis.set_major_locator(date_locator_major)
             ax.xaxis.set_minor_locator(date_locator_minor)
             ax.xaxis.set_major_formatter(date_format)
-            ax.set(xlabel='Time', ylabel='Karma', ylim=[lowpoint.score - 10, highpoint.score + 10],
-                   xlim=[time[0], time[-1]])
+            ax.grid(b=True, which='minor', color='0.9', linestyle=':')
+            ax.grid(b=True, which='major', color='0.5', linestyle='--')
+            ax.set(xlabel='Time', ylabel='Karma',
+                   xlim=[time[0] - ((time[-1] - time[0]) * 0.05), time[-1] + ((time[-1] - time[0]) * 0.05)])
             ax.plot_date(time, scores, '-', xdate=True)
+            fig.autofmt_xdate()
             fig.savefig(filename, dpi=240, transparent=False)
 
             # Open a file pointer to send it in Discord
