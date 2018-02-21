@@ -96,7 +96,7 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
     fig.autofmt_xdate()
 
     # Save the file to disk and set the right permissions
-    filename = ''.join(karma_dict.keys()) + f'-{datetime.utcnow()}.png'
+    filename = ''.join(karma_dict.keys()) + '-' + str(hex(int(datetime.utcnow().timestamp()))).lstrip('0x') + '.png'
     path = '{path}/{filename}'.format(path=CONFIG['FIG_SAVE_PATH'].rstrip('/'), filename=filename)
 
     fig.savefig(path, dpi=240, transparent=False)
@@ -233,11 +233,10 @@ class Karma:
                 generated_at = datetime.strftime(utc.localize(datetime.utcnow()).astimezone(timezone('Europe/London')),
                                                  '%H:%M %d %b %Y')
                 time_taken = (t_end - t_start) / 1000
-                time_plural = 's' if time_taken == 1 else ''
                 embed = Embed(color=Color.from_rgb(61, 83, 255),
                               title=f'Karma trend for "{karma_stripped}" over time',
                               description=f'Karma tracked between {first_change} and {last_change} with a total of {len(changes)} changes')
-                embed.set_footer(text=f'Graph generated at {generated_at} in {time_taken:.3f} second{time_plural}')
+                embed.set_footer(text=f'Graph generated at {generated_at} in {time_taken:.3f} seconds')
                 embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
                 await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :chart_with_upwards_trend:', embed=embed)
         else:
