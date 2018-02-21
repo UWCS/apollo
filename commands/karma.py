@@ -1,13 +1,18 @@
+import os
 from datetime import datetime, timedelta
+from time import time
+from typing import List, Dict
 
 import matplotlib.pyplot as plt
-from discord import File
+from discord import File, Embed, Color
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType
+from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType, MissingRequiredArgument
 from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
     HourLocator, MinuteLocator
+from pytz import utc, timezone
 from sqlalchemy import func
 
+from config import CONFIG
 from models import db_session, Karma as KarmaModel, KarmaChange
 
 LONG_HELP_TEXT = """
@@ -24,7 +29,84 @@ class KarmaError(CommandError):
         super().__init__(*args)
 
 
+# Utility function to get the current system time in milliseconds
+current_milli_time = lambda: int(round(time() * 1000))
+
+
+# Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
+async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
+    # Matplotlib preamble
+    plt.rcParams.update({'figure.autolayout': True})
+    fig, ax = plt.subplots(figsize=(8, 6))
+
+    # Get the earliest and latest karma values fo
+    earliest_karma = utc.localize(datetime.utcnow()).astimezone(timezone('Europe/London'))
+    latest_karma = utc.localize(datetime(1970, 1, 1)).astimezone(timezone('Europe/London'))
+    for key, changes in karma_dict.items():
+        earliest_karma = changes[0].local_time if changes[0].local_time < earliest_karma else earliest_karma
+        latest_karma = changes[-1].local_time if changes[-1].local_time >= latest_karma else latest_karma
+
+    karma_timeline = latest_karma - earliest_karma
+
+    # Determine the right graph tick positioning
+    if karma_timeline <= timedelta(hours=1):
+        date_format = DateFormatter('%H:%M %d %b %Y')
+        date_locator_major = MinuteLocator(interval=15)
+        date_locator_minor = MinuteLocator()
+    elif karma_timeline <= timedelta(hours=6):
+        date_format = DateFormatter('%H:%M %d %b %Y')
+        date_locator_major = HourLocator()
+        date_locator_minor = MinuteLocator(interval=15)
+    elif karma_timeline <= timedelta(days=14):
+        date_format = DateFormatter('%d %b %Y')
+        date_locator_major = DayLocator()
+        date_locator_minor = HourLocator(interval=6)
+    elif karma_timeline <= timedelta(days=30):
+        date_format = DateFormatter('%d %b %Y')
+        date_locator_major = WeekdayLocator()
+        date_locator_minor = DayLocator()
+    elif karma_timeline <= timedelta(days=365):
+        date_format = DateFormatter('%B %Y')
+        date_locator_major = MonthLocator()
+        date_locator_minor = WeekdayLocator(interval=2)
+    else:
+        date_format = DateFormatter('%Y')
+        date_locator_major = YearLocator()
+        date_locator_minor = MonthLocator()
+
+    # Transform the karma changes into plottable values
+    for karma, changes in karma_dict.items():
+        scores = list(map(lambda k: k.score, changes))
+        time = date2num(list(map(lambda k: k.local_time, changes)))
+
+        # Plot the values
+        ax.xaxis.set_major_locator(date_locator_major)
+        ax.xaxis.set_minor_locator(date_locator_minor)
+        ax.xaxis.set_major_formatter(date_format)
+        ax.grid(b=True, which='minor', color='0.9', linestyle=':')
+        ax.grid(b=True, which='major', color='0.5', linestyle='--')
+        ax.set(xlabel='Time', ylabel='Karma',
+               xlim=[time[0] - ((time[-1] - time[0]) * 0.05), time[-1] + ((time[-1] - time[0]) * 0.05)])
+        line, = ax.plot_date(time, scores, '-', xdate=True)
+        line.set_label(karma)
+
+    # Create a legend if more than  1 line and format the dates
+    if len(karma_dict.keys()) > 1:
+        ax.legend()
+    fig.autofmt_xdate()
+
+    # Save the file to disk and set the right permissions
+    filename = ''.join(karma_dict.keys()) + f'-{datetime.utcnow()}.png'
+    path = '{path}/{filename}'.format(path=CONFIG['FIG_SAVE_PATH'].rstrip('/'), filename=filename)
+
+    fig.savefig(path, dpi=240, transparent=False)
+    os.chmod(path, 0o644)
+
+    return filename, path
+
+
 class Karma:
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -79,14 +161,45 @@ class Karma:
 
         await ctx.send(result)
 
-    @karma.command(help='Gives information about specified karma topics')
-    async def info(self, ctx: Context, *args):
-        await ctx.send('That command isn\'t implemented at the moment. :cry:')
+    @karma.command(help='Gives information about the specified karma topic', ignore_extra=True)
+    @commands.cooldown(5, 60, BucketType.user)
+    async def info(self, ctx: Context, karma: clean_content):
+        # Strip any leading @s and get the item from the DB
+        karma_stripped = karma.lstrip('@')
+        karma_item = db_session.query(KarmaModel).filter(
+            func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
+
+        # If the item doesn't exist then raise an error
+        if not karma_item:
+            raise KarmaError(message=f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:')
+
+        # # Loop over the karma
+        # for karma in args:
+        #     # Strip any leading @s
+        #     karma_stripped = karma.lstrip('@')
+        #     karma_item = db_session.query(KarmaModel).filter(
+        #         func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
+        #
+        #     # If there's one item that can't be found then exit early
+        #     if not karma_item and len(args) == 1:
+        #         raise KarmaError(message=f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:')
+        #     elif not karma_item:
+        #         continue
+        #
+        #     await ctx.send(karma_item or 'None')
+
+    @info.error
+    async def info_error(self, ctx: Context, error: CommandError):
+        if isinstance(error, MissingRequiredArgument):
+            await ctx.send('You need to give a karma topic to get information about. :frowning:')
+        elif isinstance(error, KarmaError):
+            await ctx.send(error.message)
 
     @karma.command(help='Plots the karma change over time of the specified karma', ignore_extra=True)
     @commands.cooldown(5, 60, BucketType.user)
     async def plot(self, ctx: Context, karma: clean_content):
         await ctx.trigger_typing()
+        t_start = current_milli_time()
 
         karma_stripped = karma.lstrip('@')
         karma_item = db_session.query(KarmaModel).filter(
@@ -96,64 +209,37 @@ class Karma:
             changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id) \
                 .order_by(KarmaChange.created_at.asc()).all()
 
+            # Check if the topic has been karma'd >=10 times
             if len(changes) < 10:
                 plural = ''
                 if len(changes) > 1:
                     plural = 's'
 
                 raise KarmaError(
-                    message=f'"{karma}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}). :chart_with_upwards_trend:')
-
-            karma_timeline = changes[-1].local_time - changes[0].local_time
-
-            if karma_timeline < timedelta(hours=1):
-                date_format = DateFormatter('%H:%M %d %b %Y')
-                date_locator_major = MinuteLocator(interval=15)
-                date_locator_minor = MinuteLocator()
-            elif karma_timeline < timedelta(hours=6):
-                date_format = DateFormatter('%H:%M %d %b %Y')
-                date_locator_major = HourLocator()
-                date_locator_minor = MinuteLocator(interval=15)
-            elif karma_timeline < timedelta(days=7):
-                date_format = DateFormatter('%d %b %Y')
-                date_locator_major = DayLocator()
-                date_locator_minor = HourLocator(interval=6)
-            elif karma_timeline < timedelta(days=30):
-                date_format = DateFormatter('%d %b %Y')
-                date_locator_major = WeekdayLocator()
-                date_locator_minor = DayLocator()
-            elif karma_timeline < timedelta(days=365):
-                date_format = DateFormatter('%B %Y')
-                date_locator_major = MonthLocator()
-                date_locator_minor = WeekdayLocator(interval=2)
-            else:
-                date_format = DateFormatter('%Y')
-                date_locator_major = YearLocator()
-                date_locator_minor = MonthLocator()
-
-            scores = list(map(lambda k: k.score, changes))
-            time = date2num(list(map(lambda k: k.local_time, changes)))
-
-            filename = f'tmp/{karma_stripped}-{datetime.utcnow()}.png'
+                    message=f'"{karma}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}). :chart_with_downwards_trend:')
 
             # Plot the graph and save it to a png
-            plt.rcParams.update({'figure.autolayout': True})
-            fig, ax = plt.subplots(figsize=(8, 6))
-            ax.xaxis.set_major_locator(date_locator_major)
-            ax.xaxis.set_minor_locator(date_locator_minor)
-            ax.xaxis.set_major_formatter(date_format)
-            ax.grid(b=True, which='minor', color='0.9', linestyle=':')
-            ax.grid(b=True, which='major', color='0.5', linestyle='--')
-            ax.set(xlabel='Time', ylabel='Karma',
-                   xlim=[time[0] - ((time[-1] - time[0]) * 0.05), time[-1] + ((time[-1] - time[0]) * 0.05)])
-            ax.plot_date(time, scores, '-', xdate=True)
-            fig.autofmt_xdate()
-            fig.savefig(filename, dpi=240, transparent=False)
+            filename, path = await plot_karma({karma_stripped: changes})
+            t_end = current_milli_time()
 
-            # Open a file pointer to send it in Discord
-            plot_image = open(filename, mode='rb')
-            plot = File(plot_image)
-            await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+            if not CONFIG['FIG_HOST_URL']:
+                # Attach the file as an image for dev purposes
+                plot_image = open(path, mode='rb')
+                plot = File(plot_image)
+                await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+            else:
+                first_change = datetime.strftime(changes[0].local_time, '%H:%M %d %b %Y')
+                last_change = datetime.strftime(changes[-1].local_time, '%H:%M %d %b %Y')
+                generated_at = datetime.strftime(utc.localize(datetime.utcnow()).astimezone(timezone('Europe/London')),
+                                                 '%H:%M %d %b %Y')
+                time_taken = (t_end - t_start) / 1000
+                time_plural = 's' if time_taken == 1 else ''
+                embed = Embed(color=Color.from_rgb(61, 83, 255),
+                              title=f'Karma trend for "{karma_stripped}" over time',
+                              description=f'Karma tracked between {first_change} and {last_change} with a total of {len(changes)} changes')
+                embed.set_footer(text=f'Graph generated at {generated_at} in {time_taken:.3f} second{time_plural}')
+                embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
+                await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :chart_with_upwards_trend:', embed=embed)
         else:
             # The item hasn't been karma'd
             result = f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:'
@@ -168,7 +254,8 @@ class Karma:
         karma_stripped = karma.lstrip('@')
 
         # Get the karma from the database
-        karma_item = db_session.query(KarmaModel).filter(func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
+        karma_item = db_session.query(KarmaModel).filter(
+            func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
 
         if karma_item:
             # Get all of the changes that have some reason

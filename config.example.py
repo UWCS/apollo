@@ -7,6 +7,8 @@ CONFIG = {
     'BOT_SECRET_KEY': 'secret_key_here',
     'KARMA_TIMEOUT': 900,
     'DISCORD_TOKEN': 'discord_token',
+    'FIG_SAVE_PATH': '/path/to/graph/dir/',
+    'FIG_HOST_URL': 'https://your.url/to/host/images',
     'SQL_LOGGING': True,
     'BOT_LOGGING': True,
 }
