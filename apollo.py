@@ -24,7 +24,7 @@ GLHF! :rocket:
 """
 
 # The command extensions to be loaded by the bot
-EXTENSIONS = ['commands.verify', 'commands.karma', 'commands.say', 'commands.flip']
+EXTENSIONS = ['commands.verify', 'commands.karma', 'commands.say', 'commands.flip', 'commands.zed0']
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
