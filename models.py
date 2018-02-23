@@ -1,12 +1,11 @@
 from datetime import datetime
 
+from pytz import timezone, utc
 from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy_utils import EncryptedType, ScalarListType
-
-from pytz import timezone, utc
 
 from config import CONFIG
 
@@ -68,8 +67,8 @@ class KarmaChange(Base):
     change = Column(Integer, nullable=False)
     score = Column(Integer, nullable=False)
 
-    karma = relationship('Karma', back_populates='reasons')
-    user = relationship('User', back_populates='karma_reasons')
+    karma = relationship('Karma', back_populates='changes')
+    user = relationship('User', back_populates='karma_changes')
     message = relationship('LoggedMessage', back_populates='karma')
 
     @hybrid_property
@@ -89,7 +88,7 @@ class Karma(Base):
     minuses = Column(Integer, nullable=False, default=0)
     neutrals = Column(Integer, nullable=False, default=0)
 
-    reasons = relationship('KarmaChange', back_populates='karma', order_by=KarmaChange.score)
+    changes = relationship('KarmaChange', back_populates='karma', order_by=KarmaChange.score)
 
     @hybrid_property
     def net_score(self):
@@ -113,4 +112,4 @@ class User(Base):
     verified_at = Column(EncryptedType(type_in=DateTime, key=CONFIG['BOT_SECRET_KEY']), nullable=True)
 
     messages = relationship('LoggedMessage', back_populates='user', order_by=LoggedMessage.created_at)
-    karma_reasons = relationship('KarmaChange', back_populates='user', order_by=KarmaChange.created_at)
+    karma_changes = relationship('KarmaChange', back_populates='user', order_by=KarmaChange.created_at)
