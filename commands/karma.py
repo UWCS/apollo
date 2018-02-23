@@ -1,10 +1,11 @@
 import os
 from datetime import datetime, timedelta
+from functools import reduce
 from time import time
 from typing import List, Dict
 
 import matplotlib.pyplot as plt
-from discord import File, Embed, Color
+from discord import Embed, Color, File
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType, MissingRequiredArgument
 from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
@@ -35,6 +36,10 @@ current_milli_time = lambda: int(round(time() * 1000))
 
 # Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
 async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
+    # Error if there's no input data
+    if len(karma_dict) == 0:
+        raise ValueError('karma_dict must contain at least 1 item')
+
     # Matplotlib preamble
     plt.rcParams.update({'figure.autolayout': True})
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -164,6 +169,7 @@ class Karma:
     @karma.command(help='Gives information about the specified karma topic', ignore_extra=True)
     @commands.cooldown(5, 60, BucketType.user)
     async def info(self, ctx: Context, karma: clean_content):
+        t_start = current_milli_time()
         # Strip any leading @s and get the item from the DB
         karma_stripped = karma.lstrip('@')
         karma_item = db_session.query(KarmaModel).filter(
@@ -195,17 +201,26 @@ class Karma:
         elif isinstance(error, KarmaError):
             await ctx.send(error.message)
 
-    @karma.command(help='Plots the karma change over time of the specified karma', ignore_extra=True)
+    @karma.command(help='Plots the karma change over time of the given karma topic(s)')
     @commands.cooldown(5, 60, BucketType.user)
-    async def plot(self, ctx: Context, karma: clean_content):
+    async def plot(self, ctx: Context, *args: clean_content):
         await ctx.trigger_typing()
         t_start = current_milli_time()
 
-        karma_stripped = karma.lstrip('@')
-        karma_item = db_session.query(KarmaModel).filter(
-            func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
+        karma_dict = dict()
+        failed = []
 
-        if karma_item:
+        # Iterate over the karma item(s)
+        for karma in args:
+            karma_stripped = karma.lstrip('@')
+            karma_item = db_session.query(KarmaModel).filter(
+                func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
+
+            # Bucket the karma item(s) based on existence in the database
+            if not karma_item:
+                failed.append(f'"{karma_stripped}" hasn\'t been karma\'d')
+                continue
+
             changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id) \
                 .order_by(KarmaChange.created_at.asc()).all()
 
@@ -215,34 +230,71 @@ class Karma:
                 if len(changes) > 1:
                     plural = 's'
 
-                raise KarmaError(
-                    message=f'"{karma}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}). :chart_with_downwards_trend:')
+                failed.append(f'"{karma_stripped}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}')
 
-            # Plot the graph and save it to a png
-            filename, path = await plot_karma({karma_stripped: changes})
-            t_end = current_milli_time()
+            # Add the karma changes to the dict
+            karma_dict[karma_stripped] = changes
 
-            if not CONFIG['FIG_HOST_URL']:
-                # Attach the file as an image for dev purposes
-                plot_image = open(path, mode='rb')
-                plot = File(plot_image)
-                await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+        # Plot the graph and save it to a png
+        filename, path = await plot_karma(karma_dict)
+        t_end = current_milli_time()
+
+        if not CONFIG['FIG_HOST_URL']:
+            # Attach the file as an image for dev purposes
+            plot_image = open(path, mode='rb')
+            plot = File(plot_image)
+            await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+        else:
+            # Construct the embed
+            generated_at = datetime.strftime(utc.localize(datetime.utcnow()).astimezone(timezone('Europe/London')),
+                                             '%H:%M %d %b %Y')
+            time_taken = (t_end - t_start) / 1000
+            total_changes = reduce(lambda count, size: count + size, map(lambda t: len(t[1]), karma_dict.items()), 0)
+            # Construct the embed strings
+            if karma_dict.keys():
+                embed_colour = Color.from_rgb(61, 83, 255)
+                embed_title = 'Karma trend over time for {karma}' if len(karma_dict.keys()) == 1 \
+                    else 'Karma trends over time for {karma}'
+                embed_description = f'Tracked {len(karma_dict.keys())} topic{"s" if len(karma_dict.keys()) > 1 else ""} with a total of {total_changes} changes'
+                dict_keys = list(karma_dict.keys())
+
+                if len(dict_keys) == 1:
+                    embed_title.format(karma=f'{dict_keys[0]}')
+                if len(dict_keys) <= 3:
+                    embed_title.format(karma=', '.join(
+                        map(lambda s: f'"{s}"', dict_keys[:-1])) + f', and "{dict_keys[-1]}"')
+                else:
+                    embed_title.format(
+                        karma=', '.join(map(lambda s: f'"{s}"', dict_keys[:3]))
+                              + f', and {len(dict_keys) - 3} other topics')
             else:
-                first_change = datetime.strftime(changes[0].local_time, '%H:%M %d %b %Y')
-                last_change = datetime.strftime(changes[-1].local_time, '%H:%M %d %b %Y')
-                generated_at = datetime.strftime(utc.localize(datetime.utcnow()).astimezone(timezone('Europe/London')),
-                                                 '%H:%M %d %b %Y')
-                time_taken = (t_end - t_start) / 1000
-                embed = Embed(color=Color.from_rgb(61, 83, 255),
-                              title=f'Karma trend for "{karma_stripped}" over time',
-                              description=f'Karma tracked between {first_change} and {last_change} with a total of {len(changes)} changes')
+                embed_colour = Color.from_rgb(255, 23, 68)
+                embed_title = 'Failed to plot karma for {karma}'
+                embed_description = f'Failed to track the karma for the item{"s" if len(args) > 1 else ""} given'
+
+                if len(failed) == 1:
+                    embed_title.format(karma=f'{failed[0]}')
+                elif len(failed) <= 3:
+                    embed_title.format(karma=', '.join(
+                        map(lambda s: f'"{s}"', failed[:-1])) + f', and "{failed[-1]}"')
+                else:
+                    embed_title.format(karma=', '.join(
+                        map(lambda s: f'"{s}"', failed[:3])) + f', and {len(failed) - 3} other topics')
+
+            embed = Embed(color=embed_colour, title=embed_title, description=embed_description)
+
+            # If there were any errors then add them
+            if failed:
+                failed_str = reduce(lambda s, reason: s + f' • {reason}\n', failed).rstrip('\n')
+                embed.add_field(name=f'{len(failed)} error{"s" if len(failed) > 1 else ""} occured:\n\n',
+                                value=failed_str)
+
+            # There was something plotted so attach the graph
+            if karma_dict.keys():
                 embed.set_footer(text=f'Graph generated at {generated_at} in {time_taken:.3f} seconds')
                 embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
-                await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :chart_with_upwards_trend:', embed=embed)
-        else:
-            # The item hasn't been karma'd
-            result = f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:'
-            await ctx.send(result)
+
+            await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :chart_with_upwards_trend:', embed=embed)
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
