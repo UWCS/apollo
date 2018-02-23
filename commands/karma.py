@@ -101,7 +101,8 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
     fig.autofmt_xdate()
 
     # Save the file to disk and set the right permissions
-    filename = ''.join(karma_dict.keys()) + '-' + str(hex(int(datetime.utcnow().timestamp()))).lstrip('0x') + '.png'
+    filename = (''.join(karma_dict.keys()) + '-' + str(hex(int(datetime.utcnow().timestamp()))).lstrip('0x') + '.png')\
+        .replace(' ', '')
     path = '{path}/{filename}'.format(path=CONFIG['FIG_SAVE_PATH'].rstrip('/'), filename=filename)
 
     fig.savefig(path, dpi=240, transparent=False)
@@ -180,6 +181,7 @@ class Karma:
     @karma.command(help='Gives information about the specified karma topic', ignore_extra=True)
     @commands.cooldown(5, 60, BucketType.user)
     async def info(self, ctx: Context, karma: clean_content):
+        ctx.trigger_typing()
         t_start = current_milli_time()
         # Strip any leading @s and get the item from the DB
         karma_stripped = karma.lstrip('@')
@@ -190,20 +192,19 @@ class Karma:
         if not karma_item:
             raise KarmaError(message=f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:')
 
-        # # Loop over the karma
-        # for karma in args:
-        #     # Strip any leading @s
-        #     karma_stripped = karma.lstrip('@')
-        #     karma_item = db_session.query(KarmaModel).filter(
-        #         func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
-        #
-        #     # If there's one item that can't be found then exit early
-        #     if not karma_item and len(args) == 1:
-        #         raise KarmaError(message=f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:')
-        #     elif not karma_item:
-        #         continue
-        #
-        #     await ctx.send(karma_item or 'None')
+        # Get the changes and plot the graph
+        filename, path = await plot_karma({karma_stripped: karma_item.changes})
+
+        # TODO: Get interesting stats
+
+        # Attach the file as an image for dev purposes
+        if not CONFIG['DEBUG']:
+            # Attach the file as an image for dev purposes
+            plot_image = open(path, mode='rb')
+            plot = File(plot_image)
+            await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+        else:
+            pass
 
     @info.error
     async def info_error(self, ctx: Context, error: CommandError):
@@ -217,6 +218,10 @@ class Karma:
     async def plot(self, ctx: Context, *args: clean_content):
         await ctx.trigger_typing()
         t_start = current_milli_time()
+
+        # If there are no arguments
+        if not args:
+            raise KarmaError(message='I can\'t')
 
         karma_dict = dict()
         failed = []
@@ -232,23 +237,20 @@ class Karma:
                 failed.append((karma_stripped, 'hasn\'t been karma\'d'))
                 continue
 
-            changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id) \
-                .order_by(KarmaChange.created_at.asc()).all()
-
             # Check if the topic has been karma'd >=10 times
-            if len(changes) < 10:
+            if len(karma_item.changes) < 5:
                 failed.append((karma_stripped,
-                               f'must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{"s" if len(changes) > 1 else ""})'))
+                               f'must have been karma\'d at least 5 times before a plot can be made (currently karma\'d {len(karma_item.changes)} time{"s" if len(karma_item.changes) > 1 else ""})'))
                 continue
 
             # Add the karma changes to the dict
-            karma_dict[karma_stripped] = changes
+            karma_dict[karma_stripped] = karma_item.changes
 
         # Plot the graph and save it to a png
         filename, path = await plot_karma(karma_dict)
         t_end = current_milli_time()
 
-        if not CONFIG['FIG_HOST_URL']:
+        if not CONFIG['DEBUG']:
             # Attach the file as an image for dev purposes
             plot_image = open(path, mode='rb')
             plot = File(plot_image)
