@@ -144,13 +144,13 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # Construct the reply string in totality
     # If you have error(s) and no items processed successfully
     if not item_str and error_str:
-        reply = f'I couldn\'t karma the requested item{transaction_plural} because of the following problem{transaction_plural}:\n\n{error_str}'
+        reply = f'Sorry <@{message.author.id}>, I couldn\'t karma the requested item{transaction_plural} because of the following problem{transaction_plural}:\n\n{error_str}'
     # If you have items processed successfully but some errors too
     elif item_str and error_str:
-        reply = f'I have made changes to the following item(s) karma:\n{item_str}\nThere were some issues with the following item(s), too:\n\n{error_str}'
+        reply = f'Thanks <@{message.author.id}>, I have made changes to the following item(s) karma:\n\n{item_str}\n\nThere were some issues with the following item(s), too:\n\n{error_str}'
     # If all items were processed successfully
     else:
-        reply = f'I have made changes to the following karma item{transaction_plural}:\n\n{item_str}'
+        reply = f'Thanks <@{message.author.id}>, I have made changes to the following karma item{transaction_plural}:\n\n{item_str}'
 
     # Commit any changes (in case of any DB inconsistencies)
     db_session.commit()
