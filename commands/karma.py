@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import reduce
 from time import time
@@ -101,7 +102,7 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
     fig.autofmt_xdate()
 
     # Save the file to disk and set the right permissions
-    filename = (''.join(karma_dict.keys()) + '-' + str(hex(int(datetime.utcnow().timestamp()))).lstrip('0x') + '.png')\
+    filename = (''.join(karma_dict.keys()) + '-' + str(hex(int(datetime.utcnow().timestamp()))).lstrip('0x') + '.png') \
         .replace(' ', '')
     path = '{path}/{filename}'.format(path=CONFIG['FIG_SAVE_PATH'].rstrip('/'), filename=filename)
 
@@ -181,7 +182,7 @@ class Karma:
     @karma.command(help='Gives information about the specified karma topic', ignore_extra=True)
     @commands.cooldown(5, 60, BucketType.user)
     async def info(self, ctx: Context, karma: clean_content):
-        ctx.trigger_typing()
+        await ctx.trigger_typing()
         t_start = current_milli_time()
         # Strip any leading @s and get the item from the DB
         karma_stripped = karma.lstrip('@')
@@ -195,16 +196,44 @@ class Karma:
         # Get the changes and plot the graph
         filename, path = await plot_karma({karma_stripped: karma_item.changes})
 
-        # TODO: Get interesting stats
+        # Get the user with the most karma
+        # I'd use a group_by sql statement here but it seems to not terminate
+        all_changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id)\
+            .order_by(KarmaChange.created_at.asc()).all()
+        user_changes = defaultdict(list)
+        for change in all_changes:
+            user_changes[change.user].append(change)
+
+        most_karma = max(user_changes.items(), key=lambda item: len(item[1]))
+
+        # Calculate the approval rating of the karma
+        approval = 100 * ((karma_item.pluses - karma_item.minuses) / (karma_item.pluses + karma_item.minuses))
+        print(most_karma)
+        mins_per_karma = (all_changes[-1].local_time - all_changes[0].local_time).total_seconds() / (60 * len(all_changes))
+        time_taken = (current_milli_time() - t_start) / 1000
 
         # Attach the file as an image for dev purposes
-        if not CONFIG['DEBUG']:
+        if CONFIG['DEBUG']:
             # Attach the file as an image for dev purposes
             plot_image = open(path, mode='rb')
             plot = File(plot_image)
-            await ctx.send(f'Here\'s the karma trend for "{karma}" over time', file=plot)
+            await ctx.send(f'Here\'s the karma trend for "{karma_stripped}" over time', file=plot)
         else:
-            pass
+            # Construct the embed
+            generated_at = datetime.strftime(utc.localize(datetime.utcnow()).astimezone(timezone('Europe/London')),
+                                             '%H:%M %d %b %Y')
+            embed_colour = Color.from_rgb(61, 83, 255)
+            embed_title = f'Statistics for "{karma_stripped}"'
+            embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} time{"s" if len(all_changes) > 1 else ""} by {len(user_changes.keys())} user{"s" if len(user_changes.keys()) > 1 else ""}'
+
+            embed = Embed(title=embed_title, description=embed_description, color=embed_colour)
+            embed.add_field(name='Most karma\'d', value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} time{"s" if len(most_karma[1]) > 1 else ""}')
+            embed.add_field(name='Approval rating', value=f'The approval rating of "{karma_stripped}" is {approval:.1f}% ({karma_item.pluses} positive to {karma_item.minuses} negative karma and {karma_item.neutrals} neutral karma)')
+            embed.add_field(name='Karma timeline', value=f'"{karma_stripped}" was first karma\'d on {datetime.strftime(all_changes[0].local_time, "%d %b %Y at %H:%M")} and has been karma\'d approximately every {mins_per_karma:.1f} minutes')
+            embed.set_footer(text=f'Statistics generated at {generated_at} in {time_taken:.3f} seconds')
+            embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
+
+            await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :page_facing_up:', embed=embed)
 
     @info.error
     async def info_error(self, ctx: Context, error: CommandError):
@@ -265,7 +294,8 @@ class Karma:
             if karma_dict.keys():
                 embed_colour = Color.from_rgb(61, 83, 255)
                 embed_description = f'Tracked {len(karma_dict.keys())} topic{"s" if len(karma_dict.keys()) > 1 else ""} with a total of {total_changes} changes'
-                embed_title = f'Karma trend over time for {comma_separate(list(karma_dict.keys()))}' if len(karma_dict.keys()) == 1 \
+                embed_title = f'Karma trend over time for {comma_separate(list(karma_dict.keys()))}' if len(
+                    karma_dict.keys()) == 1 \
                     else f'Karma trends over time for {comma_separate(list(karma_dict.keys()))}'
             else:
                 embed_colour = Color.from_rgb(255, 23, 68)
