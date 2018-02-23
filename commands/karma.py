@@ -208,7 +208,6 @@ class Karma:
 
         # Calculate the approval rating of the karma
         approval = 100 * ((karma_item.pluses - karma_item.minuses) / (karma_item.pluses + karma_item.minuses))
-        print(most_karma)
         mins_per_karma = (all_changes[-1].local_time - all_changes[0].local_time).total_seconds() / (60 * len(all_changes))
         time_taken = (current_milli_time() - t_start) / 1000
 
@@ -227,7 +226,7 @@ class Karma:
             embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} time{"s" if len(all_changes) > 1 else ""} by {len(user_changes.keys())} user{"s" if len(user_changes.keys()) > 1 else ""}'
 
             embed = Embed(title=embed_title, description=embed_description, color=embed_colour)
-            embed.add_field(name='Most karma\'d', value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} time{"s" if len(most_karma[1]) > 1 else ""}')
+            embed.add_field(name='Most karma\'d', value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} change{"s" if len(most_karma[1]) > 1 else ""}')
             embed.add_field(name='Approval rating', value=f'The approval rating of "{karma_stripped}" is {approval:.1f}% ({karma_item.pluses} positive to {karma_item.minuses} negative karma and {karma_item.neutrals} neutral karma)')
             embed.add_field(name='Karma timeline', value=f'"{karma_stripped}" was first karma\'d on {datetime.strftime(all_changes[0].local_time, "%d %b %Y at %H:%M")} and has been karma\'d approximately every {mins_per_karma:.1f} minutes')
             embed.set_footer(text=f'Statistics generated at {generated_at} in {time_taken:.3f} seconds')
