@@ -250,7 +250,7 @@ class Karma:
         filename, path = await plot_karma(karma_dict)
         t_end = current_milli_time()
 
-        if not CONFIG['DEBUG']:
+        if CONFIG['DEBUG']:
             # Attach the file as an image for dev purposes
             plot_image = open(path, mode='rb')
             plot = File(plot_image)
