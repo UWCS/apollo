@@ -38,7 +38,7 @@ current_milli_time = lambda: int(round(time() * 1000))
 async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
     # Error if there's no input data
     if len(karma_dict) == 0:
-        raise ValueError('karma_dict must contain at least 1 item')
+        return '', ''
 
     # Matplotlib preamble
     plt.rcParams.update({'figure.autolayout': True})
@@ -108,6 +108,17 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
     os.chmod(path, 0o644)
 
     return filename, path
+
+
+# Util function to construct comma-separated strings in the form of:
+# "foo" or "foo and bar" or "foo, bar, and baz" or "foo, bar, baz, and (n) other topics"
+def comma_separate(items: List[str]) -> str:
+    if len(items) == 1:
+        return f'"{items[0]}"'
+    elif len(items) <= 3:
+        return ', '.join(map(lambda s: f'"{s}"', items[:-1])) + f'{"," if len(items) == 3 else ""} and "{items[-1]}"'
+    else:
+        return ', '.join(map(lambda s: f'"{s}"', items[:3])) + f', and {len(items) - 3} other topics'
 
 
 class Karma:
@@ -218,7 +229,7 @@ class Karma:
 
             # Bucket the karma item(s) based on existence in the database
             if not karma_item:
-                failed.append(f'"{karma_stripped}" hasn\'t been karma\'d')
+                failed.append((karma_stripped, 'hasn\'t been karma\'d'))
                 continue
 
             changes = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id) \
@@ -226,11 +237,9 @@ class Karma:
 
             # Check if the topic has been karma'd >=10 times
             if len(changes) < 10:
-                plural = ''
-                if len(changes) > 1:
-                    plural = 's'
-
-                failed.append(f'"{karma_stripped}" must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{plural}')
+                failed.append((karma_stripped,
+                               f'must have been karma\'d at least 10 times before a plot can be made (currently karma\'d {len(changes)} time{"s" if len(changes) > 1 else ""})'))
+                continue
 
             # Add the karma changes to the dict
             karma_dict[karma_stripped] = changes
@@ -253,41 +262,17 @@ class Karma:
             # Construct the embed strings
             if karma_dict.keys():
                 embed_colour = Color.from_rgb(61, 83, 255)
-                embed_title = 'Karma trend over time for {karma}' if len(karma_dict.keys()) == 1 \
-                    else 'Karma trends over time for {karma}'
                 embed_description = f'Tracked {len(karma_dict.keys())} topic{"s" if len(karma_dict.keys()) > 1 else ""} with a total of {total_changes} changes'
-                dict_keys = list(karma_dict.keys())
-
-                if len(dict_keys) == 1:
-                    embed_title.format(karma=f'{dict_keys[0]}')
-                if len(dict_keys) <= 3:
-                    embed_title.format(karma=', '.join(
-                        map(lambda s: f'"{s}"', dict_keys[:-1])) + f', and "{dict_keys[-1]}"')
-                else:
-                    embed_title.format(
-                        karma=', '.join(map(lambda s: f'"{s}"', dict_keys[:3]))
-                              + f', and {len(dict_keys) - 3} other topics')
+                embed_title = f'Karma trend over time for {comma_separate(list(karma_dict.keys()))}' if len(karma_dict.keys()) == 1 \
+                    else f'Karma trends over time for {comma_separate(list(karma_dict.keys()))}'
             else:
                 embed_colour = Color.from_rgb(255, 23, 68)
-                embed_title = 'Failed to plot karma for {karma}'
-                embed_description = f'Failed to track the karma for the item{"s" if len(args) > 1 else ""} given'
-
-                if len(failed) == 1:
-                    embed_title.format(karma=f'{failed[0]}')
-                elif len(failed) <= 3:
-                    embed_title.format(karma=', '.join(
-                        map(lambda s: f'"{s}"', failed[:-1])) + f', and "{failed[-1]}"')
-                else:
-                    embed_title.format(karma=', '.join(
-                        map(lambda s: f'"{s}"', failed[:3])) + f', and {len(failed) - 3} other topics')
-
+                embed_description = f'The following problem{"s" if len(failed) > 1 else ""} occurred whilst plotting:'
+                embed_title = f'Could not plot karma for {comma_separate(list(map(lambda i: i[0], failed)))}'
             embed = Embed(color=embed_colour, title=embed_title, description=embed_description)
-
             # If there were any errors then add them
-            if failed:
-                failed_str = reduce(lambda s, reason: s + f' • {reason}\n', failed).rstrip('\n')
-                embed.add_field(name=f'{len(failed)} error{"s" if len(failed) > 1 else ""} occured:\n\n',
-                                value=failed_str)
+            for karma, reason in failed:
+                embed.add_field(name=f'Failed to plot "{karma}"', value=f' • {reason}')
 
             # There was something plotted so attach the graph
             if karma_dict.keys():
