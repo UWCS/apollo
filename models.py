@@ -88,7 +88,7 @@ class Karma(Base):
     minuses = Column(Integer, nullable=False, default=0)
     neutrals = Column(Integer, nullable=False, default=0)
 
-    changes = relationship('KarmaChange', back_populates='karma', order_by=KarmaChange.score)
+    changes = relationship('KarmaChange', back_populates='karma', order_by=KarmaChange.created_at.asc())
 
     @hybrid_property
     def net_score(self):
