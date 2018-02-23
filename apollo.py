@@ -24,7 +24,7 @@ GLHF! :rocket:
 """
 
 # The command extensions to be loaded by the bot
-EXTENSIONS = ['commands.verify', 'commands.karma']
+EXTENSIONS = ['commands.verify', 'commands.karma','commands.say']
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
@@ -61,9 +61,13 @@ async def on_message(message: Message):
         db_session.add(logged_message)
         db_session.commit()
 
-        reply = process_karma(message, logged_message.id, db_session, CONFIG['KARMA_TIMEOUT'])
-        if reply:
-            await message.channel.send(reply)
+        # Get all specified command prefixes for the bot
+        command_prefixes = bot.command_prefix(bot,message)
+        # Only process karma if the message was not a command (ie did not start with a command prefix)
+        if not True in [message.content.startswith(prefix) for prefix in command_prefixes]:
+            reply = process_karma(message, logged_message.id, db_session, CONFIG['KARMA_TIMEOUT'])
+            if reply:
+                await message.channel.send(reply)
 
     await bot.process_commands(message)
 
