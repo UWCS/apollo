@@ -79,7 +79,8 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
         elif net_karma > 1:
             net_karma = 1
 
-        self_karma = (key.lower() == message_author.lower() or key.lower() == message_nick.lower())
+        # have to hard code 'irc' as only strings are passed into this function, TODO: change this
+        self_karma = ((key.lower() == message_author.lower() and not message_author.lower() == 'irc') or key.lower() == message_nick.lower())
 
         transactions.append(KarmaTransaction(name=key, self_karma=self_karma, net_karma=net_karma, reasons=reasons))
 
