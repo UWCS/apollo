@@ -1,6 +1,8 @@
 from datetime import datetime
 from math import floor
 
+from config import CONFIG
+
 from discord import Message
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
@@ -21,8 +23,14 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
     # TODO: Protect from byte-limit length chars
 
+    # If the author was IRC, set the display name to be the irc user that karma'd, else use original display name
+    display_name = message.author.display_name
+    if message.author.id == CONFIG['UWCS_DISCORD_BRIDGE_BOT_ID']:
+        # Gets the username of the irc user
+        display_name = message.content.split(" ")[0][3:-3]
+
     # Process the raw karma tokens into a number of karma transactions
-    transactions = create_transactions(message.author.name, message.author.display_name, raw_karma)
+    transactions = create_transactions(message.author.name, display_name, raw_karma)
 
     if not transactions:
         return reply
@@ -141,16 +149,22 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             else:
                 item_str += f' • **{truncated_name}** (new score is {karma_change.score}). {apollo_response}\n'
 
+    # Get the name, either from discord or irc
+    if message.author.id == CONFIG['UWCS_DISCORD_BRIDGE_BOT_ID']:
+        author_display = display_name
+    else:
+        author_display = f'<@{message.author.id}>'
+
     # Construct the reply string in totality
     # If you have error(s) and no items processed successfully
     if not item_str and error_str:
-        reply = f'Sorry <@{message.author.id}>, I couldn\'t karma the requested item{transaction_plural} because of the following problem{transaction_plural}:\n\n{error_str}'
+        reply = f'Sorry {author_display}, I couldn\'t karma the requested item{transaction_plural} because of the following problem{transaction_plural}:\n\n{error_str}'
     # If you have items processed successfully but some errors too
     elif item_str and error_str:
-        reply = f'Thanks <@{message.author.id}>, I have made changes to the following item(s) karma:\n\n{item_str}\n\nThere were some issues with the following item(s), too:\n\n{error_str}'
+        reply = f'Thanks {author_display}, I have made changes to the following item(s) karma:\n\n{item_str}\n\nThere were some issues with the following item(s), too:\n\n{error_str}'
     # If all items were processed successfully
     else:
-        reply = f'Thanks <@{message.author.id}>, I have made changes to the following karma item{transaction_plural}:\n\n{item_str}'
+        reply = f'Thanks {author_display}, I have made changes to the following karma item{transaction_plural}:\n\n{item_str}'
 
     # Commit any changes (in case of any DB inconsistencies)
     db_session.commit()

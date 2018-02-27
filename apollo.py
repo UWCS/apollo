@@ -40,7 +40,7 @@ async def on_ready():
 
 @bot.event
 async def on_message(message: Message):
-    # If the message is by a bot then ignore it
+    # If the message is by a bot thats not irc then ignore it
     if message.author.bot and message.author.id != CONFIG['UWCS_DISCORD_BRIDGE_BOT_ID']:
         return
 
