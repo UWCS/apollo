@@ -1,0 +1,4 @@
+BLACKLIST = [
+    'c',
+    'notepad'
+]
