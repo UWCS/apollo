@@ -113,3 +113,9 @@ class User(Base):
 
     messages = relationship('LoggedMessage', back_populates='user', order_by=LoggedMessage.created_at)
     karma_changes = relationship('KarmaChange', back_populates='user', order_by=KarmaChange.created_at)
+
+@auto_str
+class Blacklist(Base):
+    __tablename__ = 'blacklist'
+    name = Column(String, primary_key=True, nullable=False)
+    added_by = Column(Integer, ForeignKey('users.id'),nullable=False)

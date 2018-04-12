@@ -1,4 +1,0 @@
-BLACKLIST = [
-    'c',
-    'notepad'
-]
