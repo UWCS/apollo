@@ -119,3 +119,4 @@ class Blacklist(Base):
     __tablename__ = 'blacklist'
     name = Column(String, primary_key=True, nullable=False)
     added_by = Column(Integer, ForeignKey('users.id'),nullable=False)
+    added_at = Column(DateTime)

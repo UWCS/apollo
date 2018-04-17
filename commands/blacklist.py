@@ -1,3 +1,4 @@
+from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, CommandError, check
 import discord
@@ -37,7 +38,7 @@ class Blklist:
         authorid = db_session.query(User).filter(User.user_uid==ctx.message.author.id).first().id
         
         if not db_session.query(Blacklist).filter(Blacklist.name==item).all():
-            blacklist = Blacklist(name=item, added_by=authorid)
+            blacklist = Blacklist(name=item, added_by=authorid, added_at=datetime.utcnow())
             db_session.add(blacklist)
             db_session.commit()
             await ctx.send(f'Added {item} to the karma blacklist. :flag_black:')
