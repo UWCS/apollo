@@ -41,7 +41,7 @@ class Blklist:
             blacklist = Blacklist(name=item, added_by=authorid, added_at=datetime.utcnow())
             db_session.add(blacklist)
             db_session.commit()
-            await ctx.send(f'Added {item} to the karma blacklist. :flag_black:')
+            await ctx.send(f'Added {item} to the karma blacklist. :pencil:')
         else:
             await ctx.send(f'{item} is already in the karma blacklist. :page_with_curl:')
 
@@ -53,7 +53,7 @@ class Blklist:
         else:
             db_session.query(Blacklist).filter(Blacklist.name==item).delete()
             db_session.commit()
-            await ctx.send(f'{item} has been removed from the karma blacklist. :flag_white:')
+            await ctx.send(f'{item} has been removed from the karma blacklist. :pencil:')
 
     @blacklist.command(help="List all blacklisted karma items.")
     @is_blacklist_admin()
