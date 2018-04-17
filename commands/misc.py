@@ -18,14 +18,5 @@ class Misc:
     async def faux(self, ctx: Context):
         await ctx.send("RUST")
 
-    @commands.command(help="List all blacklisted karma items.")
-    async def blacklist_list(self, ctx: Context):
-        blk_lst = f'Items in the blacklist: '
-        items = db_session.query(Blacklist).all()
-        for item in items:
-            blk_lst += f'{item.name}, '
-        await ctx.send(blk_lst[:-2])
-
-
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
