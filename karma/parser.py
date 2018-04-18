@@ -43,7 +43,7 @@ def parse_message(message: str):
         # If the karma item is not in quotes, need to make sure it isn't blacklisted
         if not (item.group('karma_target').startswith('"') and item.group('karma_target').endswith('"')):
             # Check to make sure non quoted item is not in blacklist
-            if not db_session.query(Blacklist).filter(Blacklist.name==item.group('karma_target').lower()).all():
+            if not db_session.query(Blacklist).filter(Blacklist.name==item.group('karma_target').casefold()).all():
                 results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
                                         reason=item.group('karma_reason') or item.group('karma_reason_2')))
         else:
