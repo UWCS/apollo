@@ -11,6 +11,6 @@ CONFIG = {
     'FIG_HOST_URL': 'https://your.url/to/host/images',
     'SQL_LOGGING': True,
     'BOT_LOGGING': True,
-    'BOT_ADMIN_ROLE': 'admin',
+    'BOT_ADMIN_ROLE': '9874698723',
     'DEBUG': True,
 }
