@@ -52,7 +52,7 @@ class Blklist:
 
         if not db_session.query(Blacklist) \
                          .filter(Blacklist.name == item).all():
-            blacklist = Blacklist(name=item, added_by=authorid)
+            blacklist = Blacklist(name=item.lower(), added_by=authorid)
             db_session.add(blacklist)
             db_session.commit()
             await ctx.send(f'Added {item} to the karma blacklist. :pencil:')
