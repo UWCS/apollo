@@ -1,4 +1,3 @@
-from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, CommandError, check
 import discord
@@ -6,23 +5,36 @@ import discord
 from config import CONFIG
 from models import db_session, Blacklist, User
 
+
 class BlacklistError(CommandError):
     message = None
+
     def __init__(self, message=None, *args):
         self.message = message
         super().__init__(*args)
 
+
 def is_blacklist_admin():
     async def predicate(ctx: Context):
-        if not discord.utils.get(ctx.message.author.roles, name=CONFIG['BOT_ADMIN_ROLE']) is not None:
+        roles = discord.utils.get(
+                    ctx.message.author.roles,
+                    name=CONFIG['BOT_ADMIN_ROLE'])
+        if roles is None:
             await ctx.message.delete()
-            raise BlacklistError(message='That command can only be run by the "{role}" role, <@{user_id}>.'.format(user_id=ctx.message.author.id,role=CONFIG['BOT_ADMIN_ROLE']))
+            msg = 'That command can only be run by ' \
+                  'the "{role}" role, <@{user_id}>.'
+            raise BlacklistError(
+                    message=msg.format(
+                        user_id=ctx.message.author.id,
+                        role=CONFIG['BOT_ADMIN_ROLE']))
         else:
             return True
 
     return check(predicate)
 
-# Classname set to Blklist to not clash with SQL model name "Blacklist" (it broke everything)
+
+# Classname set to Blklist to not clash with SQL model
+# name "Blacklist" (it broke everything)
 class Blklist:
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -35,25 +47,32 @@ class Blklist:
     @blacklist.command(help="Add a word to the karma blacklist.")
     @is_blacklist_admin()
     async def add(self, ctx: Context, item: str):
-        authorid = db_session.query(User).filter(User.user_uid==ctx.message.author.id).first().id
-        
-        if not db_session.query(Blacklist).filter(Blacklist.name==item).all():
-            blacklist = Blacklist(name=item, added_by=authorid, added_at=datetime.utcnow())
+        authorid = db_session.query(User) \
+                             .filter(User.user_uid == ctx.message.author.id) \
+                             .first().id
+
+        if not db_session.query(Blacklist) \
+                         .filter(Blacklist.name == item).all():
+            blacklist = Blacklist(name=item, added_by=authorid)
             db_session.add(blacklist)
             db_session.commit()
             await ctx.send(f'Added {item} to the karma blacklist. :pencil:')
         else:
-            await ctx.send(f'{item} is already in the karma blacklist. :page_with_curl:')
+            await ctx.send(
+                f'{item} is already in the karma blacklist. :page_with_curl:')
 
     @blacklist.command(help="Remove a word from the karma blacklist.")
     @is_blacklist_admin()
     async def remove(self, ctx: Context, item: str):
-        if not db_session.query(Blacklist).filter(Blacklist.name==item).all():
-            await ctx.send(f'{item} is not in the karma blacklist. :page_with_curl:')
+        if not db_session.query(Blacklist) \
+                         .filter(Blacklist.name == item).all():
+            await ctx.send(
+                f'{item} is not in the karma blacklist. :page_with_curl:')
         else:
-            db_session.query(Blacklist).filter(Blacklist.name==item).delete()
+            db_session.query(Blacklist).filter(Blacklist.name == item).delete()
             db_session.commit()
-            await ctx.send(f'{item} has been removed from the karma blacklist. :pencil:')
+            await ctx.send(
+                f'{item} has been removed from the karma blacklist. :pencil:')
 
     @blacklist.command(help="List all blacklisted karma items.")
     @is_blacklist_admin()
@@ -66,15 +85,20 @@ class Blklist:
 
     @blacklist.command(help="Search for a blacklisted karma item.")
     async def search(self, ctx: Context, item: str):
-        item_repl = item.replace('*','%')
-        items = db_session.query(Blacklist).filter(Blacklist.name.ilike(f'%{item_repl}%')).all()        
+        item_repl = item.replace('*', '%')
+        items = db_session.query(Blacklist) \
+                          .filter(Blacklist.name.ilike(f'%{item_repl}%')).all()
         if len(items) == 0:
-            await ctx.send(f'There were no items matching "{item}" in the blacklist. :sweat:')
+            await ctx.send(
+                f'There were no items matching "{item}"'
+                 'in the blacklist. :sweat:')
         else:
             if len(items) == 1:
-                blk_lst = f'The item matching "{item}" in the blacklist is:\n\n'
+                blk_lst = f'The item matching "{item}" ' \
+                           'in the blacklist is:\n\n'
             else:
-                blk_lst = f'The items matching "{item}" in the blacklist are:\n\n'
+                blk_lst = f'The items matching "{item}" ' \
+                           'in the blacklist are:\n\n'
 
             # Don't want to spam too much on a search
             max_len = 10
@@ -90,8 +114,11 @@ class Blklist:
     @list.error
     @add.error
     @remove.error
-    async def blacklist_error_handler(self, ctx: Context, error: BlacklistError):
+    async def blacklist_error_handler(self,
+                                      ctx: Context,
+                                      error: BlacklistError):
         await ctx.send(error.message)
+
 
 def setup(bot: Bot):
     bot.add_cog(Blklist(bot))
