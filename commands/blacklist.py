@@ -18,7 +18,7 @@ def is_blacklist_admin():
     async def predicate(ctx: Context):
         roles = discord.utils.get(
                     ctx.message.author.roles,
-                    id=int(CONFIG['BOT_ADMIN_ROLE']))
+                    id=CONFIG['BOT_ADMIN_ROLE'])
         if roles is None:
             await ctx.message.delete()
             msg = 'You don\'t have permission to run '\
