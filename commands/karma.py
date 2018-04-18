@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use('Agg')
+
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta

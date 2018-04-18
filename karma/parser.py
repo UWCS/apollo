@@ -2,6 +2,7 @@ import enum
 import re
 from collections import namedtuple
 from typing import List
+from models import db_session, Blacklist
 
 RawKarma = namedtuple('RawKarma', ['name', 'op', 'reason'])
 KarmaTransaction = namedtuple('KarmaTransaction', ['name', 'self_karma', 'net_karma', 'reasons'])
@@ -39,8 +40,15 @@ def parse_message(message: str):
 
     # Collate all matches into a list
     for item in items:
-        results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
-                                reason=item.group('karma_reason') or item.group('karma_reason_2')))
+        # If the karma item is not in quotes, need to make sure it isn't blacklisted
+        if not (item.group('karma_target').startswith('"') and item.group('karma_target').endswith('"')):
+            # Check to make sure non quoted item is not in blacklist
+            if not db_session.query(Blacklist).filter(Blacklist.name==item.group('karma_target')).all():
+                results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
+                                        reason=item.group('karma_reason') or item.group('karma_reason_2')))
+        else:
+            results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
+                                    reason=item.group('karma_reason') or item.group('karma_reason_2')))
 
     # If there are any results then return the list, otherwise give None
     if results:

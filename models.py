@@ -1,11 +1,12 @@
 from datetime import datetime
 
 from pytz import timezone, utc
-from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger
+from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger, func
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
 from sqlalchemy_utils import EncryptedType, ScalarListType
+
 
 from config import CONFIG
 
@@ -113,3 +114,10 @@ class User(Base):
 
     messages = relationship('LoggedMessage', back_populates='user', order_by=LoggedMessage.created_at)
     karma_changes = relationship('KarmaChange', back_populates='user', order_by=KarmaChange.created_at)
+
+@auto_str
+class Blacklist(Base):
+    __tablename__ = 'blacklist'
+    name = Column(String, primary_key=True, nullable=False)
+    added_by = Column(Integer, ForeignKey('users.id'),nullable=False)
+    added_at = Column(DateTime, nullable=False, default=func.current_timestamp())
