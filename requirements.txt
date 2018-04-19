@@ -14,6 +14,7 @@ matplotlib==2.1.2
 multidict==4.1.0
 numpy==1.14.0
 psycopg2==2.7.3.2
+pycodestyle==2.4.0
 pycparser==2.18
 pyparsing==2.2.0
 python-dateutil==2.6.1
