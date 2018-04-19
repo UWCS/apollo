@@ -5,7 +5,8 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install -U git+https://github.com/Rapptz/discord.py@rewrite
-# command to run tests
+  - cp config.example.py config.py
+  # command to run tests
 script:
   - python -m unittest karma.karma_tests
   # Formatting compliance test
