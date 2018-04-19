@@ -5,6 +5,11 @@ from discord.ext.commands import Context, Bot, CommandError, check
 from config import CONFIG
 from models import db_session, BlockedKarma, User
 
+LONG_HELP_TEXT = """
+Query, display, and modify the blacklisted karma topics.
+"""
+SHORT_HELP_TEXT = """View and modify the blacklisted karma topics."""
+
 
 class BlacklistError(CommandError):
     message = None
@@ -14,9 +19,9 @@ class BlacklistError(CommandError):
         super().__init__(*args)
 
 
-def is_blacklist_admin():
+def is_compsoc_exec():
     async def predicate(ctx: Context):
-        roles = discord.utils.get(ctx.message.author.roles, id=CONFIG['BOT_ADMIN_ROLE'])
+        roles = discord.utils.get(ctx.message.author.roles, id=CONFIG['UWCS_EXEC_ROLE_ID'])
         if roles is None:
             await ctx.message.delete()
             raise BlacklistError(f'You don\'t have permission to run that command, <@{ctx.message.author.id}>.')
@@ -30,13 +35,13 @@ class Blacklist:
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(help="Query or amend the karma blacklist.")
+    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def blacklist(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
 
-    @blacklist.command(help="Add a word to the karma blacklist.")
-    @is_blacklist_admin()
+    @blacklist.command(help="Add a topic to the karma blacklist.")
+    @is_compsoc_exec()
     async def add(self, ctx: Context, item: str):
         author_id = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first().id
 
@@ -51,7 +56,7 @@ class Blacklist:
                 f'{item} is already in the karma blacklist. :page_with_curl:')
 
     @blacklist.command(help="Remove a word from the karma blacklist.")
-    @is_blacklist_admin()
+    @is_compsoc_exec()
     async def remove(self, ctx: Context, item: str):
         if not db_session.query(BlockedKarma).filter(BlockedKarma.name == item.casefold()).all():
             await ctx.send(f'{item} is not in the karma blacklist. :page_with_curl:')
@@ -61,30 +66,33 @@ class Blacklist:
 
             await ctx.send(f'{item} has been removed from the karma blacklist. :pencil:')
 
-    @blacklist.command(help="List all blacklisted karma items.")
-    @is_blacklist_admin()
+    @blacklist.command(help="List all blacklisted karma topics.")
+    @is_compsoc_exec()
     async def list(self, ctx: Context):
-        list_str = 'The items in the karma blacklist are:\n\n'
-
         items = db_session.query(BlockedKarma).all()
-        for item in items:
-            list_str += f' • **{item.name}**\n'
+        if items:
+            list_str = 'The topics in the karma blacklist are:\n\n'
+
+            for item in items:
+                list_str += f' • **{item.name}**\n'
+        else:
+            list_str = 'There are no karma topics currently blacklisted! :mag:'
 
         await ctx.send(list_str)
 
-    @blacklist.command(help="Search for a blacklisted karma item.")
+    @blacklist.command(help="Search for a blacklisted topic.")
     async def search(self, ctx: Context, item: str):
         item_folded = item.replace('*', '%').casefold()
         items = db_session.query(BlockedKarma) \
             .filter(BlockedKarma.name.ilike(f'%{item_folded}%')).all()
         if len(items) == 0:
             await ctx.send(
-                f'There were no items matching "{item}" in the blacklist. :sweat:')
+                f'There were no topics matching "{item}" in the blacklist. :sweat:')
         else:
             if len(items) == 1:
-                list_str = f'The item matching "{item}" in the blacklist is:\n\n'
+                list_str = f'The topic matching "{item}" in the blacklist is:\n\n'
             else:
-                list_str = f'The {"first 10" if len(items) > 10 else ""} items matching "{item}" in the blacklist are:\n\n'
+                list_str = f'The {"first 10" if len(items) > 10 else ""} topic matching "{item}" in the blacklist are:\n\n'
 
             # Don't want to spam too much on a search
             max_len = 10
