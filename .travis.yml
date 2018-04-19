@@ -6,8 +6,9 @@ install:
   - pip install -r requirements.txt
   - pip install -U git+https://github.com/Rapptz/discord.py@rewrite
   - cp config.example.py config.py
+  - cp alembic.example.ini alembic.ini
   # command to run tests
 script:
   - python -m unittest karma.karma_tests
   # Formatting compliance test
-  - pycodestyle --show-source --show-pep8 --ignore=E121,E123,E126,E133,E226,E241,E242,E704,W503,W504,E402 --max-line-length=300 karma/* commands/*
+  - pycodestyle --show-source --show-pep8 --ignore=E121,E123,E126,E133,E226,E241,E242,E704,W503,W504,E402 --max-line-length=300 karma/* commands/* apollo.py models.py
