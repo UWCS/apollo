@@ -12,6 +12,5 @@ CONFIG = {
     'SQL_LOGGING': True,
     'BOT_LOGGING': True,
     'BOT_ADMIN_ROLE': '9874698723',
-    'DEBUG': True,
-    'IS_CI': True,
+    'DEBUG': True
 }

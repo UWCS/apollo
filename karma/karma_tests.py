@@ -1,18 +1,9 @@
 import unittest
 
-from alembic import command
-from alembic.config import Config
-
-from config import CONFIG
 from karma.parser import parse_message, create_transactions, RawKarma, KarmaTransaction
 
 
 class TestKarmaProcessor(unittest.TestCase):
-    def setUp(self):
-        if CONFIG['IS_CI']:
-            alembic_cfg = Config('alembic.ini')
-            command.upgrade(alembic_cfg, 'head')
-
     def test_empty(self):
         self.assertEqual(create_transactions('', '', []), None)
 
@@ -204,11 +195,6 @@ class TestKarmaProcessor(unittest.TestCase):
 
 
 class TestKarmaParser(unittest.TestCase):
-    def setUp(self):
-        if CONFIG['IS_CI']:
-            alembic_cfg = Config('alembic.ini')
-            command.upgrade(alembic_cfg, 'head')
-
     def test_empty(self):
         self.assertEqual(parse_message(''), None)
 
