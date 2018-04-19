@@ -1,9 +1,8 @@
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
-from models import db_session, Blacklist, User
 
 ZED0_HELP_TEXT = """Very important command."""
-FAUX_HELP_TEXT = """A member of the rust evangelical strike force."""
+FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
 
 
 class Misc:
@@ -17,6 +16,7 @@ class Misc:
     @commands.command(help=FAUX_HELP_TEXT, brief=FAUX_HELP_TEXT)
     async def faux(self, ctx: Context):
         await ctx.send("RUST")
+
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))

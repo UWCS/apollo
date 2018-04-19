@@ -2,7 +2,8 @@ import enum
 import re
 from collections import namedtuple
 from typing import List
-from models import db_session, Blacklist
+
+from models import db_session, BlockedKarma
 
 RawKarma = namedtuple('RawKarma', ['name', 'op', 'reason'])
 KarmaTransaction = namedtuple('KarmaTransaction', ['name', 'self_karma', 'net_karma', 'reasons'])
@@ -43,11 +44,14 @@ def parse_message(message: str):
         # If the karma item is not in quotes, need to make sure it isn't blacklisted
         if not (item.group('karma_target').startswith('"') and item.group('karma_target').endswith('"')):
             # Check to make sure non quoted item is not in blacklist
-            if not db_session.query(Blacklist).filter(Blacklist.name==item.group('karma_target').casefold()).all():
-                results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
+            if not db_session.query(BlockedKarma)\
+                    .filter(BlockedKarma.name == item.group('karma_target').casefold()).all():
+                results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'),
+                                        op=item.group('karma_op'),
                                         reason=item.group('karma_reason') or item.group('karma_reason_2')))
         else:
-            results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'), op=item.group('karma_op'),
+            results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'),
+                                    op=item.group('karma_op'),
                                     reason=item.group('karma_reason') or item.group('karma_reason_2')))
 
     # If there are any results then return the list, otherwise give None
@@ -62,7 +66,7 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
     if not message_author or not karma:
         return None
 
-    # Copy the karma so we don't make any unintended changes
+    # Copy the karma so we don't make any unintended changes and get the message author
     raw_karma = karma
 
     # Reformat the karma info to be per-karma item rather than per-token
@@ -88,7 +92,8 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
             net_karma = 1
 
         # have to hard code 'irc' as only strings are passed into this function, TODO: change this
-        self_karma = ((key.lower() == message_author.lower() and not message_author.lower() == 'irc') or key.lower() == message_nick.lower())
+        self_karma = ((key.casefold() == message_author.casefold() and not message_author.casefold() == 'irc')
+                      or key.casefold() == message_nick.casefold())
 
         transactions.append(KarmaTransaction(name=key, self_karma=self_karma, net_karma=net_karma, reasons=reasons))
 
