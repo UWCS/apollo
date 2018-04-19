@@ -7,7 +7,6 @@ cffi==1.11.4
 chardet==3.0.4
 cryptography==2.1.4
 cycler==0.10.0
-discord.py==1.0.0a0
 idna==2.6
 Mako==1.0.7
 MarkupSafe==1.0

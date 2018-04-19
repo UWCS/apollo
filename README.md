@@ -4,6 +4,14 @@ Apollo is a [Discord](https://discordapp.com/) bot for the [University of Warwic
 
 Apollo is based loosely on the development of [artemis](https://github.com/rhiannonmichelmore/artemis), another Discord bot produced by a member of UWCS.
 
+### Installation
+
+To run this project you need to install the in-development version of [Discord.py]()'s `rewrite` branch. This can be done using:
+
+```
+pip install -U git+https://github.com/Rapptz/discord.py@rewrite
+```
+
 ### License
 
 This project is distributed under the MIT license.
