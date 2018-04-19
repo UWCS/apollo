@@ -51,8 +51,8 @@ class Blklist:
                              .first().id
 
         if not db_session.query(Blacklist) \
-                         .filter(Blacklist.name == item).all():
-            blacklist = Blacklist(name=item, added_by=authorid)
+                         .filter(Blacklist.name == item.casefold()).all():
+            blacklist = Blacklist(name=item.casefold(), added_by=authorid)
             db_session.add(blacklist)
             db_session.commit()
             await ctx.send(f'Added {item} to the karma blacklist. :pencil:')
@@ -64,11 +64,11 @@ class Blklist:
     @is_blacklist_admin()
     async def remove(self, ctx: Context, item: str):
         if not db_session.query(Blacklist) \
-                         .filter(Blacklist.name == item).all():
+                         .filter(Blacklist.name == item.casefold()).all():
             await ctx.send(
                 f'{item} is not in the karma blacklist. :page_with_curl:')
         else:
-            db_session.query(Blacklist).filter(Blacklist.name == item).delete()
+            db_session.query(Blacklist).filter(Blacklist.name == item.casefold()).delete()
             db_session.commit()
             await ctx.send(
                 f'{item} has been removed from the karma blacklist. :pencil:')
@@ -84,7 +84,7 @@ class Blklist:
 
     @blacklist.command(help="Search for a blacklisted karma item.")
     async def search(self, ctx: Context, item: str):
-        item_repl = item.replace('*', '%')
+        item_repl = item.replace('*', '%').casefold()
         items = db_session.query(Blacklist) \
                           .filter(Blacklist.name.ilike(f'%{item_repl}%')).all()
         if len(items) == 0:
