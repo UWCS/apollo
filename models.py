@@ -119,6 +119,6 @@ class User(Base):
 class BlockedKarma(Base):
     __tablename__ = 'blacklist'
 
-    name = Column(String, primary_key=True, nullable=False)
-    added_by = Column(Integer, ForeignKey('users.id'), nullable=False)
+    topic = Column(String, primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     added_at = Column(DateTime, nullable=False, default=func.current_timestamp())

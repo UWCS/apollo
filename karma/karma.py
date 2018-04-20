@@ -124,7 +124,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 karma_item.minuses = karma_item.minuses + 1
 
         # Give some sass if someone is trying to downvote the bot
-        if transaction.name.lower() == 'apollo' and transaction.net_karma < 0:
+        if transaction.name.casefold() == 'Apollo'.casefold() and transaction.net_karma < 0:
             apollo_response = ':wink:'
         else:
             apollo_response = ''

@@ -46,8 +46,8 @@ class Blacklist:
         author_id = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first().id
 
         if not db_session.query(BlockedKarma) \
-                .filter(BlockedKarma.name == item.casefold()).all():
-            blacklist = BlockedKarma(name=item.casefold(), added_by=author_id)
+                .filter(BlockedKarma.topic == item.casefold()).all():
+            blacklist = BlockedKarma(topic=item.casefold(), user_id=author_id)
             db_session.add(blacklist)
             db_session.commit()
             await ctx.send(f'Added {item} to the karma blacklist. :pencil:')
@@ -58,10 +58,10 @@ class Blacklist:
     @blacklist.command(help="Remove a word from the karma blacklist.")
     @is_compsoc_exec()
     async def remove(self, ctx: Context, item: str):
-        if not db_session.query(BlockedKarma).filter(BlockedKarma.name == item.casefold()).all():
+        if not db_session.query(BlockedKarma).filter(BlockedKarma.topic == item.casefold()).all():
             await ctx.send(f'{item} is not in the karma blacklist. :page_with_curl:')
         else:
-            db_session.query(BlockedKarma).filter(BlockedKarma.name == item.casefold()).delete()
+            db_session.query(BlockedKarma).filter(BlockedKarma.topic == item.casefold()).delete()
             db_session.commit()
 
             await ctx.send(f'{item} has been removed from the karma blacklist. :pencil:')
@@ -84,7 +84,7 @@ class Blacklist:
     async def search(self, ctx: Context, item: str):
         item_folded = item.replace('*', '%').casefold()
         items = db_session.query(BlockedKarma) \
-            .filter(BlockedKarma.name.ilike(f'%{item_folded}%')).all()
+            .filter(BlockedKarma.topic.ilike(f'%{item_folded}%')).all()
         if len(items) == 0:
             await ctx.send(
                 f'There were no topics matching "{item}" in the blacklist. :sweat:')

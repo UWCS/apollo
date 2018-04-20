@@ -47,7 +47,7 @@ def parse_message(message: str, db_session: Session):
         if not (item.group('karma_target').startswith('"') and item.group('karma_target').endswith('"')):
             # Check to make sure non quoted item is not in blacklist
             if not db_session.query(BlockedKarma)\
-                    .filter(BlockedKarma.name == item.group('karma_target').casefold()).all():
+                    .filter(BlockedKarma.topic == item.group('karma_target').casefold()).all():
                 results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'),
                                         op=item.group('karma_op'),
                                         reason=item.group('karma_reason') or item.group('karma_reason_2')))
