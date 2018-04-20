@@ -64,7 +64,7 @@ class Blacklist:
             db_session.query(BlockedKarma).filter(BlockedKarma.topic == item.casefold()).delete()
             db_session.commit()
 
-            await ctx.send(f'{item} has been removed from the karma blacklist. :pencil:')
+            await ctx.send(f'{item} has been removed from the karma blacklist. :wastebasket:')
 
     @blacklist.command(help="List all blacklisted karma topics.")
     @is_compsoc_exec()
@@ -74,7 +74,7 @@ class Blacklist:
             list_str = 'The topics in the karma blacklist are:\n\n'
 
             for item in items:
-                list_str += f' • **{item.name}**\n'
+                list_str += f' • **{item.topic}**\n'
         else:
             list_str = 'There are no karma topics currently blacklisted! :mag:'
 
