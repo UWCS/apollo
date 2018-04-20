@@ -3,7 +3,9 @@ import re
 from collections import namedtuple
 from typing import List
 
-from models import db_session, BlockedKarma
+from sqlalchemy.orm import Session
+
+from models import BlockedKarma
 
 RawKarma = namedtuple('RawKarma', ['name', 'op', 'reason'])
 KarmaTransaction = namedtuple('KarmaTransaction', ['name', 'self_karma', 'net_karma', 'reasons'])
@@ -24,7 +26,7 @@ class Operation(enum.Enum):
             return Operation.NEUTRAL
 
 
-def parse_message(message: str):
+def parse_message(message: str, db_session: Session):
     # Remove any code blocks
     filtered_message = re.sub(u'```.*```', '', message)
 

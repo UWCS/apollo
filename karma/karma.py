@@ -1,12 +1,11 @@
 from datetime import datetime
 from math import floor
 
-from config import CONFIG
-
 from discord import Message
 from sqlalchemy import func, desc
 from sqlalchemy.orm import Session
 
+from config import CONFIG
 from karma.parser import parse_message, create_transactions
 from models import User, Karma, KarmaChange
 
@@ -15,7 +14,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     reply = ''
 
     # Parse the message for karma modifications
-    raw_karma = parse_message(message.clean_content)
+    raw_karma = parse_message(message.clean_content, db_session)
 
     # If no karma'd items, just return
     if not raw_karma:
