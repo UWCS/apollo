@@ -29,8 +29,7 @@ def is_private_channel():
         if not isinstance(ctx.channel, PrivateChannel):
             await ctx.message.delete()
             raise VerifyError(
-                message='That command is supposed to be sent to me in a private message, <@{user_id}>.'.format(
-                    user_id=ctx.message.author.id))
+                message=f'That command is supposed to be sent to me in a private message, <@{ctx.message.author.id}>.')
         else:
             return True
 
