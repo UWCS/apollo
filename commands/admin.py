@@ -93,7 +93,7 @@ class Admin:
                         value=f'{user.username.split("#")[0]} was last seen on {datetime.strftime(user.last_seen, "%d %b %Y at %H:%M")}.')
         if user.verified_at:
             embed.add_field(name='Verification',
-                            value=f'{user.username.split("#")[0]} is a verified member of CompSoc with a Uni ID of {user.uni_id} having verified on {user.verified_at}.')
+                            value=f'{user.username.split("#")[0]} is a verified member of CompSoc with a Uni ID of {user.uni_id} having verified on {datetime.strftime(user.verified_at, "%d %b %Y at %H:%M")}.')
 
         posts = db_session.query(LoggedMessage).filter(LoggedMessage.author == user.id).all()
         channels = db_session.query(LoggedMessage.channel_name).filter(LoggedMessage.author == user.id) \
