@@ -1,5 +1,7 @@
 import matplotlib
 
+from apollo import pluralise
+
 matplotlib.use('Agg')
 
 import os
@@ -214,7 +216,7 @@ class Karma:
         # Calculate the approval rating of the karma
         approval = 100 * ((karma_item.pluses - karma_item.minuses) / (karma_item.pluses + karma_item.minuses))
         mins_per_karma = (all_changes[-1].local_time - all_changes[0].local_time).total_seconds() / (
-                    60 * len(all_changes))
+                60 * len(all_changes))
         time_taken = (current_milli_time() - t_start) / 1000
 
         # Attach the file as an image for dev purposes
@@ -229,16 +231,16 @@ class Karma:
                                              '%H:%M %d %b %Y')
             embed_colour = Color.from_rgb(61, 83, 255)
             embed_title = f'Statistics for "{karma_stripped}"'
-            embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} time{"s" if len(all_changes) > 1 else ""} by {len(user_changes.keys())} user{"s" if len(user_changes.keys()) > 1 else ""}'
+            embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} {pluralise(all_changes, "time")} by {len(user_changes.keys())} {pluralise(user_changes.keys(), "user")}.'
 
             embed = Embed(title=embed_title, description=embed_description, color=embed_colour)
             embed.add_field(name='Most karma\'d',
-                            value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} change{"s" if len(most_karma[1]) > 1 else ""}')
+                            value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} {pluralise(most_karma[1], "change")}.')
             embed.add_field(name='Approval rating',
-                            value=f'The approval rating of "{karma_stripped}" is {approval:.1f}% ({karma_item.pluses} positive to {karma_item.minuses} negative karma and {karma_item.neutrals} neutral karma)')
+                            value=f'The approval rating of "{karma_stripped}" is {approval:.1f}% ({karma_item.pluses} positive to {karma_item.minuses} negative karma and {karma_item.neutrals} neutral karma).')
             embed.add_field(name='Karma timeline',
-                            value=f'"{karma_stripped}" was first karma\'d on {datetime.strftime(all_changes[0].local_time, "%d %b %Y at %H:%M")} and has been karma\'d approximately every {mins_per_karma:.1f} minutes')
-            embed.set_footer(text=f'Statistics generated at {generated_at} in {time_taken:.3f} seconds')
+                            value=f'"{karma_stripped}" was first karma\'d on {datetime.strftime(all_changes[0].local_time, "%d %b %Y at %H:%M")} and has been karma\'d approximately every {mins_per_karma:.1f} minutes.')
+            embed.set_footer(text=f'Statistics generated at {generated_at} in {time_taken:.3f} seconds.')
             embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
 
             await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :page_facing_up:', embed=embed)
@@ -277,7 +279,7 @@ class Karma:
             # Check if the topic has been karma'd >=10 times
             if len(karma_item.changes) < 5:
                 failed.append((karma_stripped,
-                               f'must have been karma\'d at least 5 times before a plot can be made (currently karma\'d {len(karma_item.changes)} time{"s" if len(karma_item.changes) > 1 else ""})'))
+                               f'must have been karma\'d at least 5 times before a plot can be made (currently karma\'d {len(karma_item.changes)} {pluralise(karma_item.changes, "time")})'))
                 continue
 
             # Add the karma changes to the dict
@@ -301,13 +303,13 @@ class Karma:
             # Construct the embed strings
             if karma_dict.keys():
                 embed_colour = Color.from_rgb(61, 83, 255)
-                embed_description = f'Tracked {len(karma_dict.keys())} topic{"s" if len(karma_dict.keys()) > 1 else ""} with a total of {total_changes} changes'
+                embed_description = f'Tracked {len(karma_dict.keys())} {pluralise(karma_dict.keys(), "topic")} with a total of {total_changes} changes'
                 embed_title = f'Karma trend over time for {comma_separate(list(karma_dict.keys()))}' if len(
                     karma_dict.keys()) == 1 \
                     else f'Karma trends over time for {comma_separate(list(karma_dict.keys()))}'
             else:
                 embed_colour = Color.from_rgb(255, 23, 68)
-                embed_description = f'The following problem{"s" if len(failed) > 1 else ""} occurred whilst plotting:'
+                embed_description = f'The following {pluralise(failed, "problem")} occurred whilst plotting:'
                 embed_title = f'Could not plot karma for {comma_separate(list(map(lambda i: i[0], failed)))}'
             embed = Embed(color=embed_colour, title=embed_title, description=embed_description)
             # If there were any errors then add them
