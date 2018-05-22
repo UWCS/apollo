@@ -3,7 +3,7 @@ from discord.ext.commands import Context, Bot
 
 ZED0_HELP_TEXT = """Very important command."""
 FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
-GO_HELP_TEXT =   """The eternal #cs meme."""
+GO_HELP_TEXT = """The eternal #cs meme."""
 
 
 class Misc:
