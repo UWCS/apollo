@@ -50,7 +50,7 @@ class Verify:
 
         # Get the discord data from our servers
         headers = {'Authorization': 'Token {token}'.format(token=CONFIG['UWCS_API_TOKEN'])}
-        api_request = requests.get('https://uwcs.co.uk/accounts/api/{uni_id}/'.format(uni_id=uni_number),
+        api_request = requests.get('https://uwcs.co.uk/api/user/{uni_id}/'.format(uni_id=uni_number),
                                    headers=headers)
 
         # If the request goes okay
