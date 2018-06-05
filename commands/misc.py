@@ -4,6 +4,7 @@ from discord.ext.commands import Context, Bot
 ZED0_HELP_TEXT = """Very important command."""
 FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
 GO_HELP_TEXT = """The eternal #cs meme."""
+DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
 
 
 class Misc:
@@ -22,6 +23,9 @@ class Misc:
     async def go(self, ctx: Context):
         await ctx.send("lol no generics")
 
+    @commands.command(help=DUNNO_HELP_TEXT, brief=DUNNO_HELP_TEXT)
+    async def dunno(self, ctx: Context):
+        await ctx.send("¯\\_(ツ)_/¯")
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
