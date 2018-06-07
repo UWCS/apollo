@@ -27,5 +27,6 @@ class Misc:
     async def dunno(self, ctx: Context):
         await ctx.send("¯\\_(ツ)_/¯")
 
+
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
