@@ -1,7 +1,6 @@
 import matplotlib
 
 from apollo import pluralise
-from commands.blacklist import is_compsoc_exec
 
 matplotlib.use('Agg')
 
@@ -15,8 +14,7 @@ from typing import List, Dict
 import matplotlib.pyplot as plt
 from discord import Embed, Color, File
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType, MissingRequiredArgument, \
-    BadArgument
+from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType, MissingRequiredArgument
 from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
     HourLocator, MinuteLocator
 from pytz import utc, timezone
@@ -159,29 +157,51 @@ class Karma:
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
 
-    @karma.command(help='Admin only command to set the karma of a topic to a specific value')
-    @is_compsoc_exec()
-    async def set(self, ctx: Context, karma: clean_content, value: clean_content):
-        # Make sure that there's a karma topic to change
-        if not karma:
-            raise BadArgument(message='The karma topic must not be blank.')
+    # @karma.command(help='Admin only command to set the karma of a topic to a specific value')
+    # @is_compsoc_exec()
+    # async def set(self, ctx: Context, karma: clean_content, value: clean_content):
+    #     # Make sure that there's a karma topic to change
+    #     if not karma:
+    #         raise BadArgument(message='The karma topic must not be blank.')
+    #
+    #     if not value:
+    #         raise BadArgument(message='The value of karma must not be blank.')
+    #
+    #     # Strip any leading @s and get the item from the DB
+    #     karma_stripped = karma.lstrip('@')
+    #     karma_item = db_session.query(KarmaModel).filter(
+    #         func.lower(KarmaModel.name) == func.lower(karma_stripped)).first()
+    #
+    #     # If the item doesn't exist then create it
+    #     if not karma_item:
+    #         # The item hasn't been karma'd
+    #         result = f'"{karma_stripped}" hasn\'t been karma\'d yet. :cry:'
+    #         await ctx.send(result)
+    #
+    #     new_score = convert_int(str(value))
+    #
+    #     # Get karma-ing user
+    #     user = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first()
+    #
+    #     # Get the last change (or none if there was none)
+    #     last_change = db_session.query(KarmaChange).filter(KarmaChange.karma_id == karma_item.id).order_by(
+    #         desc(KarmaChange.created_at)).first()
+    #
+    #     # Create the karma change and commit it
+    #     karma_change = KarmaChange(karma_id=karma_item.id, user_id=user.id, message_id=ctx.message.id,
+    #                                reasons=[f'Set by {user.username} to {new_score}'], score=new_score,
+    #                                change=(new_score - last_change.score), created_at=datetime.utcnow())
+    #     db_session.add(karma_change)
+    #
+    #     await ctx.send(str(karma_change))
 
-        if not value:
-            raise BadArgument(message='The value of karma must not be blank.')
-
-        # TODO Check if the karma item exists (create it if not) and then set its karma to that value.
-
-        v = convert_int(str(value))
-
-        await ctx.send(str(karma) + ' ' + str(v))
-
-    @set.error
-    async def karma_generic_error(self, ctx: Context, error: CommandError):
-        if isinstance(error, BadArgument):
-            if 'IntConverter' in str(error):
-                await ctx.send('The value to set that topic to must be an integer.')
-            else:
-                await ctx.send(error)
+    # @set.error
+    # async def karma_generic_error(self, ctx: Context, error: CommandError):
+    #     if isinstance(error, BadArgument):
+    #         if 'IntConverter' in str(error):
+    #             await ctx.send('The value to set that topic to must be an integer.')
+    #         else:
+    #             await ctx.send(error)
 
     @karma.command(help='Shows the top 5 karma topics')
     async def top(self, ctx: Context):
