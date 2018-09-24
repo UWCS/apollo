@@ -1,6 +1,7 @@
 import matplotlib
 
 from apollo import pluralise
+from commands.blacklist import is_compsoc_exec
 
 matplotlib.use('Agg')
 
@@ -14,7 +15,8 @@ from typing import List, Dict
 import matplotlib.pyplot as plt
 from discord import Embed, Color, File
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType, MissingRequiredArgument
+from discord.ext.commands import Context, Bot, CommandError, clean_content, BucketType, MissingRequiredArgument, \
+    BadArgument
 from matplotlib.dates import DayLocator, WeekdayLocator, MonthLocator, YearLocator, DateFormatter, date2num, \
     HourLocator, MinuteLocator
 from pytz import utc, timezone
@@ -130,6 +132,23 @@ def comma_separate(items: List[str]) -> str:
         return ', '.join(map(lambda s: f'"{s}"', items[:3])) + f', and {len(items) - 3} other topics'
 
 
+"""
+Method to convert a string to an integer that's a bit more complex than the default int converter
+"""
+
+
+def convert_int(argument: str):
+    if argument.casefold().startswith('0x'):
+        # Hexadecimal
+        return int(argument, base=0)
+    elif argument.casefold().startswith('0b'):
+        # Binary
+        return int(argument, base=0)
+    else:
+        # Check if it's something like sys.maxint/maxint, etc?
+        return int(argument, base=10)
+
+
 class Karma:
 
     def __init__(self, bot):
@@ -139,6 +158,30 @@ class Karma:
     async def karma(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
+
+    @karma.command(help='Admin only command to set the karma of a topic to a specific value')
+    @is_compsoc_exec()
+    async def set(self, ctx: Context, karma: clean_content, value: clean_content):
+        # Make sure that there's a karma topic to change
+        if not karma:
+            raise BadArgument(message='The karma topic must not be blank.')
+
+        if not value:
+            raise BadArgument(message='The value of karma must not be blank.')
+
+        # TODO Check if the karma item exists (create it if not) and then set its karma to that value.
+
+        v = convert_int(str(value))
+
+        await ctx.send(str(karma) + ' ' + str(v))
+
+    @set.error
+    async def karma_generic_error(self, ctx: Context, error: CommandError):
+        if isinstance(error, BadArgument):
+            if 'IntConverter' in str(error):
+                await ctx.send('The value to set that topic to must be an integer.')
+            else:
+                await ctx.send(error)
 
     @karma.command(help='Shows the top 5 karma topics')
     async def top(self, ctx: Context):
