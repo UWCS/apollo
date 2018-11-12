@@ -27,10 +27,11 @@ class Misc:
     @commands.command(help=DUNNO_HELP_TEXT, brief=DUNNO_HELP_TEXT)
     async def dunno(self, ctx: Context):
         await ctx.send("¯\\_(ツ)_/¯")
-		
+
     @commands.command(help=RUST_HELP_TEXT, brief=RUST_HELP_TEXT)
     async def rust(self, ctx: Context):
         await ctx.send("FAUX")
+
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
