@@ -5,8 +5,7 @@ ZED0_HELP_TEXT = """Very important command."""
 FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
 GO_HELP_TEXT = """The eternal #cs meme."""
 DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
-RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you.
-"""
+RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you."""
 
 
 class Misc:
