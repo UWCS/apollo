@@ -5,6 +5,7 @@ ZED0_HELP_TEXT = """Very important command."""
 FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
 GO_HELP_TEXT = """The eternal #cs meme."""
 DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
+RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you."""
 
 
 class Misc:
@@ -26,6 +27,10 @@ class Misc:
     @commands.command(help=DUNNO_HELP_TEXT, brief=DUNNO_HELP_TEXT)
     async def dunno(self, ctx: Context):
         await ctx.send("¯\\_(ツ)_/¯")
+
+    @commands.command(help=RUST_HELP_TEXT, brief=RUST_HELP_TEXT)
+    async def rust(self, ctx: Context):
+        await ctx.send("FAUX")
 
 
 def setup(bot: Bot):
