@@ -16,7 +16,8 @@ class Facts:
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def facts(self, ctx: Context):
-        options = ["The billionth digit of Pi is 9.",
+        options = [
+            "The billionth digit of Pi is 9.",
             "Humans can survive underwater. But not for very long.",
             "A nanosecond lasts one billionth of a second.",
             "Honey does not spoil.",
