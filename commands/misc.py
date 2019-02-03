@@ -7,6 +7,8 @@ GO_HELP_TEXT = """The eternal #cs meme."""
 DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
 RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you."""
 PR_HELP_TEXT = """You know what to do"""
+BLUESHELL_HELP_TEXT = """Thank you RNGesus for the £5 donation!"""
+SAM_HELP_TEXT = """Sam."""
 
 
 class Misc:
@@ -32,10 +34,18 @@ class Misc:
     @commands.command(help=RUST_HELP_TEXT, brief=RUST_HELP_TEXT)
     async def rust(self, ctx: Context):
         await ctx.send("FAUX")
-        
+
     @commands.command(help=PR_HELP_TEXT, brief=PR_HELP_TEXT)
     async def pr(self, ctx: Context):
         await ctx.send("You can make a pull request for that!")
+
+    @commands.command(help=BLUESHELL_HELP_TEXT, brief=BLUESHELL_HELP_TEXT)
+    async def blueshell(self, ctx: Context):
+        await ctx.send(":blueshell:")
+
+    @commands.command(help=SAM_HELP_TEXT, brief=SAM_HELP_TEXT)
+    async def sam(self, ctx: Context):
+        await ctx.send(":playingCoy:")
 
 
 def setup(bot: Bot):
