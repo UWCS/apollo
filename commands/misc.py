@@ -10,6 +10,7 @@ PR_HELP_TEXT = """You know what to do"""
 BLUESHELL_HELP_TEXT = """Thank you RNGesus for the £5 donation!"""
 SAM_HELP_TEXT = """Sam."""
 
+
 class Misc:
     def __init__(self, bot: Bot):
         self.bot = bot
