@@ -40,7 +40,7 @@ class Misc:
 
     @commands.command(help=BLUESHELL_HELP_TEXT, brief=BLUESHELL_HELP_TEXT)
     async def blueshell(self, ctx: Context):
-        await ctx.send("<:blueshell:541996747258331146> Thank you RNGesus for the £5 donation! <:blueshell:541996747258331146>")
+        await ctx.send("<:blueshell:541726526543101973> Thank you RNGesus for the £5 donation! <:blueshell:541726526543101973>")
 
 
 def setup(bot: Bot):
