@@ -118,7 +118,7 @@ async def on_member_join(member: Member):
         user.last_seen = datetime.utcnow()
     db_session.commit()
 
-    #await member.send(WELCOME_MESSAGE.format(user_id=member.id))
+    #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
 
 if __name__ == '__main__':

@@ -111,7 +111,7 @@ class Fact:
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def fact(self, ctx: Context):
-        await ctx.send(f'<@{ctx.message.author.id}>: {random.choice(options)}')
+        await ctx.send(f'<@{ctx.message.author.id}>: {random.choice(self.options)}')
 
 
 def setup(bot: Bot):
