@@ -25,7 +25,7 @@ GLHF! :rocket:
 
 # The command extensions to be loaded by the bot
 EXTENSIONS = ['commands.verify', 'commands.karma', 'commands.say', 'commands.flip', 'commands.misc', 'commands.admin',
-              'commands.blacklist', 'commands.facts']
+              'commands.blacklist', 'commands.fact']
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
@@ -118,7 +118,7 @@ async def on_member_join(member: Member):
         user.last_seen = datetime.utcnow()
     db_session.commit()
 
-    await member.send(WELCOME_MESSAGE.format(user_id=member.id))
+    #await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
 
 if __name__ == '__main__':
