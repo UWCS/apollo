@@ -98,7 +98,7 @@ class Blacklist:
             max_len = 10
             for it in items:
                 if max_len > 0:
-                    list_str += f' • **{it.name}**\n'
+                    list_str += f' • **{it.topic}**\n'
                 else:
                     break
                 max_len -= 1
