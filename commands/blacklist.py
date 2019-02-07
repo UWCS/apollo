@@ -89,7 +89,6 @@ class Blacklist:
             await ctx.send(
                 f'There were no topics matching "{item}" in the blacklist. :sweat:')
         else:
-            print("here")
             if len(items) == 1:
                 list_str = f'The topic matching "{item}" in the blacklist is:\n\n'
             else:
