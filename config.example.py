@@ -12,5 +12,6 @@ CONFIG = {
     'FIG_HOST_URL': 'https://your.url/to/host/images',
     'SQL_LOGGING': True,
     'BOT_LOGGING': True,
-    'DEBUG': True
+    'DEBUG': True,
+    'REMINDER_SEARCH_INTERVAL': 30
 }

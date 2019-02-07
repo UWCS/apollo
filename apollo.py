@@ -6,7 +6,9 @@ from discord.ext.commands import Bot, when_mentioned_or
 
 from config import CONFIG
 from karma.karma import process_karma
-from models import User, db_session, LoggedMessage, MessageDiff
+from models import User, db_session, LoggedMessage, MessageDiff, Reminder
+
+import asyncio
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
@@ -25,7 +27,7 @@ GLHF! :rocket:
 
 # The command extensions to be loaded by the bot
 EXTENSIONS = ['commands.verify', 'commands.karma', 'commands.say', 'commands.flip', 'commands.misc', 'commands.admin',
-              'commands.blacklist', 'commands.fact']
+              'commands.blacklist', 'commands.fact', 'commands.reminders']
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
 
@@ -35,6 +37,24 @@ def pluralise(l, word, single='', plural='s'):
         return word + plural
     else:
         return word + single
+
+
+async def reminder_check():
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        now = datetime.now()
+        # I have this useless variable because its not pep8 if you compare directly to False lol
+        not_triggered = False
+        reminders = db_session.query(Reminder).filter(Reminder.trigger_at <= now, Reminder.triggered == not_triggered).all()
+        for r in reminders:
+            author_uid = db_session.query(User).filter(User.id == r.user_id).first().user_uid
+            channel = bot.get_channel(r.playback_channel_id)
+            message = f'Reminding <@{author_uid}>: ' + r.reminder_content
+            await channel.send(message)
+            r.triggered = True
+            db_session.commit()
+
+        await asyncio.sleep(CONFIG['REMINDER_SEARCH_INTERVAL'])
 
 
 @bot.event
@@ -129,4 +149,5 @@ if __name__ == '__main__':
             exc = '{}: {}'.format(type(e).__name__, e)
             print('Failed to load extension {}\n{}'.format(extension, exc))
 
+    bot.loop.create_task(reminder_check())
     bot.run(CONFIG['DISCORD_TOKEN'])

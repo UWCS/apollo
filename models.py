@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from pytz import timezone, utc
-from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger, func
+from sqlalchemy import Column, String, Integer, DateTime, create_engine, ForeignKey, BigInteger, func, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
@@ -122,3 +122,15 @@ class BlockedKarma(Base):
     topic = Column(String, primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     added_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+
+
+@auto_str
+class Reminder(Base):
+    __tablename__ = 'reminders'
+    id = Column(Integer, primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    reminder_content = Column(String, nullable=False)
+    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+    trigger_at = Column(DateTime, nullable=False)
+    triggered = Column(Boolean, nullable=False)
+    playback_channel_id = Column(BigInteger, nullable=False)
