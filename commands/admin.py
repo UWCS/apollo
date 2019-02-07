@@ -13,6 +13,8 @@ from commands.verify import is_private_channel
 from config import CONFIG
 from models import db_session, User, LoggedMessage
 
+from utils import get_name_string
+
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
 """
@@ -44,7 +46,8 @@ def is_compsoc_exec_in_guild():
         if roles is None:
             if not isinstance(ctx.channel, PrivateChannel):
                 await ctx.message.delete()
-            raise AdminError(f'You don\'t have permission to run that command, <@{ctx.message.author.id}>.')
+            display_name = get_name_string(ctx.message)
+            raise AdminError(f'You don\'t have permission to run that command, {display_name}.')
         else:
             return True
 

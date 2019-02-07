@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from config import CONFIG
 from karma.parser import parse_message, create_transactions
 from models import User, Karma, KarmaChange
+from utils import get_name_string
 
 
 def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):
@@ -149,10 +150,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 item_str += f' • **{truncated_name}** (new score is {karma_change.score}). {apollo_response}\n'
 
     # Get the name, either from discord or irc
-    if message.author.id == CONFIG['UWCS_DISCORD_BRIDGE_BOT_ID']:
-        author_display = display_name
-    else:
-        author_display = f'<@{message.author.id}>'
+    author_display = get_name_string(message)
 
     # Construct the reply string in totality
     # If you have error(s) and no items processed successfully

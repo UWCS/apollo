@@ -47,9 +47,13 @@ async def reminder_check():
         not_triggered = False
         reminders = db_session.query(Reminder).filter(Reminder.trigger_at <= now, Reminder.triggered == not_triggered).all()
         for r in reminders:
-            author_uid = db_session.query(User).filter(User.id == r.user_id).first().user_uid
+            if r.irc_name:
+                display_name = r.irc_name
+            else:
+                author_uid = db_session.query(User).filter(User.id == r.user_id).first().user_uid
+                display_name = f'<@{author_uid}>'
             channel = bot.get_channel(r.playback_channel_id)
-            message = f'Reminding <@{author_uid}>: ' + r.reminder_content
+            message = f'Reminding {display_name}: ' + r.reminder_content
             await channel.send(message)
             r.triggered = True
             db_session.commit()

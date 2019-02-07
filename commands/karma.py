@@ -23,6 +23,8 @@ from sqlalchemy import func
 from config import CONFIG
 from models import db_session, Karma as KarmaModel, KarmaChange
 
+from utils import get_name_string
+
 LONG_HELP_TEXT = """
 Query and display the information about the karma topics on the UWCS discord server.
 """
@@ -306,7 +308,8 @@ class Karma:
             embed.set_footer(text=f'Statistics generated at {generated_at} in {time_taken:.3f} seconds.')
             embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
 
-            await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :page_facing_up:', embed=embed)
+            display_name = get_name_string(ctx.message)
+            await ctx.send(f'Here you go, {display_name}! :page_facing_up:', embed=embed)
 
     @info.error
     async def info_error(self, ctx: Context, error: CommandError):
@@ -384,7 +387,8 @@ class Karma:
                 embed.set_footer(text=f'Graph generated at {generated_at} in {time_taken:.3f} seconds')
                 embed.set_image(url='{host}/{filename}'.format(host=CONFIG['FIG_HOST_URL'], filename=filename))
 
-            await ctx.send(f'Here you go, <@{ctx.message.author.id}>! :chart_with_upwards_trend:', embed=embed)
+            display_name = get_name_string(ctx.message)
+            await ctx.send(f'Here you go, {display_name}! :chart_with_upwards_trend:', embed=embed)
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
