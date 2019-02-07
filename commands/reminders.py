@@ -8,6 +8,8 @@ from models import db_session, User, Reminder
 import re
 from datetime import datetime, timedelta
 
+from utils import get_name_string
+
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.
 """
@@ -79,7 +81,6 @@ class Reminders:
 
     @reminder.command(help='Add a reminder, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your reminder (rest of discord message).')
     async def add(self, ctx: Context, *args: clean_content):
-        author_id = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first().id
         if not args:
             await ctx.send("You're missing a time and a message!")
         else:
@@ -91,16 +92,26 @@ class Reminders:
                 await ctx.send("That time is in the past.")
             else:
                 # HURRAY the time is valid and not in the past, add the reminder
-                author_id = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first().id
+                display_name = get_name_string(ctx.message)
+
+                # set the id to a random value if the author was the bridge bot, since we wont be using it anyways
+                # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
+                if ctx.message.author.id == CONFIG['UWCS_DISCORD_BRIDGE_BOT_ID']:
+                    author_id = 1
+                    irc_n = display_name
+                else:
+                    author_id = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first().id
+                    irc_n = None
+
                 if len(args) > 1:
                     rem_content = " ".join(args[1:])
                     trig_at = trigger_time
                     trig = False
                     playback_ch_id = ctx.message.channel.id
-                    new_reminder = Reminder(user_id=author_id, reminder_content=rem_content, trigger_at=trig_at, triggered=trig, playback_channel_id=playback_ch_id)
+                    new_reminder = Reminder(user_id=author_id, reminder_content=rem_content, trigger_at=trig_at, triggered=trig, playback_channel_id=playback_ch_id, irc_name=irc_n)
                     db_session.add(new_reminder)
                     db_session.commit()
-                    await ctx.send(f'Thanks <@{ctx.message.author.id}>, I have saved your reminder (but please note that my granularity is set at {CONFIG["REMINDER_SEARCH_INTERVAL"]} seconds).')
+                    await ctx.send(f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG["REMINDER_SEARCH_INTERVAL"]} seconds).')
                 else:
                     await ctx.send("Please include some reminder text!")
 

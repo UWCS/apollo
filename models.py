@@ -134,3 +134,4 @@ class Reminder(Base):
     trigger_at = Column(DateTime, nullable=False)
     triggered = Column(Boolean, nullable=False)
     playback_channel_id = Column(BigInteger, nullable=False)
+    irc_name = Column(String, nullable=True)

@@ -3,6 +3,8 @@ import random
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
 
+from utils import get_name_string
+
 LONG_HELP_TEXT = """
 Selects a random "interesting" "fact".
 """
@@ -111,7 +113,8 @@ class Fact:
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def fact(self, ctx: Context):
-        await ctx.send(f'<@{ctx.message.author.id}>: {random.choice(self.options)}')
+        display_name = get_name_string(ctx.message)
+        await ctx.send(f'{display_name}: {random.choice(self.options)}')
 
 
 def setup(bot: Bot):

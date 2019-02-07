@@ -9,6 +9,8 @@ from discord.ext.commands import CommandError, Context, check, Bot
 from config import CONFIG
 from models import User, db_session
 
+from utils import get_name_string
+
 LONG_HELP_TEXT = """
 Allows you to verify your account with your university number to gain the 'CompSoc Member' role. Should be sent in a private message.
 """
@@ -27,9 +29,10 @@ class VerifyError(CommandError):
 def is_private_channel():
     async def predicate(ctx: Context):
         if not isinstance(ctx.channel, PrivateChannel):
+            display_name = get_name_string(ctx.message)
             await ctx.message.delete()
             raise VerifyError(
-                message=f'That command is supposed to be sent to me in a private message, <@{ctx.message.author.id}>.')
+                message=f'That command is supposed to be sent to me in a private message, {display_name}.')
         else:
             return True
 

@@ -5,6 +5,8 @@ from discord.ext.commands import Context, Bot, CommandError, check
 from config import CONFIG
 from models import db_session, BlockedKarma, User
 
+from utils import get_name_string
+
 LONG_HELP_TEXT = """
 Query, display, and modify the blacklisted karma topics.
 """
@@ -24,7 +26,8 @@ def is_compsoc_exec():
         roles = discord.utils.get(ctx.message.author.roles, id=CONFIG['UWCS_EXEC_ROLE_ID'])
         if roles is None:
             await ctx.message.delete()
-            raise BlacklistError(f'You don\'t have permission to run that command, <@{ctx.message.author.id}>.')
+            display_name = get_name_string(ctx.message)
+            raise BlacklistError(f'You don\'t have permission to run that command, {display_name}.')
         else:
             return True
 
