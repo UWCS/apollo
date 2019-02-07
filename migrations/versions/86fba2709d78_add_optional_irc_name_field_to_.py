@@ -17,9 +17,7 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column('reminders',
-                    sa.Column('irc_name', sa.String(), nullable=True)
-    )
+    op.add_column('reminders', sa.Column('irc_name', sa.String(), nullable=True))
 
 
 def downgrade():
