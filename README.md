@@ -12,6 +12,12 @@ To run this project you need to install the in-development version of [Discord.p
 pip install -U git+https://github.com/Rapptz/discord.py@rewrite
 ```
 
+### Contributor Notes
+
+* When writing anything that needs to reply back to a specific username, please do `from utils import get_name_string` and get the display string using this function, with the discord `Message` object as the argument (e.g. `display_name = get_name_string(ctx.message)`). This will return either a discord username, formatted correctly, or an irc nickname depending on the source of the message. Finally, this can be used as normal in a format string e.g. `await ctx.send(f'Sorry {display_name}, that won't work.')`.
+
+* When writing a new command, please read in the rest of the message using `*args: clean_content` (see `commands/flip.py` as an example), and if you need it as one large string, use `" ".join(args)`. This is instead of reading the whole message content, which will likely break the irc bridging (unless you know what you're doing).
+
 ### License
 
 This project is distributed under the MIT license.
