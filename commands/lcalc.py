@@ -23,6 +23,7 @@ Example:
 
 SHORT_HELP_TEXT = """Inteprets and reduces lambda calculus expressions."""
 
+
 class Lcalc:
     def __init__(self, bot: Bot):
         self.bot = bot
