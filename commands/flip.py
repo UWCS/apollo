@@ -24,7 +24,7 @@ class Flip:
         else:
             options = ['Heads', 'Tails'] if not args else args
 
-            await ctx.send(f'{display_name}: {random.choice(options).title().lstrip("@")}')
+            await ctx.send(f'{display_name}: {random.choice(options).lstrip("@")}')
 
 
 def setup(bot: Bot):
