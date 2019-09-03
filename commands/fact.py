@@ -12,7 +12,7 @@ Selects a random "interesting" "fact".
 SHORT_HELP_TEXT = """Information!"""
 
 
-class Fact:
+class Fact(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.options = [

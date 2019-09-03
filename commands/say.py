@@ -8,7 +8,7 @@ Make the bot repeat after you.
 SHORT_HELP_TEXT = """Make the bot repeat after you."""
 
 
-class Say:
+class Say(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 

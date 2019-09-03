@@ -54,7 +54,7 @@ def is_compsoc_exec_in_guild():
     return check(predicate)
 
 
-class Admin:
+class Admin(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 

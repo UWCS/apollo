@@ -149,7 +149,7 @@ def convert_int(argument: str):
         return int(argument, base=10)
 
 
-class Karma:
+class Karma(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot

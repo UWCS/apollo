@@ -13,7 +13,7 @@ BLUESHELL_HELP_TEXT = """!blueshell"""
 AWOO_HELP_TEXT = """Tails and that"""
 
 
-class Misc:
+class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
