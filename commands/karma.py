@@ -1,5 +1,3 @@
-import re
-
 import matplotlib
 
 from apollo import pluralise
@@ -435,4 +433,4 @@ class Karma(commands.Cog):
 
 def setup(bot: Bot):
     bot.add_cog(Karma(bot))
-    solarize("light")
+    solarize()
