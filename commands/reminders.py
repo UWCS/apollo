@@ -8,7 +8,7 @@ from models import db_session, User, Reminder
 import re
 from datetime import datetime, timedelta
 
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.

@@ -13,7 +13,7 @@ from commands.verify import is_private_channel
 from config import CONFIG
 from models import db_session, User, LoggedMessage
 
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.

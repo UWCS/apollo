@@ -3,7 +3,7 @@ import random
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
 
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 Selects a random "interesting" "fact".

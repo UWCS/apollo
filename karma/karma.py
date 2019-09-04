@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from config import CONFIG
 from karma.parser import parse_message, create_transactions
 from models import User, Karma, KarmaChange
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 
 def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):

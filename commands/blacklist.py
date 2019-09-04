@@ -5,7 +5,7 @@ from discord.ext.commands import Context, Bot, CommandError, check
 from config import CONFIG
 from models import db_session, BlockedKarma, User
 
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 Query, display, and modify the blacklisted karma topics.
