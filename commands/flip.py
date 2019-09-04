@@ -12,7 +12,7 @@ Picks randomly between two options (or heads and tails if left blank)
 SHORT_HELP_TEXT = """Picks randomly between two options"""
 
 
-class Flip:
+class Flip(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 

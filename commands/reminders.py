@@ -70,7 +70,7 @@ def parse_time(time):
     return parsed_time
 
 
-class Reminders:
+class Reminders(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 

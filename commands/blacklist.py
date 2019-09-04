@@ -34,7 +34,7 @@ def is_compsoc_exec():
     return check(predicate)
 
 
-class Blacklist:
+class Blacklist(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
