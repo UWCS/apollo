@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 
 from discord import Message, Member
@@ -7,8 +8,6 @@ from discord.ext.commands import Bot, when_mentioned_or
 from config import CONFIG
 from karma.karma import process_karma
 from models import User, db_session, LoggedMessage, MessageDiff, Reminder
-
-import asyncio
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
@@ -20,13 +19,13 @@ Hey <@{user_id}>!
 
 I'm Apollo, the UWCS Discord's friendly bot. I'd like to welcome you to the University of Warwick Computing Society Discord server!
 
-If you are a member of the society then you can verify your account using the 'verify' command (use `!help verify` to find out more)! If you're not a member, you can join through the Warwick student's union website.
+If you're not already a member of the society, you can join through the Warwick student's union website.
 
 GLHF! :rocket:
 """
 
 # The command extensions to be loaded by the bot
-EXTENSIONS = ['commands.verify', 'commands.karma', 'commands.say', 'commands.flip', 'commands.misc', 'commands.admin',
+EXTENSIONS = ['commands.karma', 'commands.say', 'commands.flip', 'commands.misc', 'commands.admin',
               'commands.blacklist', 'commands.fact', 'commands.reminders', 'commands.lcalc']
 
 bot = Bot(command_prefix=when_mentioned_or('!'), description=DESCRIPTION)
