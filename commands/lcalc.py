@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, clean_content
 
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 ERROR_LIMIT = 3
 DEPTH_LIMIT = 50

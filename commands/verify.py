@@ -9,7 +9,7 @@ from discord.ext.commands import CommandError, Context, check, Bot
 from config import CONFIG
 from models import User, db_session
 
-from utils import get_name_string
+from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 Allows you to verify your account with your university number to gain the 'CompSoc Member' role. Should be sent in a private message.

@@ -23,7 +23,8 @@ from sqlalchemy import func
 from config import CONFIG
 from models import db_session, Karma as KarmaModel, KarmaChange
 
-from utils import get_name_string
+from utils.aliases import get_name_string
+from utils.solarize import solarize
 
 LONG_HELP_TEXT = """
 Query and display the information about the karma topics on the UWCS discord server.
@@ -432,3 +433,4 @@ class Karma(commands.Cog):
 
 def setup(bot: Bot):
     bot.add_cog(Karma(bot))
+    solarize()

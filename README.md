@@ -6,11 +6,7 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 ### Installation
 
-To run this project you need to install the in-development version of [Discord.py]()'s `rewrite` branch. This can be done using:
-
-```
-pip install -U git+https://github.com/Rapptz/discord.py@rewrite
-```
+To run this bot, create a new Python virtual environment (version 3.6 or above) and use `pip install -r requirements.txt` to install all of the library requirements. You will also need to migrate the database using `alembic` after the Python libraries are installed.
 
 ### Contributor Notes
 
