@@ -1,4 +1,5 @@
 import html
+import re
 from functools import reduce
 
 from bs4 import BeautifulSoup
@@ -27,12 +28,15 @@ class Widen(commands.Cog):
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def widen(self, ctx: Context, *message: clean_content):
         if message:
-            target_raw = html.escape(" ".join(message))
+            # Convert message into a string from tuple of strings
+            target_raw = " ".join(message)
         else:
             messages = await ctx.history(limit=2).flatten()
-            target_raw = html.escape(messages[-1].clean_content)
+            target_raw = messages[-1].clean_content
 
-        # TODO: Clean the string of things like custom emoji, IRC users
+        target_raw = re.sub(r'<:.+:\d+>', '', target_raw)  # Remove custom emoji
+        target_raw = re.sub(r'^\*\*<\w+>\*\* ', '', target_raw)  # Remove IRC usernames
+        target_raw = html.escape(target_raw.strip())  # Escape any other text in prep for de-markdownify
 
         # Convert it to HTML and then remove all tags to get the raw text
         # A side effect of this is that any text that looks like a HTML tag will be removed
@@ -41,17 +45,18 @@ class Widen(commands.Cog):
         target = ''.join(soup.findAll(text=True))
 
         # Cascade the widening
-        is_wide = reduce(lambda x, y: ord(y) in range(0xFF01, 0xFF5F) or ord(y) == 0x3000, target_raw, True)
+        is_wide = reduce(lambda x, y: x and (ord(y) in range(0xFF01, 0xFF5F) or ord(y) == 0x3000), target_raw, True)
         if is_wide:
             widened = widen("　".join([x.lstrip('@') for x in target]))
         else:
             widened = widen("".join([x.lstrip('@') for x in target]))
 
-        # Make sure we send a message that's short enough
-        if len(widened) <= 2000:
-            await ctx.send(widened)
-        else:
-            await ctx.send(widen("The output is too wide") + "　:frowning:")
+        if widened:
+            # Make sure we send a message that's short enough
+            if len(widened) <= 2000:
+                await ctx.send(widened)
+            else:
+                await ctx.send(widen("The output is too wide") + "　:frowning:")
 
 
 def setup(bot: Bot):
