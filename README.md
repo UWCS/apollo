@@ -14,6 +14,8 @@ To run this bot, create a new Python virtual environment (version 3.6 or above) 
 
 * When writing a new command, please read in the rest of the message using `*args: clean_content` (see `commands/flip.py` as an example), and if you need it as one large string, use `" ".join(args)`. This is instead of reading the whole message content, which will likely break the irc bridging (unless you know what you're doing).
 
+* This project uses the Black Python formatter. Before submitting your code for a PR, run `black .` on the root directory of this project to bring all of your up to spec for the code style guide.
+
 ### License
 
 This project is distributed under the MIT license.
