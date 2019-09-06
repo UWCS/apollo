@@ -1,4 +1,5 @@
 import html
+from functools import reduce
 
 from bs4 import BeautifulSoup
 from discord.ext import commands
@@ -31,13 +32,22 @@ class Widen(commands.Cog):
             messages = await ctx.history(limit=2).flatten()
             target_raw = html.escape(messages[-1].clean_content)
 
+        # TODO: Clean the string of things like custom emoji, IRC users
+
         # Convert it to HTML and then remove all tags to get the raw text
         # A side effect of this is that any text that looks like a HTML tag will be removed
         target_html = markdown(target_raw)
         soup = BeautifulSoup(target_html, 'lxml')
         target = ''.join(soup.findAll(text=True))
 
-        widened = widen("".join([x.lstrip('@') for x in target]))
+        # Cascade the widening
+        is_wide = reduce(lambda x, y: ord(y) in range(0xFF01, 0xFF5F) or ord(y) == 0x3000, target_raw, True)
+        if is_wide:
+            widened = widen("　".join([x.lstrip('@') for x in target]))
+        else:
+            widened = widen("".join([x.lstrip('@') for x in target]))
+
+        # Make sure we send a message that's short enough
         if len(widened) <= 2000:
             await ctx.send(widened)
         else:
