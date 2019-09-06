@@ -39,13 +39,18 @@ def is_compsoc_exec_in_guild():
             guild for guild in ctx.bot.guilds if guild.id == CONFIG["UWCS_DISCORD_ID"]
         ][0]
         compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
-        if compsoc_member is None:
+        if not compsoc_member:
             raise AdminError(
                 f"You aren't part of the UWCS discord so I'm afraid I can't let you do that. :octagonal_sign:"
             )
 
-        roles = discord.utils.get(compsoc_member.roles, id=CONFIG["UWCS_EXEC_ROLE_ID"])
-        if roles is None:
+        roles = list(
+            map(
+                lambda x: discord.utils.get(compsoc_member.roles, id=x),
+                CONFIG["UWCS_EXEC_ROLE_IDS"],
+            )
+        )
+        if not roles:
             if not isinstance(ctx.channel, PrivateChannel):
                 await ctx.message.delete()
             display_name = get_name_string(ctx.message)
