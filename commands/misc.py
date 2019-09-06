@@ -43,7 +43,9 @@ class Misc(commands.Cog):
 
     @commands.command(help=BLUESHELL_HELP_TEXT, brief=BLUESHELL_HELP_TEXT)
     async def blueshell(self, ctx: Context):
-        await ctx.send("<:blueshell:541726526543101973> Thank you RNGesus for the £5 donation! <:blueshell:541726526543101973>")
+        await ctx.send(
+            "<:blueshell:541726526543101973> Thank you RNGesus for the £5 donation! <:blueshell:541726526543101973>"
+        )
 
     @commands.command(help=AWOO_HELP_TEXT, brief=AWOO_HELP_TEXT)
     async def awoo(self, ctx: Context):

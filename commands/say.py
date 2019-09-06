@@ -14,7 +14,7 @@ class Say(commands.Cog):
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def say(self, ctx: Context, *message: clean_content):
-        await ctx.send(" ".join([x.lstrip('@') for x in message]))
+        await ctx.send(" ".join([x.lstrip("@") for x in message]))
 
 
 def setup(bot: Bot):

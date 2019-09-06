@@ -4,7 +4,6 @@ from discord.ext.commands import Context, Bot, CommandError, check
 
 from config import CONFIG
 from models import db_session, BlockedKarma, User
-
 from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
@@ -23,11 +22,15 @@ class BlacklistError(CommandError):
 
 def is_compsoc_exec():
     async def predicate(ctx: Context):
-        roles = discord.utils.get(ctx.message.author.roles, id=CONFIG['UWCS_EXEC_ROLE_ID'])
+        roles = discord.utils.get(
+            ctx.message.author.roles, id=CONFIG["UWCS_EXEC_ROLE_ID"]
+        )
         if roles is None:
             await ctx.message.delete()
             display_name = get_name_string(ctx.message)
-            raise BlacklistError(f'You don\'t have permission to run that command, {display_name}.')
+            raise BlacklistError(
+                f"You don't have permission to run that command, {display_name}."
+            )
         else:
             return True
 
@@ -46,51 +49,72 @@ class Blacklist(commands.Cog):
     @blacklist.command(help="Add a topic to the karma blacklist.")
     @is_compsoc_exec()
     async def add(self, ctx: Context, item: str):
-        author_id = db_session.query(User).filter(User.user_uid == ctx.message.author.id).first().id
+        author_id = (
+            db_session.query(User)
+            .filter(User.user_uid == ctx.message.author.id)
+            .first()
+            .id
+        )
 
-        if not db_session.query(BlockedKarma) \
-                .filter(BlockedKarma.topic == item.casefold()).all():
+        if (
+            not db_session.query(BlockedKarma)
+            .filter(BlockedKarma.topic == item.casefold())
+            .all()
+        ):
             blacklist = BlockedKarma(topic=item.casefold(), user_id=author_id)
             db_session.add(blacklist)
             db_session.commit()
-            await ctx.send(f'Added {item} to the karma blacklist. :pencil:')
+            await ctx.send(f"Added {item} to the karma blacklist. :pencil:")
         else:
             await ctx.send(
-                f'{item} is already in the karma blacklist. :page_with_curl:')
+                f"{item} is already in the karma blacklist. :page_with_curl:"
+            )
 
     @blacklist.command(help="Remove a word from the karma blacklist.")
     @is_compsoc_exec()
     async def remove(self, ctx: Context, item: str):
-        if not db_session.query(BlockedKarma).filter(BlockedKarma.topic == item.casefold()).all():
-            await ctx.send(f'{item} is not in the karma blacklist. :page_with_curl:')
+        if (
+            not db_session.query(BlockedKarma)
+            .filter(BlockedKarma.topic == item.casefold())
+            .all()
+        ):
+            await ctx.send(f"{item} is not in the karma blacklist. :page_with_curl:")
         else:
-            db_session.query(BlockedKarma).filter(BlockedKarma.topic == item.casefold()).delete()
+            db_session.query(BlockedKarma).filter(
+                BlockedKarma.topic == item.casefold()
+            ).delete()
             db_session.commit()
 
-            await ctx.send(f'{item} has been removed from the karma blacklist. :wastebasket:')
+            await ctx.send(
+                f"{item} has been removed from the karma blacklist. :wastebasket:"
+            )
 
     @blacklist.command(help="List all blacklisted karma topics.")
     @is_compsoc_exec()
     async def list(self, ctx: Context):
         items = db_session.query(BlockedKarma).all()
         if items:
-            list_str = 'The topics in the karma blacklist are:\n\n'
+            list_str = "The topics in the karma blacklist are:\n\n"
 
             for item in items:
-                list_str += f' • **{item.topic}**\n'
+                list_str += f" • **{item.topic}**\n"
         else:
-            list_str = 'There are no karma topics currently blacklisted! :mag:'
+            list_str = "There are no karma topics currently blacklisted! :mag:"
 
         await ctx.send(list_str)
 
     @blacklist.command(help="Search for a blacklisted topic.")
     async def search(self, ctx: Context, item: str):
-        item_folded = item.replace('*', '%').casefold()
-        items = db_session.query(BlockedKarma) \
-            .filter(BlockedKarma.topic.ilike(f'%{item_folded}%')).all()
+        item_folded = item.replace("*", "%").casefold()
+        items = (
+            db_session.query(BlockedKarma)
+            .filter(BlockedKarma.topic.ilike(f"%{item_folded}%"))
+            .all()
+        )
         if len(items) == 0:
             await ctx.send(
-                f'There were no topics matching "{item}" in the blacklist. :sweat:')
+                f'There were no topics matching "{item}" in the blacklist. :sweat:'
+            )
         else:
             if len(items) == 1:
                 list_str = f'The topic matching "{item}" in the blacklist is:\n\n'
@@ -101,7 +125,7 @@ class Blacklist(commands.Cog):
             max_len = 10
             for it in items:
                 if max_len > 0:
-                    list_str += f' • **{it.topic}**\n'
+                    list_str += f" • **{it.topic}**\n"
                 else:
                     break
                 max_len -= 1

@@ -70,7 +70,7 @@ class Fact(commands.Cog):
             "Ripe peas are yellow; we pick them before they're ripe.",
             "Albert Einstein never learned to drive.",
             "Yawning is contagious to dogs and chimps.",
-            "On April 18, 1930, BBC radio reported \"There is no news.\"",
+            'On April 18, 1930, BBC radio reported "There is no news."',
             "There is a city in Turkey called Batman.",
             "Oklahoma's state vegetable is the watermelon.",
             "Neil Armstrong's astronaut application was a week late.",
@@ -109,12 +109,13 @@ class Fact(commands.Cog):
             "In the 1600s English people had accents similar to the modern-day American accent.",
             "Human eyes stop growing around the age of 13.",
             "Nikola Tesla fell in love with a pigeon, once stating 'I loved that pigeon as a man loves a woman, and she loved me'.",
-            "The Scottish national animal is the unicorn."]
+            "The Scottish national animal is the unicorn.",
+        ]
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def fact(self, ctx: Context):
         display_name = get_name_string(ctx.message)
-        await ctx.send(f'{display_name}: {random.choice(self.options)}')
+        await ctx.send(f"{display_name}: {random.choice(self.options)}")
 
 
 def setup(bot: Bot):

@@ -6,9 +6,12 @@ from utils.aliases import get_name_string
 ERROR_LIMIT = 3
 DEPTH_LIMIT = 50
 
-LONG_HELP_TEXT = """
+LONG_HELP_TEXT = (
+    """
 Inteprets and reduces pure lambda calculus statements.
-Inputs are limited to a single line with a reduction limit of """ + str(DEPTH_LIMIT) + """.
+Inputs are limited to a single line with a reduction limit of """
+    + str(DEPTH_LIMIT)
+    + """.
 
 Syntax:
   abstraction: \\x.y
@@ -20,6 +23,7 @@ Example:
   !lambda eval (\\x.\\y.y x) a b            -> (b a)
   !lambda eval \\f.(\\x.f(x x)) (\\x.f(x x)) -> <diverges>
 """
+)
 
 SHORT_HELP_TEXT = """Inteprets and reduces lambda calculus expressions."""
 
@@ -37,12 +41,12 @@ class Lcalc(commands.Cog):
     async def eval(self, ctx: Context, *args: clean_content):
         display_name = get_name_string(ctx.message)
         self.errors = 0
-        self.out = f'{display_name}:\n```'
+        self.out = f"{display_name}:\n```"
         self.evaluate(" ".join(args))
         if self.errors:
-            self.out += f'{self.errors} errors detected.'
+            self.out += f"{self.errors} errors detected."
         self.out += "```"
-        await ctx.send(f'{self.out}')
+        await ctx.send(f"{self.out}")
 
     def absorbToken(self):
         self.value = ""
@@ -68,7 +72,9 @@ class Lcalc(commands.Cog):
         else:
             self.token = "var"
             self.value += self.code[self.pointer]
-            while self.pointer+1 < len(self.code) and self.code[self.pointer+1] not in ("\\", "(", ")", ".", " "):
+            while self.pointer + 1 < len(self.code) and self.code[
+                self.pointer + 1
+            ] not in ("\\", "(", ")", ".", " "):
                 self.pointer += 1
                 self.value += self.code[self.pointer]
         self.pointer += 1
@@ -81,10 +87,20 @@ class Lcalc(commands.Cog):
         self.absorbToken()
 
     def printInvalidTokenError(self, expectedTokens):
-        self.out += "Error: Expected " + (expectedTokens[0] if len(expectedTokens) == 1 else "one of " + str(expectedTokens)) + "\n"
-        self.out += "  Found " + self.token + " at position " + str(self.pointer) + ":" + "\n"
+        self.out += (
+            "Error: Expected "
+            + (
+                expectedTokens[0]
+                if len(expectedTokens) == 1
+                else "one of " + str(expectedTokens)
+            )
+            + "\n"
+        )
+        self.out += (
+            "  Found " + self.token + " at position " + str(self.pointer) + ":" + "\n"
+        )
         self.out += self.code + "\n"
-        self.out += " "*(self.pointer-1) + "^" + "\n"
+        self.out += " " * (self.pointer - 1) + "^" + "\n"
 
     def parseExpression(self):
         if self.token == "var":
@@ -100,7 +116,7 @@ class Lcalc(commands.Cog):
         elif self.token == "(":
             self.absorbToken()  # Absorb (
             left = self.parseExpression()
-            self.absorbWithCheck((")"),)  # Absorb )
+            self.absorbWithCheck((")"))  # Absorb )
         else:
             self.errors += 1
             if self.errors <= ERROR_LIMIT:
@@ -144,12 +160,12 @@ class Lcalc(commands.Cog):
             e2 = e1.betaReduce()
             depth += 1
         if depth == DEPTH_LIMIT:
-            self.out += f'Warning: reduction limit reached ({DEPTH_LIMIT})\n'
+            self.out += f"Warning: reduction limit reached ({DEPTH_LIMIT})\n"
         self.out += str(e2)
         return e2
 
 
-class LambdaNodeVariable():
+class LambdaNodeVariable:
     def __init__(self, name):
         self.name = name
 
@@ -168,7 +184,7 @@ class LambdaNodeVariable():
         return LambdaNodeVariable(self.name)
 
 
-class LambdaNodeAbstraction():
+class LambdaNodeAbstraction:
     def __init__(self, variable, child):
         self.variable = variable
         self.child = child
@@ -193,7 +209,7 @@ class LambdaNodeAbstraction():
         return LambdaNodeAbstraction(self.variable, self.child.copy())
 
 
-class LambdaNodeApplication():
+class LambdaNodeApplication:
     def __init__(self, left, right):
         self.left = left
         self.right = right

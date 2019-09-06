@@ -20,9 +20,9 @@ class Flip(commands.Cog):
     async def flip(self, ctx: Context, *args: clean_content):
         display_name = get_name_string(ctx.message)
         if len(args) == 1:
-            await ctx.send(f'I can\'t flip just one item {display_name}! :confused:')
+            await ctx.send(f"I can't flip just one item {display_name}! :confused:")
         else:
-            options = ['Heads', 'Tails'] if not args else args
+            options = ["Heads", "Tails"] if not args else args
 
             await ctx.send(f'{display_name}: {random.choice(options).lstrip("@")}')
 
