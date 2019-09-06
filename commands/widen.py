@@ -26,10 +26,10 @@ class Widen(commands.Cog):
         self.bot = bot
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def widen(self, ctx: Context, *message: clean_content):
+    async def widen(self, ctx: Context, message: clean_content):
         if message:
             # Convert message into a string from tuple of strings
-            target_raw = " ".join(message)
+            target_raw = message
         else:
             messages = await ctx.history(limit=2).flatten()
             target_raw = messages[-1].clean_content
