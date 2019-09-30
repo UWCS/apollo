@@ -17,7 +17,7 @@ WIDE_MAP = dict((i, i + 0xFEE0) for i in range(0x21, 0x7F))
 WIDE_MAP[0x20] = 0x3000
 
 
-def widen(s: str):
+def _widen(s: str):
     return s.translate(WIDE_MAP)
 
 
@@ -53,16 +53,16 @@ class Widen(commands.Cog):
             True,
         )
         if is_wide:
-            widened = widen("　".join([x.lstrip("@") for x in target]))
+            widened = _widen("　".join([x.lstrip("@") for x in target]))
         else:
-            widened = widen("".join([x.lstrip("@") for x in target]))
+            widened = _widen("".join([x.lstrip("@") for x in target]))
 
         if widened:
             # Make sure we send a message that's short enough
             if len(widened) <= 2000:
                 await ctx.send(widened)
             else:
-                await ctx.send(widen("The output is too wide") + "　:frowning:")
+                await ctx.send(_widen("The output is too wide") + "　:frowning:")
 
 
 def setup(bot: Bot):
