@@ -11,7 +11,9 @@ from sqlalchemy import (
     BigInteger,
     func,
     Boolean,
-    Text, Float)
+    Text,
+    Float,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
