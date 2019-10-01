@@ -14,4 +14,6 @@ CONFIG = {
     "BOT_LOGGING": True,
     "DEBUG": True,
     "REMINDER_SEARCH_INTERVAL": 30,
+    "SLICER_PATH": "/path/to/prusa-slicer",
+    "PRINTER_FILE_ROOT": "/path/to/print/files",
 }

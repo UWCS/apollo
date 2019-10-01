@@ -11,7 +11,7 @@ from sqlalchemy import (
     BigInteger,
     func,
     Boolean,
-)
+    Text, Float)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
@@ -151,6 +151,16 @@ class User(Base):
     karma_changes = relationship(
         "KarmaChange", back_populates="user", order_by=KarmaChange.created_at
     )
+
+
+@auto_str
+class FilamentType(Base):
+    __tablename__ = "filament_types"
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    name = Column(Text, nullable=False, unique=True)
+    cost = Column(Float, nullable=False)
+    image_path = Column(String, nullable=False, unique=True)
 
 
 @auto_str
