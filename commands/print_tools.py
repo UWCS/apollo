@@ -4,12 +4,14 @@ import shutil
 from pathlib import Path
 
 import requests
+from discord import Color, Embed
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, clean_content
 
 from commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from models import db_session, FilamentType
+from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 Tool(s) to help cost and request something is 3D printed on the UWCS 3D printer.
@@ -30,6 +32,7 @@ DELF_HELP_TEXT = """Remove a filament type from the bot's database"""
 LIST_HELP_TEXT = (
     """Lists all of the available filament. Takes an optional list filter"""
 )
+INFO_HELP_TEXT = """Gives information about the chosen filament, given in quotes"""
 
 
 def get_valid_filename(s):
@@ -150,8 +153,35 @@ class PrintTools(commands.Cog, name="Print tools"):
             else:
                 await ctx.send("There are no filaments currently listed")
 
+    @printtools.command(help=INFO_HELP_TEXT, brief=INFO_HELP_TEXT)
+    async def info(self, ctx: Context, filament_name: clean_content):
+        filament = (
+            db_session.query(FilamentType)
+            .filter(FilamentType.name.like(filament_name))
+            .first()
+        )
+
+        if not filament:
+            await ctx.send(
+                f'Couldn\'t find a filament that matches the name "{filament_name}"'
+            )
+            return
+
+        # Construct the embed
+        embed_colour = Color.from_rgb(61, 83, 255)
+        embed_title = f'Filament info for "{filament_name}"'
+        host = CONFIG["FIG_HOST_URL"] + "/filaments"
+        image_file = filament.image_path.split("/")[-1]
+
+        embed = Embed(title=embed_title, color=embed_colour)
+        embed.add_field(name="Cost per kilogram", value="{0:.2f}".format(filament.cost))
+        embed.set_image(url=f"{host}/{image_file}")
+
+        display_name = get_name_string(ctx.message)
+        await ctx.send(f"Here you go, {display_name}! :page_facing_up:", embed=embed)
+
     @printtools.command(help=COST_HELP_TEXT, brief=COST_HELP_TEXT)
-    async def cost(self, ctx: Context, filament: str):
+    async def cost(self, ctx: Context, filament: clean_content):
         msg = ctx.message
 
         if msg.attachments:
