@@ -1,4 +1,3 @@
-from discord.ext import commands
 import re
 from datetime import datetime, timedelta
 
@@ -56,27 +55,17 @@ def parse_time(time):
             pass
 
     if not parsed_time:
-        result = re.match(r"(\d+d)?(\d+h)?(\d+m)?(\d+s)?$", time)
+        result = re.match(r"(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s)?(?!^)$", time)
         if result:
-            check_empty = re.match(r"$", time)
-            if not check_empty:
-                parsed_time = now
-                if result.group(1):
-                    parsed_time = parsed_time + timedelta(
-                        days=int(result.group(1)[:-1])
-                    )
-                if result.group(2):
-                    parsed_time = parsed_time + timedelta(
-                        hours=int(result.group(2)[:-1])
-                    )
-                if result.group(3):
-                    parsed_time = parsed_time + timedelta(
-                        minutes=int(result.group(3)[:-1])
-                    )
-                if result.group(4):
-                    parsed_time = parsed_time + timedelta(
-                        seconds=int(result.group(4)[:-1])
-                    )
+            parsed_time = now
+            if result.group(1):
+                parsed_time = parsed_time + timedelta(days=int(result.group(1)[:-1]))
+            if result.group(2):
+                parsed_time = parsed_time + timedelta(hours=int(result.group(2)[:-1]))
+            if result.group(3):
+                parsed_time = parsed_time + timedelta(minutes=int(result.group(3)[:-1]))
+            if result.group(4):
+                parsed_time = parsed_time + timedelta(seconds=int(result.group(4)[:-1]))
 
     return parsed_time
 
