@@ -17,7 +17,7 @@ WIDE_MAP = dict((i, i + 0xFEE0) for i in range(0x21, 0x7F))
 WIDE_MAP[0x20] = 0x3000
 
 
-def _widen(s: str):
+def apply_widen(s: str):
     return s.translate(WIDE_MAP)
 
 
@@ -26,7 +26,7 @@ class Widen(commands.Cog):
         self.bot = bot
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def widen(self, ctx: Context, message: clean_content):
+    async def widen(self, ctx: Context, message: clean_content = None):
         if message:
             # Convert message into a string from tuple of strings
             target_raw = message
@@ -53,16 +53,16 @@ class Widen(commands.Cog):
             True,
         )
         if is_wide:
-            widened = _widen("　".join([x.lstrip("@") for x in target]))
+            widened = apply_widen("　".join([x.lstrip("@") for x in target]))
         else:
-            widened = _widen("".join([x.lstrip("@") for x in target]))
+            widened = apply_widen("".join([x.lstrip("@") for x in target]))
 
         if widened:
             # Make sure we send a message that's short enough
             if len(widened) <= 2000:
                 await ctx.send(widened)
             else:
-                await ctx.send(_widen("The output is too wide") + "　:frowning:")
+                await ctx.send(apply_widen("The output is too wide") + "　:frowning:")
 
 
 def setup(bot: Bot):
