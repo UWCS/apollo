@@ -6,4 +6,4 @@ def get_name_string(message):
     if message.author.id == CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]:
         return message.clean_content.split(" ")[0][3:-3]
     else:
-        return f"<@{message.author.id}>"
+        return f"{message.author.mention}"

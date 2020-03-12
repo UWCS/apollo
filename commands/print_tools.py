@@ -73,8 +73,7 @@ class PrintTools(commands.Cog, name="Print tools"):
         print_images_dir = Path(print_root_dir, "images")
 
         # Do a quick check the folder(s) exist and make them if not
-        if not print_images_dir.exists():
-            os.system("mkdir -p {path}".format(path=str(print_images_dir)))
+        print_images_dir.mkdir(parents=True, exist_ok=True)
 
         filament_name, filament_cost = args[:2]
         filament_cost = float(filament_cost)

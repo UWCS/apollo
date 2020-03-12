@@ -136,7 +136,7 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
                 time[-1] + ((time[-1] - time[0]) * 0.05),
             ],
         )
-        line, = ax.plot_date(time, scores, "-", xdate=True)
+        (line,) = ax.plot_date(time, scores, "-", xdate=True)
         line.set_label(karma)
 
     # Create a legend if more than  1 line and format the dates
