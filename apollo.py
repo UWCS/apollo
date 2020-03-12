@@ -38,6 +38,7 @@ EXTENSIONS = [
     "commands.lcalc",
     "commands.widen",
     "commands.print_tools",
+    "commands.roles",
 ]
 
 bot = Bot(command_prefix=when_mentioned_or("!"), description=DESCRIPTION)
@@ -194,10 +195,12 @@ async def on_member_join(member: Member):
 if __name__ == "__main__":
     for extension in EXTENSIONS:
         try:
+            print(f"Attemtping to load {extension}", end="")
             bot.load_extension(extension)
+            print(" ...done")
         except Exception as e:
             exc = "{}: {}".format(type(e).__name__, e)
-            print("Failed to load extension {}\n{}".format(extension, exc))
+            print("\nFailed to load extension {}\n{}".format(extension, exc))
 
     bot.loop.create_task(reminder_check())
     bot.run(CONFIG["DISCORD_TOKEN"])
