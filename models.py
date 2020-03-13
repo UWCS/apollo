@@ -194,3 +194,12 @@ class Reminder(Base):
     triggered = Column(Boolean, nullable=False)
     playback_channel_id = Column(BigInteger, nullable=False)
     irc_name = Column(String, nullable=True)
+
+
+@auto_str
+class RoleMessage(Base):
+    __tablename__ = "role_reaction_messages"
+    message_id = Column(BigInteger, primary_key=True, nullable=False)
+    channel_id = Column(BigInteger, nullable=False)
+    guild_id = Column(String, nullable=False)
+    reaction_name = Column(BigInteger, nullable=False)
