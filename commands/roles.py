@@ -90,6 +90,23 @@ class Roles(commands.Cog):
     @commands.Cog.listener(name="on_raw_reaction_remove")
     async def on_reaction_remove(self, payload):
         print("=" * 10, payload, "=" * 10, sep="\n")
+        message_id = payload.message_id
+        channel_id = payload.channel_id
+        guild_id = payload.guild_id
+        reaction_name = str(payload.emoji)
+        member = self.bot.get_guild(guild_id).get_member(payload.user_id)
+
+        role_message = db_session.query(RoleMessage).filter(
+            RoleMessage.message_id == message_id
+            and RoleMessage.channel_id == channel_id
+            and RoleMessage.guild_id == guild_id
+            and RoleMessage.reaction_name == reaction_name
+        ).first()
+
+        if role_message:
+            role = member.guild.get_role(role_message.role_id)
+            await member.remove_roles(role)
+
 
 
 def setup(bot: Bot):
