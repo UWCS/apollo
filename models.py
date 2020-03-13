@@ -203,3 +203,4 @@ class RoleMessage(Base):
     channel_id = Column(BigInteger, nullable=False)
     guild_id = Column(String, nullable=False)
     reaction_name = Column(BigInteger, nullable=False)
+    role_id = Column(BigInteger, nullable=False)
