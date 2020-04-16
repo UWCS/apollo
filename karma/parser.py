@@ -7,8 +7,10 @@ from sqlalchemy.orm import Session
 
 from models import BlockedKarma
 
-RawKarma = namedtuple('RawKarma', ['name', 'op', 'reason'])
-KarmaTransaction = namedtuple('KarmaTransaction', ['name', 'self_karma', 'net_karma', 'reasons'])
+RawKarma = namedtuple("RawKarma", ["name", "op", "reason"])
+KarmaTransaction = namedtuple(
+    "KarmaTransaction", ["name", "self_karma", "net_karma", "reasons"]
+)
 
 
 class Operation(enum.Enum):
@@ -18,9 +20,9 @@ class Operation(enum.Enum):
 
     @staticmethod
     def from_str(operation_string):
-        if operation_string == '++':
+        if operation_string == "++":
             return Operation.POSITIVE
-        elif operation_string == '--':
+        elif operation_string == "--":
             return Operation.NEGATIVE
         else:
             return Operation.NEUTRAL
@@ -28,7 +30,7 @@ class Operation(enum.Enum):
 
 def parse_message(message: str, db_session: Session):
     # Remove any code blocks
-    filtered_message = re.sub(u'```.*```', '', message)
+    filtered_message = re.sub("```.*```", "", message)
 
     # If there's no message to parse then there's nothing to return
     if not filtered_message:
@@ -37,25 +39,41 @@ def parse_message(message: str, db_session: Session):
     # The regex for parsing karma messages
     # Hold on tight because this will be a doozy...
     karma_regex = re.compile(
-        r'(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+(?P<karma_reason>[^,]+)($|,)|\s\((?P<karma_reason_2>.+)\)|,?\s|$)')
+        r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+(?P<karma_reason>[^,]+)($|,)|\s\((?P<karma_reason_2>.+)\)|,?\s|$)"
+    )
     items = karma_regex.finditer(filtered_message)
     results = []
 
     # Collate all matches into a list
     for item in items:
         # If the karma item is not in quotes, need to make sure it isn't blacklisted
-        if not (item.group('karma_target').startswith('"') and item.group('karma_target').endswith('"')):
+        if not (
+            item.group("karma_target").startswith('"')
+            and item.group("karma_target").endswith('"')
+        ):
             # Check to make sure non quoted item is not in blacklist
-            if not db_session.query(BlockedKarma)\
-                    .filter(BlockedKarma.topic == item.group('karma_target').casefold()).all() \
-                    and len(item.group('karma_target')) > 2:
-                results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'),
-                                        op=item.group('karma_op'),
-                                        reason=item.group('karma_reason') or item.group('karma_reason_2')))
+            if (
+                not db_session.query(BlockedKarma)
+                .filter(BlockedKarma.topic == item.group("karma_target").casefold())
+                .all()
+                and len(item.group("karma_target")) > 2
+            ):
+                results.append(
+                    RawKarma(
+                        name=item.group("karma_target").replace('"', "").lstrip("@"),
+                        op=item.group("karma_op"),
+                        reason=item.group("karma_reason")
+                        or item.group("karma_reason_2"),
+                    )
+                )
         else:
-            results.append(RawKarma(name=item.group('karma_target').replace('"', '').lstrip('@'),
-                                    op=item.group('karma_op'),
-                                    reason=item.group('karma_reason') or item.group('karma_reason_2')))
+            results.append(
+                RawKarma(
+                    name=item.group("karma_target").replace('"', "").lstrip("@"),
+                    op=item.group("karma_op"),
+                    reason=item.group("karma_reason") or item.group("karma_reason_2"),
+                )
+            )
 
     # If there are any results then return the list, otherwise give None
     if results:
@@ -76,7 +94,9 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
     karma_ops = dict()
     transactions = []
     for item in raw_karma:
-        karma_ops.setdefault(item.name, []).append((Operation.from_str(item.op), item.reason))
+        karma_ops.setdefault(item.name, []).append(
+            (Operation.from_str(item.op), item.reason)
+        )
 
     # Iterate over the karma items to form a number of transactions
     for key in karma_ops.keys():
@@ -95,9 +115,15 @@ def create_transactions(message_author: str, message_nick: str, karma: List[RawK
             net_karma = 1
 
         # have to hard code 'irc' as only strings are passed into this function, TODO: change this
-        self_karma = ((key.casefold() == message_author.casefold() and not message_author.casefold() == 'irc')
-                      or key.casefold() == message_nick.casefold())
+        self_karma = (
+            key.casefold() == message_author.casefold()
+            and not message_author.casefold() == "irc"
+        ) or key.casefold() == message_nick.casefold()
 
-        transactions.append(KarmaTransaction(name=key, self_karma=self_karma, net_karma=net_karma, reasons=reasons))
+        transactions.append(
+            KarmaTransaction(
+                name=key, self_karma=self_karma, net_karma=net_karma, reasons=reasons
+            )
+        )
 
     return transactions

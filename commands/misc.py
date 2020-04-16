@@ -1,3 +1,5 @@
+import random
+
 from discord.ext import commands
 from discord.ext.commands import Context, Bot
 
@@ -7,10 +9,12 @@ GO_HELP_TEXT = """The eternal #cs meme."""
 DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
 RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you."""
 PR_HELP_TEXT = """You know what to do"""
+ISSUE_HELP_TEXT = """You know what you want someone else to do"""
 BLUESHELL_HELP_TEXT = """!blueshell"""
+AWOO_HELP_TEXT = """Tails and that"""
 
 
-class Misc:
+class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
@@ -38,9 +42,19 @@ class Misc:
     async def pr(self, ctx: Context):
         await ctx.send("You can make a pull request for that!")
 
+    @commands.command(help=ISSUE_HELP_TEXT, brief=ISSUE_HELP_TEXT)
+    async def issue(self, ctx: Context):
+        await ctx.send("You can submit an issue for that!")
+
     @commands.command(help=BLUESHELL_HELP_TEXT, brief=BLUESHELL_HELP_TEXT)
     async def blueshell(self, ctx: Context):
-        await ctx.send("<:blueshell:541726526543101973> Thank you RNGesus for the £5 donation! <:blueshell:541726526543101973>")
+        await ctx.send(
+            "<:blueshell:541726526543101973> Thank you RNGesus for the £5 donation! <:blueshell:541726526543101973>"
+        )
+
+    @commands.command(help=AWOO_HELP_TEXT, brief=AWOO_HELP_TEXT)
+    async def awoo(self, ctx: Context):
+        await ctx.send("Aw{}~".format("o" * random.randrange(2, 5)))
 
 
 def setup(bot: Bot):
