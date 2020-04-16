@@ -62,6 +62,5 @@ class Misc(commands.Cog):
         await ctx.send(":neutral_face:")
 
 
-
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
