@@ -12,6 +12,7 @@ PR_HELP_TEXT = """You know what to do"""
 ISSUE_HELP_TEXT = """You know what you want someone else to do"""
 BLUESHELL_HELP_TEXT = """!blueshell"""
 AWOO_HELP_TEXT = """Tails and that"""
+SINJO_HELP_TEXT = """o-o"""
 
 
 class Misc(commands.Cog):
@@ -55,6 +56,10 @@ class Misc(commands.Cog):
     @commands.command(help=AWOO_HELP_TEXT, brief=AWOO_HELP_TEXT)
     async def awoo(self, ctx: Context):
         await ctx.send("Aw{}~".format("o" * random.randrange(2, 5)))
+
+    @commands.command(help=SINJO_HELP_TEXT, brief=SINJO_HELP_TEXT)
+    async def sinjo(self, ctx: Context):
+        await ctx.send(":neutral_face:")
 
 
 def setup(bot: Bot):
