@@ -1,10 +1,11 @@
+import re
 from datetime import datetime
 
 import discord
 from discord import Embed, Color
 from discord.abc import PrivateChannel
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, check
+from discord.ext.commands import Context, Bot, CommandError, check, clean_content
 from pytz import utc, timezone
 
 from apollo import pluralise
@@ -71,6 +72,64 @@ class Admin(commands.Cog):
     async def admin(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
+
+    # @admin.command(
+    #     name="channel",
+    #     help="""Ignore or respond to commands in the given channel (while keeping eyes on Karma).
+    #
+    #     Expects 2 arguments, whether or not to ignore a channel (ignore, watch) and the channel (ID or link)""",
+    #     bried="Ignore or respond to commands in the given channel",
+    # )
+    async def channel_ignore(self, ctx: Context, *args: clean_content):
+        # Format: !admin channel (ignore|watch) <channels...> (channel is ID or channel link)
+        # Make sure there's the right number of args
+        if len(args) < 2:
+            await ctx.send(
+                "I need both the channel(s) to ignore and whether I should watch or ignore them. See the help command for more info :smile:"
+            )
+            return
+
+        # Make sure the mode is correct
+        mode = str(args[0]).lower()
+        if mode != "ignore" and mode != "watch":
+            await ctx.send(
+                f'I can only "watch" or "ignore" channels, you told me to {mode} :slight_frown:'
+            )
+            return
+
+        # Get each of the channels from the guild
+        channel_link_exp = re.compile(r"^<#(?P<id>\d+)>$")
+        channel_id_exp = re.compile(r"^\d+$")
+        channels_raw = list(args)[1:]
+        compsoc_guild = [
+            guild for guild in ctx.bot.guilds if guild.id == CONFIG["UWCS_DISCORD_ID"]
+        ][0]
+
+        error_not_id = []
+        channel_ids = []
+        for c in channels_raw:
+            if channel_id_exp.match(c):
+                channel_ids.append(int(c))
+            else:
+                link_match = channel_link_exp.match(c)
+                if link_match:
+                    groups = link_match.groupdict()
+                    channel_ids.append(int(groups.get("id")))
+                else:
+                    error_not_id.append(c)
+
+        # Check each channel is in the guild
+        channels = []
+        error_nin_guild = []
+        for chan_id in channel_ids:
+            channel = discord.utils.get(compsoc_guild.channels, id=chan_id)
+            if channel:
+                channels.append(channel)
+            else:
+                error_nin_guild.append(chan_id)
+
+        # TODO: Check they're in the guild, and then do the DB action
+        await ctx.send(" ".join(args))
 
     @admin.command(
         name="userinfo",
