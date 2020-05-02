@@ -160,6 +160,16 @@ def test_self_karma_single_reason():
     ]
 
 
+def test_self_karma_single_reason_with_comma():
+    assert create_transactions(
+        "Bar", "Bar", [RawKarma(name="Bar", op="++", reason="Is, awesome")]
+    ) == [
+        KarmaTransaction(
+            name="Bar", self_karma=True, net_karma=1, reasons=["Is, awesome"]
+        )
+    ]
+
+
 def test_self_karma_multiple_reason():
     assert create_transactions(
         "Bar",
@@ -246,6 +256,24 @@ def test_karma_double_neutral_reasons():
             self_karma=False,
             net_karma=0,
             reasons=["Foobar baz 1", "Foobar baz 2"],
+        )
+    ]
+
+
+def test_karma_double_neutral_reasons_and_commas():
+    assert create_transactions(
+        "Bar",
+        "Bar",
+        [
+            RawKarma(name="Baz", op="+-", reason="Foobar, baz 1"),
+            RawKarma(name="Baz", op="-+", reason="Foobar, baz 2"),
+        ],
+    ) == [
+        KarmaTransaction(
+            name="Baz",
+            self_karma=False,
+            net_karma=0,
+            reasons=["Foobar, baz 1", "Foobar, baz 2"],
         )
     ]
 

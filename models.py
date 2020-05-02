@@ -85,10 +85,8 @@ class KarmaChange(Base):
         Integer, ForeignKey("messages.id"), primary_key=True, nullable=False
     )
     created_at = Column(DateTime, nullable=False)
-    reasons = Column(
-        EncryptedType(type_in=ScalarListType(str), key=CONFIG["BOT_SECRET_KEY"]),
-        nullable=True,
-    )
+    # Using a Greek question mark (;) instead of a semicolon here!
+    reasons = Column(ScalarListType(str, separator=";"), nullable=True)
     change = Column(Integer, nullable=False)
     score = Column(Integer, nullable=False)
 
