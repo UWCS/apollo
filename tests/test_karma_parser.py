@@ -94,6 +94,18 @@ def test_simple_positive_with_paren_reason(database):
     ]
 
 
+def test_simple_positive_with_quote_reason(database):
+    assert parse_message("Foobar++ \"hella cool\"", database) == [
+        RawKarma(name="Foobar", op="++", reason="hella cool")
+    ]
+
+
+def test_simple_positive_with_paren_reason_and_comma(database):
+    assert parse_message("Foobar++ (hella, cool)", database) == [
+        RawKarma(name="Foobar", op="++", reason="hella, cool")
+    ]
+
+
 def test_simple_positive_with_empty_paren_reason(database):
     assert parse_message("Foobar++ ()", database) == [
         RawKarma(name="Foobar", op="++", reason=None)
@@ -106,9 +118,27 @@ def test_simple_positive_with_compound_reason(database):
     ]
 
 
+def test_simple_positive_with_compound_reason_comma(database):
+    assert parse_message("Foobar++ because it, is (hella cool)", database) == [
+        RawKarma(name="Foobar", op="++", reason="it")
+    ]
+
+
 def test_simple_positive_with_reason(database):
     assert parse_message("Foobar++ because baz", database) == [
         RawKarma(name="Foobar", op="++", reason="baz")
+    ]
+
+
+def test_simple_positive_with_reason_quoted(database):
+    assert parse_message("Foobar++ because \"baz\"", database) == [
+        RawKarma(name="Foobar", op="++", reason="baz")
+    ]
+
+
+def test_simple_positive_with_reason_quoted_comma(database):
+    assert parse_message("Foobar++ because \"baz, blat\"", database) == [
+        RawKarma(name="Foobar", op="++", reason="baz, blat")
     ]
 
 
@@ -131,25 +161,25 @@ def test_simple_neutral_mp_with_reason(database):
 
 
 def test_quoted_positive_with_reason(database):
-    assert parse_message("Foobar++ because baz", database) == [
+    assert parse_message('"Foobar"++ because baz', database) == [
         RawKarma(name="Foobar", op="++", reason="baz")
     ]
 
 
 def test_quoted_negative_with_reason(database):
-    assert parse_message("Foobar-- because baz", database) == [
+    assert parse_message('"Foobar"-- because baz', database) == [
         RawKarma(name="Foobar", op="--", reason="baz")
     ]
 
 
 def test_quoted_neutral_pm_with_reason(database):
-    assert parse_message("Foobar+- because baz", database) == [
+    assert parse_message('"Foobar"+- because baz', database) == [
         RawKarma(name="Foobar", op="+-", reason="baz")
     ]
 
 
 def test_quoted_neutral_mp_with_reason(database):
-    assert parse_message("Foobar-+ because baz", database) == [
+    assert parse_message('"Foobar"-+ because baz', database) == [
         RawKarma(name="Foobar", op="-+", reason="baz")
     ]
 
@@ -166,6 +196,13 @@ def test_simple_multiple_karma_with_reasons_and_quotes(database):
     assert parse_message('Foobar++ because baz blat, "Hello world"--', database) == [
         RawKarma(name="Foobar", op="++", reason="baz blat"),
         RawKarma(name="Hello world", op="--", reason=None),
+    ]
+
+
+def test_complex_multiple_karma_with_reasons_and_quotes(database):
+    assert parse_message('Foobar++ because baz blat, "Hello world"-- for "foo, bar"', database) == [
+        RawKarma(name="Foobar", op="++", reason="baz blat"),
+        RawKarma(name="Hello world", op="--", reason="foo, bar"),
     ]
 
 
@@ -194,7 +231,7 @@ def test_start_simple_mid_message_with_reason(database):
 
 
 def test_code_block_with_internal_reason(database):
-    assert parse_message("```Foobar baz because foo```", database) is None
+    assert parse_message("```Foobar++ baz because foo```", database) is None
 
 
 def test_code_block_with_karma_op_after(database):

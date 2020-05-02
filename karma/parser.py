@@ -39,7 +39,7 @@ def parse_message(message: str, db_session: Session):
     # The regex for parsing karma messages
     # Hold on tight because this will be a doozy...
     karma_regex = re.compile(
-        r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+(?P<karma_reason>[^,]+)($|,)|\s\((?P<karma_reason_2>.+)\)|,?\s|$)"
+        r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+((?P<karma_reason>[^\",]+)|\"(?P<karma_reason_2>.+)\")($|,)|\s\((?P<karma_reason_3>.+)\)|\s\"(?P<karma_reason_4>.+)\"|,?\s|$)"
     )
     items = karma_regex.finditer(filtered_message)
     results = []
@@ -63,7 +63,9 @@ def parse_message(message: str, db_session: Session):
                         name=item.group("karma_target").replace('"', "").lstrip("@"),
                         op=item.group("karma_op"),
                         reason=item.group("karma_reason")
-                        or item.group("karma_reason_2"),
+                        or item.group("karma_reason_2")
+                        or item.group("karma_reason_3")
+                        or item.group("karma_reason_4"),
                     )
                 )
         else:
@@ -71,7 +73,10 @@ def parse_message(message: str, db_session: Session):
                 RawKarma(
                     name=item.group("karma_target").replace('"', "").lstrip("@"),
                     op=item.group("karma_op"),
-                    reason=item.group("karma_reason") or item.group("karma_reason_2"),
+                    reason=item.group("karma_reason")
+                    or item.group("karma_reason_2")
+                    or item.group("karma_reason_3")
+                    or item.group("karma_reason_4"),
                 )
             )
 
