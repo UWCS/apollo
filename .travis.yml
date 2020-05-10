@@ -2,13 +2,15 @@ language: python
 python:
   - "3.6"
 # command to install dependencies
+env:
+  - SECRET_KEY="secret_key_here"
 install:
   - pip install -r requirements.txt
   - cp config.example.py config.py
   # command to run tests
 script:
   # Formatting compliance test
-  - SECRET_KEY="secret_key_here" pytest -v
+  - pytest -v
   - black --check .
 
 # Discord notifications
