@@ -8,7 +8,7 @@ install:
   # command to run tests
 script:
   # Formatting compliance test
-  - pytest -v
+  - SECRET_KEY="secret_key_here" pytest -v
   - black --check .
 
 # Discord notifications
