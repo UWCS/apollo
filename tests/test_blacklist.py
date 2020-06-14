@@ -15,6 +15,10 @@ def database():
     # Locate the testing config for Alembic
     config = Config(os.path.join(os.path.dirname(__file__), "../alembic.tests.ini"))
 
+    # Set the migration secret key here
+    if not os.environ.get("SECRET_KEY", None):
+        os.environ["SECRET_KEY"] = "test"
+
     # Start up the in-memory database instance
     db_engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(db_engine)
