@@ -25,8 +25,8 @@ class Widen(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def widen(self, ctx: Context, message: clean_content = None):
+    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, rest_is_raw=True)
+    async def widen(self, ctx: Context, *, message):
         if message:
             # Convert message into a string from tuple of strings
             target_raw = message
