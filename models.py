@@ -12,7 +12,6 @@ from sqlalchemy import (
     func,
     Boolean,
     Text,
-    Float,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -85,10 +84,8 @@ class KarmaChange(Base):
         Integer, ForeignKey("messages.id"), primary_key=True, nullable=False
     )
     created_at = Column(DateTime, nullable=False)
-    reasons = Column(
-        EncryptedType(type_in=ScalarListType(str), key=CONFIG["BOT_SECRET_KEY"]),
-        nullable=True,
-    )
+    # Using a Greek question mark (;) instead of a semicolon here!
+    reasons = Column(ScalarListType(str, separator=";"), nullable=True)
     change = Column(Integer, nullable=False)
     score = Column(Integer, nullable=False)
 
@@ -157,12 +154,21 @@ class User(Base):
 
 @auto_str
 class FilamentType(Base):
+    FILLAMENTUM = "fillamentum"
+    PRUSAMENT = "prusament"
+
     __tablename__ = "filament_types"
 
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(Text, nullable=False, unique=True)
-    cost = Column(Float, nullable=False)
+    profile = Column(String, default=FILLAMENTUM)
     image_path = Column(String, nullable=False, unique=True)
+
+    @staticmethod
+    def verify_type(type_str: str) -> bool:
+        return {FilamentType.FILLAMENTUM: True, FilamentType.PRUSAMENT: True}.get(
+            type_str.lower(), False
+        )
 
 
 @auto_str

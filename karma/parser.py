@@ -1,7 +1,7 @@
 import enum
 import re
 from collections import namedtuple
-from typing import List
+from typing import List, Union
 
 from sqlalchemy.orm import Session
 
@@ -28,6 +28,32 @@ class Operation(enum.Enum):
             return Operation.NEUTRAL
 
 
+def process_topic(topic_raw: str, db_session: Session) -> Union[str, None]:
+    if topic_raw.startswith('"') and topic_raw.endswith('"'):
+        # Remove surrounding quotes and then remove leading @
+        return topic_raw.replace('"', "").lstrip("@").strip()
+    else:
+        # Check if the item topic is disallowed
+        if (
+            not db_session.query(BlockedKarma)
+            .filter(BlockedKarma.topic == topic_raw.casefold())
+            .all()
+            and len(topic_raw) > 2
+        ):
+            return topic_raw.replace('"', "").lstrip("@").strip()
+        else:
+            return None
+
+
+def process_reason(reason_raw) -> Union[str, None]:
+    return (
+        reason_raw.group("karma_reason")
+        or reason_raw.group("karma_reason_2")
+        or reason_raw.group("karma_reason_3")
+        or reason_raw.group("karma_reason_4")
+    )
+
+
 def parse_message(message: str, db_session: Session):
     # Remove any code blocks
     filtered_message = re.sub("```.*```", "", message)
@@ -38,42 +64,25 @@ def parse_message(message: str, db_session: Session):
 
     # The regex for parsing karma messages
     # Hold on tight because this will be a doozy...
-    karma_regex = re.compile(
-        r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))(?P<karma_op>(\+\+|\+\-|\-\+|\-\-))(\s(because|for)\s+(?P<karma_reason>[^,]+)($|,)|\s\((?P<karma_reason_2>.+)\)|,?\s|$)"
-    )
+    karma_re_target = r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))"
+    karma_re_op = r"(?P<karma_op>[+-]{2,})"
+    karma_re_reason = '(\s(because|for)\s+((?P<karma_reason>[^",]+)|"(?P<karma_reason_2>.+)")($|,)|\s\((?P<karma_reason_3>.+)\)|\s"(?P<karma_reason_4>.+)"(?![+-]{2,})|,?\s|$)'
+
+    karma_regex = re.compile(karma_re_target + karma_re_op + karma_re_reason)
     items = karma_regex.finditer(filtered_message)
     results = []
 
     # Collate all matches into a list
     for item in items:
-        # If the karma item is not in quotes, need to make sure it isn't blacklisted
-        if not (
-            item.group("karma_target").startswith('"')
-            and item.group("karma_target").endswith('"')
-        ):
-            # Check to make sure non quoted item is not in blacklist
-            if (
-                not db_session.query(BlockedKarma)
-                .filter(BlockedKarma.topic == item.group("karma_target").casefold())
-                .all()
-                and len(item.group("karma_target")) > 2
-            ):
-                results.append(
-                    RawKarma(
-                        name=item.group("karma_target").replace('"', "").lstrip("@"),
-                        op=item.group("karma_op"),
-                        reason=item.group("karma_reason")
-                        or item.group("karma_reason_2"),
-                    )
-                )
-        else:
-            results.append(
-                RawKarma(
-                    name=item.group("karma_target").replace('"', "").lstrip("@"),
-                    op=item.group("karma_op"),
-                    reason=item.group("karma_reason") or item.group("karma_reason_2"),
-                )
-            )
+        # Need to make sure it isn't blacklisted
+        topic = process_topic(item.group("karma_target"), db_session)
+        op = item.group("karma_op")
+        if not topic:
+            continue
+
+        reason = process_reason(item)
+
+        results.append(RawKarma(name=topic, op=op, reason=reason))
 
     # If there are any results then return the list, otherwise give None
     if results:
