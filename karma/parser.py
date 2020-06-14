@@ -1,7 +1,6 @@
 import enum
 import re
 from collections import namedtuple
-from re import Match
 from typing import List, Union
 
 from sqlalchemy.orm import Session
@@ -46,7 +45,7 @@ def process_topic(topic_raw: str, db_session: Session) -> Union[str, None]:
             return None
 
 
-def process_reason(reason_raw: Match) -> Union[str, None]:
+def process_reason(reason_raw) -> Union[str, None]:
     return (
         reason_raw.group("karma_reason")
         or reason_raw.group("karma_reason_2")
