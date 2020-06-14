@@ -125,7 +125,6 @@ async def on_message(message: Message):
                 logged_message.id,
                 db_session,
                 CONFIG["KARMA_TIMEOUT"],
-                KARMA_PARSER,
             )
             if reply:
                 await message.channel.send(reply)
