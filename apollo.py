@@ -121,10 +121,7 @@ async def on_message(message: Message):
             message.content.startswith(prefix) for prefix in command_prefixes
         ]:
             reply = process_karma(
-                message,
-                logged_message.id,
-                db_session,
-                CONFIG["KARMA_TIMEOUT"],
+                message, logged_message.id, db_session, CONFIG["KARMA_TIMEOUT"]
             )
             if reply:
                 await message.channel.send(reply)

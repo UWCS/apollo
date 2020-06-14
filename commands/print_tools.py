@@ -1,3 +1,4 @@
+import configparser
 import os
 import re
 import shutil
@@ -14,12 +15,12 @@ from models import db_session, FilamentType
 from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
-Tool(s) to help cost and request something is 3D printed on the UWCS 3D printer.
+Commands to help cost and request something is 3D printed on the UWCS 3D printer.
 """
 ADDF_LONG_TEXT = """
 Adds a filament type to the bot's database. Format is a name in quotes, a cost per kilo, and an image of the filament (attached to the message or linked). An example:
 
-!printtools add_filament "<name>" <cost> [<image_url>]
+!printtools add_filament "<name>" <profile> [<image_url>]
 """
 DELF_LONG_TEXT = """
 Removes a filament type from the bot's database. Takes the full name of the filament in quotes.
@@ -46,6 +47,17 @@ def get_valid_filename(s):
 
 class PrintTools(commands.Cog, name="Print tools"):
     def __init__(self, bot: Bot):
+        self.print_root_dir = Path(CONFIG["PRINTER_FILE_ROOT"])
+        self.print_images_dir = Path(self.print_root_dir, "images")
+        self.print_profiles_dir = Path(self.print_root_dir, "profiles")
+
+        print_profiles = [
+            x for x in os.listdir(self.print_profiles_dir) if x.endswith(".ini")
+        ]
+        self.print_profiles = dict(
+            [(x, Path(self.print_profiles_dir, x)) for x in print_profiles]
+        )
+
         self.bot = bot
 
     @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
@@ -59,7 +71,7 @@ class PrintTools(commands.Cog, name="Print tools"):
         # Check we have the bare minumum number of args
         if len(args) < 2:
             await ctx.send(
-                "I need at least a filament name in quotes and its cost per kilogram."
+                "I need at least a filament name in quotes and the associated print profile."
             )
             return
 
@@ -69,15 +81,17 @@ class PrintTools(commands.Cog, name="Print tools"):
                 "Please provide an image of the filament by an image link or attachment"
             )
 
-        print_root_dir = Path(CONFIG["PRINTER_FILE_ROOT"])
-        print_images_dir = Path(print_root_dir, "images")
-
         # Do a quick check the folder(s) exist and make them if not
-        print_images_dir.mkdir(parents=True, exist_ok=True)
+        self.print_images_dir.mkdir(parents=True, exist_ok=True)
 
-        filament_name, filament_cost = args[:2]
-        filament_cost = float(filament_cost)
-        image_file = Path(print_images_dir, get_valid_filename(filament_name))
+        filament_name, filament_profile = args[:2]
+        # Verify that the filament type is an expected type
+        if not FilamentType.verify_type(str(filament_profile)):
+            await ctx.send(
+                f'Print profile "{filament_profile}" is not a valid profile. Currently accepted profiles are: `filamentum`, `prusament`.'
+            )
+
+        image_file = Path(self.print_images_dir, get_valid_filename(filament_name))
 
         # Get the image and save it to the filesystem
         if ctx.message.attachments:
@@ -97,7 +111,9 @@ class PrintTools(commands.Cog, name="Print tools"):
 
         # Save the model to the database
         filament = FilamentType(
-            name=filament_name, cost=filament_cost, image_path=str(image_file)
+            name=str(filament_name),
+            profile=str(filament_profile).lower(),
+            image_path=str(image_file),
         )
         db_session.add(filament)
         db_session.commit()
@@ -124,8 +140,9 @@ class PrintTools(commands.Cog, name="Print tools"):
         await ctx.send(f'Removed "{filament_name}" from the filament list!')
 
     @printtools.command(name="list", help=LIST_HELP_TEXT, brief=LIST_HELP_TEXT)
-    async def listf(self, ctx: Context, *filter: clean_content):
+    async def list_filament(self, ctx: Context, *filter: clean_content):
         # If there is a search filter then use it
+        # TODO: Use the embeds for this
         if filter:
             filter_str = str(filter[0])
             filaments = (
@@ -138,11 +155,25 @@ class PrintTools(commands.Cog, name="Print tools"):
             filaments = db_session.query(FilamentType).order_by(FilamentType.name).all()
 
         if filaments:
-            # Format the list nicely
-            filament_list = "\n".join(
-                map(lambda x: f" • **{x.name}** - £{x.cost}/kg", filaments)
-            )
-            if len(filament_list) > 1:
+            filament_list = []
+            for f in filaments:
+                # Format the list nicely
+                config = configparser.ConfigParser()
+                if self.print_profiles.get(f"uwcs_balanced_{f.profile}.ini", None):
+                    config.read_file(
+                        open(
+                            self.print_profiles.get(f"uwcs_balanced_{f.profile}.ini"),
+                            "r",
+                        )
+                    )
+                    cost = f"- £{config.get('cfg', 'filament_cost')}/kg"
+                else:
+                    cost = "- Unknown cost"
+
+                filament_list.append(f" • **{f.name}** {cost}")
+
+            filament_list = '\n'.join(filament_list)
+            if len(filaments) > 1:
                 await ctx.send(f"Our current filaments:\n{filament_list}")
             else:
                 await ctx.send(f"Our current filament:\n{filament_list}")
@@ -150,7 +181,7 @@ class PrintTools(commands.Cog, name="Print tools"):
             if filter:
                 await ctx.send(f'There are no filaments that match "{str(filter[0])}"')
             else:
-                await ctx.send("There are no filaments currently listed")
+                await ctx.send("There are no filaments currently available")
 
     @printtools.command(help=INFO_HELP_TEXT, brief=INFO_HELP_TEXT)
     async def info(self, ctx: Context, filament_name: clean_content):
