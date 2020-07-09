@@ -13,6 +13,7 @@ ISSUE_HELP_TEXT = """You know what you want someone else to do"""
 BLUESHELL_HELP_TEXT = """!blueshell"""
 AWOO_HELP_TEXT = """Tails and that"""
 SINJO_HELP_TEXT = """o-o"""
+SERVERS_HELP_TEXT = """List of our multiplayer servers"""
 
 
 class Misc(commands.Cog):
@@ -60,6 +61,23 @@ class Misc(commands.Cog):
     @commands.command(help=SINJO_HELP_TEXT, brief=SINJO_HELP_TEXT)
     async def sinjo(self, ctx: Context):
         await ctx.send(":neutral_face:")
+        
+    @commands.command(help=SERVERS_HELP_TEXT, brief=SERVERS_HELP_TEXT)
+    async def servers(self, ctx: Context):
+        await ctx.send(""":video_game: Running Servers :video_game: 
+We have some permanantly running servers:
+
+:ice_cube: Vanilla Minecraft :ice_cube: 
+We have a minecraft 1.15.2 server running at:
+`minecraft.uwcs.co.uk`
+
+:hammer_pick: Modded Minecraft :hammer_pick: 
+We  have a modded server running FTB Revelation at:
+`moddedminecraft.uwcs.co.uk`
+
+:crossed_swords: Terraria :crossed_swords: 
+We have a Terraria 1.4.0.5 server running at:
+`terraria.uwcs.co.uk:7777`""")
 
 
 def setup(bot: Bot):
