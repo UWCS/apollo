@@ -1,4 +1,4 @@
-# Apollo [![Build Status](https://travis-ci.org/davidjrichardson/apollo.svg?branch=master)](https://travis-ci.org/davidjrichardson/apollo)
+# Apollo [![Build Status](https://travis-ci.org/UWCS/apollo.svg?branch=master)](https://travis-ci.org/uwcs/apollo)
 
 Apollo is a [Discord](https://discordapp.com/) bot for the [University of Warwick Computing Society](https://uwcs.co.uk). It is designed to augment our Discord server with a few of the user services available on our website.
 
