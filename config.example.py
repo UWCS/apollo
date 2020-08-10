@@ -16,5 +16,4 @@ CONFIG = {
     "REMINDER_SEARCH_INTERVAL": 30,
     "SLICER_PATH": "/path/to/prusa-slicer",
     "PRINTER_FILE_ROOT": "/path/to/print/files",
-    "MUTEX_ROLES": [],  # paired as (role, conflicted role that should be removed)
 }

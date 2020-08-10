@@ -187,21 +187,7 @@ async def on_member_join(member: Member):
         user.last_seen = datetime.utcnow()
     db_session.commit()
 
-
-@bot.event
-async def on_member_update(before: Member, after: Member):
-    # Short-circuit if there are no changes
-    if before.roles == after.roles:
-        return
-
-    new_roles = after.roles
-    # Remove any lower-priority roles if they are mutually exclusive
-    for role, conflicted in CONFIG["MUTEX_ROLES"]:
-        new_roles_ids = list(map(lambda x: x.id, new_roles))
-        if role in new_roles_ids:
-            new_roles = [r for r in new_roles if r.id != conflicted]
-
-    await after.edit(roles=new_roles)
+    #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
 
 if __name__ == "__main__":
