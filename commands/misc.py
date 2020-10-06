@@ -61,10 +61,11 @@ class Misc(commands.Cog):
     @commands.command(help=SINJO_HELP_TEXT, brief=SINJO_HELP_TEXT)
     async def sinjo(self, ctx: Context):
         await ctx.send(":neutral_face:")
-        
+
     @commands.command(help=SERVERS_HELP_TEXT, brief=SERVERS_HELP_TEXT)
     async def servers(self, ctx: Context):
-        await ctx.send(""":video_game: Running Servers :video_game: 
+        await ctx.send(
+            """:video_game: Running Servers :video_game: 
 We have some permanantly running servers:
 
 :ice_cube: Vanilla Minecraft :ice_cube: 
@@ -77,7 +78,8 @@ We  have a modded server running FTB Revelation at:
 
 :crossed_swords: Terraria :crossed_swords: 
 We have a Terraria 1.4.0.5 server running at:
-`terraria.uwcs.co.uk:7777`""")
+`terraria.uwcs.co.uk:7777`"""
+        )
 
 
 def setup(bot: Bot):

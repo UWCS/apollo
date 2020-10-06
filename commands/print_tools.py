@@ -172,7 +172,7 @@ class PrintTools(commands.Cog, name="Print tools"):
 
                 filament_list.append(f" • **{f.name}** {cost}")
 
-            filament_list = '\n'.join(filament_list)
+            filament_list = "\n".join(filament_list)
             if len(filaments) > 1:
                 await ctx.send(f"Our current filaments:\n{filament_list}")
             else:
