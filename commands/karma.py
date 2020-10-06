@@ -39,7 +39,6 @@ from config import CONFIG
 from models import db_session, Karma as KarmaModel, KarmaChange
 
 from utils.aliases import get_name_string
-from utils.solarize import solarize
 
 LONG_HELP_TEXT = """
 Query and display the information about the karma topics on the UWCS discord server.
@@ -67,6 +66,7 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
         return "", ""
 
     # Matplotlib preamble
+    plt.clf()
     plt.rcParams.update({"figure.autolayout": True})
     fig, ax = plt.subplots(figsize=(8, 6))
 
@@ -531,4 +531,3 @@ class Karma(commands.Cog):
 
 def setup(bot: Bot):
     bot.add_cog(Karma(bot))
-    solarize()
