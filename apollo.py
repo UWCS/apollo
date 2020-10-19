@@ -36,7 +36,7 @@ EXTENSIONS = [
     "commands.reminders",
     "commands.lcalc",
     "commands.widen",
-    "commands.print_tools",
+    "commands.tex",
 ]
 
 bot = Bot(command_prefix=when_mentioned_or("!"), description=DESCRIPTION)
