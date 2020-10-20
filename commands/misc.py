@@ -14,6 +14,7 @@ BLUESHELL_HELP_TEXT = """!blueshell"""
 AWOO_HELP_TEXT = """Tails and that"""
 SINJO_HELP_TEXT = """o-o"""
 SERVERS_HELP_TEXT = """List of our multiplayer servers"""
+HASKELL_HELP_TEXT = """#notacult"""
 
 
 class Misc(commands.Cog):
@@ -80,6 +81,10 @@ We  have a modded server running FTB Revelation at:
 We have a Terraria 1.4.0.5 server running at:
 `terraria.uwcs.co.uk:7777`"""
         )
+
+    @commands.command(help=HASKELL_HELP_TEXT, brief=HASKELL_HELP_TEXT)
+    async def haskell(self, ctx: Context):
+        await ctx.send("https://www.youtube.com/watch?v=FYFhN_0QhfQ")
 
 
 def setup(bot: Bot):
