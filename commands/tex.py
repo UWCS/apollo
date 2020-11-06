@@ -41,6 +41,8 @@ class Tex(commands.Cog):
         if not message:
             await ctx.send("Your message contained nothing to render")
 
+        if message[0] == '```tex':
+            message = ('```', *message[1:])
         combined = " ".join([x.lstrip("@") for x in message])
         if combined[0] != "`" or combined[-1] != "`":
             await ctx.send("Please place your input in an inline code block")
@@ -71,8 +73,9 @@ class Tex(commands.Cog):
             # Plot the latex and save it.
             plt.text(0, 1, tex_code, color="white")
             plt.savefig(path_png, dpi=300, bbox_inches="tight", transparent=True)
-        except RuntimeError:
+        except RuntimeError as r:
             # Failed to render latex. Report error
+            print(r)
             await ctx.send("Unable to render LaTeX. Please check that it's correct")
         else:
             # Generate a mask of the transparent regions in the image
