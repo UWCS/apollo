@@ -41,8 +41,8 @@ class Tex(commands.Cog):
         if not message:
             await ctx.send("Your message contained nothing to render")
 
-        if message[0] == '```tex':
-            message = ('```', *message[1:])
+        if message[0] == "```tex":
+            message = ("```", *message[1:])
         combined = " ".join([x.lstrip("@") for x in message])
         if combined[0] != "`" or combined[-1] != "`":
             await ctx.send("Please place your input in an inline code block")
