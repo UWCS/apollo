@@ -55,6 +55,7 @@ class Tex(commands.Cog):
         # Matplotlib preamble
         plt.clf()
         plt.rc("text", usetex=True)
+        plt.rc("text.latex", preamble=r"\usepackage{amsmath}")
         plt.rc("font", **{"family": "serif", "serif": ["Palatino"], "size": 16})
         plt.axis("off")
 
