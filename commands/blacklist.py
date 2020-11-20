@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, CommandError, check
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import db_session, BlockedKarma, User
@@ -63,8 +65,12 @@ class Blacklist(commands.Cog):
         ):
             blacklist = BlockedKarma(topic=item.casefold(), user_id=author_id)
             db_session.add(blacklist)
-            db_session.commit()
-            await ctx.send(f"Added {item} to the karma blacklist. :pencil:")
+            try:
+                db_session.commit()
+                await ctx.send(f"Added {item} to the karma blacklist. :pencil:")
+            except (ScalarListException, SQLAlchemyError):
+                db_session.rollback()
+                await ctx.send(f"Something went wrong adding {item} to the karma blacklist. No change has occurred")
         else:
             await ctx.send(
                 f"{item} is already in the karma blacklist. :page_with_curl:"
@@ -83,11 +89,12 @@ class Blacklist(commands.Cog):
             db_session.query(BlockedKarma).filter(
                 BlockedKarma.topic == item.casefold()
             ).delete()
-            db_session.commit()
-
-            await ctx.send(
-                f"{item} has been removed from the karma blacklist. :wastebasket:"
-            )
+            try:
+                db_session.commit()
+                await ctx.send(f"{item} has been removed from the karma blacklist. :wastebasket:")
+            except (ScalarListException, SQLAlchemyError):
+                db_session.rollback()
+                await ctx.send(f"Something went wrong removing {item} to the karma blacklist. No change has occurred")
 
     @blacklist.command(help="List all blacklisted karma topics.")
     @is_compsoc_exec()

@@ -8,6 +8,8 @@ import requests
 from discord import Color, Embed
 from discord.ext import commands
 from discord.ext.commands import Context, Bot, clean_content
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy_utils import ScalarListException
 
 from commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
@@ -116,8 +118,12 @@ class PrintTools(commands.Cog, name="Print tools"):
             image_path=str(image_file),
         )
         db_session.add(filament)
-        db_session.commit()
-        await ctx.send(f'"{filament_name}" added to the available filament list!')
+        try:
+            db_session.commit()
+            await ctx.send(f'"{filament_name}" added to the available filament list!')
+        except (ScalarListException, SQLAlchemyError):
+            db_session.rollback()
+            await ctx.send(f'Could not add "{filament_name}" due to an internal error.')
 
     @printtools.command(help=DELF_LONG_TEXT, brief=DELF_HELP_TEXT)
     @is_compsoc_exec_in_guild()
@@ -135,9 +141,12 @@ class PrintTools(commands.Cog, name="Print tools"):
             return
 
         db_session.delete(filament)
-        db_session.commit()
-
-        await ctx.send(f'Removed "{filament_name}" from the filament list!')
+        try:
+            db_session.commit()
+            await ctx.send(f'Removed "{filament_name}" from the filament list!')
+        except (ScalarListException, SQLAlchemyError):
+            db_session.rollback()
+            await ctx.send(f'Could not remove "{filament_name}" due to an internal error.')
 
     @printtools.command(name="list", help=LIST_HELP_TEXT, brief=LIST_HELP_TEXT)
     async def list_filament(self, ctx: Context, *filter: clean_content):

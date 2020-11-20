@@ -3,7 +3,9 @@ from math import floor
 
 from discord import Message
 from sqlalchemy import func, desc
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.parser import parse_message, create_transactions
@@ -72,7 +74,12 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
         if not karma_item:
             karma_item = Karma(name=transaction.name)
             db_session.add(karma_item)
-            db_session.commit()
+            try:
+                db_session.commit()
+            except (ScalarListException, SQLAlchemyError):
+                db_session.rollback()
+                error_str += f' • Could not create "{truncated_name}" due to an internal error.\n'
+                continue
 
         # Get the last change (or none if there was none)
         last_change = (
@@ -99,7 +106,12 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 created_at=datetime.utcnow(),
             )
             db_session.add(karma_change)
-            db_session.commit()
+            try:
+                db_session.commit()
+            except (ScalarListException, SQLAlchemyError):
+                db_session.rollback()
+                error_str += f' • Could not change "{truncated_name}" due to an internal error.\n'
+                continue
         else:
             time_delta = datetime.utcnow() - last_change.created_at
 
@@ -120,7 +132,12 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     created_at=datetime.utcnow(),
                 )
                 db_session.add(karma_change)
-                db_session.commit()
+                try:
+                    db_session.commit()
+                except (ScalarListException, SQLAlchemyError):
+                    db_session.rollback()
+                    error_str += f' • Could not change "{truncated_name}" due to an internal error.\n'
+                    continue
             else:
                 # Tell the user that the item is on cooldown
                 if time_delta.seconds < 60:
@@ -189,5 +206,8 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
         reply = f"Thanks {author_display}, I have made changes to the following karma item{transaction_plural}:\n\n{item_str}"
 
     # Commit any changes (in case of any DB inconsistencies)
-    db_session.commit()
+    try:
+        db_session.commit()
+    except (ScalarListException, SQLAlchemyError):
+        db_session.rollback()
     return reply.rstrip()

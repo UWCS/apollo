@@ -4,6 +4,8 @@ from datetime import datetime
 from discord import Message, Member
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
@@ -99,7 +101,12 @@ async def on_message(message: Message):
     else:
         user.last_seen = message.created_at
     # Commit the session so the user is available now
-    db_session.commit()
+    try:
+        db_session.commit()
+    except (ScalarListException, SQLAlchemyError):
+        db_session.rollback()
+        # Something very wrong, but not way to reliably recover so abort
+        return
 
     # Only log messages that were in a public channel
     if isinstance(message.channel, GuildChannel):
@@ -112,7 +119,11 @@ async def on_message(message: Message):
             channel_name=message.channel.name,
         )
         db_session.add(logged_message)
-        db_session.commit()
+        try:
+            db_session.commit()
+        except (ScalarListException, SQLAlchemyError):
+            db_session.rollback()
+            return
 
         # Get all specified command prefixes for the bot
         command_prefixes = bot.command_prefix(bot, message)
@@ -157,7 +168,10 @@ async def on_message_edit(before: Message, after: Message):
                     created_at=(after.edited_at or datetime.utcnow()),
                 )
                 db_session.add(message_diff)
-                db_session.commit()
+                try:
+                    db_session.commit()
+                except (ScalarListException, SQLAlchemyError):
+                    db_session.rollback()
 
 
 @bot.event
@@ -173,7 +187,10 @@ async def on_message_delete(message: Message):
     if db_message:
         # Update the message deleted_at and commit the changes made
         db_message.deleted_at = datetime.utcnow()
-        db_session.commit()
+        try:
+            db_session.commit()
+        except (ScalarListException, SQLAlchemyError):
+            db_session.rollback()
 
 
 @bot.event
@@ -185,7 +202,10 @@ async def on_member_join(member: Member):
         db_session.add(user)
     else:
         user.last_seen = datetime.utcnow()
-    db_session.commit()
+    try:
+        db_session.commit()
+    except (ScalarListException, SQLAlchemyError):
+        db_session.rollback()
 
     #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
