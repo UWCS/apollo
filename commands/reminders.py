@@ -131,9 +131,7 @@ class Reminders(commands.Cog):
                         )
                     except:
                         db_session.rollback()
-                        await ctx.send(
-                            f'Something went wrong'
-                        )
+                        await ctx.send(f"Something went wrong")
                 else:
                     await ctx.send("Please include some reminder text!")
 

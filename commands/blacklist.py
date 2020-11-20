@@ -70,7 +70,9 @@ class Blacklist(commands.Cog):
                 await ctx.send(f"Added {item} to the karma blacklist. :pencil:")
             except (ScalarListException, SQLAlchemyError):
                 db_session.rollback()
-                await ctx.send(f"Something went wrong adding {item} to the karma blacklist. No change has occurred")
+                await ctx.send(
+                    f"Something went wrong adding {item} to the karma blacklist. No change has occurred"
+                )
         else:
             await ctx.send(
                 f"{item} is already in the karma blacklist. :page_with_curl:"
@@ -91,10 +93,14 @@ class Blacklist(commands.Cog):
             ).delete()
             try:
                 db_session.commit()
-                await ctx.send(f"{item} has been removed from the karma blacklist. :wastebasket:")
+                await ctx.send(
+                    f"{item} has been removed from the karma blacklist. :wastebasket:"
+                )
             except (ScalarListException, SQLAlchemyError):
                 db_session.rollback()
-                await ctx.send(f"Something went wrong removing {item} to the karma blacklist. No change has occurred")
+                await ctx.send(
+                    f"Something went wrong removing {item} to the karma blacklist. No change has occurred"
+                )
 
     @blacklist.command(help="List all blacklisted karma topics.")
     @is_compsoc_exec()

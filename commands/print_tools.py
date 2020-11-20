@@ -146,7 +146,9 @@ class PrintTools(commands.Cog, name="Print tools"):
             await ctx.send(f'Removed "{filament_name}" from the filament list!')
         except (ScalarListException, SQLAlchemyError):
             db_session.rollback()
-            await ctx.send(f'Could not remove "{filament_name}" due to an internal error.')
+            await ctx.send(
+                f'Could not remove "{filament_name}" due to an internal error.'
+            )
 
     @printtools.command(name="list", help=LIST_HELP_TEXT, brief=LIST_HELP_TEXT)
     async def list_filament(self, ctx: Context, *filter: clean_content):
