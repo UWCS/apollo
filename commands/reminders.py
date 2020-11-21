@@ -124,10 +124,14 @@ class Reminders(commands.Cog):
                         irc_name=irc_n,
                     )
                     db_session.add(new_reminder)
-                    db_session.commit()
-                    await ctx.send(
-                        f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG["REMINDER_SEARCH_INTERVAL"]} seconds).'
-                    )
+                    try:
+                        db_session.commit()
+                        await ctx.send(
+                            f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG["REMINDER_SEARCH_INTERVAL"]} seconds).'
+                        )
+                    except:
+                        db_session.rollback()
+                        await ctx.send(f"Something went wrong")
                 else:
                     await ctx.send("Please include some reminder text!")
 

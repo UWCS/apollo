@@ -5,6 +5,8 @@ import requests
 from discord.abc import PrivateChannel
 from discord.ext import commands
 from discord.ext.commands import CommandError, Context, check, Bot
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import User, db_session
@@ -106,7 +108,7 @@ class Verify(commands.Cog):
                 if not compsoc_member:
                     raise VerifyError(
                         message="It seems like you're not a member of the UWCS Discord yet. You can join us here: "
-                        "https://discordapp.com/invite/qhnbSyh"
+                        "https://discord.gg/uwcs"
                     )
                 try:
                     compsoc_role = [
@@ -129,11 +131,15 @@ class Verify(commands.Cog):
                 )
                 user.uni_id = uni_number
                 user.verified_at = datetime.utcnow()
-                db_session.commit()
+                try:
+                    db_session.commit()
+                    await ctx.send(
+                        "You're all verified and ready to go! Welcome to the UWCS Discord."
+                    )
+                except (ScalarListException, SQLAlchemyError):
+                    db_session.rollback()
+                    await ctx.send("Could not verify you due to an internal error.")
 
-                await ctx.send(
-                    "You're all verified and ready to go! Welcome to the UWCS Discord."
-                )
         else:
             raise VerifyError(
                 message="That university number appears to be inactive or not exist - if you have just purchased "
