@@ -67,18 +67,14 @@ class Misc(commands.Cog):
     async def servers(self, ctx: Context):
         await ctx.send(
             """:video_game: Running Servers :video_game: 
-We have some permanantly running servers:
+We have some permanently running servers:
 
 :ice_cube: Vanilla Minecraft :ice_cube: 
-We have a minecraft 1.16.3 server running at:
+We have a minecraft 1.16.4 server running at:
 `minecraft.uwcs.co.uk`
 
-:hammer_pick: Modded Minecraft :hammer_pick: 
-We  have a modded server running FTB Revelation at:
-`moddedminecraft.uwcs.co.uk`
-
 :crossed_swords: Terraria :crossed_swords: 
-We have a Terraria 1.4.0.5 server running at:
+We have a Terraria 1.4.1.2 server running at:
 `terraria.uwcs.co.uk:7777`"""
         )
 
