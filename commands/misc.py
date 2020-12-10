@@ -70,7 +70,7 @@ class Misc(commands.Cog):
 We have some permanantly running servers:
 
 :ice_cube: Vanilla Minecraft :ice_cube: 
-We have a minecraft 1.15.2 server running at:
+We have a minecraft 1.16.3 server running at:
 `minecraft.uwcs.co.uk`
 
 :hammer_pick: Modded Minecraft :hammer_pick: 
