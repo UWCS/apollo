@@ -14,7 +14,7 @@ from models import User, db_session, LoggedMessage, MessageDiff, Reminder
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
 
-To verify your account please set your Discord tag (name and 4 digit number e.g.: Foo#1337) in account settings on the UWCS website and then PM the bot your university number.
+Apollo is open source and available at: https://github.com/UWCS/apollo. Pull requests are welcome!
 """
 WELCOME_MESSAGE = """
 Hey <@{user_id}>!
