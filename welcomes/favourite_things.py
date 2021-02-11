@@ -1,52 +1,128 @@
-from random import choice
+from random import choice, choices
 
 
-FAVOURITES = [
+class Category:
+    def __init__(self, probability, generate):
+        self.probability = probability
+        self.generate = generate
+
+categories = []
+
+
+MISC = [
     "typo",
-    "cowboy saying",
-    "character in an animated film",
-    "Greek god",
-    "era of history",
-    "dog breed",
-    "aquatic reptile",
-    "paladin",
-    "species of gastropod",
-    "natural view",
-    "children's movie",
-    "paradox",
-    "burrito filling",
-    "letter of the alphabet",
-    "picture of a falcon",
-    "lizard",
-    "punctuation mark",
-    "holiday",
-    "breed of cat",
-    "flavour of jam",
-    "species of big cat",
     "Doctor Who companion",
     "type of chair",
-    "dragon",
+    "punctuation mark",
+    "era of history",
+    "paradox",
+    "unit of measurement",
+    "spacecraft",
+    "metal alloy",
+    "meme",
+    "Twitch streamer",
+    "Minecraft block",
+    "holiday",
+    "artist",
+    "colour",
+    "letter of the alphabet",
+]
+
+categories.append(new Category(len(MISC), lambda => choice(MISC)))
+
+
+BREED = [
+    "breed of dog",
+    "breed of cat",
+]
+
+categories.append(new Category(1, lambda => choice(BREED)))
+
+
+DRINK = [
     "hot drink",
     "cold drink",
-    "unit of measurement",
-    "VoIP service",
-    "spacecraft",
-    "handheld video game",
-    "meme",
-    "genre of music",
-    "console game",
-    "metal alloy",
-    "Twitch streamer",
-    "flavour of smoothie",
-    "Minecraft block",
-    "artist",
-    "favourite word with a Q in it",
-    "type of mushroom",
-    "strategy game",
-    "feathered animal",
-    "favourite supernatural creature",
 ]
+
+categories.append(new Category(1, lambda => choice(DRINK)))
+
+
+MEDIUM = [
+    "music",
+    "film",
+    "movie",
+    "TV show",
+    "video game",
+    "board game",
+]
+
+categories.append(new Category(1, lambda => "genre of {}".format(choice(MEDIUM))))
+
+
+FOODSTUFF = [
+    "smoothie",
+    "milkshake",
+    "ice cream",
+    "jam",
+]
+
+categories.append(new Category(1, lambda => "flavour of {}".format(choice(FOODSTUFF))))
+
+
+FILLING = [
+    "burrito",
+    "pancake",
+]
+
+categories.append(new Category(1, lambda => "{} filling".format(choice(FILLING))))
+
+
+ANIMAL_CLASS = [
+    "mammal",
+    "reptile",
+    "amphibian",
+    "fish",
+    "bird",
+    "lizard",
+    "gastropod",
+]
+
+categories.append(new Category(1, lambda => "species of {}".format(choice(ANIMAL_CLASS))))
+
+
+ANIMAL_TYPE = [
+    "big cat",
+    "supernatural creature",
+    "dragon",
+    "feathered animal",
+    "mushroom",
+]
+
+categories.append(new Category(1, lambda => "type of {}".format(choice(ANIMAL_TYPE))))
+
+
+MYTHOLOGY = [
+    "Greek",
+    "Egyptian",
+    "Roman",
+    "Aztec",
+]
+
+categories.append(new Category(1, lambda => "{} god".format(choice(MYTHOLOGY))))
+
+
+LETTER = [
+    "a", "b", "c", "d", "e", "f", "g", "h", "i", "j",
+    "k", "l", "m", "n", "o", "p", "q", "r", "s", "t",
+    "u", "v", "w", "x", "y", "z"
+]
+
+categories.append(new Category(1, lambda => "word containing the letter {}".format(upper(choice(LETTER)))))
+
+
+distribution = categories.map(lambda c => c.probability)
 
 
 def generate_category():
-    return choice(FAVOURITES)
+    category = choices(categories, distribution)
+    return category.generate ()

@@ -9,7 +9,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
-from welcomes.welcome_messages import send_welcome_message
+from welcomes.welcome_messages import generate_welcome_message
 from models import User, db_session, LoggedMessage, MessageDiff, Reminder
 
 DESCRIPTION = """
@@ -211,10 +211,10 @@ async def on_member_join(member: Member):
     #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
     # Join message
-    message = generate_welcome_message(member)
     channel = bot.get_channel(CONFIG["UWCS_WELCOME_CHANNEL_ID"])
     target = bot.get_channel(CONFIG["UWCS_INTROS_CHANNEL_ID"])
-    await channel.send(message, target)
+    message = generate_welcome_message(member.display_name, target.mention)
+    await channel.send(message)
 
 
 if __name__ == "__main__":
