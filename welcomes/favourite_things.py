@@ -2,8 +2,8 @@ from random import choice, choices
 
 
 class Category:
-    def __init__(self, probability, generate):
-        self.probability = probability
+    def __init__(self, weight, generate):
+        self.weight = weight
         self.generate = generate
 
 categories = []
@@ -117,12 +117,10 @@ LETTER = [
     "u", "v", "w", "x", "y", "z"
 ]
 
-categories.append(Category(1, lambda : "word containing the letter {}".format(upper(choice(LETTER)))))
-
-
-distribution = categories.map(lambda c : c.probability)
+categories.append(Category(1, lambda : "word containing the letter {}".format(choice(LETTER).upper())))
 
 
 def generate_category():
+    distribution = map(lambda c : c.weight, categories)
     category = choices(categories, distribution)
-    return category.generate ()
+    return category[0].generate ()
