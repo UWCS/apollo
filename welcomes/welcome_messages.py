@@ -34,7 +34,7 @@ MISC = [
     "colour",
     "letter of the alphabet",
     "song",
-    "game"
+    "game",
     "piece of music",
     "fruit",
     "programming language",
@@ -133,7 +133,7 @@ BRAND = [
     "toothpaste",
     "games console",
 ]
-categories.append(Category(1, "brand of {}", FRANCHISE))
+categories.append(Category(1, "brand of {}", BRAND))
 
 
 # Generate a complete welcome message given a member's name and a intros channel
