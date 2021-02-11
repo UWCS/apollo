@@ -28,7 +28,7 @@ MISC = [
     "letter of the alphabet",
 ]
 
-categories.append(new Category(len(MISC), lambda => choice(MISC)))
+categories.append(Category(len(MISC), lambda : choice(MISC)))
 
 
 BREED = [
@@ -36,7 +36,7 @@ BREED = [
     "breed of cat",
 ]
 
-categories.append(new Category(1, lambda => choice(BREED)))
+categories.append(Category(1, lambda : choice(BREED)))
 
 
 DRINK = [
@@ -44,7 +44,7 @@ DRINK = [
     "cold drink",
 ]
 
-categories.append(new Category(1, lambda => choice(DRINK)))
+categories.append(Category(1, lambda : choice(DRINK)))
 
 
 MEDIUM = [
@@ -56,7 +56,7 @@ MEDIUM = [
     "board game",
 ]
 
-categories.append(new Category(1, lambda => "genre of {}".format(choice(MEDIUM))))
+categories.append(Category(1, lambda : "genre of {}".format(choice(MEDIUM))))
 
 
 FOODSTUFF = [
@@ -66,7 +66,7 @@ FOODSTUFF = [
     "jam",
 ]
 
-categories.append(new Category(1, lambda => "flavour of {}".format(choice(FOODSTUFF))))
+categories.append(Category(1, lambda : "flavour of {}".format(choice(FOODSTUFF))))
 
 
 FILLING = [
@@ -74,7 +74,7 @@ FILLING = [
     "pancake",
 ]
 
-categories.append(new Category(1, lambda => "{} filling".format(choice(FILLING))))
+categories.append(Category(1, lambda : "{} filling".format(choice(FILLING))))
 
 
 ANIMAL_CLASS = [
@@ -87,7 +87,7 @@ ANIMAL_CLASS = [
     "gastropod",
 ]
 
-categories.append(new Category(1, lambda => "species of {}".format(choice(ANIMAL_CLASS))))
+categories.append(Category(1, lambda : "species of {}".format(choice(ANIMAL_CLASS))))
 
 
 ANIMAL_TYPE = [
@@ -98,7 +98,7 @@ ANIMAL_TYPE = [
     "mushroom",
 ]
 
-categories.append(new Category(1, lambda => "type of {}".format(choice(ANIMAL_TYPE))))
+categories.append(Category(1, lambda : "type of {}".format(choice(ANIMAL_TYPE))))
 
 
 MYTHOLOGY = [
@@ -108,7 +108,7 @@ MYTHOLOGY = [
     "Aztec",
 ]
 
-categories.append(new Category(1, lambda => "{} god".format(choice(MYTHOLOGY))))
+categories.append(Category(1, lambda : "{} god".format(choice(MYTHOLOGY))))
 
 
 LETTER = [
@@ -117,10 +117,10 @@ LETTER = [
     "u", "v", "w", "x", "y", "z"
 ]
 
-categories.append(new Category(1, lambda => "word containing the letter {}".format(upper(choice(LETTER)))))
+categories.append(Category(1, lambda : "word containing the letter {}".format(upper(choice(LETTER)))))
 
 
-distribution = categories.map(lambda c => c.probability)
+distribution = categories.map(lambda c : c.probability)
 
 
 def generate_category():
