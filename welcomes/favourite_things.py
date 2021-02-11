@@ -1,0 +1,52 @@
+from random import choice
+
+
+FAVOURITES = [
+    "typo",
+    "cowboy saying",
+    "character in an animated film",
+    "Greek god",
+    "era of history",
+    "dog breed",
+    "aquatic reptile",
+    "paladin",
+    "species of gastropod",
+    "natural view",
+    "children's movie",
+    "paradox",
+    "burrito filling",
+    "letter of the alphabet",
+    "picture of a falcon",
+    "lizard",
+    "punctuation mark",
+    "holiday",
+    "breed of cat",
+    "flavour of jam",
+    "species of big cat",
+    "Doctor Who companion",
+    "type of chair",
+    "dragon",
+    "hot drink",
+    "cold drink",
+    "unit of measurement",
+    "VoIP service",
+    "spacecraft",
+    "handheld video game",
+    "meme",
+    "genre of music",
+    "console game",
+    "metal alloy",
+    "Twitch streamer",
+    "flavour of smoothie",
+    "Minecraft block",
+    "artist",
+    "favourite word with a Q in it",
+    "type of mushroom",
+    "strategy game",
+    "feathered animal",
+    "favourite supernatural creature",
+]
+
+
+def generate_category():
+    return choice(FAVOURITES)
