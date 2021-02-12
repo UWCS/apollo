@@ -40,8 +40,6 @@ MISC = [
     "paradox",
     "unit of measurement",
     "spacecraft",
-    "metal alloy",
-    "element",
     "meme",
     "Twitch streamer",
     "Minecraft block",
@@ -63,6 +61,8 @@ MISC = [
     "olympic sport",
     "word beginning and ending with the same letter",
     "animated character",
+    "shape",
+    "fact",
 ]
 categories.append(Category(len(MISC), "{}", MISC))
 
@@ -202,7 +202,16 @@ SPEECH = [
     "shout",
     "whisper",
 ]
-categories.append(Category(1, "to {}", SPEECH))
+categories.append(Category(1, "thing to {}", SPEECH))
+
+
+CHEMICAL = [
+    "metal alloy",
+    "element",
+    "chemical element",
+    "ore",
+]
+categories.append(Category(1, "{}", SPEECH))
 
 
 # Generate a complete welcome message given a member's name and a intros channel
