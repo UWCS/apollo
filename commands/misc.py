@@ -84,7 +84,7 @@ We have a Terraria 1.4.1.2 server running at:
         await ctx.send("https://www.youtube.com/watch?v=FYFhN_0QhfQ")
 
     @commands.command(help=PING_HELP_TEXT, brief=PING_HELP_TEXT)
-    async def haskell(self, ctx: Context):
+    async def ping(self, ctx: Context):
         await ctx.send("Pong")
 
 
