@@ -18,37 +18,51 @@ class Category:
 categories = []
 
 
+GENERIC = [
+    "instrument",
+    "movie",
+    "book",
+    "author",
+    "actor",
+    "song",
+    "game",
+    "piece of music",
+    "artist",
+    "colour",
+]
+categories.append(Category(len(GENERIC), "{}", GENERIC))
+
+
 MISC = [
     "typo",
-    "type of chair",
     "punctuation mark",
     "era of history",
     "paradox",
     "unit of measurement",
     "spacecraft",
     "metal alloy",
+    "element",
     "meme",
     "Twitch streamer",
     "Minecraft block",
+    "month",
     "holiday",
-    "artist",
-    "colour",
     "letter of the alphabet",
-    "song",
-    "game",
-    "piece of music",
     "fruit",
     "programming language",
     "continent",
+    "flag",
+    "cardinal direction",
     "planet",
     "piece of cutlery",
     "utensil",
     "ancient, modern, or natural wonder of the world",
     "font",
     "constellation",
-    "book",
-    "author",
-    "instrument",
+    "type of maze",
+    "olympic sport",
+    "word beginning and ending with the same letter",
+    "animated character",
 ]
 categories.append(Category(len(MISC), "{}", MISC))
 
@@ -61,6 +75,7 @@ categories.append(Category(1, "{}", BREED))
 
 
 DRINK = [
+    "drink",
     "hot drink",
     "cold drink",
 ]
@@ -72,11 +87,17 @@ MEDIUM = [
     "film",
     "movie",
     "TV show",
+    "game",
+]
+categories.append(Category(1, "genre of {}", MEDIUM))
+
+
+GAME_TYPE = [
     "video game",
     "board game",
     "card game",
 ]
-categories.append(Category(1, "genre of {}", MEDIUM))
+categories.append(Category(1, "genre of {}", GAME_TYPE))
 
 
 FOODSTUFF = [
@@ -84,6 +105,7 @@ FOODSTUFF = [
     "milkshake",
     "ice cream",
     "jam",
+    "crisps",
 ]
 categories.append(Category(1, "flavour of {}", FOODSTUFF))
 
@@ -91,6 +113,8 @@ categories.append(Category(1, "flavour of {}", FOODSTUFF))
 FILLING = [
     "burrito",
     "pancake",
+    "studel",
+    "pie",
 ]
 categories.append(Category(1, "{} filling", FILLING))
 
@@ -146,6 +170,39 @@ BRAND = [
     "games console",
 ]
 categories.append(Category(1, "brand of {}", BRAND))
+
+
+FURNITURE = [
+    "chair",
+    "sofa",
+]
+categories.append(Category(1, "type of {}", FURNITURE))
+
+
+NUMBER = [
+    "number",
+    "positive number",
+    "negative number",
+    "fraction",
+    "non-zero number",
+]
+categories.append(Category(1, "{}", NUMBER))
+
+
+BUILDING = [
+    "building",
+    "building with windows",
+    "ancient building",
+    "modern building",
+    "building with a spire",
+]
+
+
+SPEECH = [
+    "shout",
+    "whisper",
+]
+categories.append(Category(1, "to {}", SPEECH))
 
 
 # Generate a complete welcome message given a member's name and a intros channel
