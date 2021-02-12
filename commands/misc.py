@@ -15,6 +15,7 @@ AWOO_HELP_TEXT = """Tails and that"""
 SINJO_HELP_TEXT = """o-o"""
 SERVERS_HELP_TEXT = """List of our multiplayer servers"""
 HASKELL_HELP_TEXT = """#notacult"""
+PING_HELP_TEXT = """:ping_pong:"""
 
 
 class Misc(commands.Cog):
@@ -66,14 +67,14 @@ class Misc(commands.Cog):
     @commands.command(help=SERVERS_HELP_TEXT, brief=SERVERS_HELP_TEXT)
     async def servers(self, ctx: Context):
         await ctx.send(
-            """:video_game: Running Servers :video_game: 
+            """:video_game: Running Servers :video_game:
 We have some permanently running servers:
 
-:ice_cube: Vanilla Minecraft :ice_cube: 
+:ice_cube: Vanilla Minecraft :ice_cube:
 We have a minecraft 1.16.4 server running at:
 `minecraft.uwcs.co.uk`
 
-:crossed_swords: Terraria :crossed_swords: 
+:crossed_swords: Terraria :crossed_swords:
 We have a Terraria 1.4.1.2 server running at:
 `terraria.uwcs.co.uk:7777`"""
         )
@@ -81,6 +82,10 @@ We have a Terraria 1.4.1.2 server running at:
     @commands.command(help=HASKELL_HELP_TEXT, brief=HASKELL_HELP_TEXT)
     async def haskell(self, ctx: Context):
         await ctx.send("https://www.youtube.com/watch?v=FYFhN_0QhfQ")
+
+    @commands.command(help=PING_HELP_TEXT, brief=PING_HELP_TEXT)
+    async def haskell(self, ctx: Context):
+        await ctx.send("Pong")
 
 
 def setup(bot: Bot):
