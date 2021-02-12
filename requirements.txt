@@ -39,6 +39,7 @@ pre-commit==2.7.1
 psycopg2-binary==2.8.6
 pycparser==2.19
 pyparsing==2.4.2
+pytest
 python-dateutil==2.8.0
 python-editor==1.0.4
 pytz==2020.1
