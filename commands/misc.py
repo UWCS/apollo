@@ -15,7 +15,7 @@ AWOO_HELP_TEXT = """Tails and that"""
 SINJO_HELP_TEXT = """o-o"""
 SERVERS_HELP_TEXT = """List of our multiplayer servers"""
 HASKELL_HELP_TEXT = """#notacult"""
-PING_HELP_TEXT = """:ping_pong:"""
+PING_HELP_TEXT = """Pong!"""
 
 
 class Misc(commands.Cog):
@@ -85,7 +85,7 @@ We have a Terraria 1.4.1.2 server running at:
 
     @commands.command(help=PING_HELP_TEXT, brief=PING_HELP_TEXT)
     async def ping(self, ctx: Context):
-        await ctx.send("Pong")
+        await ctx.send(":ping_pong:")
 
 
 def setup(bot: Bot):
