@@ -30,14 +30,17 @@ def test_self_karma_single():
 
 
 def test_self_karma_multiple():
-    assert create_transactions(
-        "Baz",
-        "Baz",
-        [
-            RawKarma(name="Baz", op="++", reason=None),
-            RawKarma(name="Baz", op="++", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=True, net_karma=1, reasons=[])]
+    assert (
+        create_transactions(
+            "Baz",
+            "Baz",
+            [
+                RawKarma(name="Baz", op="++", reason=None),
+                RawKarma(name="Baz", op="++", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=True, net_karma=1, reasons=[])]
+    )
 
 
 def test_self_karma_single_with_others():
@@ -55,69 +58,87 @@ def test_self_karma_single_with_others():
 
 
 def test_karma_double_positive():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason=None),
-            RawKarma(name="Baz", op="++", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
+    assert (
+        create_transactions(
+            "Bar",
+            "Bar",
+            [
+                RawKarma(name="Baz", op="++", reason=None),
+                RawKarma(name="Baz", op="++", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
+    )
 
 
 def test_karma_double_negative():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="--", reason=None),
-            RawKarma(name="Baz", op="--", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=False, net_karma=-1, reasons=[])]
+    assert (
+        create_transactions(
+            "Bar",
+            "Bar",
+            [
+                RawKarma(name="Baz", op="--", reason=None),
+                RawKarma(name="Baz", op="--", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=-1, reasons=[])]
+    )
 
 
 def test_karma_double_neutral():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="+-", reason=None),
-            RawKarma(name="Baz", op="-+", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=False, net_karma=0, reasons=[])]
+    assert (
+        create_transactions(
+            "Bar",
+            "Bar",
+            [
+                RawKarma(name="Baz", op="+-", reason=None),
+                RawKarma(name="Baz", op="-+", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=0, reasons=[])]
+    )
 
 
 def test_karma_positive_neutral():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason=None),
-            RawKarma(name="Baz", op="+-", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
+    assert (
+        create_transactions(
+            "Bar",
+            "Bar",
+            [
+                RawKarma(name="Baz", op="++", reason=None),
+                RawKarma(name="Baz", op="+-", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
+    )
 
 
 def test_karma_negative_neutral():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason=None),
-            RawKarma(name="Baz", op="+-", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
+    assert (
+        create_transactions(
+            "Bar",
+            "Bar",
+            [
+                RawKarma(name="Baz", op="++", reason=None),
+                RawKarma(name="Baz", op="+-", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
+    )
 
 
 def test_karma_positive_negative():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason=None),
-            RawKarma(name="Baz", op="--", reason=None),
-        ],
-    ) == [KarmaTransaction(name="Baz", self_karma=False, net_karma=0, reasons=[])]
+    assert (
+        create_transactions(
+            "Bar",
+            "Bar",
+            [
+                RawKarma(name="Baz", op="++", reason=None),
+                RawKarma(name="Baz", op="--", reason=None),
+            ],
+        )
+        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=0, reasons=[])]
+    )
 
 
 def test_simple_positive_reason():
