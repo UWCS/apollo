@@ -10,8 +10,10 @@ class Category:
         self.weight = weight
         self.template = template
         self.selection = selection
+
     def generate(self):
         return self.template.format(choice(self.selection))
+
 
 categories = []
 
@@ -140,4 +142,6 @@ categories.append(Category(1, "brand of {}", BRAND))
 def generate_welcome_message(name, channel):
     weights = [c.weight for c in categories]
     category = choices(categories, weights)[0]
-    return "{} {}!\nIf you want, feel free to introduce yourself in {} with your pronouns, interests, and favourite {}.".format(choice(GREETINGS), name, channel, category.generate ())
+    return "{} {}!\nIf you want, feel free to introduce yourself in {} with your pronouns, interests, and favourite {}.".format(
+        choice(GREETINGS), name, channel, category.generate()
+    )
