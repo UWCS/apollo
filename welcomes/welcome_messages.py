@@ -20,7 +20,6 @@ categories = []
 
 MISC = [
     "typo",
-    "Doctor Who companion",
     "type of chair",
     "punctuation mark",
     "era of history",
@@ -40,6 +39,16 @@ MISC = [
     "piece of music",
     "fruit",
     "programming language",
+    "continent",
+    "planet",
+    "piece of cutlery",
+    "utensil",
+    "ancient, modern, or natural wonder of the world",
+    "font",
+    "constellation",
+    "book",
+    "author",
+    "instrument",
 ]
 categories.append(Category(len(MISC), "{}", MISC))
 
@@ -65,6 +74,7 @@ MEDIUM = [
     "TV show",
     "video game",
     "board game",
+    "card game",
 ]
 categories.append(Category(1, "genre of {}", MEDIUM))
 
@@ -124,8 +134,8 @@ FRANCHISE = [
     "Pokemon",
     "Star Wars episode or spin-off",
     "episode of the Simpsons",
-    "episode of Doctor Who",
-    "episode of Game of Thrones",
+    "Doctor Who companion",
+    "Game of Thrones character",
 ]
 categories.append(Category(1, "{}", FRANCHISE))
 
