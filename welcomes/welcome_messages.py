@@ -63,6 +63,7 @@ MISC = [
     "animated character",
     "shape",
     "fact",
+    "weather",
 ]
 categories.append(Category(len(MISC), "{}", MISC))
 
@@ -97,7 +98,7 @@ GAME_TYPE = [
     "board game",
     "card game",
 ]
-categories.append(Category(1, "genre of {}", GAME_TYPE))
+categories.append(Category(1, "{}", GAME_TYPE))
 
 
 FOODSTUFF = [
@@ -136,9 +137,19 @@ ANIMAL_TYPE = [
     "supernatural creature",
     "dragon",
     "feathered animal",
-    "mushroom",
 ]
 categories.append(Category(1, "type of {}", ANIMAL_TYPE))
+
+
+PLANT_TYPE = [
+    "flower",
+    "tree",
+    "mushroom",
+    "deciduous tree",
+    "evergreen tree",
+    "forest",
+]
+categories.append(Category(1, "kind of {}", PLANT_TYPE))
 
 
 MYTHOLOGY = [
@@ -211,7 +222,15 @@ CHEMICAL = [
     "chemical element",
     "ore",
 ]
-categories.append(Category(1, "{}", SPEECH))
+categories.append(Category(1, "{}", CHEMICAL))
+
+
+CLOTHING = [
+    "hat",
+    "shirt",
+    "shoe",
+]
+categories.append(Category(1, "{}", CLOTHING))
 
 
 # Generate a complete welcome message given a member's name and a intros channel
