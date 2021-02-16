@@ -239,6 +239,16 @@ def test_complex_multiple_karma_no_reasons_quotes(database):  # The Sinjo input
     ]
 
 
+def test_complex_multiple_karma_no_reasons_quotes_no_comma_separation(database):
+    assert parse_message(
+        '"easy lover"++ "phil collins"++ "philip bailey"++', database
+    ) == [
+        RawKarma(name="easy lover", op="++", reason=None),
+        RawKarma(name="phil collins", op="++", reason=None),
+        RawKarma(name="philip bailey", op="++", reason=None),
+    ]
+
+
 def test_complex_multiple_karma_with_reasons_and_quotes(database):
     assert parse_message(
         'Foobar++ because baz blat, "Hello world"-- for "foo, bar"', database
