@@ -66,7 +66,7 @@ def parse_message(message: str, db_session: Session):
     # Hold on tight because this will be a doozy...
     karma_re_target = r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))"
     karma_re_op = r"(?P<karma_op>[+-]{2,})"
-    karma_re_reason = '(\s(because|for)\s+((?P<karma_reason>[^",]+)|"(?P<karma_reason_2>.+)")($|,)|\s\((?P<karma_reason_3>.+)\)|\s"(?P<karma_reason_4>.+)"(?![+-]{2,})|,?\s|$)'
+    karma_re_reason = '(\s(because|for)\s+((?P<karma_reason>[^",]+)|"(?P<karma_reason_2>.+)")($|,)|\s\((?P<karma_reason_3>.+)\)|\s"(?P<karma_reason_4>[^"]+)"(?![+-]{2,})|,?\s|$)'
 
     karma_regex = re.compile(karma_re_target + karma_re_op + karma_re_reason)
     items = karma_regex.finditer(filtered_message)
