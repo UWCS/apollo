@@ -20,4 +20,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_column('messages', 'deleted_at')
+    with op.batch_alter_table('messages') as bop:
+        bop.drop_column('deleted_at')
