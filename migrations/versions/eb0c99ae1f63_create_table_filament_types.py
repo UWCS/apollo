@@ -1,4 +1,4 @@
-"""Add filament list table
+"""Create table filament_types
 
 Revision ID: eb0c99ae1f63
 Revises: be19cf89389d

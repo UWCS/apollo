@@ -1,4 +1,4 @@
-"""add dateadded field to blacklist table
+"""Add column added_at to blacklist
 
 Revision ID: 915998e5c0fc
 Revises: 479aac4ff86d

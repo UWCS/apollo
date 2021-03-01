@@ -1,4 +1,4 @@
-"""Rename blocked karma topic column names
+"""Rename (karma) blacklist column names
 
 Revision ID: 3e497f4c9795
 Revises: fd2fd5c8960d

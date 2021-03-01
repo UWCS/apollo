@@ -1,4 +1,4 @@
-"""Add deleted_at field to LoggedMessage
+"""Add column deleted_at to messages
 
 Revision ID: 941acb4f5c2f
 Revises: 8021dc65ebaa

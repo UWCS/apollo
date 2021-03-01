@@ -1,4 +1,4 @@
-"""add optional irc_name field to reminders table
+"""Add column irc_name to reminders
 
 Revision ID: 86fba2709d78
 Revises: 1cb55d4fff97

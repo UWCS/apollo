@@ -1,4 +1,4 @@
-"""Modify FilamentType to use a profile instead of cost
+"""Replace filament_types column cost with profile
 
 Revision ID: 36b213001624
 Revises: e64fcfd066ac

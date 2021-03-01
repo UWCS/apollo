@@ -1,4 +1,4 @@
-"""create reminders table
+"""Create table reminders
 
 Revision ID: 1cb55d4fff97
 Revises: 3e497f4c9795
