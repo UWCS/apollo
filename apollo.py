@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from discord import Intents
 from discord.ext.commands import Bot, when_mentioned_or
 
