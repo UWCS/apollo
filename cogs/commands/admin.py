@@ -10,7 +10,6 @@ from pytz import timezone, utc
 from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
-from cogs.commands.verify import is_private_channel
 from config import CONFIG
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
 from utils.aliases import get_name_string
@@ -39,6 +38,7 @@ class EnumGet:
             return default
         else:
             return cls[values[casefolded]]
+
 
 @unique
 class ChannelIgnoreMode(EnumGet, Enum):
@@ -92,6 +92,7 @@ class Admin(commands.Cog):
         self.bot = bot
 
     @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @is_compsoc_exec_in_guild()
     async def admin(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
@@ -201,8 +202,10 @@ class Admin(commands.Cog):
                 except SQLAlchemyError:
                     db_session.rollback()
                     await ctx.send("Something went wrong. No change has occurred")
+            else:
+                await ctx.send(f"{channel.mention} is already on normal karma mode!")
         else:
-            if karma_channel is not None:
+            if karma_channel is None:
                 await ctx.send(f"{channel.mention} is on normal karma mode.")
             else:
                 await ctx.send(f"{channel.mention} is on mini karma mode.")
@@ -213,7 +216,6 @@ class Admin(commands.Cog):
         brief="Show info about a user using their Discord username.",
     )
     @is_compsoc_exec_in_guild()
-    @is_private_channel()
     async def user_info(self, ctx: Context, user_str: str):
         await ctx.trigger_typing()
 
