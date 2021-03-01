@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cogs.commands.karma import current_milli_time
 from cogs.commands.verify import is_private_channel
 from config import CONFIG
-from models import IgnoredChannel, LoggedMessage, User, db_session
+from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
 from utils.aliases import get_name_string
 from utils.pluralise import pluralise
 
@@ -168,7 +168,44 @@ class Admin(commands.Cog):
         brief="Send a shorter karma message in the given channel"
     )
     async def channel_karma(self, ctx: Context, channel: TextChannel, mode: MiniKarmaMode.get = None):
-        pass
+        # TODO: avoid writing duplicate code with above if possible?
+        karma_channel = (
+            db_session.query(MiniKarmaChannel)
+            .filter(MiniKarmaChannel.channel == channel.id)
+            .first()
+        )
+
+        if mode == MiniKarmaMode.Mini:
+            if karma_channel is None:
+                new_karma_channel = MiniKarmaChannel(
+                    channel=channel.id,
+                    user_id=ctx.author.id,
+                )
+                db_session.add(new_karma_channel)
+                try:
+                    db_session.commit()
+                    await ctx.send(f"Added {channel.mention} to the mini karma channels")
+                except SQLAlchemyError:
+                    db_session.rollback()
+                    await ctx.send("Something went wrong. No change has occurred.")
+            else:
+                await ctx.send(f"{channel.mention} is already on mini karma mode!")
+        elif mode == MiniKarmaMode.Normal:
+            if karma_channel is not None:
+                db_session.query(MiniKarmaChannel).filter(
+                    MiniKarmaChannel.channel == channel.id
+                ).delete()
+                try:
+                    db_session.commit()
+                    await ctx.send(f"{channel.mention} is now on normal karma mode")
+                except SQLAlchemyError:
+                    db_session.rollback()
+                    await ctx.send("Something went wrong. No change has occurred")
+        else:
+            if karma_channel is not None:
+                await ctx.send(f"{channel.mention} is on normal karma mode.")
+            else:
+                await ctx.send(f"{channel.mention} is on mini karma mode.")
 
     @admin.command(
         name="userinfo",
