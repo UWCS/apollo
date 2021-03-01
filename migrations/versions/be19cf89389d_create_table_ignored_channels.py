@@ -1,4 +1,4 @@
-"""empty message
+"""Create table ignored_channels
 
 Revision ID: be19cf89389d
 Revises: 86fba2709d78
