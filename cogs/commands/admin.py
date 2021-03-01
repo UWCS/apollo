@@ -162,7 +162,7 @@ class Admin(commands.Cog):
         help="""Gets or sets whether the specified channel is using mini karma output mode or not.
         Mini karma output channels have a more brief karma message, designed to reduce number of newlines.
         
-        Excepts up to two arguments: !admin minikarma (channel) [mini|normal]
+        Expects up to two arguments: !admin minikarma (channel) [mini|normal]
         If one argument is passed, retrieve the current settings.
         If two arguments are passed, set whether the channel is using mini karma or not.
         """,
