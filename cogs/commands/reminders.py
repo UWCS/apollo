@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import Reminder, User, db_session
@@ -159,7 +161,7 @@ class Reminders(commands.Cog):
                         await ctx.send(
                             f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG["REMINDER_SEARCH_INTERVAL"]} seconds).'
                         )
-                    except:
+                    except (ScalarListException, SQLAlchemyError):
                         db_session.rollback()
                         await ctx.send(f"Something went wrong")
                 else:
