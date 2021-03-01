@@ -22,6 +22,6 @@ def upgrade():
 
 
 def downgrade():
-    op.add_column('filament_types', sa.Column('cost', sa.Float, nullable=False))
+    op.add_column('filament_types', sa.Column('cost', sa.Float, nullable=True))
     with op.batch_alter_table('filament_types') as bop:
         bop.drop_column('profile')
