@@ -8,12 +8,12 @@ from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, check, clean_content
 from pytz import timezone, utc
 
-from utils.pluralise import pluralise
 from cogs.commands.karma import current_milli_time
 from cogs.commands.verify import is_private_channel
 from config import CONFIG
 from models import LoggedMessage, User, db_session
 from utils.aliases import get_name_string
+from utils.pluralise import pluralise
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.

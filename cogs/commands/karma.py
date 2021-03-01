@@ -30,11 +30,11 @@ from matplotlib.dates import (
 from pytz import timezone, utc
 from sqlalchemy import func
 
-from utils.pluralise import pluralise
 from config import CONFIG
 from models import Karma as KarmaModel
 from models import KarmaChange, db_session
 from utils.aliases import get_name_string
+from utils.pluralise import pluralise
 
 matplotlib.use("Agg")
 

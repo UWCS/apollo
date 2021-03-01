@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from discord import Member, Message
+from discord import Message
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, Cog
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,7 +9,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
-from models import db_session, User, LoggedMessage, MessageDiff, Reminder
+from models import LoggedMessage, MessageDiff, Reminder, User, db_session
 
 
 async def reminder_check(bot):
@@ -48,7 +48,10 @@ class Database(Cog):
     @Cog.listener()
     async def on_message(self, message: Message):
         # If the message is by a bot thats not irc then ignore it
-        if message.author.bot and message.author.id != CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]:
+        if (
+            message.author.bot
+            and message.author.id != CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]
+        ):
             return
 
         user = db_session.query(User).filter(User.user_uid == message.author.id).first()
@@ -105,8 +108,8 @@ class Database(Cog):
                 # Log any edits to messages
                 original_message = (
                     db_session.query(LoggedMessage)
-                        .filter(LoggedMessage.message_uid == before.id)
-                        .first()
+                    .filter(LoggedMessage.message_uid == before.id)
+                    .first()
                 )
                 if original_message:
                     message_diff = MessageDiff(
@@ -141,5 +144,3 @@ class Database(Cog):
 
 def setup(bot: Bot):
     bot.add_cog(Database(bot))
-
-
