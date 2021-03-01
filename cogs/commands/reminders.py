@@ -1,3 +1,4 @@
+import asyncio
 import re
 from datetime import datetime, timedelta
 
@@ -70,9 +71,38 @@ def parse_time(time):
     return parsed_time
 
 
+async def reminder_check(bot):
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        now = datetime.now()
+        # I have this useless variable because its not pep8 if you compare directly to False lol
+        not_triggered = False
+        reminders = (
+            db_session.query(Reminder)
+            .filter(Reminder.trigger_at <= now, Reminder.triggered == not_triggered)
+            .all()
+        )
+        for r in reminders:
+            if r.irc_name:
+                display_name = r.irc_name
+            else:
+                author_uid = (
+                    db_session.query(User).filter(User.id == r.user_id).first().user_uid
+                )
+                display_name = f"<@{author_uid}>"
+            channel = bot.get_channel(r.playback_channel_id)
+            message = f"Reminding {display_name}: " + r.reminder_content
+            await channel.send(message)
+            r.triggered = True
+            db_session.commit()
+
+        await asyncio.sleep(CONFIG["REMINDER_SEARCH_INTERVAL"])
+
+
 class Reminders(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.bot.loop.create_task(reminder_check(self.bot))
 
     @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def reminder(self, ctx: Context):
