@@ -3,18 +3,29 @@ from datetime import datetime
 
 from discord import Message
 from discord.abc import GuildChannel
-from discord.ext.commands import Bot, Cog
+from discord.ext.commands import Bot, Cog, Context
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
-from models import LoggedMessage, MessageDiff, User, db_session
+from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session
+
+
+def not_in_blacklisted_channel(ctx: Context):
+    return (
+        db_session.query(IgnoredChannel)
+        .filter(IgnoredChannel.channel == ctx.channel.id)
+        .first()
+        is None
+    )
 
 
 class Database(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        # Set up a global check that we're not in a blacklisted channel
+        self.bot.add_check(not_in_blacklisted_channel)
 
     @Cog.listener()
     async def on_message(self, message: Message):
