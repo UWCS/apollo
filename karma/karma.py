@@ -25,10 +25,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # TODO: Protect from byte-limit length chars
 
     # If the author was IRC, set the display name to be the irc user that karma'd, else use original display name
-    display_name = message.author.display_name
-    if message.author.id == CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]:
-        # Gets the username of the irc user
-        display_name = message.content.split(" ")[0][3:-3]
+    display_name = get_name_string(message)
 
     # Process the raw karma tokens into a number of karma transactions
     transactions = create_transactions(message.author.name, display_name, raw_karma)
