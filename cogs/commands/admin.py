@@ -30,11 +30,7 @@ class AdminError(CommandError):
         super().__init__(*args)
 
 
-@unique
-class ChannelIgnoreMode(Enum):
-    Ignore = 0
-    Watch = 1
-
+class EnumGet:
     @classmethod
     def get(cls, argument: str, default=None):
         values = {e.name.casefold(): e.name for e in list(cls)}
@@ -43,6 +39,17 @@ class ChannelIgnoreMode(Enum):
             return default
         else:
             return cls[values[casefolded]]
+
+@unique
+class ChannelIgnoreMode(EnumGet, Enum):
+    Ignore = 0
+    Watch = 1
+
+
+@unique
+class MiniKarmaMode(EnumGet, Enum):
+    Mini = 0
+    Normal = 1
 
 
 def is_compsoc_exec_in_guild():
@@ -103,8 +110,6 @@ class Admin(commands.Cog):
     async def channel_ignore(
         self, ctx: Context, channel: TextChannel, mode: ChannelIgnoreMode.get = None
     ):
-        # Format: !admin channel (channel) (ignore|watch)
-
         ignored_channel = (
             db_session.query(IgnoredChannel)
             .filter(IgnoredChannel.channel == channel.id)
@@ -150,6 +155,20 @@ class Admin(commands.Cog):
                 await ctx.send(f"{channel.mention} is currently being ignored.")
             else:
                 await ctx.send(f"{channel.mention} is not currently being ignored")
+
+    @admin.command(
+        name="minikarma",
+        help="""Gets or sets whether the specified channel is using mini karma output mode or not.
+        Mini karma output channels have a more brief karma message, designed to reduce number of newlines.
+        
+        Excepts up to two arguments: !admin minikarma (channel) [mini|normal]
+        If one argument is passed, retrieve the current settings.
+        If two arguments are passed, set whether the channel is using mini karma or not.
+        """,
+        brief="Send a shorter karma message in the given channel"
+    )
+    async def channel_karma(self, ctx: Context, channel: TextChannel, mode: MiniKarmaMode.get = None):
+        pass
 
     @admin.command(
         name="userinfo",
