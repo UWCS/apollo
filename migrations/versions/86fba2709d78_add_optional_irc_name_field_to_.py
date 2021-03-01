@@ -21,4 +21,5 @@ def upgrade():
 
 
 def downgrade():
-    pass
+    with op.batch_alter_table('reminders') as bop:
+        bop.drop_column('irc_name')
