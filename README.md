@@ -7,10 +7,41 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 ### Installation
 
-To run this bot, create a new Python virtual environment (version 3.6 or above) and use `pip install -r requirements.txt` to install all of the library requirements.
-You will also need to migrate the database using `alembic upgrade head` after the Python libraries are installed.
-Copy `config.example.py` to `config.py` and configure the fields.
-The database connection is set to in-memory by default - you may wish to store it locally, in which case it should be formatted `sqlite:///path/to/file.sqlite3`.
+#### Dependencies
+
+Two dependency files are included with this project.
+The first, `requirements.txt`, only includes top-level dependencies.
+
+The second, `requirements.lock`, contains a pinned list of all dependencies.
+
+If installing the top-level dependencies does not work, try installing the pinned dependencies.
+
+#### Environment Setup
+
+1. Create a new virtual environment `python -m venv .venv`.
+2. Activate the virtual environment
+   - On Linux and macOS: `source .venv/bin/activate`.
+   - On Windows: `.\venv\Scripts\activate`
+3. Check that the virtual environment has been activated.
+   - On Linux and macOS: `which python`  
+     Expected output: `.../.venv/bin/python`.
+   - On Windows: `where python` (**NB** on PowerShell use `where.exe` or `Get-Command` instead of `where`)  
+     Expected output: `...\.venv\Scripts\python.exe`.
+4. Install dependencies.  
+   Now that we've activated the environment, `pip` will install packages locally.
+   - Installing top-level dependencies via `pip install -r requirements.txt` should work.
+   - If it doesn't, you may need to install the pinned requirements via `pip install -r requirements.lock`
+5. Copy `config.example.py` to `config.py` and configure the fields.
+6. Copy `alembic.example.ini` to `alembic.ini`.
+7. Set up the database by running migrations with `alembic upgrade head`.
+   - The default database location is `sqlite:///:memory:` (in both `config.example.py` and `alembic.example.ini`).
+     For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///local.sqlite3`.
+8. On the [Discord developer portal](https://discord.com/developers/), make sure that your bot has the required intents.
+   - Currently, only the Members intent is necessary.
+
+#### Running Apollo
+
+Run `apollo.py` - either with `python apollo.py` or just by executing the file.
 
 ### Contributor Notes
 
