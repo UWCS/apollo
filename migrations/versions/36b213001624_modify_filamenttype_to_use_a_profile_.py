@@ -17,9 +17,11 @@ depends_on = None
 
 def upgrade():
     op.add_column('filament_types', sa.Column('profile', sa.String, default='fillamentum'))
-    op.drop_column('filament_types', 'cost')
+    with op.batch_alter_table('filament_types') as bop:
+        bop.drop_column('cost')
 
 
 def downgrade():
     op.add_column('filament_types', sa.Column('cost', sa.Float, nullable=False))
-    op.drop_column('filament_types', 'profile')
+    with op.batch_alter_table('filament_types') as bop:
+        bop.drop_column('profile')
