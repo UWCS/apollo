@@ -68,76 +68,35 @@ MISC = [
 categories.append(Category(len(MISC), "{}", MISC))
 
 
-BREED = [
-    "breed of dog",
-    "breed of cat",
-]
+BREED = ["breed of dog", "breed of cat"]
 categories.append(Category(1, "{}", BREED))
 
 
-DRINK = [
-    "drink",
-    "hot drink",
-    "cold drink",
-]
+DRINK = ["drink", "hot drink", "cold drink"]
 categories.append(Category(1, "{}", DRINK))
 
 
-MEDIUM = [
-    "music",
-    "film",
-    "movie",
-    "TV show",
-    "game",
-]
+MEDIUM = ["music", "film", "movie", "TV show", "game"]
 categories.append(Category(1, "genre of {}", MEDIUM))
 
 
-GAME_TYPE = [
-    "video game",
-    "board game",
-    "card game",
-]
+GAME_TYPE = ["video game", "board game", "card game"]
 categories.append(Category(1, "{}", GAME_TYPE))
 
 
-FOODSTUFF = [
-    "smoothie",
-    "milkshake",
-    "ice cream",
-    "jam",
-    "crisps",
-]
+FOODSTUFF = ["smoothie", "milkshake", "ice cream", "jam", "crisps"]
 categories.append(Category(1, "flavour of {}", FOODSTUFF))
 
 
-FILLING = [
-    "burrito",
-    "pancake",
-    "studel",
-    "pie",
-]
+FILLING = ["burrito", "pancake", "studel", "pie"]
 categories.append(Category(1, "{} filling", FILLING))
 
 
-ANIMAL_CLASS = [
-    "mammal",
-    "reptile",
-    "amphibian",
-    "fish",
-    "bird",
-    "lizard",
-    "gastropod",
-]
+ANIMAL_CLASS = ["mammal", "reptile", "amphibian", "fish", "bird", "lizard", "gastropod"]
 categories.append(Category(1, "species of {}", ANIMAL_CLASS))
 
 
-ANIMAL_TYPE = [
-    "big cat",
-    "supernatural creature",
-    "dragon",
-    "feathered animal",
-]
+ANIMAL_TYPE = ["big cat", "supernatural creature", "dragon", "feathered animal"]
 categories.append(Category(1, "type of {}", ANIMAL_TYPE))
 
 
@@ -152,12 +111,7 @@ PLANT_TYPE = [
 categories.append(Category(1, "kind of {}", PLANT_TYPE))
 
 
-MYTHOLOGY = [
-    "Greek",
-    "Egyptian",
-    "Roman",
-    "Aztec",
-]
+MYTHOLOGY = ["Greek", "Egyptian", "Roman", "Aztec"]
 categories.append(Category(1, "{} god", MYTHOLOGY))
 
 
@@ -175,28 +129,15 @@ FRANCHISE = [
 categories.append(Category(1, "{}", FRANCHISE))
 
 
-BRAND = [
-    "cereal",
-    "toothpaste",
-    "games console",
-]
+BRAND = ["cereal", "toothpaste", "games console"]
 categories.append(Category(1, "brand of {}", BRAND))
 
 
-FURNITURE = [
-    "chair",
-    "sofa",
-]
+FURNITURE = ["chair", "sofa"]
 categories.append(Category(1, "type of {}", FURNITURE))
 
 
-NUMBER = [
-    "number",
-    "positive number",
-    "negative number",
-    "fraction",
-    "non-zero number",
-]
+NUMBER = ["number", "positive number", "negative number", "fraction", "non-zero number"]
 categories.append(Category(1, "{}", NUMBER))
 
 
@@ -209,27 +150,15 @@ BUILDING = [
 ]
 
 
-SPEECH = [
-    "shout",
-    "whisper",
-]
+SPEECH = ["shout", "whisper"]
 categories.append(Category(1, "thing to {}", SPEECH))
 
 
-CHEMICAL = [
-    "metal alloy",
-    "element",
-    "chemical element",
-    "ore",
-]
+CHEMICAL = ["metal alloy", "element", "chemical element", "ore"]
 categories.append(Category(1, "{}", CHEMICAL))
 
 
-CLOTHING = [
-    "hat",
-    "shirt",
-    "shoe",
-]
+CLOTHING = ["hat", "shirt", "shoe"]
 categories.append(Category(1, "{}", CLOTHING))
 
 

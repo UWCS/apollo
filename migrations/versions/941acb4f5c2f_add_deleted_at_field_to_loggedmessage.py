@@ -9,15 +9,15 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '941acb4f5c2f'
-down_revision = '8021dc65ebaa'
+revision = "941acb4f5c2f"
+down_revision = "8021dc65ebaa"
 branch_labels = None
 depends_on = None
 
 
 def upgrade():
-    op.add_column('messages', sa.Column('deleted_at', sa.DateTime, nullable=True))
+    op.add_column("messages", sa.Column("deleted_at", sa.DateTime, nullable=True))
 
 
 def downgrade():
-    op.drop_column('messages', 'deleted_at')
+    op.drop_column("messages", "deleted_at")

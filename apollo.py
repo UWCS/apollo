@@ -46,7 +46,9 @@ EXTENSIONS = [
 intents = discord.Intents.default()
 intents.members = True
 
-bot = Bot(command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents)
+bot = Bot(
+    command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents
+)
 
 
 def pluralise(l, word, single="", plural="s"):
