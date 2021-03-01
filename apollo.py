@@ -10,7 +10,6 @@ from sqlalchemy_utils import ScalarListException
 from config import CONFIG
 from karma.karma import process_karma
 from models import LoggedMessage, MessageDiff, Reminder, User, db_session
-from utils.welcome_messages import generate_welcome_message
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
@@ -40,6 +39,7 @@ EXTENSIONS = [
     "cogs.commands.lcalc",
     "cogs.commands.widen",
     "cogs.commands.tex",
+    "cogs.welcome",
 ]
 
 
@@ -198,29 +198,6 @@ async def on_message_delete(message: Message):
             db_session.commit()
         except (ScalarListException, SQLAlchemyError):
             db_session.rollback()
-
-
-# @bot.event
-# async def on_member_join(member: Member):
-#     # Add the user to our database if they've never joined before
-#     user = db_session.query(User).filter(User.user_uid == member.id).first()
-#     if not user:
-#         user = User(user_uid=member.id, username=str(member))
-#         db_session.add(user)
-#     else:
-#         user.last_seen = datetime.utcnow()
-#     try:
-#         db_session.commit()
-#     except (ScalarListException, SQLAlchemyError):
-#         db_session.rollback()
-#
-#     #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
-#
-#     # Join message
-#     channel = bot.get_channel(CONFIG["UWCS_WELCOME_CHANNEL_ID"])
-#     target = bot.get_channel(CONFIG["UWCS_INTROS_CHANNEL_ID"])
-#     message = generate_welcome_message(member.display_name, target.mention)
-#     await channel.send(message)
 
 
 if __name__ == "__main__":
