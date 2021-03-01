@@ -1,17 +1,18 @@
-import re
 from datetime import datetime
+from enum import Enum, unique
 
 import discord
-from discord import Color, Embed
+from discord import Color, Embed, TextChannel
 from discord.abc import PrivateChannel
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context, check, clean_content
+from discord.ext.commands import Bot, CommandError, Context, check
 from pytz import timezone, utc
+from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
 from cogs.commands.verify import is_private_channel
 from config import CONFIG
-from models import LoggedMessage, User, db_session
+from models import IgnoredChannel, LoggedMessage, User, db_session
 from utils.aliases import get_name_string
 from utils.pluralise import pluralise
 
@@ -27,6 +28,21 @@ class AdminError(CommandError):
     def __init__(self, message=None, *args):
         self.message = message
         super().__init__(*args)
+
+
+@unique
+class ChannelIgnoreMode(Enum):
+    Ignore = 0
+    Watch = 1
+
+    @classmethod
+    def get(cls, argument: str, default=None):
+        values = {e.name.casefold(): e.name for e in list(cls)}
+        casefolded = argument.casefold()
+        if casefolded not in values:
+            return default
+        else:
+            return cls[values[casefolded]]
 
 
 def is_compsoc_exec_in_guild():
@@ -73,63 +89,67 @@ class Admin(commands.Cog):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
 
-    # @admin.command(
-    #     name="channel",
-    #     help="""Ignore or respond to commands in the given channel (while keeping eyes on Karma).
-    #
-    #     Expects 2 arguments, whether or not to ignore a channel (ignore, watch) and the channel (ID or link)""",
-    #     bried="Ignore or respond to commands in the given channel",
-    # )
-    async def channel_ignore(self, ctx: Context, *args: clean_content):
-        # Format: !admin channel (ignore|watch) <channels...> (channel is ID or channel link)
-        # Make sure there's the right number of args
-        if len(args) < 2:
-            await ctx.send(
-                "I need both the channel(s) to ignore and whether I should watch or ignore them. See the help command for more info :smile:"
-            )
-            return
+    @admin.command(
+        name="channel",
+        help="""Gets or sets whether the specified channel is being ignored or not.
+        Ignored channels do not react to commands but still track karma.
 
-        # Make sure the mode is correct
-        mode = str(args[0]).casefold()
-        if mode != "ignore" and mode != "watch":
-            await ctx.send(
-                f'I can only "watch" or "ignore" channels, you told me to {mode} :slight_frown:'
-            )
-            return
+        Expects up to two arguments: !admin channel (channel) [ignore|watch].
+        If one argument is passed, retrieve the current setting.
+        If two arguments are passed, set whether the channel is ignored or not.
+        """,
+        brief="Ignore or respond to commands in the given channel",
+    )
+    async def channel_ignore(
+        self, ctx: Context, channel: TextChannel, mode: ChannelIgnoreMode.get = None
+    ):
+        # Format: !admin channel (channel) (ignore|watch)
 
-        # Get each of the channels from the guild
-        channel_link_exp = re.compile(r"^<#(?P<id>\d+)>$")
-        channel_id_exp = re.compile(r"^\d+$")
-        channels_raw = list(args)[1:]
-        compsoc_guild = [
-            guild for guild in ctx.bot.guilds if guild.id == CONFIG["UWCS_DISCORD_ID"]
-        ][0]
+        ignored_channel = (
+            db_session.query(IgnoredChannel)
+            .filter(IgnoredChannel.channel == channel.id)
+            .first()
+        )
 
-        error_not_id = []
-        channel_ids = []
-        for c in channels_raw:
-            if channel_id_exp.match(c):
-                channel_ids.append(int(c))
+        if mode == ChannelIgnoreMode.Ignore:
+            if ignored_channel is None:
+                # Create a new entry
+                new_ignored_channel = IgnoredChannel(
+                    channel=channel.id,
+                    user_id=ctx.author.id,
+                )
+                db_session.add(new_ignored_channel)
+                try:
+                    db_session.commit()
+                    await ctx.send(f"Added {channel.mention} to the ignored list.")
+                except SQLAlchemyError:
+                    db_session.rollback()
+                    await ctx.send("Something went wrong. No change has occurred.")
             else:
-                link_match = channel_link_exp.match(c)
-                if link_match:
-                    groups = link_match.groupdict()
-                    channel_ids.append(int(groups.get("id")))
-                else:
-                    error_not_id.append(c)
-
-        # Check each channel is in the guild
-        channels = []
-        error_nin_guild = []
-        for chan_id in channel_ids:
-            channel = discord.utils.get(compsoc_guild.channels, id=chan_id)
-            if channel:
-                channels.append(channel)
+                # Entry already present
+                await ctx.send(f"{channel.mention} is already ignored!")
+        elif mode == ChannelIgnoreMode.Watch:
+            if ignored_channel is not None:
+                # Remove the entry
+                db_session.query(IgnoredChannel).filter(
+                    IgnoredChannel.channel == channel.id
+                ).delete()
+                try:
+                    db_session.commit()
+                    await ctx.send(f"{channel.mention} is no longer being ignored.")
+                except SQLAlchemyError:
+                    db_session.rollback()
+                    await ctx.send("Something went wrong. No change has occurred.")
             else:
-                error_nin_guild.append(chan_id)
+                # The entry is not present
+                await ctx.send(f"{channel.mention} is not currently being ignored.")
 
-        # TODO: Check they're in the guild, and then do the DB action
-        await ctx.send(" ".join(args))
+        else:
+            # Report status
+            if ignored_channel is not None:
+                await ctx.send(f"{channel.mention} is currently being ignored.")
+            else:
+                await ctx.send(f"{channel.mention} is not currently being ignored")
 
     @admin.command(
         name="userinfo",
