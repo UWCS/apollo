@@ -116,7 +116,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
             if time_delta.seconds >= timeout:
                 # If the bot is being downvoted then the karma can only go up
-                if transaction.name.casefold() == "Apollo".casefold():
+                if transaction.name.casefold() == "apollo":
                     new_score = last_change.score + abs(transaction.net_karma)
                 else:
                     new_score = last_change.score + transaction.net_karma
@@ -165,7 +165,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
         # Give some sass if someone is trying to downvote the bot
         if (
-            transaction.name.casefold() == "Apollo".casefold()
+            transaction.name.casefold() == "apollo"
             and transaction.net_karma < 0
         ):
             apollo_response = ":wink:"
