@@ -1,44 +1,43 @@
-import matplotlib
-
-from apollo import pluralise
-
-matplotlib.use("Agg")
-
 import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import reduce
 from time import time
-from typing import List, Dict
+from typing import Dict, List
 
+import matplotlib
 import matplotlib.pyplot as plt
-from discord import Embed, Color, File
+from discord import Color, Embed, File
 from discord.ext import commands
 from discord.ext.commands import (
-    Context,
     Bot,
-    CommandError,
-    clean_content,
     BucketType,
+    CommandError,
+    Context,
     MissingRequiredArgument,
+    clean_content,
 )
 from matplotlib.dates import (
-    DayLocator,
-    WeekdayLocator,
-    MonthLocator,
-    YearLocator,
     DateFormatter,
-    date2num,
+    DayLocator,
     HourLocator,
     MinuteLocator,
+    MonthLocator,
+    WeekdayLocator,
+    YearLocator,
+    date2num,
 )
-from pytz import utc, timezone
+from pytz import timezone, utc
 from sqlalchemy import func
 
 from config import CONFIG
-from models import db_session, Karma as KarmaModel, KarmaChange
-
+from models import Karma as KarmaModel
+from models import KarmaChange, db_session
 from utils.aliases import get_name_string
+from utils.pluralise import pluralise
+
+matplotlib.use("Agg")
+
 
 LONG_HELP_TEXT = """
 Query and display the information about the karma topics on the UWCS discord server.

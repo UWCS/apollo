@@ -2,16 +2,16 @@ from datetime import datetime
 
 from pytz import timezone, utc
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    DateTime,
-    create_engine,
-    ForeignKey,
     BigInteger,
-    func,
     Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
     Text,
+    create_engine,
+    func,
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property

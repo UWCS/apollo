@@ -6,7 +6,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from karma.parser import parse_message, RawKarma
+from karma.parser import RawKarma, parse_message
 from models import Base
 
 

@@ -1,7 +1,7 @@
 import random
 
 from discord.ext import commands
-from discord.ext.commands import Context, Bot
+from discord.ext.commands import Bot, Context
 
 ZED0_HELP_TEXT = """Very important command."""
 FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
