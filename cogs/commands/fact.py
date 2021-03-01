@@ -92,7 +92,7 @@ class Fact(commands.Cog):
             "In the 1500s it was illegal for European physicians to treat a patient without first consulting the moon.",
             "More people live in Shanghai than in the whole of Australia.",
             "Olympic gold medals are 93% silver.",
-            "Prince Charles has an Aston Martin that runs on biofuel made from wine."
+            "Prince Charles has an Aston Martin that runs on biofuel made from wine.",
             "Strawberries have more vitamin C per serving than oranges.",
             "Cyclists need 7% less oxygen when pedalling in time with music.",
             "9% of pet owners throw birthday parties for their pets.",
