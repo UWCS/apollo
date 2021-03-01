@@ -1,12 +1,10 @@
-import discord
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context, check
+from discord.ext.commands import Bot, CommandError, Context
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from config import CONFIG
+from cogs.commands.admin import is_compsoc_exec_in_guild
 from models import BlockedKarma, User, db_session
-from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """
 Query, display, and modify the blacklisted karma topics.
@@ -22,23 +20,6 @@ class BlacklistError(CommandError):
         super().__init__(*args)
 
 
-def is_compsoc_exec():
-    async def predicate(ctx: Context):
-        roles = discord.utils.get(
-            ctx.message.author.roles, id=CONFIG["UWCS_EXEC_ROLE_ID"]
-        )
-        if roles is None:
-            await ctx.message.delete()
-            display_name = get_name_string(ctx.message)
-            raise BlacklistError(
-                f"You don't have permission to run that command, {display_name}."
-            )
-        else:
-            return True
-
-    return check(predicate)
-
-
 class Blacklist(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -49,7 +30,7 @@ class Blacklist(commands.Cog):
             await ctx.send("Subcommand not found")
 
     @blacklist.command(help="Add a topic to the karma blacklist.")
-    @is_compsoc_exec()
+    @is_compsoc_exec_in_guild()
     async def add(self, ctx: Context, item: str):
         author_id = (
             db_session.query(User)
@@ -79,7 +60,7 @@ class Blacklist(commands.Cog):
             )
 
     @blacklist.command(help="Remove a word from the karma blacklist.")
-    @is_compsoc_exec()
+    @is_compsoc_exec_in_guild()
     async def remove(self, ctx: Context, item: str):
         if (
             not db_session.query(BlockedKarma)
@@ -103,7 +84,7 @@ class Blacklist(commands.Cog):
                 )
 
     @blacklist.command(help="List all blacklisted karma topics.")
-    @is_compsoc_exec()
+    @is_compsoc_exec_in_guild()
     async def list(self, ctx: Context):
         items = db_session.query(BlockedKarma).all()
         if items:
