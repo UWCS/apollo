@@ -20,4 +20,5 @@ def upgrade():
 
 
 def downgrade():
-    pass
+    with op.batch_alter_table('blacklist') as bop:
+        bop.drop_column('added_at')
