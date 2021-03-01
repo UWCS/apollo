@@ -19,7 +19,7 @@ class Irc(Cog):
             idx += 4
             message.content = message.content[idx:]
 
-        await self.bot.process_commands(message)
+            await self.bot.process_commands(message)
 
 
 def setup(bot: Bot):
