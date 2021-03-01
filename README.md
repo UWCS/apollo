@@ -6,7 +6,7 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 ### Installation
 
-To run this bot, create a new Python virtual environment (version 3.6 or above) and use `pip install -r requirements.txt` to install all of the library requirements. You will also need to migrate the database using `alembic` after the Python libraries are installed.
+To run this bot, create a new Python virtual environment (version 3.6 or above) and use `pip install -r requirements.txt` to install all of the library requirements. You will also need to migrate the database using `alembic upgrade head` after the Python libraries are installed.
 
 ### Contributor Notes
 
