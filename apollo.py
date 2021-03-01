@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from discord import Message, Member
+from discord import Message, Member, Intents
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
 from sqlalchemy.exc import SQLAlchemyError
@@ -43,7 +43,7 @@ EXTENSIONS = [
 ]
 
 
-intents = discord.Intents.default()
+intents = Intents.default()
 intents.members = True
 
 bot = Bot(
