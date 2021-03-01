@@ -20,4 +20,5 @@ def upgrade():
 
 
 def downgrade():
-    pass
+    op.alter_column('blacklist', column_name='topic', new_column_name='name')
+    op.alter_column('blacklist', column_name='user_id', new_column_name='added_by')
