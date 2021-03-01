@@ -91,7 +91,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
         if not last_change:
             # If the bot is being downvoted then the karma can only go up
-            if transaction.name.lower() == "apollo":
+            if transaction.name.casefold() == "apollo":
                 new_score = abs(transaction.net_karma)
             else:
                 new_score = transaction.net_karma
@@ -117,7 +117,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
             if time_delta.seconds >= timeout:
                 # If the bot is being downvoted then the karma can only go up
-                if transaction.name.lower() == "apollo":
+                if transaction.name.casefold() == "Apollo".casefold():
                     new_score = last_change.score + abs(transaction.net_karma)
                 else:
                     new_score = last_change.score + transaction.net_karma
@@ -158,7 +158,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             karma_item.pluses = karma_item.pluses + 1
         elif transaction.net_karma == -1:
             # Make sure the changed operation is updated
-            if transaction.name.lower() == "apollo":
+            if transaction.name.casefold() == "apollo":
                 karma_item.pluses = karma_item.pluses + 1
             else:
                 karma_item.minuses = karma_item.minuses + 1

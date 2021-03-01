@@ -90,7 +90,7 @@ class Admin(commands.Cog):
             return
 
         # Make sure the mode is correct
-        mode = str(args[0]).lower()
+        mode = str(args[0]).casefold()
         if mode != "ignore" and mode != "watch":
             await ctx.send(
                 f'I can only "watch" or "ignore" channels, you told me to {mode} :slight_frown:'

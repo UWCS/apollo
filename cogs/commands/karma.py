@@ -504,7 +504,7 @@ class Karma(commands.Cog):
                 for sublist in [change.reasons for change in karma_changes]
                 for reason in sublist
             ]
-            reasons = sorted(reasons, key=str.lower)
+            reasons = sorted(reasons, key=str.casefold)
 
             # If there's at least one reason
             if reasons:

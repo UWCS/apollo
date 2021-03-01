@@ -114,7 +114,7 @@ class PrintTools(commands.Cog, name="Print tools"):
         # Save the model to the database
         filament = FilamentType(
             name=str(filament_name),
-            profile=str(filament_profile).lower(),
+            profile=str(filament_profile).casefold(),
             image_path=str(image_file),
         )
         db_session.add(filament)

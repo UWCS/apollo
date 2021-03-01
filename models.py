@@ -167,7 +167,7 @@ class FilamentType(Base):
     @staticmethod
     def verify_type(type_str: str) -> bool:
         return {FilamentType.FILLAMENTUM: True, FilamentType.PRUSAMENT: True}.get(
-            type_str.lower(), False
+            type_str.casefold(), False
         )
 
 
