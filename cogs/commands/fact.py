@@ -1,9 +1,9 @@
 import random
 from pathlib import Path
 
+import yaml
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
-import yaml
 
 from utils.aliases import get_name_string
 
