@@ -166,9 +166,11 @@ class Admin(commands.Cog):
         If one argument is passed, retrieve the current settings.
         If two arguments are passed, set whether the channel is using mini karma or not.
         """,
-        brief="Send a shorter karma message in the given channel"
+        brief="Send a shorter karma message in the given channel",
     )
-    async def channel_karma(self, ctx: Context, channel: TextChannel, mode: MiniKarmaMode.get = None):
+    async def channel_karma(
+        self, ctx: Context, channel: TextChannel, mode: MiniKarmaMode.get = None
+    ):
         # TODO: avoid writing duplicate code with above if possible?
         karma_channel = (
             db_session.query(MiniKarmaChannel)
@@ -185,7 +187,9 @@ class Admin(commands.Cog):
                 db_session.add(new_karma_channel)
                 try:
                     db_session.commit()
-                    await ctx.send(f"Added {channel.mention} to the mini karma channels")
+                    await ctx.send(
+                        f"Added {channel.mention} to the mini karma channels"
+                    )
                 except SQLAlchemyError:
                     db_session.rollback()
                     await ctx.send("Something went wrong. No change has occurred.")

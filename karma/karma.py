@@ -38,7 +38,11 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     user = db_session.query(User).filter(User.user_uid == message.author.id).first()
 
     # Get whether the channel is on mini karma or not
-    channel = db_session.query(MiniKarmaChannel).filter(MiniKarmaChannel.channel == message.channel.id).one_or_none()
+    channel = (
+        db_session.query(MiniKarmaChannel)
+        .filter(MiniKarmaChannel.channel == message.channel.id)
+        .one_or_none()
+    )
     if channel is None:
         karma_mode = MiniKarmaMode.Normal
     else:

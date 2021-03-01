@@ -1,4 +1,4 @@
-from discord import Member, Message
+from discord import Message
 from discord.ext.commands import Bot, Cog
 
 from config import CONFIG
