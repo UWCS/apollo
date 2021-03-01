@@ -8,15 +8,6 @@ Apollo is the Discord bot for the University of Warwick Computing Society, desig
 
 Apollo is open source and available at: https://github.com/UWCS/apollo. Pull requests are welcome!
 """
-WELCOME_MESSAGE = """
-Hey <@{user_id}>!
-
-I'm Apollo, the UWCS Discord's friendly bot. I'd like to welcome you to the University of Warwick Computing Society Discord server!
-
-If you're not already a member of the society, you can join through the Warwick student's union website.
-
-GLHF! :rocket:
-"""
 
 # The command extensions to be loaded by the bot
 EXTENSIONS = [
