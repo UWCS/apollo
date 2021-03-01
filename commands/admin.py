@@ -2,17 +2,17 @@ import re
 from datetime import datetime
 
 import discord
-from discord import Embed, Color
+from discord import Color, Embed
 from discord.abc import PrivateChannel
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, check, clean_content
-from pytz import utc, timezone
+from discord.ext.commands import Bot, CommandError, Context, check, clean_content
+from pytz import timezone, utc
 
 from apollo import pluralise
 from commands.karma import current_milli_time
 from commands.verify import is_private_channel
 from config import CONFIG
-from models import db_session, User, LoggedMessage
+from models import LoggedMessage, User, db_session
 from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """

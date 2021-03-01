@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, clean_content
+from discord.ext.commands import Bot, Context, clean_content
 
 LONG_HELP_TEXT = """
 Make the bot repeat after you.

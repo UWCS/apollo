@@ -2,14 +2,14 @@ from datetime import datetime
 from math import floor
 
 from discord import Message
-from sqlalchemy import func, desc
+from sqlalchemy import desc, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
-from karma.parser import parse_message, create_transactions
-from models import User, Karma, KarmaChange
+from karma.parser import create_transactions, parse_message
+from models import Karma, KarmaChange, User
 from utils.aliases import get_name_string
 
 

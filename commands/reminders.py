@@ -2,10 +2,10 @@ import re
 from datetime import datetime, timedelta
 
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, clean_content
+from discord.ext.commands import Bot, Context, clean_content
 
 from config import CONFIG
-from models import db_session, User, Reminder
+from models import Reminder, User, db_session
 from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """

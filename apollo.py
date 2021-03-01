@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 
-from discord import Message, Member, Intents
+from discord import Intents, Member, Message
 from discord.abc import GuildChannel
 from discord.ext.commands import Bot, when_mentioned_or
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,8 +9,8 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
+from models import LoggedMessage, MessageDiff, Reminder, User, db_session
 from welcomes.welcome_messages import generate_welcome_message
-from models import User, db_session, LoggedMessage, MessageDiff, Reminder
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.

@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, CommandError, check
+from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
-from models import db_session, BlockedKarma, User
+from models import BlockedKarma, User, db_session
 from utils.aliases import get_name_string
 
 LONG_HELP_TEXT = """

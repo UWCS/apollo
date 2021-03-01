@@ -4,7 +4,7 @@ from datetime import datetime
 import requests
 from discord.abc import PrivateChannel
 from discord.ext import commands
-from discord.ext.commands import CommandError, Context, check, Bot
+from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 

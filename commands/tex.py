@@ -2,18 +2,18 @@ import os
 from datetime import datetime
 
 import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
 from discord.ext import commands
-from discord.ext.commands import Context, Bot, clean_content
+from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
-from skimage import io, color, img_as_float
+from skimage import color, img_as_float, io
 
 from config import CONFIG
 from utils.aliases import get_name_string
 
 matplotlib.use("Agg")
 
-import matplotlib.pyplot as plt
-import numpy as np
 
 # Discord background colour
 IMAGE_BACKGROUND = [(54 / 255), (58 / 255), (64 / 255)]
