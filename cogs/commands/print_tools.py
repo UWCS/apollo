@@ -11,7 +11,7 @@ from discord.ext.commands import Bot, Context, clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from commands.admin import is_compsoc_exec_in_guild
+from cogs.commands import is_compsoc_exec_in_guild
 from config import CONFIG
 from models import FilamentType, db_session
 from utils.aliases import get_name_string

@@ -9,8 +9,8 @@ from discord.ext.commands import Bot, CommandError, Context, check, clean_conten
 from pytz import timezone, utc
 
 from apollo import pluralise
-from commands.karma import current_milli_time
-from commands.verify import is_private_channel
+from cogs.commands.karma import current_milli_time
+from cogs.commands.verify import is_private_channel
 from config import CONFIG
 from models import LoggedMessage, User, db_session
 from utils.aliases import get_name_string
