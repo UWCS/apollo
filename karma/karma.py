@@ -1,5 +1,4 @@
 from datetime import datetime
-from math import floor
 
 from discord import Message
 from sqlalchemy import desc, func
@@ -141,13 +140,14 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             else:
                 # Tell the user that the item is on cooldown
                 if time_delta.seconds < 60:
-                    error_str += f' • Could not change "{truncated_name}" since it is still on cooldown (last altered {time_delta.seconds} seconds ago).\n'
+                    seconds_plural = f"second{'s' if time_delta.seconds != 1 else ''}"
+                    duration = f"{time_delta.seconds} {seconds_plural}"
                 else:
-                    mins_plural = ""
-                    mins = floor(time_delta.seconds / 60)
-                    if time_delta.seconds >= 120:
-                        mins_plural = "s"
-                    error_str += f' • Could not change "{truncated_name}" since it is still on cooldown (last altered {mins} minute{mins_plural} ago).\n'
+                    mins = time_delta.seconds // 60
+                    mins_plural = f"minute{'s' if mins != 1 else ''}"
+                    duration = f"{mins} {mins_plural}"
+
+                error_str += f' • Could not change "{truncated_name}" since it is still on cooldown (last altered {duration} ago).\n'
 
                 continue
 
