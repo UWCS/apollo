@@ -10,7 +10,7 @@ from discord.file import File
 from skimage import color, img_as_float, io
 
 from config import CONFIG
-from utils.aliases import get_name_string
+from utils import get_name_string
 
 matplotlib.use("Agg")
 

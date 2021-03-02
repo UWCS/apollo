@@ -12,8 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cogs.commands.karma import current_milli_time
 from config import CONFIG
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
-from utils.aliases import get_name_string
-from utils.pluralise import pluralise
+from utils import get_name_string, pluralise
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
@@ -30,6 +29,8 @@ class AdminError(CommandError):
 
 
 class EnumGet:
+    """Only use this if you're an enum inheriting it!"""
+
     @classmethod
     def get(cls, argument: str, default=None):
         values = {e.name.casefold(): e.name for e in list(cls)}
@@ -42,12 +43,16 @@ class EnumGet:
 
 @unique
 class ChannelIgnoreMode(EnumGet, Enum):
+    """Whether a channel is ignored or not"""
+
     Ignore = 0
     Watch = 1
 
 
 @unique
 class MiniKarmaMode(EnumGet, Enum):
+    """Whether a channel is on mini-karma mode or not"""
+
     Mini = 0
     Normal = 1
 
@@ -240,7 +245,6 @@ class Admin(commands.Cog):
         else:
             await ctx.send("No channels are ignored or on mini-karma mode.")
 
-
     @admin.command(
         name="userinfo",
         help="Display information about the given user. Uses their Discord username.",
@@ -266,13 +270,6 @@ class Admin(commands.Cog):
             )
 
         user = users[0]
-
-        # Generate stats information
-        time_taken = (current_milli_time() - t_start) / 1000
-        generated_at = datetime.strftime(
-            utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
-            "%H:%M %d %b %Y",
-        )
 
         # Create the embed to send
         embed_colour = Color.from_rgb(61, 83, 255)
@@ -307,13 +304,20 @@ class Admin(commands.Cog):
             name="Message count",
             value=f'{user.username.split("#")[0]} has posted {len(posts)} {pluralise(posts, "time")} across {len(channels)} {pluralise(channels, "channel")}.',
         )
+
+        # Generate stats information
+        time_taken = (current_milli_time() - t_start) / 1000
+        generated_at = datetime.strftime(
+            utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
+            "%H:%M %d %b %Y",
+        )
         embed.set_footer(
             text=f"Information generated at {generated_at} in {time_taken:.3f} seconds"
         )
 
         await ctx.send(embed=embed)
 
-    @user_info.error
+    @admin.error
     async def user_info_error(self, ctx: Context, error: AdminError):
         await ctx.send(error.message)
 

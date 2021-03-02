@@ -12,20 +12,20 @@ Apollo is open source and available at: https://github.com/UWCS/apollo. Pull req
 
 # The command extensions to be loaded by the bot
 EXTENSIONS = [
-    "cogs.commands.karma",
-    "cogs.commands.say",
-    "cogs.commands.flip",
-    "cogs.commands.misc",
     "cogs.commands.admin",
     "cogs.commands.blacklist",
     "cogs.commands.fact",
-    "cogs.commands.reminders",
+    "cogs.commands.flip",
+    "cogs.commands.karma",
     "cogs.commands.lcalc",
-    "cogs.commands.widen",
+    "cogs.commands.misc",
+    "cogs.commands.reminders",
+    "cogs.commands.say",
     "cogs.commands.tex",
-    "cogs.welcome",
+    "cogs.commands.widen",
     "cogs.database",
     "cogs.irc",
+    "cogs.welcome",
 ]
 
 

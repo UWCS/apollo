@@ -10,7 +10,7 @@ from cogs.commands.admin import MiniKarmaMode
 from config import CONFIG
 from karma.parser import KarmaTransaction, create_transactions, parse_message
 from models import Karma, KarmaChange, MiniKarmaChannel, User
-from utils.aliases import get_name_string
+from utils import get_name_string
 
 
 def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):

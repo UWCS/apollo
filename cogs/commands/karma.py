@@ -33,8 +33,7 @@ from sqlalchemy import func
 from config import CONFIG
 from models import Karma as KarmaModel
 from models import KarmaChange, db_session
-from utils.aliases import get_name_string
-from utils.pluralise import pluralise
+from utils import get_name_string, pluralise
 
 matplotlib.use("Agg")
 
@@ -177,12 +176,8 @@ def comma_separate(items: List[str]) -> str:
         )
 
 
-"""
-Method to convert a string to an integer that's a bit more complex than the default int converter
-"""
-
-
 def convert_int(argument: str):
+    """Method to convert a string to an integer that's a bit more complex than the default int converter"""
     if argument.casefold().startswith("0x"):
         # Hexadecimal
         return int(argument, base=0)

@@ -9,7 +9,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import Reminder, User, db_session
-from utils.aliases import get_name_string
+from utils import get_name_string
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.

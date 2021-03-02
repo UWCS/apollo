@@ -7,14 +7,14 @@ from pathlib import Path
 import requests
 from discord import Color, Embed
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context, check, clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from cogs.commands import is_compsoc_exec_in_guild
+from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from models import FilamentType, db_session
-from utils.aliases import get_name_string
+from utils import get_name_string
 
 LONG_HELP_TEXT = """
 Commands to help cost and request something is 3D printed on the UWCS 3D printer.
@@ -68,7 +68,7 @@ class PrintTools(commands.Cog, name="Print tools"):
             await ctx.send("Subcommand not found")
 
     @printtools.command(help=ADDF_LONG_TEXT, brief=ADDF_HELP_TEXT)
-    @is_compsoc_exec_in_guild()
+    @check(is_compsoc_exec_in_guild)
     async def add_filament(self, ctx: Context, *args: clean_content):
         # Check we have the bare minumum number of args
         if len(args) < 2:
@@ -126,7 +126,7 @@ class PrintTools(commands.Cog, name="Print tools"):
             await ctx.send(f'Could not add "{filament_name}" due to an internal error.')
 
     @printtools.command(help=DELF_LONG_TEXT, brief=DELF_HELP_TEXT)
-    @is_compsoc_exec_in_guild()
+    @check(is_compsoc_exec_in_guild)
     async def del_filament(self, ctx: Context, filament_name: clean_content):
         filament = (
             db_session.query(FilamentType)
