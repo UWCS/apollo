@@ -1,4 +1,4 @@
-fact-endpoint: "https://seml.ink/random"
+fact-endpoint: "https://thefact.space/random"
 facts:
   - "The billionth digit of Pi is 9."
   - "Humans can survive underwater. But not for very long."
