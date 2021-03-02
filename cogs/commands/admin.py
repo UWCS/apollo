@@ -152,12 +152,12 @@ class Admin(commands.Cog):
 
     @admin.command(
         name="minikarma",
-        help="""Gets or sets whether the specified channel is using mini karma output mode or not.
-        Mini karma output channels have a more brief karma message, designed to reduce number of newlines.
+        help="""Gets or sets whether the specified channel is using mini-karma output mode or not.
+        Mini-karma output channels have a more brief karma message, designed to reduce number of newlines.
         
         Expects up to two arguments: !admin minikarma (channel) [mini|normal]
         If one argument is passed, retrieve the current settings.
-        If two arguments are passed, set whether the channel is using mini karma or not.
+        If two arguments are passed, set whether the channel is using mini-karma or not.
         """,
         brief="Send a shorter karma message in the given channel",
     )
@@ -181,13 +181,13 @@ class Admin(commands.Cog):
                 try:
                     db_session.commit()
                     await ctx.send(
-                        f"Added {channel.mention} to the mini karma channels"
+                        f"Added {channel.mention} to the mini-karma channels"
                     )
                 except SQLAlchemyError:
                     db_session.rollback()
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
-                await ctx.send(f"{channel.mention} is already on mini karma mode!")
+                await ctx.send(f"{channel.mention} is already on mini-karma mode!")
         elif mode == MiniKarmaMode.Normal:
             if karma_channel is not None:
                 db_session.query(MiniKarmaChannel).filter(
@@ -205,7 +205,7 @@ class Admin(commands.Cog):
             if karma_channel is None:
                 await ctx.send(f"{channel.mention} is on normal karma mode.")
             else:
-                await ctx.send(f"{channel.mention} is on mini karma mode.")
+                await ctx.send(f"{channel.mention} is on mini-karma mode.")
 
     @admin.command(
         name="userinfo",
