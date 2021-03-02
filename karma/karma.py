@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import ScalarListException
 
 from cogs.commands.admin import MiniKarmaMode
-from config import CONFIG
 from karma.parser import KarmaTransaction, create_transactions, parse_message
 from models import Karma, KarmaChange, MiniKarmaChannel, User
 from utils import get_name_string
