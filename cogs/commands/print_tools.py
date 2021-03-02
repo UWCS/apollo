@@ -49,9 +49,9 @@ def get_valid_filename(s):
 
 class PrintTools(commands.Cog, name="Print tools"):
     def __init__(self, bot: Bot):
-        self.print_root_dir = Path(CONFIG["PRINTER_FILE_ROOT"])
-        self.print_images_dir = Path(self.print_root_dir, "images")
-        self.print_profiles_dir = Path(self.print_root_dir, "profiles")
+        self.print_root_dir = CONFIG.PRINTER_FILE_ROOT
+        self.print_images_dir = self.print_root_dir / "images"
+        self.print_profiles_dir = self.print_root_dir / "profiles"
 
         print_profiles = [
             x for x in os.listdir(self.print_profiles_dir) if x.endswith(".ini")
@@ -211,7 +211,7 @@ class PrintTools(commands.Cog, name="Print tools"):
         # Construct the embed
         embed_colour = Color.from_rgb(61, 83, 255)
         embed_title = f'Filament info for "{filament_name}"'
-        host = CONFIG["FIG_HOST_URL"] + "/filaments"
+        host = CONFIG.FIG_HOST_URL + "/filaments"
         image_file = filament.image_path.split("/")[-1]
 
         embed = Embed(title=embed_title, color=embed_colour)

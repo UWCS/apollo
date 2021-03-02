@@ -149,9 +149,7 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
         + str(hex(int(datetime.utcnow().timestamp()))).lstrip("0x")
         + ".png"
     ).replace(" ", "")
-    path = "{path}/{filename}".format(
-        path=CONFIG["FIG_SAVE_PATH"].rstrip("/"), filename=filename
-    )
+    path = CONFIG.FIG_SAVE_PATH / filename
 
     fig.savefig(path, dpi=240, transparent=False)
     os.chmod(path, 0o644)
@@ -313,7 +311,7 @@ class Karma(commands.Cog):
         time_taken = (current_milli_time() - t_start) / 1000
 
         # Attach the file as an image for dev purposes
-        if CONFIG["DEBUG"]:
+        if CONFIG.DEBUG:
             # Attach the file as an image for dev purposes
             plot_image = open(path, mode="rb")
             plot = File(plot_image)
@@ -350,7 +348,7 @@ class Karma(commands.Cog):
             )
             embed.set_image(
                 url="{host}/{filename}".format(
-                    host=CONFIG["FIG_HOST_URL"], filename=filename
+                    host=CONFIG.FIG_HOST_URL, filename=filename
                 )
             )
 
@@ -412,7 +410,7 @@ class Karma(commands.Cog):
         filename, path = await plot_karma(karma_dict)
         t_end = current_milli_time()
 
-        if CONFIG["DEBUG"]:
+        if CONFIG.DEBUG:
             # Attach the file as an image for dev purposes
             plot_image = open(path, mode="rb")
             plot = File(plot_image)
@@ -458,7 +456,7 @@ class Karma(commands.Cog):
                 )
                 embed.set_image(
                     url="{host}/{filename}".format(
-                        host=CONFIG["FIG_HOST_URL"], filename=filename
+                        host=CONFIG.FIG_HOST_URL, filename=filename
                     )
                 )
 

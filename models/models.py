@@ -22,7 +22,7 @@ from config import CONFIG
 
 Base = declarative_base()
 
-engine = create_engine(CONFIG["DATABASE_CONNECTION"], echo=CONFIG["SQL_LOGGING"])
+engine = create_engine(CONFIG.DATABASE_CONNECTION, echo=CONFIG.SQL_LOGGING)
 db_session = Session(bind=engine)
 
 
@@ -44,7 +44,7 @@ class MessageDiff(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     original_message = Column(Integer, ForeignKey("messages.id"), nullable=False)
     new_content = Column(
-        EncryptedType(type_in=String, key=CONFIG["BOT_SECRET_KEY"]), nullable=False
+        EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=False
     )
     created_at = Column(DateTime, nullable=False)
 
@@ -58,13 +58,13 @@ class LoggedMessage(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     message_uid = Column(BigInteger, nullable=False)
     message_content = Column(
-        EncryptedType(type_in=String, key=CONFIG["BOT_SECRET_KEY"]), nullable=False
+        EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=False
     )
     author = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, nullable=False)
     deleted_at = Column(DateTime, nullable=True)
     channel_name = Column(
-        EncryptedType(type_in=String, key=CONFIG["BOT_SECRET_KEY"]), nullable=False
+        EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=False
     )
 
     user = relationship("User", back_populates="messages")
@@ -105,7 +105,7 @@ class Karma(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
     added = Column(
-        EncryptedType(type_in=DateTime, key=CONFIG["BOT_SECRET_KEY"]),
+        EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY),
         nullable=False,
         default=datetime.utcnow(),
     )
@@ -133,15 +133,15 @@ class User(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     user_uid = Column(BigInteger, nullable=False)
     username = Column(
-        EncryptedType(type_in=String, key=CONFIG["BOT_SECRET_KEY"]), nullable=False
+        EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=False
     )
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
     last_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
     uni_id = Column(
-        EncryptedType(type_in=String, key=CONFIG["BOT_SECRET_KEY"]), nullable=True
+        EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=True
     )
     verified_at = Column(
-        EncryptedType(type_in=DateTime, key=CONFIG["BOT_SECRET_KEY"]), nullable=True
+        EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY), nullable=True
     )
 
     messages = relationship(

@@ -38,7 +38,7 @@ class Welcome(Cog):
         self.welcome_template = parsed.get("message")
 
     def generate_welcome_message(self, name):
-        intro_channel = self.bot.get_channel(CONFIG["UWCS_INTROS_CHANNEL_ID"])
+        intro_channel = self.bot.get_channel(CONFIG.UWCS_INTROS_CHANNEL_ID)
         greeting = choice(self.greetings)
         category = choices(self.categories, self.category_weights)[0]
         thing = category.generate()
@@ -63,7 +63,7 @@ class Welcome(Cog):
         #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
 
         # Join message
-        channel = self.bot.get_channel(CONFIG["UWCS_WELCOME_CHANNEL_ID"])
+        channel = self.bot.get_channel(CONFIG.UWCS_WELCOME_CHANNEL_ID)
         await channel.send(self.generate_welcome_message(member.display_name))
 
 

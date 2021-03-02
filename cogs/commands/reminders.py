@@ -98,7 +98,7 @@ async def reminder_check(bot):
             r.triggered = True
             db_session.commit()
 
-        await asyncio.sleep(CONFIG["REMINDER_SEARCH_INTERVAL"])
+        await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
 
 
 class Reminders(commands.Cog):
@@ -130,7 +130,7 @@ class Reminders(commands.Cog):
 
                 # set the id to a random value if the author was the bridge bot, since we wont be using it anyways
                 # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
-                if ctx.message.author.id == CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]:
+                if ctx.message.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID:
                     author_id = 1
                     irc_n = display_name
                 else:
@@ -159,7 +159,7 @@ class Reminders(commands.Cog):
                     try:
                         db_session.commit()
                         await ctx.send(
-                            f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG["REMINDER_SEARCH_INTERVAL"]} seconds).'
+                            f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG.REMINDER_SEARCH_INTERVAL} seconds).'
                         )
                     except (ScalarListException, SQLAlchemyError):
                         db_session.rollback()

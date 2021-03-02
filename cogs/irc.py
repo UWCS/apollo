@@ -13,7 +13,7 @@ class Irc(Cog):
         # allow irc users to use commands by altering content to remove the nick before sending for command processing
         # note that clean_content is *not* altered and everything relies on this fact for it to work without having to go back and lookup the message in the db
         # if message.content.startswith("**<"): # <-- FOR TESTING
-        if message.author.id == CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]:
+        if message.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID:
             # Search for first "> " and strip the message from there (Since irc nicks cant have <, > in them
             idx = message.content.find(">** ")
             idx += 4

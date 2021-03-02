@@ -39,7 +39,7 @@ bot = Bot(
 
 @bot.event
 async def on_ready():
-    if CONFIG["BOT_LOGGING"]:
+    if CONFIG.BOT_LOGGING:
         # TODO: Write this to a logging file?
         print("Logged in as")
         print(str(bot.user))
@@ -54,4 +54,4 @@ if __name__ == "__main__":
             exc = "{}: {}".format(type(e).__name__, e)
             print("Failed to load extension {}\n{}".format(extension, exc))
 
-    bot.run(CONFIG["DISCORD_TOKEN"])
+    bot.run(CONFIG.DISCORD_TOKEN)

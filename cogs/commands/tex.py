@@ -66,9 +66,7 @@ class Tex(commands.Cog):
             + str(hex(int(datetime.utcnow().timestamp()))).lstrip("0x")
             + ".png"
         ).replace(" ", "")
-        path_png = "{path}/{filename}".format(
-            path=CONFIG["FIG_SAVE_PATH"].rstrip("/"), filename=filename
-        )
+        path_png = CONFIG.FIG_SAVE_PATH / filename
         path_jpg = path_png.replace(".png", ".jpg")
         try:
             # Plot the latex and save it.

@@ -60,7 +60,7 @@ class MiniKarmaMode(EnumGet, Enum):
 async def is_compsoc_exec_in_guild(ctx: Context):
     # Get the roles of the user in the UWCS discord
     compsoc_guild = [
-        guild for guild in ctx.bot.guilds if guild.id == CONFIG["UWCS_DISCORD_ID"]
+        guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID
     ][0]
     compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
     if not compsoc_member:
@@ -71,7 +71,7 @@ async def is_compsoc_exec_in_guild(ctx: Context):
     roles = list(
         map(
             lambda x: discord.utils.get(compsoc_member.roles, id=x),
-            CONFIG["UWCS_EXEC_ROLE_IDS"],
+            CONFIG.UWCS_EXEC_ROLE_IDS,
         )
     )
     if not roles:

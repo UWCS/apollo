@@ -57,7 +57,7 @@ class Verify(commands.Cog):
 
         # Get the discord data from our servers
         headers = {
-            "Authorization": "Token {token}".format(token=CONFIG["UWCS_API_TOKEN"])
+            "Authorization": "Token {token}".format(token=CONFIG.UWCS_API_TOKEN)
         }
         api_request = requests.get(
             "https://uwcs.co.uk/api/user/{uni_id}/".format(uni_id=uni_number),
@@ -102,7 +102,7 @@ class Verify(commands.Cog):
                 compsoc_guild = [
                     guild
                     for guild in ctx.bot.guilds
-                    if guild.id == CONFIG["UWCS_DISCORD_ID"]
+                    if guild.id == CONFIG.UWCS_DISCORD_ID
                 ][0]
                 compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
                 if not compsoc_member:
@@ -114,7 +114,7 @@ class Verify(commands.Cog):
                     compsoc_role = [
                         role
                         for role in compsoc_guild.roles
-                        if role.id == CONFIG["UWCS_MEMBER_ROLE_ID"]
+                        if role.id == CONFIG.UWCS_MEMBER_ROLE_ID
                     ][0]
                 except IndexError:
                     raise VerifyError(

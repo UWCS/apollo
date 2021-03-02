@@ -33,7 +33,7 @@ class Database(Cog):
         # If the message is by a bot thats not irc then ignore it
         if (
             message.author.bot
-            and message.author.id != CONFIG["UWCS_DISCORD_BRIDGE_BOT_ID"]
+            and message.author.id != CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
         ):
             return
 
@@ -77,7 +77,7 @@ class Database(Cog):
                 message.content.startswith(prefix) for prefix in command_prefixes
             ]:
                 reply = process_karma(
-                    message, logged_message.id, db_session, CONFIG["KARMA_TIMEOUT"]
+                    message, logged_message.id, db_session, CONFIG.KARMA_TIMEOUT
                 )
                 if reply:
                     await message.channel.send(reply)
