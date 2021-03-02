@@ -208,6 +208,40 @@ class Admin(commands.Cog):
                 await ctx.send(f"{channel.mention} is on mini-karma mode.")
 
     @admin.command(
+        name="list",
+        help="""List the channels that are ignored or on mini-karma mode""",
+    )
+    async def channel_ignore_list(self, ctx: Context):
+        ignored_channels = [
+            f" • {c.mention}"
+            for c in ctx.guild.text_channels
+            if c.id in list(db_session.query(IgnoredChannel).all())
+        ]
+
+        mini_karma_channels = [
+            f" • {c.mention}"
+            for c in ctx.guild.text_channels
+            if c.id in (list(db_session.query(MiniKarmaChannel).all()))
+        ]
+
+        message = []
+
+        if ignored_channels:
+            message += ["Ignored channels:"] + ignored_channels
+
+        if ignored_channels and mini_karma_channels:
+            message.append("")
+
+        if mini_karma_channels:
+            message += ["", "Mini-karma Channels:"] + mini_karma_channels
+
+        if message:
+            await ctx.send("\n".join(message))
+        else:
+            await ctx.send("No channels are ignored or on mini-karma mode.")
+
+
+    @admin.command(
         name="userinfo",
         help="Display information about the given user. Uses their Discord username.",
         brief="Show info about a user using their Discord username.",
