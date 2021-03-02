@@ -31,7 +31,7 @@ If installing the top-level dependencies does not work, try installing the pinne
    Now that we've activated the environment, `pip` will install packages locally.
    - Installing top-level dependencies via `pip install -r requirements.txt` should work.
    - If it doesn't, you may need to install the pinned requirements via `pip install -r requirements.lock`
-5. Copy `config.example.py` to `config.py` and configure the fields.
+5. Copy `config.example.yaml` to `config.yaml` and configure the fields.
 6. Copy `alembic.example.ini` to `alembic.ini`.
 7. Set up the database by running migrations with `alembic upgrade head`.
    - The default database location is `sqlite:///:memory:` (in both `config.example.py` and `alembic.example.ini`).
