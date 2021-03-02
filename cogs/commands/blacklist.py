@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context
+from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
@@ -30,7 +30,7 @@ class Blacklist(commands.Cog):
             await ctx.send("Subcommand not found")
 
     @blacklist.command(help="Add a topic to the karma blacklist.")
-    @is_compsoc_exec_in_guild()
+    @check(is_compsoc_exec_in_guild)
     async def add(self, ctx: Context, item: str):
         author_id = (
             db_session.query(User)
@@ -60,7 +60,7 @@ class Blacklist(commands.Cog):
             )
 
     @blacklist.command(help="Remove a word from the karma blacklist.")
-    @is_compsoc_exec_in_guild()
+    @check(is_compsoc_exec_in_guild)
     async def remove(self, ctx: Context, item: str):
         if (
             not db_session.query(BlockedKarma)
@@ -84,7 +84,7 @@ class Blacklist(commands.Cog):
                 )
 
     @blacklist.command(help="List all blacklisted karma topics.")
-    @is_compsoc_exec_in_guild()
+    @check(is_compsoc_exec_in_guild)
     async def list(self, ctx: Context):
         items = db_session.query(BlockedKarma).all()
         if items:
