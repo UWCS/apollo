@@ -159,7 +159,7 @@ class Reminders(commands.Cog):
                     try:
                         db_session.commit()
                         await ctx.send(
-                            f'Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG.REMINDER_SEARCH_INTERVAL} seconds).'
+                            f"Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG.REMINDER_SEARCH_INTERVAL} seconds)."
                         )
                     except (ScalarListException, SQLAlchemyError):
                         db_session.rollback()
