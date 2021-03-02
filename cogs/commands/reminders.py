@@ -10,6 +10,7 @@ from sqlalchemy_utils import ScalarListException
 from config import CONFIG
 from models import Reminder, User, db_session
 from utils import get_name_string
+from utils.utils import user_is_irc_bot
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.
@@ -130,7 +131,7 @@ class Reminders(commands.Cog):
 
                 # set the id to a random value if the author was the bridge bot, since we wont be using it anyways
                 # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
-                if ctx.message.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID:
+                if user_is_irc_bot(ctx):
                     author_id = 1
                     irc_n = display_name
                 else:

@@ -1,7 +1,7 @@
 from discord import Message
 from discord.ext.commands import Bot, Cog
 
-from config import CONFIG
+from utils.utils import user_is_irc_bot
 
 
 class Irc(Cog):
@@ -13,7 +13,7 @@ class Irc(Cog):
         # allow irc users to use commands by altering content to remove the nick before sending for command processing
         # note that clean_content is *not* altered and everything relies on this fact for it to work without having to go back and lookup the message in the db
         # if message.content.startswith("**<"): # <-- FOR TESTING
-        if message.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID:
+        if user_is_irc_bot(message):
             # Search for first "> " and strip the message from there (Since irc nicks cant have <, > in them
             idx = message.content.find(">** ")
             idx += 4

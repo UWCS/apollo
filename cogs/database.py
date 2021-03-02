@@ -11,6 +11,7 @@ from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from karma.karma import process_karma
 from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session
+from utils.utils import user_is_irc_bot
 
 
 def not_in_blacklisted_channel(ctx: Context):
@@ -30,11 +31,8 @@ class Database(Cog):
 
     @Cog.listener()
     async def on_message(self, message: Message):
-        # If the message is by a bot thats not irc then ignore it
-        if (
-            message.author.bot
-            and message.author.id != CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
-        ):
+        # If the message is by a bot that's not irc then ignore it
+        if message.author.bot and not user_is_irc_bot(message):
             return
 
         user = db_session.query(User).filter(User.user_uid == message.author.id).first()
