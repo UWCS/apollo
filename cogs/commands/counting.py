@@ -24,7 +24,12 @@ class Counting(commands.Cog):
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def counting(self, ctx: Context, *args: clean_content):
         if self.currentlyPlaying:
-            await ctx.send(f"There is already a game being played in {self.channel}!")
+            channel = (
+                "this channel"
+                if self.channel == ctx.message.channel
+                else self.channel.mention
+            )
+            await ctx.send(f"There is already a game being played in {channel}!")
             return
 
         self.currentlyPlaying = True
@@ -38,7 +43,8 @@ class Counting(commands.Cog):
             return
         if message.content.isnumeric():
             if int(message.content) == self.nextNumber:
-                await message.add_reaction("✔️")
+                self.nextNumber += 1
+                await message.add_reaction("✅")
             else:
                 await message.add_reaction("❌")
                 await message.channel.send(
