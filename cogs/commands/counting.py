@@ -1,5 +1,6 @@
+from discord import Message
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Cog, Context, clean_content
 
 from utils import get_name_string
 
@@ -13,7 +14,7 @@ SHORT_HELP_TEXT = """Starts a counting game"""
 class Counting(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        reset()
+        self.reset()
 
     def reset(self):
         self.currentlyPlaying = False
@@ -33,16 +34,16 @@ class Counting(commands.Cog):
 
     @Cog.listener()
     async def on_message(self, message: Message):
-        if not currentlyPlaying or message.channel != self.channel:
+        if not self.currentlyPlaying or message.channel != self.channel:
             return
         if message.content.isnumeric():
-            if int(message.content) == nextNumber:
-                message.add_reaction("✔️")
+            if int(message.content) == self.nextNumber:
+                await message.add_reaction("✔️")
             else:
-                message.add_reaction("❌")
-                await ctx.send(f"**Incorrect number!** The next number was {self.nextNumber}.")
-                reset ()
+                await message.add_reaction("❌")
+                await message.channel.send(f"**Incorrect number!** The next number was {self.nextNumber}.")
+                self.reset ()
 
 
 def setup(bot: Bot):
-    bot.add_cog(Flip(bot))
+    bot.add_cog(Counting(bot))
