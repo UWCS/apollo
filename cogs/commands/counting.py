@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from discord import Message
 from discord.ext import commands
 from discord.ext.commands import Bot, Cog, Context, clean_content
@@ -19,7 +21,8 @@ class Counting(commands.Cog):
     def reset(self):
         self.currently_playing = False
         self.channel = None
-        self.next_number = 0
+        self.prev_number = None
+        self.step = None
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def counting(self, ctx: Context):
@@ -41,11 +44,19 @@ class Counting(commands.Cog):
     async def on_message(self, message: Message):
         if not self.currently_playing or message.channel != self.channel:
             return
-        if message.content.isnumeric():
-            if int(message.content) == self.next_number:
-                self.next_number += 1
+        if is_number(message.content):
+            number = Decimal(message.content)
+            if self.prev_number == None:  # First number submitted
+                self.prev_number = number
+                if number != 0:
+                    self.step = number
+            elif self.step == None:  # First non-zero number submitted
+                self.prev_number = number
+                self.step = number
+            elif number == self.prev_number + self.step:  # General case
+                self.prev_number = number
                 await message.add_reaction("✅")
-            else:
+            else:  # Invalid submission
                 await message.add_reaction("❌")
                 await message.channel.send(
                     f"**Incorrect number!** The next number was {self.next_number}."
