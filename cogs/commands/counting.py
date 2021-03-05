@@ -22,7 +22,7 @@ class Counting(commands.Cog):
         self.nextNumber = 0
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def counting(self, ctx: Context, *args: clean_content):
+    async def counting(self, ctx: Context):
         if self.currentlyPlaying:
             channel = (
                 "this channel"
