@@ -118,9 +118,14 @@ class Admin(commands.Cog):
         if mode == ChannelIgnoreMode.Ignore:
             if ignored_channel is None:
                 # Create a new entry
+                user = (
+                    db_session.query(User)
+                    .filter(User.user_uid == ctx.author.id)
+                    .first()
+                )
                 new_ignored_channel = IgnoredChannel(
                     channel=channel.id,
-                    user_id=ctx.author.id,
+                    user_id=user.id,
                 )
                 db_session.add(new_ignored_channel)
                 try:
@@ -178,9 +183,14 @@ class Admin(commands.Cog):
 
         if mode == MiniKarmaMode.Mini:
             if karma_channel is None:
+                user = (
+                    db_session.query(User)
+                    .filter(User.user_uid == ctx.author.id)
+                    .first()
+                )
                 new_karma_channel = MiniKarmaChannel(
                     channel=channel.id,
-                    user_id=ctx.author.id,
+                    user_id=user.id,
                 )
                 db_session.add(new_karma_channel)
                 try:
