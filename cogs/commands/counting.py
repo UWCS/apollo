@@ -41,8 +41,10 @@ class Counting(commands.Cog):
                 await message.add_reaction("✔️")
             else:
                 await message.add_reaction("❌")
-                await message.channel.send(f"**Incorrect number!** The next number was {self.nextNumber}.")
-                self.reset ()
+                await message.channel.send(
+                    f"**Incorrect number!** The next number was {self.nextNumber}."
+                )
+                self.reset()
 
 
 def setup(bot: Bot):
