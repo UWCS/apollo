@@ -46,6 +46,7 @@ class Counting(commands.Cog):
             return
         if is_number(message.content):
             number = Decimal(message.content)
+            valid = True
             if self.prev_number == None:  # First number submitted
                 self.prev_number = number
                 if number != 0:
@@ -55,8 +56,12 @@ class Counting(commands.Cog):
                 self.step = number
             elif number == self.prev_number + self.step:  # General case
                 self.prev_number = number
-                await message.add_reaction("✅")
             else:  # Invalid submission
+                valid = False
+
+            if valid:
+                await message.add_reaction("✅")
+            else:
                 await message.add_reaction("❌")
                 await message.channel.send(
                     f"**Incorrect number!** The next number was {self.prev_number + self.step}."
