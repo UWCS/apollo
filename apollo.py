@@ -15,6 +15,7 @@ Apollo is open source and available at: https://github.com/UWCS/apollo. Pull req
 EXTENSIONS = [
     "cogs.commands.admin",
     "cogs.commands.blacklist",
+    "cogs.commands.counting",
     "cogs.commands.fact",
     "cogs.commands.flip",
     "cogs.commands.karma",
