@@ -17,13 +17,13 @@ class Counting(commands.Cog):
         self.reset()
 
     def reset(self):
-        self.currentlyPlaying = False
+        self.currently_playing = False
         self.channel = None
-        self.nextNumber = 0
+        self.next_number = 0
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def counting(self, ctx: Context):
-        if self.currentlyPlaying:
+        if self.currently_playing:
             channel = (
                 "this channel"
                 if self.channel == ctx.message.channel
@@ -32,23 +32,23 @@ class Counting(commands.Cog):
             await ctx.send(f"There is already a game being played in {channel}!")
             return
 
-        self.currentlyPlaying = True
+        self.currently_playing = True
         self.channel = ctx.message.channel
 
         await ctx.send(f"The game begins!")
 
     @Cog.listener()
     async def on_message(self, message: Message):
-        if not self.currentlyPlaying or message.channel != self.channel:
+        if not self.currently_playing or message.channel != self.channel:
             return
         if message.content.isnumeric():
-            if int(message.content) == self.nextNumber:
-                self.nextNumber += 1
+            if int(message.content) == self.next_number:
+                self.next_number += 1
                 await message.add_reaction("✅")
             else:
                 await message.add_reaction("❌")
                 await message.channel.send(
-                    f"**Incorrect number!** The next number was {self.nextNumber}."
+                    f"**Incorrect number!** The next number was {self.next_number}."
                 )
                 self.reset()
 
