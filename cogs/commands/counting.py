@@ -1,10 +1,8 @@
 from decimal import Decimal
 
-from discord import Message
-from discord.ext import commands
-from discord.ext.commands import Bot, Cog, Context, clean_content
+from discord.ext.commands import Bot, Cog, Context, check, command
 
-from utils import get_name_string, is_number
+from utils import is_decimal
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
@@ -13,18 +11,13 @@ Starts a counting game where each player must name the next number in the sequen
 SHORT_HELP_TEXT = """Starts a counting game"""
 
 
-class Counting(commands.Cog):
+class Counting(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.reset()
-
-    def reset(self):
         self.currently_playing = False
         self.channel = None
-        self.prev_number = None
-        self.step = None
 
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def counting(self, ctx: Context):
         if self.currently_playing:
             channel = (
@@ -36,37 +29,47 @@ class Counting(commands.Cog):
             return
 
         self.currently_playing = True
-        self.channel = ctx.message.channel
+        channel = ctx.message.channel
 
         await ctx.send(f"The game begins!")
+        # The count starts at 0.
+        count = 0
+        # The number of successful replies in a row.
+        length = 0
+        # We need to determine what the step is.
+        # It will be the first decimal number sent in the same channel.
 
-    @Cog.listener()
-    async def on_message(self, message: Message):
-        if not self.currently_playing or message.channel != self.channel:
-            return
-        if is_number(message.content):
-            number = Decimal(message.content)
-            valid = True
-            if self.prev_number == None:  # First number submitted
-                self.prev_number = number
-                if number != 0:
-                    self.step = number
-            elif self.step == None:  # First non-zero number submitted
-                self.prev_number = number
-                self.step = number
-            elif number == self.prev_number + self.step:  # General case
-                self.prev_number = number
-            else:  # Invalid submission
-                valid = False
+        def check_dec(m):
+            return m.channel == channel and is_decimal(m.content)
 
-            if valid:
-                await message.add_reaction("✅")
+        msg = await self.bot.wait_for("message", check=check)
+        # Set the step.
+        await msg.add_reaction("✅")
+        step = Decimal(msg.content)
+        length += 1
+        count += step
+
+        while True:
+            # Wait for the next numeric message
+            msg = await self.bot.wait_for("message", check=check_dec)
+            value = Decimal(msg.content)
+            if value == count + step:
+                # If the number is correct, increase the count and length.
+                count += step
+                length += 1
+                await msg.add_reaction("✅")
             else:
-                await message.add_reaction("❌")
-                await message.channel.send(
-                    f"**Incorrect number!** The next number was {self.prev_number + self.step}."
+                # Otherwise, break the chain.
+                await msg.add_reaction("❌")
+                await ctx.send(
+                    f"Gone wrong at {count}! The next number was {count + step}.\n"
+                    f"This chain lasted {length} consecutive messages."
                 )
-                self.reset()
+                break
+
+        # Reset the cog's state.
+        self.currently_playing = False
+        self.channel = None
 
 
 def setup(bot: Bot):

@@ -1,4 +1,5 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+
 from config import CONFIG
 
 
@@ -14,11 +15,11 @@ def get_name_string(message):
         return f"{message.author.mention}"
 
 
-def is_number(num):
+def is_decimal(num):
     try:
         Decimal(num)
         return True
-    except:
+    except TypeError:
         return False
 
 
