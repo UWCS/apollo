@@ -4,7 +4,7 @@ from discord import Message
 from discord.ext import commands
 from discord.ext.commands import Bot, Cog, Context, clean_content
 
-from utils import get_name_string
+from utils import get_name_string, is_number
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
