@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from discord import Intents
-from discord.ext.commands import Bot, when_mentioned_or
+from discord.ext.commands import Bot, Context, check, when_mentioned_or
 
+from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 
 DESCRIPTION = """
@@ -35,6 +36,14 @@ intents.members = True
 bot = Bot(
     command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents
 )
+
+
+@bot.command()
+@check(is_compsoc_exec_in_guild)
+async def reload_cogs(ctx: Context):
+    for extension in EXTENSIONS:
+        bot.reload_extension(extension)
+    await ctx.message.add_reaction("✅")
 
 
 @bot.event
