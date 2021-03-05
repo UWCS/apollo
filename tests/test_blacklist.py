@@ -31,8 +31,8 @@ def database():
     user = User(user_uid=1, username="Foo")
     db_session.add(user)
 
-    c = BlockedKarma(topic="c".casefold(), user_id=1)
-    notepad = BlockedKarma(topic="notepad".casefold(), user_id=1)
+    c = BlockedKarma(topic="c", user_id=1)
+    notepad = BlockedKarma(topic="notepad", user_id=1)
     db_session.add_all([c, notepad])
     db_session.commit()
 

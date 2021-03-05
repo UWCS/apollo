@@ -1,0 +1,20 @@
+config:
+  UWCS_discord_bridge_bot_id: 1337
+  UWCS_member_role_id: 2674
+  UWCS_exec_role_ids: [ 9874698723 ]
+  UWCS_welcome_channel_id: 420
+  UWCS_intros_channel_id: 69
+  database_connection: "sqlite:///:memory:"
+  UWCS_discord_id: 1337
+  UWCS_api_token: api_token
+  bot_secret_key: secret_key
+  karma_timeout: 900
+  discord_token: discord_token
+  fig_save_path: /path/to/graph/dir/
+  fig_host_url: https://your.url/to/host/images
+  sql_logging: on
+  bot_logging: on
+  debug: True
+  reminder_search_interval: 30
+  slicer_path: /path/to/prusa-slicer
+  printer_file_root: /path/to/print/files

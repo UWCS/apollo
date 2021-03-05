@@ -1,4 +1,4 @@
-from karma.parser import create_transactions, KarmaTransaction, RawKarma
+from karma.parser import KarmaTransaction, RawKarma, create_transactions
 
 
 def test_empty():

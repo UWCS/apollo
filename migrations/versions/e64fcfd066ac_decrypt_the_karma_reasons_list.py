@@ -59,9 +59,9 @@ def upgrade():
     for change in session.query(KarmaChange):
         change.reasons_new = change.reasons
 
-    op.drop_column("karma_changes", "reasons")
     with op.batch_alter_table("karma_changes") as bop:
         bop.alter_column("reasons_new", new_column_name="reasons")
+        bop.drop_column("reasons")
 
 
 def downgrade():
@@ -79,4 +79,5 @@ def downgrade():
     for change in session.query(KarmaChange):
         change.reasons = change.reasons_new
 
-    op.drop_column("karma_changes", "reasons_new")
+    with op.batch_alter_table("karma_changes") as bop:
+        bop.drop_column("reasons_new")
