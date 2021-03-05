@@ -59,7 +59,7 @@ class Counting(commands.Cog):
             else:  # Invalid submission
                 await message.add_reaction("❌")
                 await message.channel.send(
-                    f"**Incorrect number!** The next number was {self.next_number}."
+                    f"**Incorrect number!** The next number was {self.prev_number + self.step}."
                 )
                 self.reset()
 
