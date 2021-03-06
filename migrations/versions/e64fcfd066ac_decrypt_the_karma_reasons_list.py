@@ -60,8 +60,8 @@ def upgrade():
         change.reasons_new = change.reasons
 
     with op.batch_alter_table("karma_changes") as bop:
-        bop.alter_column("reasons_new", new_column_name="reasons")
         bop.drop_column("reasons")
+        bop.alter_column("reasons_new", new_column_name="reasons")
 
 
 def downgrade():
