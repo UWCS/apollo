@@ -1,9 +1,12 @@
+from datetime import datetime
 from decimal import Decimal
 
 from discord import User
 from discord.ext.commands import Bot, Cog, Context, check, command, group
+from sqlalchemy.exc import SQLAlchemyError
 
 from utils import is_decimal
+from models import CountingRun, db_session
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
@@ -20,6 +23,7 @@ class Counting(Cog):
 
     @group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def counting(self, ctx: Context):
+        # If user does not use a subcommand assume they want to play the game
         if not ctx.invoked_subcommand:
             if self.currently_playing:
                 channel = (
@@ -31,6 +35,7 @@ class Counting(Cog):
                 return
 
             self.currently_playing = True
+            started_at = datetime.utcnow()
             channel = ctx.message.channel
 
             await ctx.send(f"The game begins!")
@@ -68,6 +73,22 @@ class Counting(Cog):
                         f"This chain lasted {length} consecutive messages."
                     )
                     break
+
+            # Save this run to the database
+            ended_at = datetime.utcnow()
+            run = CountingRun(
+                started_at=started_at,
+                ended_at=ended_at,
+                length=length,
+                step=step,
+            )
+            db_session.add(run)
+            try:
+                db_session.commit()
+                await ctx.send("Run recorded!")
+            except SQLAlchemyError:
+                db_session.rollback()
+                await ctx.send("Something went wrong. The run could not be recorded.")
 
             # Reset the cog's state.
             self.currently_playing = False
