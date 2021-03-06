@@ -107,7 +107,7 @@ class Karma(Base):
     added = Column(
         EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY),
         nullable=False,
-        default=func.current_timestmap(),
+        default=func.current_timestamp(),
     )
     pluses = Column(Integer, nullable=False, default=0)
     minuses = Column(Integer, nullable=False, default=0)
@@ -135,8 +135,8 @@ class User(Base):
     username = Column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=False
     )
-    first_seen = Column(DateTime, nullable=False, default=func.current_timestmap())
-    last_seen = Column(DateTime, nullable=False, default=func.current_timestmap())
+    first_seen = Column(DateTime, nullable=False, default=func.current_timestamp())
+    last_seen = Column(DateTime, nullable=False, default=func.current_timestamp())
     uni_id = Column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=True
     )
