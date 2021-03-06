@@ -11,8 +11,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '2938ed05a881'
-down_revision = '99d413a94a0a'
+revision = "2938ed05a881"
+down_revision = "99d413a94a0a"
 branch_labels = None
 depends_on = None
 
@@ -35,4 +35,3 @@ def downgrade():
         bop.alter_column("last_seen", default=datetime.utcnow())
     with op.batch_alter_table("karma") as bop:
         bop.alter_column("added", default=datetime.utcnow())
-
