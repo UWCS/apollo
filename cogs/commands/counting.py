@@ -6,7 +6,7 @@ from discord.ext.commands import Bot, Cog, Context, check, command, group
 from sqlalchemy.exc import SQLAlchemyError
 
 from utils import is_decimal
-from models import CountingRun, db_session
+from models import CountingRun, CountingUser, db_session, User as UserModel
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
@@ -43,6 +43,7 @@ class Counting(Cog):
             count = 0
             # The number of successful replies in a row.
             length = 0
+
             # We need to determine what the step is.
             # It will be the first decimal number sent in the same channel.
 
@@ -55,15 +56,21 @@ class Counting(Cog):
             step = Decimal(msg.content)
             length += 1
             count += step
+            # Dict for users to correct replies
+            # NB no points for the first user - the initial message cannot be wrong
+            players = dict()
 
             while True:
                 # Wait for the next numeric message
                 msg = await self.bot.wait_for("message", check=check_dec)
                 value = Decimal(msg.content)
+                if msg.author.id not in players:
+                    players[msg.author.id] = 0
                 if value == count + step:
                     # If the number is correct, increase the count and length.
                     count += step
                     length += 1
+                    players[msg.author.id] += 1
                     await msg.add_reaction("✅")
                 else:
                     # Otherwise, break the chain.
@@ -83,6 +90,26 @@ class Counting(Cog):
                 step=step,
             )
             db_session.add(run)
+
+            # Save the players who played into the database
+            for player, correct in players.items():
+                # The last message sent is the incorrect one
+                wrong = 1 if msg.author.id == player else 0
+                db_user = db_session.query(UserModel).filter(UserModel.user_uid == player).first()
+                # If we can't find the user, skip
+                if not db_user:
+                    continue
+                # See if they've taken part in the counting game before
+                counting_user = db_session.query(CountingUser).filter(
+                    CountingUser.user_id == db_user.id).one_or_none()
+                if counting_user is None:
+                    # Create a new entry
+                    counting_user = CountingUser(user_id=db_user.id, correct_replies=correct, wrong_replies=wrong)
+                else:
+                    counting_user.correct_replies += correct
+                    counting_user.wrong_replies += wrong
+                db_session.add(counting_user)
+
             try:
                 db_session.commit()
                 await ctx.send("Run recorded!")
