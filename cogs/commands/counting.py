@@ -155,7 +155,7 @@ class Counting(Cog):
         await ctx.send("\n".join(message))
 
     @counting.command(help="Show the top 5 longest runs recorded")
-    async def runs(self, ctx: Context):
+    async def top(self, ctx: Context):
         top5 = (
             db_session.query(CountingRun)
             .order_by(CountingRun.length.desc())
@@ -173,7 +173,7 @@ class Counting(Cog):
         await ctx.send("\n".join(message))
 
     @counting.command(help="Look up a user's stats")
-    async def lookup(self, ctx: Context, user: User):
+    async def user(self, ctx: Context, user: User):
         # Give me Result.Bind please
         db_user = (
             db_session.query(UserModel).filter(UserModel.user_uid == user.id).first()
