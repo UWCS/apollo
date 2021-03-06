@@ -136,7 +136,7 @@ class Counting(Cog):
     async def leaderboard(self, ctx: Context):
         top5 = (
             db_session.query(CountingUser)
-            .order_by(CountingUser.correct_replies)
+            .order_by(CountingUser.correct_replies.desc())
             .limit(5)
             .all()
         )
@@ -156,7 +156,12 @@ class Counting(Cog):
 
     @counting.command(help="Show the top 5 longest runs recorded")
     async def runs(self, ctx: Context):
-        top5 = db_session.query(CountingRun).order_by(CountingRun.length).limit(5).all()
+        top5 = (
+            db_session.query(CountingRun)
+            .order_by(CountingRun.length.desc())
+            .limit(5)
+            .all()
+        )
         message = ["Here are the top 5 longest runs:" ""]
         for i, c_run in enumerate(top5):
             start = c_run.started_at.strftime("%x %X")
