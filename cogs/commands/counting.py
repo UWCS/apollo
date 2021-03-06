@@ -5,8 +5,10 @@ from discord import User
 from discord.ext.commands import Bot, Cog, Context, check, command, group
 from sqlalchemy.exc import SQLAlchemyError
 
+from models import CountingRun, CountingUser
+from models import User as UserModel
+from models import db_session
 from utils import is_decimal
-from models import CountingRun, CountingUser, db_session, User as UserModel
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
@@ -95,16 +97,25 @@ class Counting(Cog):
             for player, correct in players.items():
                 # The last message sent is the incorrect one
                 wrong = 1 if msg.author.id == player else 0
-                db_user = db_session.query(UserModel).filter(UserModel.user_uid == player).first()
+                db_user = (
+                    db_session.query(UserModel)
+                    .filter(UserModel.user_uid == player)
+                    .first()
+                )
                 # If we can't find the user, skip
                 if not db_user:
                     continue
                 # See if they've taken part in the counting game before
-                counting_user = db_session.query(CountingUser).filter(
-                    CountingUser.user_id == db_user.id).one_or_none()
+                counting_user = (
+                    db_session.query(CountingUser)
+                    .filter(CountingUser.user_id == db_user.id)
+                    .one_or_none()
+                )
                 if counting_user is None:
                     # Create a new entry
-                    counting_user = CountingUser(user_id=db_user.id, correct_replies=correct, wrong_replies=wrong)
+                    counting_user = CountingUser(
+                        user_id=db_user.id, correct_replies=correct, wrong_replies=wrong
+                    )
                 else:
                     counting_user.correct_replies += correct
                     counting_user.wrong_replies += wrong
@@ -123,15 +134,57 @@ class Counting(Cog):
 
     @counting.command(help="Show the top 5 users in the counting game")
     async def leaderboard(self, ctx: Context):
-        pass
+        top5 = (
+            db_session.query(CountingUser)
+            .order_by(CountingUser.correct_replies)
+            .limit(5)
+            .all()
+        )
+        message = ["Here are the top 5 users by correct answers: ", ""]
+        for i, c_user in enumerate(top5):
+            username = (
+                db_session.query(UserModel)
+                .filter(UserModel.id == c_user.id)
+                .first()
+                .username
+            )
+            message.append(
+                f"• #{i + 1}. **{username}**: {c_user.correct_replies}✅ {c_user.wrong_replies}❌"
+            )
+
+        await ctx.send("\n".join(message))
 
     @counting.command(help="Show the top 5 longest runs recorded")
     async def runs(self, ctx: Context):
-        pass
+        top5 = db_session.query(CountingRun).order_by(CountingRun.length).limit(5).all()
+        message = ["Here are the top 5 longest runs:" ""]
+        for i, c_run in enumerate(top5):
+            start = c_run.started_at.strftime("%x %X")
+            end = c_run.ended_at.strftime("%x %X")
+            message.append(
+                f"• #{i + 1}. **length {c_run.length}**, step {c_run.step}, took place {start}-{end}"
+            )
+
+        await ctx.send("\n".join(message))
 
     @counting.command(help="Look up a user's stats")
     async def lookup(self, ctx: Context, user: User):
-        pass
+        # Give me Result.Bind please
+        db_user = (
+            db_session.query(UserModel).filter(UserModel.user_uid == user.id).first()
+        )
+        if db_user is None:
+            await ctx.send("Could not find user!")
+            return
+        c_user = (
+            db_session.query(CountingUser).filter(CountingUser.id == db_user.id).first()
+        )
+        if c_user is None:
+            await ctx.send("User has not played any counting games!")
+            return
+        await ctx.send(
+            f"**{db_user.username}**: {c_user.correct_replies}✅ {c_user.wrong_replies}❌"
+        )
 
     @counting.command(help="Look up your own stats")
     async def me(self, ctx: Context):
