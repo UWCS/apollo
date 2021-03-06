@@ -107,7 +107,7 @@ class Karma(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
     added = Column(
-        EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY),
+        DateTime,
         nullable=False,
         default=func.current_timestamp(),
     )
