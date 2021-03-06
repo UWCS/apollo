@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from discord import User
-from discord.ext.commands import Bot, Cog, Context, check, group
+from discord.ext.commands import Bot, BucketType, Cog, Context, check, cooldown, group
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import CountingRun, CountingUser
@@ -172,6 +172,7 @@ class Counting(Cog):
 
         await ctx.send("\n".join(message))
 
+    @cooldown(2, 30, BucketType.user)
     @counting.command(help="Look up a user's stats")
     async def user(self, ctx: Context, user: User):
         # Give me Result.Bind please
@@ -193,7 +194,11 @@ class Counting(Cog):
 
     @counting.command(help="Look up your own stats")
     async def me(self, ctx: Context):
-        await self.lookup(ctx, ctx.author)
+        await self.user(ctx, ctx.author)
+
+    @user.error
+    async def user_error(self, ctx: Context, err):
+        await ctx.send(err)
 
 
 def setup(bot: Bot):
