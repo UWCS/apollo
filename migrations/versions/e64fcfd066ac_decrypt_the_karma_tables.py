@@ -1,4 +1,4 @@
-"""Decrypt the karma reasons list
+"""Decrypt the karma tables
 
 Revision ID: e64fcfd066ac
 Revises: eb0c99ae1f63
@@ -6,6 +6,7 @@ Create Date: 2020-05-02 14:44:07.337112
 
 """
 import os
+from datetime import datetime
 
 import sqlalchemy as sa
 import sqlalchemy_utils as sau
@@ -47,6 +48,21 @@ class KarmaChange(Base):
     reasons_new = sa.Column(sau.ScalarListType(str, separator=";"), nullable=True)
 
 
+class Karma(Base):
+    __tablename__ = "karma"
+
+    id = sa.Column(sa.Integer, primary_key=True, nullable=False)
+    name = sa.Column(sa.String, nullable=False)
+    added = sa.Column(
+        sau.EncryptedType(type_in=sa.DateTime, key=secret_key),
+        nullable=False,
+        default=sa.func.current_timestamp(),
+    )
+    pluses = sa.Column(sa.Integer, nullable=False, default=0)
+    minuses = sa.Column(sa.Integer, nullable=False, default=0)
+    neutrals = sa.Column(sa.Integer, nullable=False, default=0)
+
+
 def upgrade():
     bind = op.get_bind()
     session = orm.Session(bind=bind)
@@ -54,14 +70,32 @@ def upgrade():
     op.add_column(
         "karma_changes", sa.Column("reasons_new", sau.ScalarListType, nullable=True)
     )
+    op.add_column(
+        "karma",
+        sa.Column(
+            "added_new",
+            sa.DateTime,
+            nullable=False,
+            server_default=sa.func.current_timestamp(),
+        ),
+    )
 
     # Decrypt the reason and save it with the new separator
     for change in session.query(KarmaChange):
         change.reasons_new = change.reasons
 
+    # Decrypt the added column
+    for karma in session.query(Karma):
+        # print(karma)
+        karma.added_new = karma.added
+
     with op.batch_alter_table("karma_changes") as bop:
         bop.drop_column("reasons")
         bop.alter_column("reasons_new", new_column_name="reasons")
+
+    with op.batch_alter_table("karma") as bop:
+        bop.drop_column("added")
+        bop.alter_column("added_new", new_column_name="added")
 
 
 def downgrade():
@@ -71,13 +105,31 @@ def downgrade():
     with op.batch_alter_table("karma_changes") as bop:
         bop.alter_column("reasons", new_column_name="reasons_new")
 
+    with op.batch_alter_table("karma") as bop:
+        bop.alter_column("added", new_column_name="added_new")
+
     op.add_column(
         "karma_changes", sa.Column("reasons", sau.EncryptedType, nullable=True)
+    )
+
+    # This is the wrong default value but is preserved for backward compatibility
+    op.add_column(
+        "karma",
+        sa.Column(
+            "added", sau.EncryptedType, nullable=False, default=datetime.utcnow()
+        ),
     )
 
     # Re-encrypt the reasons
     for change in session.query(KarmaChange):
         change.reasons = change.reasons_new
 
+    # Re-encrypt the added
+    for karma in session.query(Karma):
+        karma.added = karma.added_new
+
     with op.batch_alter_table("karma_changes") as bop:
         bop.drop_column("reasons_new")
+
+    with op.batch_alter_table("karma") as bop:
+        bop.drop_column("added_new")
