@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import logging
+
 from discord import Intents
 from discord.ext.commands import Bot, Context, check, when_mentioned_or
 
@@ -51,17 +53,20 @@ async def reload_cogs(ctx: Context):
 async def on_ready():
     if CONFIG.BOT_LOGGING:
         # TODO: Write this to a logging file?
-        print("Logged in as")
-        print(str(bot.user))
-        print("------")
+        logging.info("Logged in as")
+        logging.info(str(bot.user))
+        logging.info("------")
 
 
 if __name__ == "__main__":
+    if CONFIG.BOT_LOGGING:
+        logging.basicConfig(level=logging.WARNING)
     for extension in EXTENSIONS:
         try:
+            logging.info(f"Attempting to load extension {extension}")
             bot.load_extension(extension)
         except Exception as e:
-            exc = "{}: {}".format(type(e).__name__, e)
-            print("Failed to load extension {}\n{}".format(extension, exc))
+            exc = f"{type(e).__name__}: {e}"
+            logging.error(f"Failed to load extension {extension}\n{exc}")
 
     bot.run(CONFIG.DISCORD_TOKEN)

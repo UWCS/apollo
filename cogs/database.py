@@ -9,7 +9,7 @@ from sqlalchemy_utils import ScalarListException
 from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from karma.karma import process_karma
-from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session
+from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session, logging
 from utils.utils import user_is_irc_bot
 
 
@@ -43,8 +43,9 @@ class Database(Cog):
         # Commit the session so the user is available now
         try:
             db_session.commit()
-        except (ScalarListException, SQLAlchemyError):
+        except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
+            logging.error(e)
             # Something very wrong, but not way to reliably recover so abort
             return
 
@@ -61,8 +62,9 @@ class Database(Cog):
             db_session.add(logged_message)
             try:
                 db_session.commit()
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
                 return
 
             # KARMA
@@ -100,8 +102,9 @@ class Database(Cog):
                     db_session.add(message_diff)
                     try:
                         db_session.commit()
-                    except (ScalarListException, SQLAlchemyError):
+                    except (ScalarListException, SQLAlchemyError) as e:
                         db_session.rollback()
+                        logging.error(e)
 
     @Cog.listener()
     async def on_message_delete(self, message: Message):
@@ -118,8 +121,9 @@ class Database(Cog):
             db_message.deleted_at = datetime.utcnow()
             try:
                 db_session.commit()
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
 
 
 def setup(bot: Bot):

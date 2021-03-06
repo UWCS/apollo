@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from decimal import Decimal
 
@@ -124,8 +125,9 @@ class Counting(Cog):
             try:
                 db_session.commit()
                 await ctx.send("Run recorded!")
-            except SQLAlchemyError:
+            except SQLAlchemyError as e:
                 db_session.rollback()
+                logging.error(e)
                 await ctx.send("Something went wrong. The run could not be recorded.")
 
             # Reset the cog's state.

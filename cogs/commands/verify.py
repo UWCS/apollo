@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime
 
@@ -134,8 +135,9 @@ class Verify(commands.Cog):
                     await ctx.send(
                         "You're all verified and ready to go! Welcome to the UWCS Discord."
                     )
-                except (ScalarListException, SQLAlchemyError):
+                except (ScalarListException, SQLAlchemyError) as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Could not verify you due to an internal error.")
 
         else:

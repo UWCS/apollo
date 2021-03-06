@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import re
 from datetime import datetime, timedelta
 
@@ -162,8 +163,9 @@ class Reminders(commands.Cog):
                         await ctx.send(
                             f"Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG.REMINDER_SEARCH_INTERVAL} seconds)."
                         )
-                    except (ScalarListException, SQLAlchemyError):
+                    except (ScalarListException, SQLAlchemyError) as e:
                         db_session.rollback()
+                        logging.error(e)
                         await ctx.send(f"Something went wrong")
                 else:
                     await ctx.send("Please include some reminder text!")

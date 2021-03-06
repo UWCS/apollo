@@ -1,4 +1,4 @@
-from datetime import datetime
+import logging
 
 from pytz import timezone, utc
 from sqlalchemy import (
@@ -23,16 +23,17 @@ from config import CONFIG
 
 Base = declarative_base()
 
-engine = create_engine(CONFIG.DATABASE_CONNECTION, echo=CONFIG.SQL_LOGGING)
+engine = create_engine(CONFIG.DATABASE_CONNECTION)
+if CONFIG.SQL_LOGGING:
+    logging.basicConfig()
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 db_session = Session(bind=engine)
 
 
 def auto_str(cls):
     def __str__(self):
-        return "%s(%s)" % (
-            type(self).__name__,
-            ", ".join("%s=%s" % item for item in vars(self).items()),
-        )
+        value = ", ".join("{}={}".format(*item) for item in vars(self).items())
+        return f"{type(self).__name__}({value})"
 
     cls.__str__ = __str__
     return cls
