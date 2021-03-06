@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from discord import Message
@@ -150,8 +151,9 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             db_session.add(karma_item)
             try:
                 db_session.commit()
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
                 errors.append(internal_error(truncated_name))
                 continue
 
@@ -182,8 +184,9 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             db_session.add(karma_change)
             try:
                 db_session.commit()
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
                 errors.append(internal_error(truncated_name))
                 continue
         else:
@@ -208,8 +211,9 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.add(karma_change)
                 try:
                     db_session.commit()
-                except (ScalarListException, SQLAlchemyError):
+                except (ScalarListException, SQLAlchemyError) as e:
                     db_session.rollback()
+                    logging.error(e)
                     errors.append(internal_error(truncated_name))
                     continue
             else:
@@ -254,6 +258,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # Commit any changes (in case of any DB inconsistencies)
     try:
         db_session.commit()
-    except (ScalarListException, SQLAlchemyError):
+    except (ScalarListException, SQLAlchemyError) as e:
+        logging.error(e)
         db_session.rollback()
     return reply.rstrip()

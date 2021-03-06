@@ -1,4 +1,4 @@
-from datetime import datetime
+import logging
 
 from pytz import timezone, utc
 from sqlalchemy import (
@@ -6,6 +6,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -22,16 +23,17 @@ from config import CONFIG
 
 Base = declarative_base()
 
-engine = create_engine(CONFIG.DATABASE_CONNECTION, echo=CONFIG.SQL_LOGGING)
+engine = create_engine(CONFIG.DATABASE_CONNECTION)
+if CONFIG.SQL_LOGGING:
+    logging.basicConfig()
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 db_session = Session(bind=engine)
 
 
 def auto_str(cls):
     def __str__(self):
-        return "%s(%s)" % (
-            type(self).__name__,
-            ", ".join("%s=%s" % item for item in vars(self).items()),
-        )
+        value = ", ".join("{}={}".format(*item) for item in vars(self).items())
+        return f"{type(self).__name__}({value})"
 
     cls.__str__ = __str__
     return cls
@@ -107,7 +109,7 @@ class Karma(Base):
     added = Column(
         EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY),
         nullable=False,
-        default=datetime.utcnow(),
+        default=func.current_timestamp(),
     )
     pluses = Column(Integer, nullable=False, default=0)
     minuses = Column(Integer, nullable=False, default=0)
@@ -135,8 +137,8 @@ class User(Base):
     username = Column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=False
     )
-    first_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
-    last_seen = Column(DateTime, nullable=False, default=datetime.utcnow())
+    first_seen = Column(DateTime, nullable=False, default=func.current_timestamp())
+    last_seen = Column(DateTime, nullable=False, default=func.current_timestamp())
     uni_id = Column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=True
     )
@@ -212,10 +214,19 @@ class Reminder(Base):
 
 
 @auto_str
-class RoleMessage(Base):
-    __tablename__ = "role_reaction_messages"
-    message_id = Column(BigInteger, primary_key=True, nullable=False)
-    channel_id = Column(BigInteger, nullable=False)
-    guild_id = Column(String, nullable=False)
-    reaction_name = Column(BigInteger, nullable=False)
-    role_id = Column(BigInteger, nullable=False)
+class CountingRun(Base):
+    __tablename__ = "counting_runs"
+    id = Column(Integer, primary_key=True, nullable=False)
+    started_at = Column(DateTime, nullable=False)
+    ended_at = Column(DateTime, nullable=False)
+    length = Column(Integer, nullable=False)
+    step = Column(Float, nullable=False)
+
+
+@auto_str
+class CountingUser(Base):
+    __tablename__ = "counting_users"
+    id = Column(Integer, primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    correct_replies = Column(Integer, nullable=False)
+    wrong_replies = Column(Integer, nullable=False)

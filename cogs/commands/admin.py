@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from enum import Enum, unique
 
@@ -58,7 +59,8 @@ class MiniKarmaMode(EnumGet, Enum):
 
 
 async def is_compsoc_exec_in_guild(ctx: Context):
-    # Get the roles of the user in the UWCS discord
+    """Get the roles of the user in the UWCS discord"""
+    # TODO: move the errors to call site? - checks should return false
     compsoc_guild = [
         guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID
     ][0]
@@ -131,8 +133,9 @@ class Admin(commands.Cog):
                 try:
                     db_session.commit()
                     await ctx.send(f"Added {channel.mention} to the ignored list.")
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 # Entry already present
@@ -146,8 +149,9 @@ class Admin(commands.Cog):
                 try:
                     db_session.commit()
                     await ctx.send(f"{channel.mention} is no longer being ignored.")
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 # The entry is not present
@@ -198,8 +202,9 @@ class Admin(commands.Cog):
                     await ctx.send(
                         f"Added {channel.mention} to the mini-karma channels"
                     )
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 await ctx.send(f"{channel.mention} is already on mini-karma mode!")
@@ -211,8 +216,9 @@ class Admin(commands.Cog):
                 try:
                     db_session.commit()
                     await ctx.send(f"{channel.mention} is now on normal karma mode")
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred")
             else:
                 await ctx.send(f"{channel.mention} is already on normal karma mode!")

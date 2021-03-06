@@ -54,6 +54,8 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
 
 * This project uses the Black Python formatter.
   Before submitting your code for a PR, run `black .` on the root directory of this project to bring all of your up to spec for the code style guide.
+  
+* For testing CI locally, use [act-cli](https://github.com/nektos/act).
 
 ### License
 

@@ -1,3 +1,5 @@
+import logging
+
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
@@ -49,8 +51,9 @@ class Blacklist(commands.Cog):
             try:
                 db_session.commit()
                 await ctx.send(f"Added {item} to the karma blacklist. :pencil:")
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
                 await ctx.send(
                     f"Something went wrong adding {item} to the karma blacklist. No change has occurred"
                 )
@@ -77,8 +80,9 @@ class Blacklist(commands.Cog):
                 await ctx.send(
                     f"{item} has been removed from the karma blacklist. :wastebasket:"
                 )
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
                 await ctx.send(
                     f"Something went wrong removing {item} to the karma blacklist. No change has occurred"
                 )

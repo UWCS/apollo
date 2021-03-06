@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from config import CONFIG
 
 
@@ -11,6 +13,14 @@ def get_name_string(message):
         return message.clean_content.split(" ")[0][3:-3]
     else:
         return f"{message.author.mention}"
+
+
+def is_decimal(num):
+    try:
+        Decimal(num)
+        return True
+    except TypeError:
+        return False
 
 
 def pluralise(l, word, single="", plural="s"):

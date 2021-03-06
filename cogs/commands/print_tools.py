@@ -1,4 +1,5 @@
 import configparser
+import logging
 import os
 import re
 import shutil
@@ -121,8 +122,9 @@ class PrintTools(commands.Cog, name="Print tools"):
         try:
             db_session.commit()
             await ctx.send(f'"{filament_name}" added to the available filament list!')
-        except (ScalarListException, SQLAlchemyError):
+        except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
+            logging.error(e)
             await ctx.send(f'Could not add "{filament_name}" due to an internal error.')
 
     @printtools.command(help=DELF_LONG_TEXT, brief=DELF_HELP_TEXT)
@@ -144,8 +146,9 @@ class PrintTools(commands.Cog, name="Print tools"):
         try:
             db_session.commit()
             await ctx.send(f'Removed "{filament_name}" from the filament list!')
-        except (ScalarListException, SQLAlchemyError):
+        except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
+            logging.error(e)
             await ctx.send(
                 f'Could not remove "{filament_name}" due to an internal error.'
             )

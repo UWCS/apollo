@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 
@@ -74,7 +75,7 @@ class Tex(commands.Cog):
             plt.savefig(path_png, dpi=300, bbox_inches="tight", transparent=True)
         except RuntimeError as r:
             # Failed to render latex. Report error
-            print(r)
+            logging.error(r)
             await ctx.send("Unable to render LaTeX. Please check that it's correct")
         else:
             # Generate a mask of the transparent regions in the image

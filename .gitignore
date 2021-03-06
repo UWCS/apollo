@@ -183,3 +183,5 @@ pip-selfcheck.json
 config.yaml
 alembic.ini
 tmp/
+# Directory for testing actions locally
+/act
