@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from discord import User
-from discord.ext.commands import Bot, Cog, Context, check, command, group
+from discord.ext.commands import Bot, Cog, Context, check, group
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import CountingRun, CountingUser
