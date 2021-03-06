@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from discord import User
 from discord.ext.commands import Bot, Cog, Context, check, command, group
 
 from utils import is_decimal
@@ -71,6 +72,22 @@ class Counting(Cog):
             # Reset the cog's state.
             self.currently_playing = False
             self.channel = None
+
+    @counting.command(help="Show the top 5 users in the counting game")
+    async def leaderboard(self, ctx: Context):
+        pass
+
+    @counting.command(help="Show the top 5 longest runs recorded")
+    async def runs(self, ctx: Context):
+        pass
+
+    @counting.command(help="Look up a user's stats")
+    async def lookup(self, ctx: Context, user: User):
+        pass
+
+    @counting.command(help="Look up your own stats")
+    async def me(self, ctx: Context):
+        await self.lookup(ctx, ctx.author)
 
 
 def setup(bot: Bot):
