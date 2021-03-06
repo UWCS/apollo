@@ -6,7 +6,7 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    ForeignKey,
+    Float, ForeignKey,
     Integer,
     String,
     Text,
@@ -218,7 +218,7 @@ class CountingRun(Base):
     started_at = Column(DateTime, nullable=False)
     ended_at = Column(DateTime, nullable=False)
     length = Column(Integer, nullable=False)
-    step = Column(Integer, nullable=False)
+    step = Column(Float, nullable=False)
 
 
 @auto_str
