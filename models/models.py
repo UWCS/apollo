@@ -209,3 +209,22 @@ class Reminder(Base):
     triggered = Column(Boolean, nullable=False)
     playback_channel_id = Column(BigInteger, nullable=False)
     irc_name = Column(String, nullable=True)
+
+
+@auto_str
+class CountingRun(Base):
+    __tablename__ = "counting_runs"
+    id = Column(Integer, primary_key=True, nullable=False)
+    started_at = Column(DateTime, nullable=False)
+    ended_at = Column(DateTime, nullable=False)
+    length = Column(Integer, nullable=False)
+    step = Column(Integer, nullable=False)
+
+
+@auto_str
+class CountingUser(Base):
+    __tablename__ = "counting_users"
+    id = Column(Integer, primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    correct_replies = Column(Integer, nullable=False)
+    wrong_replies = Column(Integer, nullable=False)
