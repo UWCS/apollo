@@ -6,7 +6,6 @@ Create Date: 2020-05-02 14:44:07.337112
 
 """
 import os
-from datetime import datetime
 
 import sqlalchemy as sa
 import sqlalchemy_utils as sau
@@ -27,6 +26,18 @@ if os.environ.get("SECRET_KEY") is None:
 secret_key = os.environ.get("SECRET_KEY")
 
 
+# These models are defined so that SQLAlchemy can find the foreign keys
+class User(Base):
+    __tablename__ = "users"
+    id = sa.Column(sa.Integer, primary_key=True, nullable=False)
+
+
+class Message(Base):
+    __tablename__ = "messages"
+    id = sa.Column(sa.Integer, primary_key=True, nullable=False)
+
+
+# These are the models we're actually changing
 class KarmaChange(Base):
     __tablename__ = "karma_changes"
 
@@ -58,6 +69,11 @@ class Karma(Base):
         nullable=False,
         default=sa.func.current_timestamp(),
     )
+    added_new = sa.Column(
+        sa.DateTime,
+        nullable=False,
+        default=sa.func.current_timestamp(),
+    )
     pluses = sa.Column(sa.Integer, nullable=False, default=0)
     minuses = sa.Column(sa.Integer, nullable=False, default=0)
     neutrals = sa.Column(sa.Integer, nullable=False, default=0)
@@ -86,8 +102,9 @@ def upgrade():
 
     # Decrypt the added column
     for karma in session.query(Karma):
-        # print(karma)
         karma.added_new = karma.added
+
+    session.commit()
 
     with op.batch_alter_table("karma_changes") as bop:
         bop.drop_column("reasons")
@@ -108,6 +125,7 @@ def downgrade():
     with op.batch_alter_table("karma") as bop:
         bop.alter_column("added", new_column_name="added_new")
 
+    # We have to start with nullable=True until the values are populated
     op.add_column(
         "karma_changes", sa.Column("reasons", sau.EncryptedType, nullable=True)
     )
@@ -116,7 +134,10 @@ def downgrade():
     op.add_column(
         "karma",
         sa.Column(
-            "added", sau.EncryptedType, nullable=False, default=datetime.utcnow()
+            "added",
+            sau.EncryptedType,
+            nullable=True,
+            default=sa.func.current_timestamp(),
         ),
     )
 
@@ -128,8 +149,12 @@ def downgrade():
     for karma in session.query(Karma):
         karma.added = karma.added_new
 
+    session.commit()
+
     with op.batch_alter_table("karma_changes") as bop:
         bop.drop_column("reasons_new")
 
     with op.batch_alter_table("karma") as bop:
+        # Now we can mark the column as non-nullable
+        bop.alter_column("added", nullable=False)
         bop.drop_column("added_new")
