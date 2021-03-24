@@ -29,7 +29,7 @@ def upgrade():
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
         sa.Column("correct_replies", sa.Integer, nullable=False),
-        sa.Column("wrong_Replies", sa.Integer, nullable=False),
+        sa.Column("wrong_replies", sa.Integer, nullable=False),
     )
 
 
