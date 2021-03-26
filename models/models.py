@@ -86,8 +86,7 @@ class KarmaChange(Base):
         Integer, ForeignKey("messages.id"), primary_key=True, nullable=False
     )
     created_at = Column(DateTime, nullable=False)
-    # Using a Greek question mark (;) instead of a semicolon here!
-    reasons = Column(ScalarListType(str, separator=";"), nullable=True)
+    reason = Column(String(), nullable=True)
     change = Column(Integer, nullable=False)
     score = Column(Integer, nullable=False)
 
