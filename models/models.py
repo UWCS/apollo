@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy_utils import EncryptedType, ScalarListType
+from sqlalchemy_utils import EncryptedType
 
 from config import CONFIG
 
