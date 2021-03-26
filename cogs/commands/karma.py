@@ -1,9 +1,14 @@
+import logging
+import operator
 import os
+import itertools as it
+import tempfile
 from collections import defaultdict
 from datetime import datetime, timedelta
 from time import time
 from typing import Dict, List
 
+import discord
 import matplotlib
 import matplotlib.pyplot as plt
 from discord import Color, Embed, File
@@ -512,8 +517,22 @@ class Karma(commands.Cog):
             else:
                 result = f"There are no reasons down for that karma topic! :frowning:"
 
-            # TODO: add handling for >2k chars (discord limit)
-            await ctx.send(result)
+            file = None
+            fp = None
+            if len(result) > 2000:
+                # Create a new temporary file that isn't deleted until we say
+                with tempfile.NamedTemporaryFile(delete=False) as fp:
+                    fp.write(result.encode("utf8"))
+
+                # Wait for the file to close before accessing it (Windows NT limitation)
+                file = File(fp.name, filename=f"{karma_stripped}.txt")
+                result = f'There are too many reasons for "{karma_stripped}" to fit in a Discord message!'
+
+            await ctx.send(result, file=file)
+
+            # Delete temporary file (if any) after message is sent
+            if fp:
+                os.remove(fp.name)
         else:
             # The item hasn't been karma'd
             result = f"\"{karma_stripped}\" hasn't been karma'd yet. :cry:"
