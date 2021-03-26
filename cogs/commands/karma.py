@@ -459,9 +459,12 @@ class Karma(commands.Cog):
                 )
 
             display_name = get_name_string(ctx.message)
-            await ctx.send(
-                f"Here you go, {display_name}! :chart_with_upwards_trend:", embed=embed
+            emoji = (
+                ":chart_with_upwards_trend"
+                if total_changes > 0
+                else ":chart_with_downwards_trend:"
             )
+            await ctx.send(f"Here you go, {display_name}! {emoji}", embed=embed)
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
