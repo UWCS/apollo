@@ -58,8 +58,7 @@ def process_reason(reason_raw) -> Optional[str]:
 
 def parse_message(message: Message, db_session: Session):
     # Remove any code blocks
-    # TODO: fix
-    filtered_message = re.sub("```.*```", "", message.clean_content)
+    filtered_message = re.sub("```.*```", "", message.clean_content, flags=re.DOTALL)
 
     # If there's no message to parse then there's nothing to return
     if not filtered_message:
