@@ -70,12 +70,9 @@ async def is_compsoc_exec_in_guild(ctx: Context):
             f"You aren't part of the UWCS discord so I'm afraid I can't let you do that. :octagonal_sign:"
         )
 
-    roles = list(
-        map(
-            lambda x: discord.utils.get(compsoc_member.roles, id=x),
-            CONFIG.UWCS_EXEC_ROLE_IDS,
-        )
-    )
+    roles = [
+        discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
+    ]
     if not roles:
         if not isinstance(ctx.channel, PrivateChannel):
             await ctx.message.delete()
