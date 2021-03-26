@@ -19,7 +19,7 @@ def is_decimal(num):
     try:
         Decimal(num)
         return True
-    except TypeError:
+    except (InvalidOperation, TypeError):
         return False
 
 
