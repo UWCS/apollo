@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy_utils import ScalarListException
 
 from cogs.commands.admin import MiniKarmaMode
-from karma.parser import KarmaTransaction, create_transactions, parse_message
+from karma.parser import KarmaTransaction, parse_message
 from models import Karma, KarmaChange, MiniKarmaChannel, User
 from utils import get_name_string
 
@@ -17,22 +17,13 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     reply = ""
 
     # Parse the message for karma modifications
-    raw_karma = parse_message(message.clean_content, db_session)
+    transactions = parse_message(message, db_session)
 
     # If no karma'd items, just return
-    if not raw_karma:
+    if not transactions:
         return reply
 
     # TODO: Protect from byte-limit length chars
-
-    # If the author was IRC, set the display name to be the irc user that karma'd, else use original display name
-    display_name = get_name_string(message)
-
-    # Process the raw karma tokens into a number of karma transactions
-    transactions = create_transactions(message.author.name, display_name, raw_karma)
-
-    if not transactions:
-        return reply
 
     # Get karma-ing user
     user = db_session.query(User).filter(User.user_uid == message.author.id).first()
@@ -90,21 +81,14 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             op = "+-"
 
         # Build the karma item string
-        if tr.reasons:
-            if len(tr.reasons) > 1:
-                reasons_plural = "reasons"
-                reasons_has = "have"
-            else:
-                reasons_plural = "reason"
-                reasons_has = "has"
-
+        if tr.reason:
             if karma_mode == MiniKarmaMode.Normal:
                 if tr.self_karma:
-                    return f" • **{truncated_name}** (new score is {karma_change.score}) and your {reasons_plural} {reasons_has} been recorded. *Fool!* that's less karma to you. :smiling_imp:"
+                    return f" • **{truncated_name}** (new score is {karma_change.score}) and your reason has been recorded. *Fool!* that's less karma to you. :smiling_imp:"
                 else:
-                    return f" • **{truncated_name}** (new score is {karma_change.score}) and your {reasons_plural} {reasons_has} been recorded. {apollo_response}"
+                    return f" • **{truncated_name}** (new score is {karma_change.score}) and your reason has been recorded. {apollo_response}"
             else:
-                return f"**{truncated_name}{op}** (now {karma_change.score}, {reasons_plural} recorded)"
+                return f"**{truncated_name}{op}** (now {karma_change.score}, reason recorded)"
 
         else:
             if karma_mode == MiniKarmaMode.Normal:
@@ -176,7 +160,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 karma_id=karma_item.id,
                 user_id=user.id,
                 message_id=message_id,
-                reasons=transaction.reasons,
+                reason=transaction.reason,
                 change=new_score,
                 score=new_score,
                 created_at=datetime.utcnow(),
@@ -203,7 +187,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     karma_id=karma_item.id,
                     user_id=user.id,
                     message_id=message_id,
-                    reasons=transaction.reasons,
+                    reason=transaction.reason,
                     score=new_score,
                     change=(new_score - last_change.score),
                     created_at=datetime.utcnow(),
