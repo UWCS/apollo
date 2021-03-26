@@ -488,26 +488,24 @@ class Karma(commands.Cog):
             karma_changes = (
                 db_session.query(KarmaChange)
                 .filter(
-                    KarmaChange.karma_id == karma_item.id, KarmaChange.reasons != []
+                    KarmaChange.karma_id == karma_item.id,
+                    KarmaChange.reason is not None,
                 )
                 .all()
             )
             # Flatten the reasons into a single list and sort it alphabetically
             reasons = sorted(
                 (
-                    reason
-                    for sublist in [change.reasons for change in karma_changes]
-                    for reason in sublist
+                    r
+                    for r in (change.reason for change in karma_changes)
+                    if r is not None
                 ),
                 key=str.casefold,
             )
 
             # If there's at least one reason
             if reasons:
-                # Handle the plurality of reason(s)
-                plural = ""
-                if len(reasons) > 1:
-                    plural = "s"
+                reasons_plural = pluralise(reasons, "reason")
 
                 bullet_points = "\n".join(f" • {reason}\n" for reason in reasons)
                 result = f'The {reasons_plural} for "{karma_stripped}" are as follows:\n\n{bullet_points}'
