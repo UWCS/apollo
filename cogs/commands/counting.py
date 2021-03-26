@@ -38,8 +38,8 @@ class Counting(Cog):
                 return
 
             self.currently_playing = True
+            self.channel = ctx.channel
             started_at = datetime.utcnow()
-            channel = ctx.message.channel
 
             await ctx.send(f"The game begins!")
             # The count starts at 0.
@@ -51,7 +51,7 @@ class Counting(Cog):
             # It will be the first decimal number sent in the same channel.
 
             def check_dec(m):
-                return m.channel == channel and is_decimal(m.content)
+                return m.channel == self.channel and is_decimal(m.content)
 
             msg = await self.bot.wait_for("message", check=check)
             # Set the step.
