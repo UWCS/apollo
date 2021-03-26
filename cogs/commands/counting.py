@@ -53,7 +53,7 @@ class Counting(Cog):
             def check_dec(m):
                 return m.channel == self.channel and is_decimal(m.content)
 
-            msg = await self.bot.wait_for("message", check=check)
+            msg = await self.bot.wait_for("message", check=check_dec)
             # Set the step.
             await msg.add_reaction("✅")
             step = Decimal(msg.content)
