@@ -62,10 +62,15 @@ class Counting(Cog):
             # Dict for users to correct replies
             # NB no points for the first user - the initial message cannot be wrong
             players = dict()
+            # Used to make sure someone else replies
+            last_player = msg.author
 
             while True:
-                # Wait for the next numeric message
-                msg = await self.bot.wait_for("message", check=check_dec)
+                # Wait for the next numeric message sent by a different person in the same channel
+                def check_dec_player(m):
+                    return check_dec(m) and m.author != last_player
+                msg = await self.bot.wait_for("message", check=check_dec_player)
+                last_player = msg.author
                 value = Decimal(msg.content)
                 if msg.author.id not in players:
                     players[msg.author.id] = 0
