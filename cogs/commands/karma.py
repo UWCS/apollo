@@ -512,6 +512,7 @@ class Karma(commands.Cog):
             else:
                 result = f"There are no reasons down for that karma topic! :frowning:"
 
+            # TODO: add handling for >2k chars (discord limit)
             await ctx.send(result)
         else:
             # The item hasn't been karma'd
