@@ -88,12 +88,23 @@ def parse_message(message: Message, db_session: Session):
 
         casefold_topic = topic.casefold()
         self_karma = (
-                casefold_topic == message.author.name.casefold()
-                or (message.author.nick is not None and message.author.nick.casefold() == casefold_topic)
-                or (user_is_irc_bot(message) and get_name_string(message).casefold() == casefold_topic)
+            casefold_topic == message.author.name.casefold()
+            or (
+                message.author.nick is not None
+                and message.author.nick.casefold() == casefold_topic
+            )
+            or (
+                user_is_irc_bot(message)
+                and get_name_string(message).casefold() == casefold_topic
+            )
         )
 
-        return KarmaTransaction(name=topic, self_karma=self_karma, net_karma=Operation.from_str(op).value, reason=reason)
+        return KarmaTransaction(
+            name=topic,
+            self_karma=self_karma,
+            net_karma=Operation.from_str(op).value,
+            reason=reason,
+        )
 
     results = [create_transaction(i) for i in items]
     # Filter out the Nones with a second list comprehension

@@ -69,6 +69,7 @@ class Counting(Cog):
                 # Wait for the next numeric message sent by a different person in the same channel
                 def check_dec_player(m):
                     return check_dec(m) and m.author != last_player
+
                 msg = await self.bot.wait_for("message", check=check_dec_player)
                 last_player = msg.author
                 value = Decimal(msg.content)
