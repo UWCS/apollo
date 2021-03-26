@@ -51,7 +51,6 @@ class KarmaChange(Base):
         sa.Integer, sa.ForeignKey("messages.id"), primary_key=True, nullable=False
     )
     created_at = sa.Column(sa.DateTime, nullable=False)
-    # Using a Greek question mark (;) instead of a semicolon here!
     reasons = sa.Column(
         sau.EncryptedType(type_in=sau.ScalarListType(str), key=secret_key),
         nullable=True,
