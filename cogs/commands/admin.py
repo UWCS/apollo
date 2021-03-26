@@ -59,8 +59,7 @@ class MiniKarmaMode(EnumGet, Enum):
 
 
 async def is_compsoc_exec_in_guild(ctx: Context):
-    """Get the roles of the user in the UWCS discord"""
-    # TODO: move the errors to call site? - checks should return false
+    """Check whether a member is an exec in the UWCS Discord"""
     compsoc_guild = next(
         (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
     )
