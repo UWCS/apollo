@@ -489,6 +489,8 @@ class Karma(commands.Cog):
         )
 
         if karma_item:
+            # Set the karma item's name to be the same as in the database
+            karma_stripped = karma_item.name
             # Get all of the changes that have some reason
             karma_changes = (
                 db_session.query(KarmaChange)
