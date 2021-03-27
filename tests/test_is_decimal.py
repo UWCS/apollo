@@ -52,11 +52,4 @@ TEST_CASES = [
 @pytest.mark.parametrize(["string", "expected"], TEST_CASES)
 def test_is_decimal(string, expected):
     actual = is_decimal(string)
-    try:
-        assert actual == expected
-    except AssertionError as e:
-        print(
-            f"{string} did not match expected value.\n"
-            f"Expected: {expected}, actual: {actual}"
-        )
-        raise e
+    assert actual == expected
