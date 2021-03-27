@@ -56,7 +56,42 @@ def process_reason(reason_raw) -> Optional[str]:
     )
 
 
-def parse_message(message: Message, db_session: Session):
+def create_transaction(
+    item: Match[str], message, db_session
+) -> Optional[KarmaTransaction]:
+    # Need to make sure it isn't blacklisted
+    topic = process_topic(item.group("karma_target"), db_session)
+
+    if topic is None or topic.isspace():
+        return
+
+    op = item.group("karma_op")
+    reason = process_reason(item)
+
+    casefold_topic = topic.casefold()
+    self_karma = (
+        casefold_topic == message.author.name.casefold()
+        or (
+            message.author.nick is not None
+            and message.author.nick.casefold() == casefold_topic
+        )
+        or (
+            user_is_irc_bot(message)
+            and get_name_string(message).casefold() == casefold_topic
+        )
+    )
+
+    return KarmaTransaction(
+        name=topic,
+        self_karma=self_karma,
+        net_karma=Operation.from_str(op),
+        reason=reason,
+    )
+
+
+def parse_message(
+    message: Message, db_session: Session
+) -> Optional[List[KarmaTransaction]]:
     # Remove any code blocks
     filtered_message = re.sub("```.*```", "", message.clean_content, flags=re.DOTALL)
 
@@ -74,38 +109,7 @@ def parse_message(message: Message, db_session: Session):
     karma_regex = re.compile(karma_re_target + karma_re_op + karma_re_reason)
     items = karma_regex.finditer(filtered_message)
 
-    # TODO: move to own function for running tests on
-    def create_transaction(item: Match[str]) -> Optional[KarmaTransaction]:
-        # Need to make sure it isn't blacklisted
-        topic = process_topic(item.group("karma_target"), db_session)
-
-        if topic is None or topic.isspace():
-            return
-
-        op = item.group("karma_op")
-        reason = process_reason(item)
-
-        casefold_topic = topic.casefold()
-        self_karma = (
-            casefold_topic == message.author.name.casefold()
-            or (
-                message.author.nick is not None
-                and message.author.nick.casefold() == casefold_topic
-            )
-            or (
-                user_is_irc_bot(message)
-                and get_name_string(message).casefold() == casefold_topic
-            )
-        )
-
-        return KarmaTransaction(
-            name=topic,
-            self_karma=self_karma,
-            net_karma=Operation.from_str(op).value,
-            reason=reason,
-        )
-
-    results = [create_transaction(i) for i in items]
+    results = [create_transaction(i, message, db_session) for i in items]
     # Filter out the Nones with a second list comprehension
     results: List[KarmaTransaction] = [t for t in results if t is not None]
 
