@@ -1,4 +1,5 @@
 import logging
+import datetime as datetime_module
 from datetime import datetime
 
 from discord import Message
@@ -11,6 +12,11 @@ from cogs.commands.admin import MiniKarmaMode
 from karma.parser import KarmaTransaction, create_transactions, parse_message
 from models import Karma, KarmaChange, MiniKarmaChannel, User
 from utils import get_name_string
+
+
+def is_in_cooldown(last_change, timeout):
+    timeout_time = datetime.utcnow() - datetime_module.timedelta(seconds=timeout)
+    return last_change.created_at > timeout_time
 
 
 def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):
@@ -74,6 +80,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             return f' • Could not change "{name}" since it is still on cooldown (last altered {duration} ago).\n'
         else:
             return f'could not change "**{name}**" (cooldown, last edit {duration} ago)'
+
 
     def success_item(tr: KarmaTransaction):
         # Give some sass if someone is trying to downvote the bot
@@ -190,35 +197,33 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 errors.append(internal_error(truncated_name))
                 continue
         else:
-            time_delta = datetime.utcnow() - last_change.created_at
-
-            if time_delta.seconds >= timeout:
-                # If the bot is being downvoted then the karma can only go up
-                if transaction.name.casefold() == "apollo":
-                    new_score = last_change.score + abs(transaction.net_karma)
-                else:
-                    new_score = last_change.score + transaction.net_karma
-
-                karma_change = KarmaChange(
-                    karma_id=karma_item.id,
-                    user_id=user.id,
-                    message_id=message_id,
-                    reasons=transaction.reasons,
-                    score=new_score,
-                    change=(new_score - last_change.score),
-                    created_at=datetime.utcnow(),
-                )
-                db_session.add(karma_change)
-                try:
-                    db_session.commit()
-                except (ScalarListException, SQLAlchemyError) as e:
-                    db_session.rollback()
-                    logging.error(e)
-                    errors.append(internal_error(truncated_name))
-                    continue
-            else:
+            if is_in_cooldown(last_change, timeout):
                 errors.append(cooldown_error(truncated_name, time_delta))
                 continue
+
+	    # If the bot is being downvoted then the karma can only go up
+            if transaction.name.casefold() == "apollo":
+                new_score = last_change.score + abs(transaction.net_karma)
+            else:
+                new_score = last_change.score + transaction.net_karma
+
+            karma_change = KarmaChange(
+                karma_id=karma_item.id,
+                user_id=user.id,
+		message_id=message_id,
+		reasons=transaction.reasons,
+		score=new_score,
+		change=(new_score - last_change.score),
+		created_at=datetime.utcnow(),
+            )
+            db_session.add(karma_change)
+            try:
+                db_session.commit()
+            except (ScalarListException, SQLAlchemyError) as e:
+               db_session.rollback()
+               logging.error(e)
+               errors.append(internal_error(truncated_name))
+               continue
 
         # Update karma counts
         if transaction.net_karma == 0:
