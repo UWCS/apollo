@@ -81,7 +81,6 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
         else:
             return f'could not change "**{name}**" (cooldown, last edit {duration} ago)'
 
-
     def success_item(tr: KarmaTransaction):
         # Give some sass if someone is trying to downvote the bot
         if tr.name.casefold() == "apollo" and tr.net_karma < 0:
@@ -201,7 +200,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 errors.append(cooldown_error(truncated_name, time_delta))
                 continue
 
-	    # If the bot is being downvoted then the karma can only go up
+            # If the bot is being downvoted then the karma can only go up
             if transaction.name.casefold() == "apollo":
                 new_score = last_change.score + abs(transaction.net_karma)
             else:
