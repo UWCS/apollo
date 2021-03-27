@@ -209,20 +209,20 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             karma_change = KarmaChange(
                 karma_id=karma_item.id,
                 user_id=user.id,
-		message_id=message_id,
-		reasons=transaction.reasons,
-		score=new_score,
-		change=(new_score - last_change.score),
-		created_at=datetime.utcnow(),
+                message_id=message_id,
+                reasons=transaction.reasons,
+                score=new_score,
+                change=(new_score - last_change.score),
+                created_at=datetime.utcnow(),
             )
             db_session.add(karma_change)
             try:
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
-               db_session.rollback()
-               logging.error(e)
-               errors.append(internal_error(truncated_name))
-               continue
+                db_session.rollback()
+                logging.error(e)
+                errors.append(internal_error(truncated_name))
+                continue
 
         # Update karma counts
         if transaction.net_karma == 0:

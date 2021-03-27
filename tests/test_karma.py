@@ -8,21 +8,24 @@ _TIMEOUT = 60
 
 
 def build_karma_change(created_at):
-  return KarmaChange(
-    karma_id=1,
-    user_id=1,
-    message_id=1,
-    reasons=None,
-    change=1,
-    score=1,
-    created_at=created_at,
-  )
+    return KarmaChange(
+        karma_id=1,
+        user_id=1,
+        message_id=1,
+        reasons=None,
+        change=1,
+        score=1,
+        created_at=created_at,
+    )
 
 
 def test_is_in_cooldown():
-  last_change = build_karma_change(datetime.utcnow())
-  assert is_in_cooldown(last_change, _TIMEOUT)
+    last_change = build_karma_change(datetime.utcnow())
+    assert is_in_cooldown(last_change, _TIMEOUT)
+
 
 def test_not_is_in_cooldown():
-  last_change = build_karma_change(datetime.utcnow() - datetime_module.timedelta(seconds=100))
-  assert not is_in_cooldown(last_change, _TIMEOUT)
+    last_change = build_karma_change(
+        datetime.utcnow() - datetime_module.timedelta(seconds=100)
+    )
+    assert not is_in_cooldown(last_change, _TIMEOUT)
