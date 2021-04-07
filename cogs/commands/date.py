@@ -17,7 +17,9 @@ class Date(commands.Cog):
         output = date.today()
         randno = random.randint(0, 99)
         if randno == 99:
-            await ctx.send("https://solidstarts.com/wp-content/uploads/dates_edited-scaled.jpg")
+            await ctx.send(
+                "https://solidstarts.com/wp-content/uploads/dates_edited-scaled.jpg"
+            )
         else:
             await ctx.send(output.strftime("%A %d %B %Y"))
 
