@@ -19,7 +19,7 @@ class Date(commands.Cog):
         if randno == 99:
             await ctx.send("https://solidstarts.com/wp-content/uploads/dates_edited-scaled.jpg")
         else:
-            await ctx.send(output.strftime("The date today is %A %d %B %Y if you really wanted to know"))
+            await ctx.send(output.strftime("%A %d %B %Y"))
 
     @commands.command(help=DAY_HELP_TEXT, brief=DAY_HELP_TEXT)
     async def day(self, ctx: Context):
