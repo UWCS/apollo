@@ -13,7 +13,7 @@ class Date(commands.Cog):
 
     @commands.command(help=DATE_HELP_TEXT, brief=DATE_HELP_TEXT)
     async def date(self, ctx: Context):
-        # 99% of the time returns the date. 1% of the time (if I can do maths) returns a picture of a date
+        """99% of the time return the date. 1% of the time (if I can do maths) returns a picture of a date"""
         output = date.today()
         randno = random.randint(0, 99)
         if randno == 99:
@@ -25,7 +25,7 @@ class Date(commands.Cog):
 
     @commands.command(help=DAY_HELP_TEXT, brief=DAY_HELP_TEXT)
     async def day(self, ctx: Context):
-        # Returns the current day
+        """Return the current day"""
         output = date.today()
         await ctx.send(output.strftime("%A"))
 
