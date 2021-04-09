@@ -1,7 +1,8 @@
-from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
-from datetime import date
 import random
+from datetime import date
+
+from discord.ext import commands
+from discord.ext.commands import Bot, Context
 
 DATE_HELP_TEXT = """Ask the bot what the date is."""
 DAY_HELP_TEXT = """Ask the bot what the day is."""
