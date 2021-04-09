@@ -15,8 +15,8 @@ class Date(commands.Cog):
     async def date(self, ctx: Context):
         """99% of the time return the date. 1% of the time (if I can do maths) returns a picture of a date"""
         output = date.today()
-        randno = random.randint(0, 99)
-        if randno == 99:
+        randno = random.random()
+        if randno <= 0.01:
             await ctx.send(
                 "https://solidstarts.com/wp-content/uploads/dates_edited-scaled.jpg"
             )
