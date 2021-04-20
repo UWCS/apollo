@@ -77,9 +77,9 @@ class Database(Cog):
             # Get all specified command prefixes for the bot
             command_prefixes = self.bot.command_prefix(self.bot, message)
             # Only process karma if the message was not a command (ie did not start with a command prefix)
-            if True not in [
+            if not any(
                 message.content.startswith(prefix) for prefix in command_prefixes
-            ]:
+            ):
                 reply = process_karma(
                     message, logged_message.id, db_session, CONFIG.KARMA_TIMEOUT
                 )
