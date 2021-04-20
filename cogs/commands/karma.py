@@ -31,7 +31,8 @@ from pytz import timezone, utc
 from sqlalchemy import func
 
 from config import CONFIG
-from models import Karma as KarmaModel, KarmaChange, db_session
+from models import Karma as KarmaModel
+from models import KarmaChange, db_session
 from utils import get_name_string, pluralise
 
 matplotlib.use("Agg")
