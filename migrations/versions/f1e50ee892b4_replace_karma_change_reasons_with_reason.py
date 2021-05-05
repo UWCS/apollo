@@ -15,8 +15,8 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 
-revision = 'f1e50ee892b4'
-down_revision = 'e377bd474696'
+revision = "f1e50ee892b4"
+down_revision = "e377bd474696"
 branch_labels = None
 depends_on = None
 
@@ -80,7 +80,9 @@ def downgrade():
     bind = op.get_bind()
     session = orm.create_session(bind)
 
-    op.add_column("karma_changes", sa.Column("reasons", sau.ScalarListType, nullable=True))
+    op.add_column(
+        "karma_changes", sa.Column("reasons", sau.ScalarListType, nullable=True)
+    )
 
     session.query(KarmaChange).update({"reasons": KarmaChange.reason})
 
