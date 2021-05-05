@@ -19,7 +19,6 @@ EXTENSIONS = [
     "cogs.commands.blacklist",
     "cogs.commands.counting",
     "cogs.commands.date",
-    "cogs.commands.fact",
     "cogs.commands.flip",
     "cogs.commands.karma",
     "cogs.commands.lcalc",
