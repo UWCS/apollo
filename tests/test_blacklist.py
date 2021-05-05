@@ -6,9 +6,9 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from karma.parser import KarmaTransaction, Operation, RawKarma, parse_message
+from karma.parser import KarmaItem, KarmaOperation
+from karma.transaction import KarmaTransaction, apply_blacklist
 from models import Base, BlockedKarma, User
-from tests.stubs import make_message_stub
 
 
 @pytest.fixture(scope="module")
@@ -43,32 +43,64 @@ def database():
 TEST_CASES = {
     # Make sure the blacklist does not interfere with regular karma parsing
     "not in blacklist": (
-        make_message_stub("foobar++"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
     ),
     # Items that are on the blacklist and it blocks
-    "blacklisted item same case": (make_message_stub("notepad++"), None),
-    "blacklisted item different case": (make_message_stub("NOTEPAD++"), None),
-    "blacklisted short item same case": (make_message_stub("c++"), None),
-    "blacklisted short item different case": (make_message_stub("C++"), None),
-    "blacklisted item with reason": (make_message_stub("notepad++ for reason"), None),
+    "blacklisted item same case": (
+        [KarmaTransaction(KarmaItem("notepad", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "blacklisted item different case": (
+        [KarmaTransaction(KarmaItem("NOTEPAD", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "blacklisted item with reason": (
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, "reason"), False
+            )
+        ],
+        [],
+    ),
     # Items on the blacklist that are bypassed
     "blacklist bypass": (
-        make_message_stub('"notepad"++'),
-        [KarmaTransaction("notepad", False, Operation.POSITIVE, None)],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, None, True), False
+            )
+        ],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, None, True), False
+            )
+        ],
     ),
     "blacklist bypass short item": (
-        make_message_stub('"c"++'),
-        [KarmaTransaction("c", False, Operation.POSITIVE, None)],
+        [KarmaTransaction(KarmaItem("c", KarmaOperation.POSITIVE, None, True), False)],
+        [KarmaTransaction(KarmaItem("c", KarmaOperation.POSITIVE, None, True), False)],
     ),
     "blacklist bypass with reason": (
-        make_message_stub('"notepad"++ for reason'),
-        [KarmaTransaction("notepad", False, Operation.POSITIVE, "reason")],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, "reason", True), False
+            )
+        ],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, "reason", True), False
+            )
+        ],
     ),
     # Mixture of blacklist and non-blacklist items
     "blacklisted item and non-blacklisted item": (
-        make_message_stub("notepad++ foobar++"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, None), False
+            ),
+            KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False),
+        ],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
     ),
 }
 
@@ -77,8 +109,8 @@ TEST_CASES = {
 # Don't change the test to add a new case - the test itself should be as simple as possible.
 # If adding a new test case would require changes to this test, it would be better suited as a new test function.
 @pytest.mark.parametrize(
-    ["message", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
+    ["transactions", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
 )
-def test_blacklist(database, message, expected):
-    actual = parse_message(message, database)
+def test_blacklist(database, transactions, expected):
+    actual = apply_blacklist(transactions, database)
     assert actual == expected

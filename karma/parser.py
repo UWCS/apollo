@@ -1,120 +1,77 @@
-import enum
 import re
-from collections import namedtuple
-from typing import List, Match, Optional
+from dataclasses import dataclass
+from enum import Enum
+from typing import List, Optional
 
-from discord import Message
-from sqlalchemy.orm import Session
+from parsita import TextParsers, opt, reg, rep
+from parsita.util import constant
 
-from models import BlockedKarma
-from utils.utils import get_name_string, user_is_irc_bot
-
-RawKarma = namedtuple("RawKarma", ["name", "op", "reason"])
-KarmaTransaction = namedtuple(
-    "KarmaTransaction", ["name", "self_karma", "net_karma", "reason"]
-)
+from utils.utils import filter_out_none
 
 
-class Operation(enum.Enum):
+class KarmaOperation(Enum):
     POSITIVE = 1
-    NEGATIVE = -1
     NEUTRAL = 0
+    NEGATIVE = -1
 
-    @staticmethod
-    def from_str(operation_string):
-        if operation_string == "++":
-            return Operation.POSITIVE
-        elif operation_string == "--":
-            return Operation.NEGATIVE
-        else:
-            return Operation.NEUTRAL
-
-
-def process_topic(topic_raw: str, db_session: Session) -> Optional[str]:
-    if topic_raw.startswith('"') and topic_raw.endswith('"'):
-        # Remove surrounding quotes and then remove leading @
-        return topic_raw.replace('"', "").lstrip("@").strip()
-    else:
-        # Check if the item topic is disallowed
-        if (
-            not db_session.query(BlockedKarma)
-            .filter(BlockedKarma.topic == topic_raw.casefold())
-            .all()
-            and len(topic_raw) > 2
-        ):
-            return topic_raw.replace('"', "").lstrip("@").strip()
-        else:
-            return None
+    def __str__(self):
+        mapping = {
+            KarmaOperation.POSITIVE: "++",
+            KarmaOperation.NEUTRAL: "+-",
+            KarmaOperation.NEGATIVE: "--",
+        }
+        return mapping[self]
 
 
-def process_reason(reason_raw) -> Optional[str]:
-    return (
-        reason_raw.group("karma_reason")
-        or reason_raw.group("karma_reason_2")
-        or reason_raw.group("karma_reason_3")
-        or reason_raw.group("karma_reason_4")
+@dataclass
+class KarmaItem:
+    topic: str
+    operation: KarmaOperation
+    reason: Optional[str]
+    bypass: bool = False
+
+
+def make_karma(el: list):
+    """Contents of el:
+    First element contains topic and whether it is a bypass or not
+    Second element contains karma operation
+    Third element contains a list of zero or one elements with the reason in it
+    """
+    # TODO: add structural pattern matching when 3.10 is usable
+    return KarmaItem(
+        topic=el[0][0], operation=el[1], reason=next(iter(el[2]), None), bypass=el[0][1]
     )
 
 
-def create_transaction(
-    item: Match[str], message, db_session
-) -> Optional[KarmaTransaction]:
-    # Need to make sure it isn't blacklisted
-    topic = process_topic(item.group("karma_target"), db_session)
+class KarmaParser(TextParsers):
+    anything = reg(r".") > constant(None)
 
-    if topic is None or topic.isspace():
-        return
-
-    op = item.group("karma_op")
-    reason = process_reason(item)
-
-    casefold_topic = topic.casefold()
-    self_karma = (
-        casefold_topic == message.author.name.casefold()
-        or (
-            message.author.nick is not None
-            and message.author.nick.casefold() == casefold_topic
-        )
-        or (
-            user_is_irc_bot(message)
-            and get_name_string(message).casefold() == casefold_topic
-        )
+    word_topic = reg(r'[^"\s]+?(?=[+-]{2})')
+    string_topic = reg(r'".*?(?<!\\)(\\\\)*?"(?=[+-]{2})')
+    topic = (word_topic > (lambda t: [t, False])) | (
+        string_topic > (lambda t: [t[1:-1], True])
     )
 
-    return KarmaTransaction(
-        name=topic,
-        self_karma=self_karma,
-        net_karma=Operation.from_str(op),
-        reason=reason,
-    )
+    op_positive = reg(r"(?<![+-])\+\+(?![+-])") > constant(KarmaOperation.POSITIVE)
+    op_neutral = (
+        reg(r"(?<![+-])\+-(?![+-])") | reg(r"(?<![+-])-\+(?![+-])")
+    ) > constant(KarmaOperation.NEUTRAL)
+    op_negative = reg(r"(?<![+-])--(?![+-])") > constant(KarmaOperation.NEGATIVE)
+    operator = op_positive | op_neutral | op_negative
+
+    bracket_reason = reg(r"\(.+?\)") > (lambda s: s[1:-1])
+    quote_reason = reg(r'".*?(?<!\\)(\\\\)*?"(?![+-]{2})') > (lambda s: s[1:-1])
+    reason_words = reg(r"(?i)because") | reg(r"(?i)for")
+    text_reason = reason_words >> (reg(r'[^",]+') | quote_reason)
+    reason = bracket_reason | quote_reason | text_reason
+
+    karma = (topic & operator & opt(reason)) > make_karma
+
+    parse_all = rep(karma | anything) > filter_out_none
 
 
-def parse_message(
-    message: Message, db_session: Session
-) -> Optional[List[KarmaTransaction]]:
-    # Remove any code blocks
-    filtered_message = re.sub("```.*```", "", message.clean_content, flags=re.DOTALL)
-
-    # If there's no message to parse then there's nothing to return
-    if not filtered_message:
-        return None
-
-    # The regex for parsing karma messages
-    # Hold on tight because this will be a doozy...
-    # TODO: parser
-    karma_re_target = r"(?P<karma_target>([^\"\s]+)|(\"([^\"]+)\"))"
-    karma_re_op = r"(?P<karma_op>[+-]{2,})"
-    karma_re_reason = r'(\s(because|for)\s+((?P<karma_reason>[^",]+)|"(?P<karma_reason_2>.+)")($|,)|\s\((?P<karma_reason_3>.+)\)|\s"(?P<karma_reason_4>[^"]+)"(?![+-]{2,})|,?\s|$)'
-
-    karma_regex = re.compile(karma_re_target + karma_re_op + karma_re_reason)
-    items = karma_regex.finditer(filtered_message)
-
-    results = [create_transaction(i, message, db_session) for i in items]
-    # Filter out the Nones with a second list comprehension
-    results: List[KarmaTransaction] = [t for t in results if t is not None]
-
-    # If there are any results then return the list, otherwise give None
-    if results:
-        return results
-    else:
-        return None
+def parse_message_content(content: str) -> List[KarmaItem]:
+    cleaned = re.sub(r"```.*?```", " ", content, flags=re.DOTALL)
+    if cleaned == "" or cleaned.isspace():
+        return []
+    return KarmaParser.parse_all.parse(cleaned).or_die()

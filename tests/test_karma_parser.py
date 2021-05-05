@@ -1,62 +1,33 @@
-import os
 from textwrap import dedent
 
 import pytest
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 
-from karma.parser import KarmaTransaction, Operation, parse_message
-from models import Base
+from karma.parser import KarmaItem, KarmaOperation, parse_message_content
 from tests.stubs import make_message_stub
-
-
-@pytest.fixture(scope="module")
-def database():
-    # Locate the testing config for Alembic
-    config = Config(os.path.join(os.path.dirname(__file__), "../alembic.tests.ini"))
-
-    # Set the migration secret key here
-    if not os.environ.get("SECRET_KEY", None):
-        os.environ["SECRET_KEY"] = "test"
-
-    # Start up the in-memory database instance
-    db_engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(db_engine)
-    db_session = Session(bind=db_engine)
-
-    # Mark it as up-to-date with migrations
-    command.stamp(config, "head")
-
-    return db_session
-
 
 TEST_CASES = {
     # Cases with no karma
-    "empty": (make_message_stub(""), None),
-    "no karma": (make_message_stub("Hello, world!"), None),
+    "empty": ("", []),
+    "no karma": ("Hello, world!", []),
     "no karma long sentence": (
-        make_message_stub(
-            "Hello, world! This is a test input string with 30+ characters"
-        ),
-        None,
+        "Hello, world! This is a test input string with 30+ characters",
+        [],
     ),
-    "no karma unbalanced quoted": (make_message_stub('"foo bar baz'), None),
-    "no karma topic": (make_message_stub("++"), None),
-    "too short operator": (make_message_stub("foobar+"), None),
-    "too long operator": (make_message_stub('"foobar"++++'), None),
-    "unrecognised operator": (make_message_stub("foobar=="), None),
-    "no karma operator with reason": (make_message_stub('"foobar" for reason'), None),
+    "no karma unbalanced quoted": ('"foo bar baz', []),
+    "no karma topic": ("++", []),
+    "too short operator": ("foobar+", []),
+    "too long operator": ('"foobar"++++', []),
+    "unrecognised operator": ("foobar==", []),
+    "space between topic and operator": ("foobar ++", []),
+    "no karma operator with reason": ('"foobar" for reason', []),
     # Cases with no karma because of code blocks
     "no karma code block": (
-        make_message_stub("```foobar++```"),
-        None,
+        "```foobar++```",
+        [],
     ),
     "no karma multi-line code block": (
-        make_message_stub(
-            dedent(
-                """
+        dedent(
+            """
                 ```
                 example
                 multi
@@ -66,174 +37,169 @@ TEST_CASES = {
                 block
                 ```
                 """
-            )
         ),
-        None,
+        [],
     ),
     "no karma multi-line code block with text before": (
-        make_message_stub(
-            dedent(
-                """
+        dedent(
+            """
                 text before code block```
                 code
                 block
                 ```++
                 """
-            )
         ),
-        None,
+        [],
     ),
     # Simple karma cases
     "simple add": (
-        make_message_stub("foobar++"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        "foobar++",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, None)],
     ),
     "simple neutral +-": (
-        make_message_stub("foobar+-"),
-        [KarmaTransaction("foobar", False, Operation.NEUTRAL, None)],
+        "foobar+-",
+        [KarmaItem("foobar", KarmaOperation.NEUTRAL, None)],
     ),
     "simple neutral -+": (
-        make_message_stub("foobar-+"),
-        [KarmaTransaction("foobar", False, Operation.NEUTRAL, None)],
+        "foobar-+",
+        [KarmaItem("foobar", KarmaOperation.NEUTRAL, None)],
     ),
     "simple negative": (
-        make_message_stub("foobar--"),
-        [KarmaTransaction("foobar", False, Operation.NEGATIVE, None)],
+        "foobar--",
+        [KarmaItem("foobar", KarmaOperation.NEGATIVE, None)],
     ),
     "quoted": (
-        make_message_stub('"foobar"++'),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        '"foobar"++',
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, None, bypass=True)],
     ),
     "quoted with space": (
-        make_message_stub('"foo bar"++'),
-        [KarmaTransaction("foo bar", False, Operation.POSITIVE, None)],
+        '"foo bar"++',
+        [KarmaItem("foo bar", KarmaOperation.POSITIVE, None, bypass=True)],
     ),
     "simple with text after": (
-        make_message_stub("foobar++ baz quz quz"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        "foobar++ baz quz quz",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, None)],
     ),
     "simple with text before": (
-        make_message_stub("baz quz qux foobar++"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        "baz quz qux foobar++",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, None)],
     ),
     "simple inside text": (
-        make_message_stub("baz quz foobar++ qux"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        "baz quz foobar++ qux",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, None)],
     ),
     # Karma reasons
     "paren (reason)": (
-        make_message_stub("foobar++ (reason)"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        "foobar++ (reason)",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     'quote "reason"': (
-        make_message_stub('foobar++ "reason"'),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        'foobar++ "reason"',
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     "for reason": (
-        make_message_stub("foobar++ for reason"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        "foobar++ for reason",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     "because reason": (
-        make_message_stub("foobar++ because reason"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        "foobar++ because reason",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     "paren (reason, comma)": (
-        make_message_stub("foobar++ (reason, comma)"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason, comma")],
+        "foobar++ (reason, comma)",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason, comma")],
     ),
     "empty paren reason": (
-        make_message_stub("foobar++ ()"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, None)],
+        "foobar++ ()",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, None)],
     ),
     "for reason with parens": (
-        make_message_stub("foobar++ for reason (parens)"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason (parens)")],
+        "foobar++ for reason (parens)",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason (parens)")],
     ),
     "for reason with comma": (
         # An early comma will cut the karma reason short
-        make_message_stub("foobar++ for reason, comma"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        "foobar++ for reason, comma",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     "for quoted reason": (
-        make_message_stub('foobar++ for "reason"'),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        'foobar++ for "reason"',
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     "for quoted reason with comma": (
-        make_message_stub('foobar++ for "reason, comma"'),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason, comma")],
+        'foobar++ for "reason, comma"',
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason, comma")],
     ),
     "for quoted reason with space": (
-        make_message_stub('foobar++ for "reason reason"'),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason reason")],
+        'foobar++ for "reason reason"',
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason reason")],
     ),
     "mid sentence for reason": (
-        make_message_stub("Hello, world! foobar++ for reason, rest of sentence"),
-        [KarmaTransaction("foobar", False, Operation.POSITIVE, "reason")],
+        "Hello, world! foobar++ for reason, rest of sentence",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason")],
     ),
     # Multiple karma
     "multiple karma": (
-        make_message_stub("foo++ bar-- baz+- quz-+"),
+        "foo++ bar-- baz+- quz-+",
         [
-            KarmaTransaction("foo", False, Operation.POSITIVE, None),
-            KarmaTransaction("bar", False, Operation.NEGATIVE, None),
-            KarmaTransaction("baz", False, Operation.NEUTRAL, None),
-            KarmaTransaction("quz", False, Operation.NEUTRAL, None),
+            KarmaItem("foo", KarmaOperation.POSITIVE, None),
+            KarmaItem("bar", KarmaOperation.NEGATIVE, None),
+            KarmaItem("baz", KarmaOperation.NEUTRAL, None),
+            KarmaItem("quz", KarmaOperation.NEUTRAL, None),
         ],
     ),
     "multiple karma comma-separated": (
-        make_message_stub("foo++, bar--, baz+-, quz-+"),
+        "foo++, bar--, baz+-, quz-+",
         [
-            KarmaTransaction("foo", False, Operation.POSITIVE, None),
-            KarmaTransaction("bar", False, Operation.NEGATIVE, None),
-            KarmaTransaction("baz", False, Operation.NEUTRAL, None),
-            KarmaTransaction("quz", False, Operation.NEUTRAL, None),
+            KarmaItem("foo", KarmaOperation.POSITIVE, None),
+            KarmaItem("bar", KarmaOperation.NEGATIVE, None),
+            KarmaItem("baz", KarmaOperation.NEUTRAL, None),
+            KarmaItem("quz", KarmaOperation.NEUTRAL, None),
         ],
     ),
     "multiple quoted karma": (
-        make_message_stub('"item 1"++ "item 2"++'),
+        '"item 1"++ "item 2"++',
         [
-            KarmaTransaction("item 1", False, Operation.POSITIVE, None),
-            KarmaTransaction("item 2", False, Operation.POSITIVE, None),
+            KarmaItem("item 1", KarmaOperation.POSITIVE, None, True),
+            KarmaItem("item 2", KarmaOperation.POSITIVE, None, True),
         ],
     ),
     "multiple karma with parens reasons": (
-        make_message_stub("item1++ (reason1) item2++ (reason2)"),
+        "item1++ (reason1) item2++ (reason2)",
         [
-            KarmaTransaction("item1", False, Operation.POSITIVE, "reason1"),
-            KarmaTransaction("item2", False, Operation.POSITIVE, "reason2"),
+            KarmaItem("item1", KarmaOperation.POSITIVE, "reason1"),
+            KarmaItem("item2", KarmaOperation.POSITIVE, "reason2"),
         ],
     ),
     "multiple karma with parens reasons comma-separated": (
-        make_message_stub("item1++ (reason1), item2++ (reason2)"),
+        "item1++ (reason1), item2++ (reason2)",
         [
-            KarmaTransaction("item1", False, Operation.POSITIVE, "reason1"),
-            KarmaTransaction("item2", False, Operation.POSITIVE, "reason2"),
+            KarmaItem("item1", KarmaOperation.POSITIVE, "reason1"),
+            KarmaItem("item2", KarmaOperation.POSITIVE, "reason2"),
         ],
     ),
     "multiple karma with for reasons": (
         # Karma with for/because reasons but be separated with commas due to the way parsing works
-        make_message_stub("item1++ for reason1, item2++ for reason2"),
+        "item1++ for reason1, item2++ for reason2",
         [
-            KarmaTransaction("item1", False, Operation.POSITIVE, "reason1"),
-            KarmaTransaction("item2", False, Operation.POSITIVE, "reason2"),
+            KarmaItem("item1", KarmaOperation.POSITIVE, "reason1"),
+            KarmaItem("item2", KarmaOperation.POSITIVE, "reason2"),
         ],
     ),
     "multiple karma with quote reasons": (
-        make_message_stub('item1++ "reason 1" item2++ "reason 2"'),
+        'item1++ "reason 1" item2++ "reason 2"',
         [
-            KarmaTransaction("item1", False, Operation.POSITIVE, "reason 1"),
-            KarmaTransaction("item2", False, Operation.POSITIVE, "reason 2"),
+            KarmaItem("item1", KarmaOperation.POSITIVE, "reason 1"),
+            KarmaItem("item2", KarmaOperation.POSITIVE, "reason 2"),
         ],
     ),
     "multiple karma with mixed reasons": (
-        make_message_stub(
-            'item1++ for reason1, item2++ because reason2, item3++ (reason 3), item4++ "reason 4"'
-        ),
+        'item1++ for reason1, item2++ because reason2, item3++ (reason 3), item4++ "reason 4"',
         [
-            KarmaTransaction("item1", False, Operation.POSITIVE, "reason1"),
-            KarmaTransaction("item2", False, Operation.POSITIVE, "reason2"),
-            KarmaTransaction("item3", False, Operation.POSITIVE, "reason 3"),
-            KarmaTransaction("item4", False, Operation.POSITIVE, "reason 4"),
+            KarmaItem("item1", KarmaOperation.POSITIVE, "reason1"),
+            KarmaItem("item2", KarmaOperation.POSITIVE, "reason2"),
+            KarmaItem("item3", KarmaOperation.POSITIVE, "reason 3"),
+            KarmaItem("item4", KarmaOperation.POSITIVE, "reason 4"),
         ],
     ),
 }
@@ -245,6 +211,6 @@ TEST_CASES = {
 @pytest.mark.parametrize(
     ["message", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
 )
-def test_parser(database, message, expected):
-    actual = parse_message(message, database)
+def test_parser(message, expected):
+    actual = parse_message_content(message)
     assert actual == expected
