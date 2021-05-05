@@ -4,7 +4,6 @@ from enum import Enum, unique
 
 import discord
 from discord import Color, Embed, TextChannel
-from discord.abc import PrivateChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, check
 from pytz import timezone, utc
@@ -13,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cogs.commands.karma import current_milli_time
 from config import CONFIG
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
-from utils import get_name_string, pluralise
+from utils import pluralise
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.

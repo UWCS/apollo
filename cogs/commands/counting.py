@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from discord import User
-from discord.ext.commands import Bot, BucketType, Cog, Context, check, cooldown, group
+from discord.ext.commands import Bot, BucketType, Cog, Context, cooldown, group
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import CountingRun, CountingUser
