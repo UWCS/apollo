@@ -138,7 +138,7 @@ class Reminders(commands.Cog):
                 else:
                     author_id = (
                         db_session.query(User)
-                        .filter(User.user_uid == ctx.message.author.id)
+                        .filter(User.user_uid == ctx.author.id)
                         .first()
                         .id
                     )
