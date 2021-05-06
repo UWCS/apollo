@@ -86,7 +86,7 @@ def upgrade():
         "karma_changes", sa.Column("reasons_new", sau.ScalarListType, nullable=True)
     )
 
-    recreate = "always" if bind.engine.name == "sqlite" else "never"
+    recreate = "always" if bind.engine.name == "sqlite" else "auto"
     with op.batch_alter_table("karma", recreate=recreate) as bop:
         bop.add_column(
             sa.Column(
@@ -131,7 +131,7 @@ def downgrade():
         "karma_changes", sa.Column("reasons", sau.EncryptedType, nullable=True)
     )
 
-    recreate = "always" if bind.engine.name == "sqlite" else "never"
+    recreate = "always" if bind.engine.name == "sqlite" else "auto"
     with op.batch_alter_table("karma", recreate=recreate) as bop:
         bop.add_column(
             sa.Column(
