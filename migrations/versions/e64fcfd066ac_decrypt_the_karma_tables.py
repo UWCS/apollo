@@ -96,12 +96,10 @@ def upgrade():
     )
 
     # Decrypt the reason and save it with the new separator
-    for change in session.query(KarmaChange):
-        change.reasons_new = change.reasons
+    session.query(KarmaChange).update({"reasons_new": KarmaChange.reasons})
 
     # Decrypt the added column
-    for karma in session.query(Karma):
-        karma.added_new = karma.added
+    session.query(Karma).update({"added_new": Karma.added})
 
     session.commit()
 
@@ -141,12 +139,10 @@ def downgrade():
     )
 
     # Re-encrypt the reasons
-    for change in session.query(KarmaChange):
-        change.reasons = change.reasons_new
+    session.query(KarmaChange).update({"reasons": KarmaChange.reasons_new})
 
     # Re-encrypt the added
-    for karma in session.query(Karma):
-        karma.added = karma.added_new
+    session.query(Karma).update({"added": Karma.added_new})
 
     session.commit()
 
