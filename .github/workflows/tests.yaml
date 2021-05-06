@@ -2,7 +2,7 @@ name: Run tests
 
 on:
   push:
-    branches: [ master, postgres-ci ]
+    branches: [ master ]
   pull_request:
     branches: [ master ]
 
