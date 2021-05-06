@@ -85,7 +85,7 @@ def upgrade():
     op.add_column(
         "karma_changes", sa.Column("reasons_new", sau.ScalarListType, nullable=True)
     )
-    with op.batch_alter_table("karma") as bop:
+    with op.batch_alter_table("karma", recreate="always") as bop:
         bop.add_column(
             sa.Column(
                 "added_new",
@@ -129,7 +129,7 @@ def downgrade():
         "karma_changes", sa.Column("reasons", sau.EncryptedType, nullable=True)
     )
 
-    with op.batch_alter_table("karma") as bop:
+    with op.batch_alter_table("karma", recreate="always") as bop:
         bop.add_column(
             sa.Column(
                 "added",
