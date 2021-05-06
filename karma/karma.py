@@ -91,7 +91,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 else:
                     return f" • **{truncated_name}** (new score is {karma_change.score}) and your reason has been recorded. {apollo_response}"
             else:
-                return f"**{truncated_name}{op}** (now {karma_change.score}, reason recorded)"
+                return f"**{truncated_name}**{op} (now {karma_change.score}, reason recorded)"
 
         else:
             if karma_mode == MiniKarmaMode.Normal:
@@ -100,7 +100,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 else:
                     return f" • **{truncated_name}** (new score is {karma_change.score}). {apollo_response}"
             else:
-                return f"**{truncated_name}{op}** (now {karma_change.score})"
+                return f"**{truncated_name}**{op} (now {karma_change.score})"
 
     # Start preparing the reply string
     if len(transactions) > 1:
