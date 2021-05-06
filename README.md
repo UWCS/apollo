@@ -9,10 +9,10 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 #### Dependencies
 
-Two dependency files are included with this project.
+Two type of dependency files are included with this project.
 The first, `requirements.txt`, only includes top-level dependencies.
 
-The second, `requirements.lock`, contains a pinned list of all dependencies.
+The second, `requirements-platform.lock`, contains a pinned list of all dependencies specific to a platform.
 
 If installing the top-level dependencies does not work, try installing the pinned dependencies.
 
