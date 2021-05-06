@@ -18,3 +18,4 @@ black~=20.8b1
 requests~=2.25.1
 parsita~=1.4.1
 pretend~=1.0.9
+dateparser~=1.0.0
