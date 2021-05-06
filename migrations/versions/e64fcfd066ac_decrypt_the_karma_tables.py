@@ -85,15 +85,15 @@ def upgrade():
     op.add_column(
         "karma_changes", sa.Column("reasons_new", sau.ScalarListType, nullable=True)
     )
-    op.add_column(
-        "karma",
-        sa.Column(
-            "added_new",
-            sa.DateTime,
-            nullable=False,
-            server_default=sa.func.current_timestamp(),
-        ),
-    )
+    with op.batch_alter_table("karma") as bop:
+        bop.add_column(
+            sa.Column(
+                "added_new",
+                sa.DateTime,
+                nullable=False,
+                server_default=sa.func.current_timestamp(),
+            ),
+        )
 
     # Decrypt the reason and save it with the new separator
     session.query(KarmaChange).update({"reasons_new": KarmaChange.reasons})
@@ -127,16 +127,15 @@ def downgrade():
         "karma_changes", sa.Column("reasons", sau.EncryptedType, nullable=True)
     )
 
-    # This is the wrong default value but is preserved for backward compatibility
-    op.add_column(
-        "karma",
-        sa.Column(
-            "added",
-            sau.EncryptedType,
-            nullable=True,
-            default=sa.func.current_timestamp(),
-        ),
-    )
+    with op.batch_alter_table("karma") as bop:
+        bop.add_column(
+            sa.Column(
+                "added",
+                sau.EncryptedType,
+                nullable=True,
+                default=sa.func.current_timestamp(),
+            ),
+        )
 
     # Re-encrypt the reasons
     session.query(KarmaChange).update({"reasons": KarmaChange.reasons_new})
