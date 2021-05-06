@@ -21,7 +21,6 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     karma_items = parse_message_content(message.content)
     transactions = make_transactions(karma_items, message)
     transactions = apply_blacklist(transactions, db_session)
-    logging.critical(transactions)
 
     # If no karma'd items, just return
     if not transactions:
