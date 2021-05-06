@@ -57,6 +57,9 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
   
 * For testing CI locally, use [act-cli](https://github.com/nektos/act).
 
+* Although the default database engine in config files is SQLite3, the current production database engine is PostgreSQL.
+  In order to test code against a PostgreSQL database, you will need to install `psycopg2` and set up a PostgreSQL instance.
+
 ### License
 
 This project is distributed under the MIT license.

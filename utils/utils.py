@@ -1,4 +1,5 @@
 from decimal import Decimal, InvalidOperation
+from typing import Iterable
 
 from config import CONFIG
 
@@ -19,7 +20,7 @@ def is_decimal(num):
     try:
         Decimal(num)
         return True
-    except TypeError:
+    except (InvalidOperation, TypeError):
         return False
 
 
@@ -28,3 +29,7 @@ def pluralise(l, word, single="", plural="s"):
         return word + plural
     else:
         return word + single
+
+
+def filter_out_none(iterable: Iterable):
+    return [i for i in iterable if i is not None]

@@ -22,7 +22,7 @@ def upgrade():
         sa.Column("started_at", sa.DateTime, nullable=False),
         sa.Column("ended_at", sa.DateTime, nullable=False),
         sa.Column("length", sa.Integer, nullable=False),
-        sa.Column("step", sa.Float, nullable=False),
+        sa.Column("step", sa.Numeric, nullable=False),
     )
     op.create_table(
         "counting_users",

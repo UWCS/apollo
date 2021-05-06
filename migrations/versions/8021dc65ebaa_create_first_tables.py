@@ -89,8 +89,8 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table("users")
-    op.drop_table("karma")
     op.drop_table("karma_changes")
-    op.drop_table("messages")
+    op.drop_table("karma")
     op.drop_table("message_edits")
+    op.drop_table("messages")
+    op.drop_table("users")
