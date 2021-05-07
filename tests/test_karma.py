@@ -12,7 +12,7 @@ def build_karma_change(created_at):
         karma_id=1,
         user_id=1,
         message_id=1,
-        reasons=None,
+        reason=None,
         change=1,
         score=1,
         created_at=created_at,
