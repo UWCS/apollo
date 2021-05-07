@@ -29,9 +29,9 @@ def upgrade():
 
 def downgrade():
     with op.batch_alter_table("reminders") as bop:
-        bop.alter_column("created_at", default=datetime.utcnow())
+        bop.alter_column("created_at", server_default=None)
     with op.batch_alter_table("users") as bop:
-        bop.alter_column("first_seen", default=datetime.utcnow())
-        bop.alter_column("last_seen", default=datetime.utcnow())
+        bop.alter_column("first_seen", server_default=None)
+        bop.alter_column("last_seen", server_default=None)
     with op.batch_alter_table("karma") as bop:
-        bop.alter_column("added", default=datetime.utcnow())
+        bop.alter_column("added", server_default=None)

@@ -3,6 +3,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 
+import dateparser
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from sqlalchemy.exc import SQLAlchemyError
@@ -20,8 +21,11 @@ SHORT_HELP_TEXT = """Add or remove reminders."""
 
 
 def parse_time(time):
-    parsed_time = None
+    # dateparser.parse returns None if it cannot parse
+    parsed_time = dateparser.parse(time)
+
     now = datetime.now()
+
     try:
         parsed_time = datetime.strptime(time, "%Y-%m-%d %H:%M")
     except ValueError:
@@ -138,7 +142,7 @@ class Reminders(commands.Cog):
                 else:
                     author_id = (
                         db_session.query(User)
-                        .filter(User.user_uid == ctx.message.author.id)
+                        .filter(User.user_uid == ctx.author.id)
                         .first()
                         .id
                     )
