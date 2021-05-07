@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from discord import Message
 from sqlalchemy import desc, func
@@ -12,6 +12,11 @@ from karma.parser import parse_message_content
 from karma.transaction import KarmaTransaction, apply_blacklist, make_transactions
 from models import Karma, KarmaChange, MiniKarmaChannel, User
 from utils import get_name_string
+
+
+def is_in_cooldown(last_change, timeout):
+    timeout_time = datetime.utcnow() - timedelta(seconds=timeout)
+    return last_change.created_at > timeout_time
 
 
 def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):
@@ -177,19 +182,37 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 errors.append(internal_error(truncated_name))
                 continue
         else:
-            time_delta = datetime.utcnow() - last_change.created_at
+            time_delta = datetime.utcnow() - last_change
+            if is_in_cooldown(last_change, timeout):
+                errors.append(cooldown_error(truncated_name, time_delta))
+                continue
 
-            if time_delta.seconds >= timeout:
-                # If the bot is being downvoted then the karma can only go up
-                if transaction.karma_item.topic.casefold() == "apollo":
-                    new_score = last_change.score + abs(
-                        transaction.karma_item.operation.value
-                    )
-                else:
-                    new_score = (
+            # If the bot is being downvoted then the karma can only go up
+            if transaction.karma_item.topic.casefold() == "apollo":
+                new_score = last_change.score + abs(
+                    transaction.karma_item.operation.value
+                )
+            else:
+                new_score = (
                         last_change.score + transaction.karma_item.operation.value
-                    )
+                )
 
+            karma_change = KarmaChange(
+                karma_id=karma_item.id,
+                user_id=user.id,
+                message_id=message_id,
+                reasons=transaction.karma_item.reason,
+                score=new_score,
+                change=(new_score - last_change.score),
+                created_at=datetime.utcnow(),
+            )
+            db_session.add(karma_change)
+            try:
+                db_session.commit()
+            except (ScalarListException, SQLAlchemyError) as e:
+                db_session.rollback()
+                logging.error(e)
+                errors.append(internal_error(truncated_name))
                 karma_change = KarmaChange(
                     karma_id=karma_item.id,
                     user_id=user.id,
