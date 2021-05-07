@@ -1,6 +1,6 @@
 [tool.black]
 line-length = 88
-target_version = ['py36']
+target_version = ['py38']
 include = '\.pyi?$'
 exclude = '''
 
@@ -20,3 +20,11 @@ exclude = '''
   )/
 )
 '''
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra"
+testpaths = [
+    "tests",
+]
+python_files = "test_*.py"

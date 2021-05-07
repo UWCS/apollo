@@ -68,7 +68,7 @@ class Tex(commands.Cog):
             + ".png"
         ).replace(" ", "")
         path_png = CONFIG.FIG_SAVE_PATH / filename
-        path_jpg = path_png.replace(".png", ".jpg")
+        path_jpg = path_png.with_suffix(".jpg")
         try:
             # Plot the latex and save it.
             plt.text(0, 1, tex_code, color="white")

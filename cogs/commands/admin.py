@@ -4,7 +4,6 @@ from enum import Enum, unique
 
 import discord
 from discord import Color, Embed, TextChannel
-from discord.abc import PrivateChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, check
 from pytz import timezone, utc
@@ -13,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cogs.commands.karma import current_milli_time
 from config import CONFIG
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
-from utils import get_name_string, pluralise
+from utils import pluralise
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
@@ -59,32 +58,20 @@ class MiniKarmaMode(EnumGet, Enum):
 
 
 async def is_compsoc_exec_in_guild(ctx: Context):
-    """Get the roles of the user in the UWCS discord"""
-    # TODO: move the errors to call site? - checks should return false
-    compsoc_guild = [
-        guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID
-    ][0]
+    """Check whether a member is an exec in the UWCS Discord"""
+    compsoc_guild = next(
+        (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
+    )
+    if not compsoc_guild:
+        return False
     compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
     if not compsoc_member:
-        raise AdminError(
-            f"You aren't part of the UWCS discord so I'm afraid I can't let you do that. :octagonal_sign:"
-        )
+        return False
 
-    roles = list(
-        map(
-            lambda x: discord.utils.get(compsoc_member.roles, id=x),
-            CONFIG.UWCS_EXEC_ROLE_IDS,
-        )
-    )
-    if not roles:
-        if not isinstance(ctx.channel, PrivateChannel):
-            await ctx.message.delete()
-        display_name = get_name_string(ctx.message)
-        raise AdminError(
-            f"You don't have permission to run that command, {display_name}."
-        )
-    else:
-        return True
+    roles = [
+        discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
+    ]
+    return any(roles)
 
 
 class Admin(commands.Cog):

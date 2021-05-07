@@ -22,14 +22,14 @@ def upgrade():
         sa.Column("started_at", sa.DateTime, nullable=False),
         sa.Column("ended_at", sa.DateTime, nullable=False),
         sa.Column("length", sa.Integer, nullable=False),
-        sa.Column("step", sa.Float, nullable=False),
+        sa.Column("step", sa.Numeric, nullable=False),
     )
     op.create_table(
         "counting_users",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
         sa.Column("correct_replies", sa.Integer, nullable=False),
-        sa.Column("wrong_Replies", sa.Integer, nullable=False),
+        sa.Column("wrong_replies", sa.Integer, nullable=False),
     )
 
 

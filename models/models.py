@@ -6,9 +6,9 @@ from sqlalchemy import (
     Boolean,
     Column,
     DateTime,
-    Float,
     ForeignKey,
     Integer,
+    Numeric,
     String,
     Text,
     create_engine,
@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, relationship
-from sqlalchemy_utils import EncryptedType, ScalarListType
+from sqlalchemy_utils import EncryptedType
 
 from config import CONFIG
 
@@ -86,8 +86,7 @@ class KarmaChange(Base):
         Integer, ForeignKey("messages.id"), primary_key=True, nullable=False
     )
     created_at = Column(DateTime, nullable=False)
-    # Using a Greek question mark (;) instead of a semicolon here!
-    reasons = Column(ScalarListType(str, separator=";"), nullable=True)
+    reason = Column(String(), nullable=True)
     change = Column(Integer, nullable=False)
     score = Column(Integer, nullable=False)
 
@@ -107,7 +106,7 @@ class Karma(Base):
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(String, nullable=False)
     added = Column(
-        EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY),
+        DateTime,
         nullable=False,
         default=func.current_timestamp(),
     )
@@ -220,7 +219,7 @@ class CountingRun(Base):
     started_at = Column(DateTime, nullable=False)
     ended_at = Column(DateTime, nullable=False)
     length = Column(Integer, nullable=False)
-    step = Column(Float, nullable=False)
+    step = Column(Numeric, nullable=False)
 
 
 @auto_str
