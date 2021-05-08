@@ -3,7 +3,6 @@ config:
   UWCS_member_role_id: 2674
   UWCS_exec_role_ids: [ 9874698723 ]
   UWCS_welcome_channel_id: 420
-  UWCS_intros_channel_id: 69
   database_connection: "postgresql://apollo:apollo@localhost/apollo"
   UWCS_discord_id: 1337
   UWCS_api_token: api_token
