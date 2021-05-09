@@ -21,6 +21,7 @@ EXTENSIONS = [
     "cogs.commands.lcalc",
     "cogs.commands.misc",
     "cogs.commands.reminders",
+    "cogs.commands.roll",
     "cogs.commands.say",
     "cogs.commands.tex",
     "cogs.commands.widen",
