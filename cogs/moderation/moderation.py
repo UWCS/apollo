@@ -14,7 +14,7 @@ from models import ModerationAction, ModerationHistory, db_session
 from utils import AdminError, DateTimeConverter, format_list, is_compsoc_exec_in_guild
 
 
-def add_moderation_history_item(user, action, reason, moderator):
+def add_moderation_history_item(user, action, reason, moderator, until=None):
     user_id = (
         db_session.query(models.User).filter(models.User.user_uid == user.id).first().id
     )
@@ -27,6 +27,7 @@ def add_moderation_history_item(user, action, reason, moderator):
     moderation_history = ModerationHistory(
         user_id=user_id,
         action=action,
+        until=until,
         reason=reason,
         moderator_id=moderator_id,
     )
