@@ -40,6 +40,7 @@ def upgrade():
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
         sa.Column("timestamp", sa.DateTime, nullable=False, default=sa.func.current_timestamp()),
         sa.Column("action", sa.Enum(ModerationAction), nullable=False),
+        sa.Column("until", sa.DateTime, nullable=True),
         sa.Column("reason", sa.String, nullable=True),
         sa.Column("moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
     )
