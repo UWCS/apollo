@@ -5,9 +5,29 @@ from typing import Optional
 from discord import HTTPException, Member, TextChannel, User
 from discord.ext.commands import Bot, Cog, Context, Greedy, check, command
 from discord.utils import get
+from sqlalchemy.exc import SQLAlchemyError
 
+import models
 from config import CONFIG
+from models import ModerationAction, ModerationHistory, db_session
 from utils import AdminError, format_list, is_compsoc_exec_in_guild
+
+
+def add_moderation_history_item(user, action, reason, moderator):
+    try:
+        user_id = db_session.query(models.User).filter(models.User.user_uid == user.id).first().id
+        moderator_id = db_session.query(models.User).filter(models.User.user_uid == moderator.id).first().id
+        moderation_history = ModerationHistory(
+            user_id=user_id,
+            action=action,
+            reason=reason,
+            moderator_id=moderator_id,
+        )
+        db_session.add(moderation_history)
+        db_session.commit()
+    except SQLAlchemyError as e:
+        db_session.rollback()
+        logging.error(e)
 
 
 class Moderation(Cog):
@@ -24,7 +44,6 @@ class Moderation(Cog):
                 "warn": get(self.bot.emojis, id=840911836580544512),
                 "yes": get(self.bot.emojis, id=840911879886209024),
             }
-            logging.critical(self._emoji["warn"])
         return self._emoji
 
     def only_mentions_users(self, react=False):
@@ -67,6 +86,7 @@ class Moderation(Cog):
         for member in members:
             try:
                 await member.ban(reason=reason, delete_message_days=delete_days)
+                add_moderation_history_item(member, ModerationAction.BAN, reason, ctx.author)
                 logging.info(f"Banned {member}")
                 banned.append(member)
             except HTTPException:
@@ -121,6 +141,8 @@ class Moderation(Cog):
         for user in users:
             try:
                 await guild.unban(user, reason=reason)
+                add_moderation_history_item(user, ModerationAction.UNBAN, reason, ctx.author)
+
                 logging.info(f"Unbanned {user}")
                 unbanned.append(user)
             except HTTPException:
@@ -169,6 +191,7 @@ class Moderation(Cog):
         for member in members:
             try:
                 await member.kick(reason=reason)
+                add_moderation_history_item(member, ModerationAction.KICK, reason, ctx.author)
                 logging.info(f"Kicked {member}")
                 kicked.append(member)
             except HTTPException:
