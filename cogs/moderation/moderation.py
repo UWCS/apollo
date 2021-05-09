@@ -14,16 +14,17 @@ from utils import AdminError, format_list, is_compsoc_exec_in_guild
 
 
 def add_moderation_history_item(user, action, reason, moderator):
+
+    user_id = db_session.query(models.User).filter(models.User.user_uid == user.id).first().id
+    moderator_id = db_session.query(models.User).filter(models.User.user_uid == moderator.id).first().id
+    moderation_history = ModerationHistory(
+        user_id=user_id,
+        action=action,
+        reason=reason,
+        moderator_id=moderator_id,
+    )
+    db_session.add(moderation_history)
     try:
-        user_id = db_session.query(models.User).filter(models.User.user_uid == user.id).first().id
-        moderator_id = db_session.query(models.User).filter(models.User.user_uid == moderator.id).first().id
-        moderation_history = ModerationHistory(
-            user_id=user_id,
-            action=action,
-            reason=reason,
-            moderator_id=moderator_id,
-        )
-        db_session.add(moderation_history)
         db_session.commit()
     except SQLAlchemyError as e:
         db_session.rollback()
