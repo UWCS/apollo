@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text
 
-from models import Base, auto_str
+from models.models import Base, auto_str
 
 
 @auto_str

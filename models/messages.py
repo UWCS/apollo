@@ -3,7 +3,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy_utils import EncryptedType
 
 from config import CONFIG
-from models import Base, auto_str
+from models.models import Base, auto_str
 
 
 @auto_str

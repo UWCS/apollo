@@ -1,6 +1,6 @@
 from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, func
 
-from models import Base, auto_str
+from models.models import Base, auto_str
 
 
 @auto_str
