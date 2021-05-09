@@ -3,7 +3,7 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import relationship
 
-from models import Base, auto_str
+from models.models import Base, auto_str
 
 
 @auto_str
