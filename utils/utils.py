@@ -1,5 +1,5 @@
 from decimal import Decimal, InvalidOperation
-from typing import Iterable
+from typing import Iterable, Sized
 
 from config import CONFIG
 
@@ -33,3 +33,13 @@ def pluralise(l, word, single="", plural="s"):
 
 def filter_out_none(iterable: Iterable):
     return [i for i in iterable if i is not None]
+
+
+def format_list(el: list):
+    if len(el) == 1:
+        return el[0]
+    elif len(el) == 2:
+        return f"{el[0]} and {el[1]}"
+    else:
+        return f'{", ".join(el[:-1])}, and {el[-1]}'
+
