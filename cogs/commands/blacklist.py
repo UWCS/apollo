@@ -5,8 +5,8 @@ from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from cogs.commands.admin import is_compsoc_exec_in_guild
 from models import BlockedKarma, User, db_session
+from utils import is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Query, display, and modify the blacklisted karma topics.

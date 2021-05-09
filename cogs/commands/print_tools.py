@@ -12,10 +12,9 @@ from discord.ext.commands import Bot, Context, check, clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from models import FilamentType, db_session
-from utils import get_name_string
+from utils import get_name_string, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Commands to help cost and request something is 3D printed on the UWCS 3D printer.

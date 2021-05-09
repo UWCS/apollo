@@ -2,17 +2,15 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import yaml
-from discord import Guild, Member, User, Message, Embed, AuditLogAction
+from discord import AuditLogAction, Embed, Guild, Member, Message, User
 from discord.ext.commands import Bot, Cog
+from humanize import precisedelta
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
-
-from humanize import precisedelta
 
 from config import CONFIG
 from models import User, db_session
 from utils import pluralise
-
 
 FOOTER = "ID: {id}"
 
@@ -21,26 +19,26 @@ JOIN_DESC = """
 {ping}
 Created {age} ago. {warning}
 """
-JOIN_COLOUR = 0x62ffae
+JOIN_COLOUR = 0x62FFAE
 
 LEAVE_HEAD = "**Member left**"
 LEAVE_DESC = """
 {ping} joined {age} ago.
 """
-LEAVE_COLOUR = 0xff62a1
+LEAVE_COLOUR = 0xFF62A1
 
 BAN_HEAD = "**User was banned**"
 BAN_DESC = """
 {user} was banned by {source}.
 **Reason:** {reason}
 """
-BAN_COLOUR = 0xff0000
+BAN_COLOUR = 0xFF0000
 
 UNBAN_HEAD = "**User was unbanned**"
 UNBAN_DESC = """
 {user} was unbanned by {source}.
 """
-UNBAN_COLOUR = 0x00ff00
+UNBAN_COLOUR = 0x00FF00
 
 EDIT_HEAD = "**Message edited in {channel}**"
 EDIT_DESC = """
@@ -55,81 +53,87 @@ _This message was not cached; the original content is unknown._
 
 :arrow_right: {link}
 """
-EDIT_COLOUR = 0xf1ff62
+EDIT_COLOUR = 0xF1FF62
 
 DELETE_HEAD = "**Message deleted in {channel}**"
 DELETE_DESC = """
 {message}
 """
-DELETE_COLOUR = 0xffb562
+DELETE_COLOUR = 0xFFB562
 
 NAME_HEAD = "**Name changed**"
 NAME_DESC = """
 **Before:** {before}
 **+After:** {after}
 """
-NAME_COLOUR = 0xff62c8
+NAME_COLOUR = 0xFF62C8
 
 NICKNAME_HEAD = "**Nickname changed**"
 NICKNAME_DESC = """
 **Before:** {before}
 **+After:** {after}
 """
-NICKNAME_COLOUR = 0x6278ff
+NICKNAME_COLOUR = 0x6278FF
 
 AVATAR_HEAD = "**Avatar changed**"
 AVATAR_DESC = """
 {ping}
 """
-AVATAR_COLOUR = 0x94ff62
+AVATAR_COLOUR = 0x94FF62
 
 ROLE_HEAD = "**Role{plural} added**"
 ROLE_DESC = """
 {roles}
 """
-ROLE_COLOUR = 0x62fff8
+ROLE_COLOUR = 0x62FFF8
 
 DEROLE_HEAD = "**Role{plural} removed**"
 DEROLE_DESC = """
 {roles}
 """
-DEROLE_COLOUR = 0xffab62
+DEROLE_COLOUR = 0xFFAB62
 
 DISCRIMINATOR_HEAD = "**Discriminator changed**"
 DISCRIMINATOR_DESC = """
 **Before:** {before}
 **+After:** {after}
 """
-DISCRIMINATOR_COLOUR = 0xfbff62
+DISCRIMINATOR_COLOUR = 0xFBFF62
 
 VOICE_JOIN_HEAD = "**Joined voice channel**"
 VOICE_JOIN_DESC = """
 {ping} joined {channel}.
 """
-VOICE_JOIN_COLOUR = 0x62ff91
+VOICE_JOIN_COLOUR = 0x62FF91
 
 VOICE_LEAVE_HEAD = "**Left voice channel**"
 VOICE_LEAVE_DESC = """
 {ping} left {channel}.
 """
-VOICE_LEAVE_COLOUR = 0xff62ab
+VOICE_LEAVE_COLOUR = 0xFF62AB
 
 VOICE_MOVE_HEAD = "**Changed voice channel**"
 VOICE_MOVE_DESC = """
 **Before:** {before}
 **+After:** {after}
 """
-VOICE_MOVE_COLOUR = 0xffe662
+VOICE_MOVE_COLOUR = 0xFFE662
 
 
 class Logging(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    async def log_event (self, channel, user: User, title, description, colour, thumbnail_url=None):
+    async def log_event(
+        self, channel, user: User, title, description, colour, thumbnail_url=None
+    ):
         embed = Embed(title=title, description=description, colour=colour)
         if user:
-            embed.set_author(name=user.display_name+"#"+user.discriminator, url=Embed.Empty, icon_url=user.avatar_url)
+            embed.set_author(
+                name=user.display_name + "#" + user.discriminator,
+                url=Embed.Empty,
+                icon_url=user.avatar_url,
+            )
             embed.set_footer(text=FOOTER.format(id=user.id))
         embed.timestamp = datetime.utcnow()
         if thumbnail_url:
@@ -141,9 +145,15 @@ class Logging(Cog):
         channel = self.bot.get_channel(CONFIG.UWCS_JOIN_LEAVE_LOG_CHANNEL_ID)
         user = self.bot.get_user(member.id)
         age = datetime.now() - user.created_at
-        warning = "**:warning: NEW ACCOUNT! :warning:**" if age < timedelta(days=7) else ""
+        warning = (
+            "**:warning: NEW ACCOUNT! :warning:**" if age < timedelta(days=7) else ""
+        )
         title = JOIN_HEAD
-        description = JOIN_DESC.format(ping=user.mention, age=precisedelta(age, minimum_unit="hours"), warning=warning)
+        description = JOIN_DESC.format(
+            ping=user.mention,
+            age=precisedelta(age, minimum_unit="hours"),
+            warning=warning,
+        )
         colour = JOIN_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -153,7 +163,9 @@ class Logging(Cog):
         user = self.bot.get_user(member.id)
         age = datetime.now() - member.joined_at
         title = LEAVE_HEAD
-        description = LEAVE_DESC.format(ping=user.mention, age=precisedelta(age, minimum_unit="hours"))
+        description = LEAVE_DESC.format(
+            ping=user.mention, age=precisedelta(age, minimum_unit="hours")
+        )
         colour = LEAVE_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -165,7 +177,9 @@ class Logging(Cog):
         source = logs.user.mention if logs.target == user else None
         reason = logs.reason if logs.target == user else None
         title = BAN_HEAD
-        description = BAN_DESC.format(user=user.name+"#"+user.discriminator, source=source, reason=reason)
+        description = BAN_DESC.format(
+            user=user.name + "#" + user.discriminator, source=source, reason=reason
+        )
         colour = BAN_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -176,7 +190,9 @@ class Logging(Cog):
         logs = logs[0]
         source = logs.user.mention if logs.target == user else None
         title = UNBAN_HEAD
-        description = UNBAN_DESC.format(user=user.name+"#"+user.discriminator, source=source)
+        description = UNBAN_DESC.format(
+            user=user.name + "#" + user.discriminator, source=source
+        )
         colour = UNBAN_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -188,7 +204,9 @@ class Logging(Cog):
         source = logs.user.mention if logs.target == user else None
         reason = logs.reason if logs.target == user else None
         title = UNBAN_HEAD
-        description = UNBAN_DESC.format(user=user.name+"#"+user.discriminator, source=source, reason=reason)
+        description = UNBAN_DESC.format(
+            user=user.name + "#" + user.discriminator, source=source, reason=reason
+        )
         colour = UNBAN_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -198,8 +216,10 @@ class Logging(Cog):
             return
         channel = self.bot.get_channel(CONFIG.UWCS_MESSAGE_LOG_CHANNEL_ID)
         user = self.bot.get_user(before.author.id)
-        title = EDIT_HEAD.format(channel="#"+before.channel.name)
-        description = EDIT_DESC.format(before=before.content, after=after.content, link=after.jump_url)
+        title = EDIT_HEAD.format(channel="#" + before.channel.name)
+        description = EDIT_DESC.format(
+            before=before.content, after=after.content, link=after.jump_url
+        )
         colour = EDIT_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -208,10 +228,16 @@ class Logging(Cog):
         if payload.cached_message is not None:
             return
         channel = self.bot.get_channel(CONFIG.UWCS_MESSAGE_LOG_CHANNEL_ID)
-        message = await self.bot.get_channel(payload.channel_id).fetch_message(payload.message_id)
+        message = await self.bot.get_channel(payload.channel_id).fetch_message(
+            payload.message_id
+        )
         user = self.bot.get_user(message.author.id)
-        title = EDIT_HEAD.format(channel="#"+self.bot.get_channel(payload.channel_id).name)
-        description = EDIT_UNCACHED_DESC.format(after=message.content, link=message.jump_url)
+        title = EDIT_HEAD.format(
+            channel="#" + self.bot.get_channel(payload.channel_id).name
+        )
+        description = EDIT_UNCACHED_DESC.format(
+            after=message.content, link=message.jump_url
+        )
         colour = EDIT_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -219,7 +245,7 @@ class Logging(Cog):
     async def on_message_delete(self, message: Message):
         channel = self.bot.get_channel(CONFIG.UWCS_MESSAGE_LOG_CHANNEL_ID)
         user = self.bot.get_user(message.author.id)
-        title = DELETE_HEAD.format(channel="#"+message.channel.name)
+        title = DELETE_HEAD.format(channel="#" + message.channel.name)
         description = DELETE_DESC.format(ping=user.mention, message=message.content)
         colour = DELETE_COLOUR
         await self.log_event(channel, user, title, description, colour)
@@ -228,9 +254,9 @@ class Logging(Cog):
     async def on_member_update(self, before: Member, after: Member):
         if before.nick != after.nick:
             await self.on_member_nick(before, after)
-        if any (map (lambda role : role not in before.roles, after.roles)):
+        if any(map(lambda role: role not in before.roles, after.roles)):
             await self.on_member_role(before, after)
-        if any (map (lambda role : role not in after.roles, before.roles)):
+        if any(map(lambda role: role not in after.roles, before.roles)):
             await self.on_member_derole(before, after)
 
     async def on_member_nick(self, before: Member, after: Member):
@@ -246,7 +272,7 @@ class Logging(Cog):
         user = self.bot.get_user(before.id)
         roles = [role.mention for role in after.roles if role not in before.roles]
         title = ROLE_HEAD.format(plural="" if len(roles) == 1 else "s")
-        description = ROLE_DESC.format(roles=", ".join (roles))
+        description = ROLE_DESC.format(roles=", ".join(roles))
         colour = ROLE_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -255,7 +281,7 @@ class Logging(Cog):
         user = self.bot.get_user(before.id)
         roles = [role.mention for role in before.roles if role not in after.roles]
         title = DEROLE_HEAD.format(plural="" if len(roles) == 1 else "s")
-        description = DEROLE_DESC.format(roles=", ".join (roles))
+        description = DEROLE_DESC.format(roles=", ".join(roles))
         colour = DEROLE_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -280,7 +306,9 @@ class Logging(Cog):
         channel = self.bot.get_channel(CONFIG.UWCS_MEMBER_LOG_CHANNEL_ID)
         user = after
         title = DISCRIMINATOR_HEAD
-        description = DISCRIMINATOR_DESC.format(before=before.discriminator, after=after.discriminator)
+        description = DISCRIMINATOR_DESC.format(
+            before=before.discriminator, after=after.discriminator
+        )
         colour = DISCRIMINATOR_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -290,7 +318,9 @@ class Logging(Cog):
         title = AVATAR_HEAD
         description = AVATAR_DESC.format(ping=user.mention)
         colour = AVATAR_COLOUR
-        await self.log_event(channel, user, title, description, colour, thumbnail_url=after.avatar_url)
+        await self.log_event(
+            channel, user, title, description, colour, thumbnail_url=after.avatar_url
+        )
 
     @Cog.listener()
     async def on_voice_state_update(self, member: Member, before, after):
@@ -305,7 +335,9 @@ class Logging(Cog):
         channel = self.bot.get_channel(CONFIG.UWCS_VOICE_LOG_CHANNEL_ID)
         user = self.bot.get_user(member.id)
         title = VOICE_JOIN_HEAD
-        description = VOICE_JOIN_DESC.format(ping=user.mention, channel=after.channel.mention)
+        description = VOICE_JOIN_DESC.format(
+            ping=user.mention, channel=after.channel.mention
+        )
         colour = VOICE_JOIN_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -313,7 +345,9 @@ class Logging(Cog):
         channel = self.bot.get_channel(CONFIG.UWCS_VOICE_LOG_CHANNEL_ID)
         user = self.bot.get_user(member.id)
         title = VOICE_LEAVE_HEAD
-        description = VOICE_LEAVE_DESC.format(ping=user.mention, channel=before.channel.mention)
+        description = VOICE_LEAVE_DESC.format(
+            ping=user.mention, channel=before.channel.mention
+        )
         colour = VOICE_LEAVE_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
@@ -321,7 +355,9 @@ class Logging(Cog):
         channel = self.bot.get_channel(CONFIG.UWCS_VOICE_LOG_CHANNEL_ID)
         user = self.bot.get_user(member.id)
         title = VOICE_MOVE_HEAD
-        description = VOICE_MOVE_DESC.format(before=before.channel.mention, after=after.channel.mention)
+        description = VOICE_MOVE_DESC.format(
+            before=before.channel.mention, after=after.channel.mention
+        )
         colour = VOICE_MOVE_COLOUR
         await self.log_event(channel, user, title, description, colour)
 
