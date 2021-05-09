@@ -102,7 +102,7 @@ class Moderation(Cog):
 
         if len(failed) > 0:
             mentions = format_list([member.mention for member in failed])
-            message_parts.append(f"I failed to kick {mentions}")
+            message_parts.append(f"I failed to ban {mentions}")
 
         await ctx.send("\n".join(message_parts))
 
