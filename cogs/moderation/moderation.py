@@ -2,7 +2,7 @@ import logging
 from textwrap import dedent
 from typing import Optional
 
-from discord import HTTPException, Member, User
+from discord import TextChannel, HTTPException, Member, User
 from discord.ext.commands import Bot, Cog, Context, Greedy, check, command
 from discord.utils import get
 
@@ -21,7 +21,10 @@ class Moderation(Cog):
             self._emoji = {
                 "no": get(self.bot.emojis, id=840911865830703124),
                 "what": get(self.bot.emojis, id=840917271111008266),
+                "warn": get(self.bot.emojis, id=840911836580544512),
+                "yes": get(self.bot.emojis, id=840911879886209024)
             }
+            logging.critical(self._emoji["warn"])
         return self._emoji
 
     def only_mentions_users(self, react=False):
@@ -197,6 +200,23 @@ class Moderation(Cog):
             message_parts.append(f"I failed to kick {mentions}")
 
         await ctx.send("\n".join(message_parts))
+
+    @command()
+    async def purge(self, ctx: Context, number_messages: int, channel: Optional[TextChannel]):
+        if channel is None:
+            channel = ctx.channel
+
+        # Add 1 to account for the message that was sent to trigger the purge, if the channel is this channel
+        this_channel = channel == ctx.channel
+        offset = 1 if this_channel else 0
+        try:
+            await channel.purge(check=lambda _: True, limit=number_messages + offset, bulk=True)
+            if not this_channel:
+                await ctx.message.add_reaction(self.emoji["yes"])
+            logging.info(f"{ctx.author} purged the most recent {number_messages} messages from {channel}")
+        except HTTPException:
+            await ctx.message.add_reaction(self.emoji["warn"])
+            logging.info(f"{ctx.author} failed to purge the most recent {number_messages} messages from {channel}")
 
 
 def setup(bot: Bot):
