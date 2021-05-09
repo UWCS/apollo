@@ -1,6 +1,9 @@
+import re
+from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Iterable, Sized
 
+import dateparser
 import discord
 from discord.ext.commands import CommandError, Context
 
@@ -46,6 +49,7 @@ def format_list(el: list):
     else:
         return f'{", ".join(el[:-1])}, and {el[-1]}'
 
+
 class AdminError(CommandError):
     message = None
 
@@ -82,6 +86,66 @@ async def is_compsoc_exec_in_guild(ctx: Context):
         discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
     ]
     return any(roles)
+
+
+def parse_time(time):
+    # dateparser.parse returns None if it cannot parse
+    parsed_time = dateparser.parse(time)
+
+    now = datetime.now()
+
+    try:
+        parsed_time = datetime.strptime(time, "%Y-%m-%d %H:%M")
+    except ValueError:
+        pass
+
+    if not parsed_time:
+        try:
+            parsed_time = datetime.strptime(time, "%m-%d %H:%M")
+            parsed_time = parsed_time.replace(year=now.year)
+            if parsed_time < now:
+                parsed_time = parsed_time.replace(year=now.year + 1)
+        except ValueError:
+            pass
+
+    if not parsed_time:
+        try:
+            parsed_time = datetime.strptime(time, "%H:%M:%S")
+            parsed_time = parsed_time.replace(
+                year=now.year, month=now.month, day=now.day
+            )
+            if parsed_time < now:
+                parsed_time = parsed_time + timedelta(days=1)
+
+        except ValueError:
+            pass
+
+    if not parsed_time:
+        try:
+            parsed_time = datetime.strptime(time, "%H:%M")
+            parsed_time = parsed_time.replace(
+                year=now.year, month=now.month, day=now.day
+            )
+            if parsed_time < now:
+                parsed_time = parsed_time + timedelta(days=1)
+        except ValueError:
+            pass
+
+    if not parsed_time:
+        result = re.match(r"(\d+d)?\s*(\d+h)?\s*(\d+m)?\s*(\d+s)?(?!^)$", time)
+        if result:
+            parsed_time = now
+            if result.group(1):
+                parsed_time = parsed_time + timedelta(days=int(result.group(1)[:-1]))
+            if result.group(2):
+                parsed_time = parsed_time + timedelta(hours=int(result.group(2)[:-1]))
+            if result.group(3):
+                parsed_time = parsed_time + timedelta(minutes=int(result.group(3)[:-1]))
+            if result.group(4):
+                parsed_time = parsed_time + timedelta(seconds=int(result.group(4)[:-1]))
+
+    return parsed_time
+
 
 def clean_brackets(
     str,
