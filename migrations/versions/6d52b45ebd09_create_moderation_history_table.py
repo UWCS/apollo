@@ -11,8 +11,6 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-from sqlalchemy import orm
-
 revision = "6d52b45ebd09"
 down_revision = "f1e50ee892b4"
 branch_labels = None
