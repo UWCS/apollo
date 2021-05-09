@@ -11,6 +11,7 @@ class ModerationAction(enum.Enum):
 
     Values are specified to ensure they always match up with the database.
     """
+
     TEMPMUTE = 0
     MUTE = 1
     UNMUTE = 2
@@ -32,5 +33,6 @@ class ModerationHistory(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     timestamp = Column(DateTime, nullable=False, default=func.current_timestamp())
     action = Column(Enum(ModerationAction), nullable=False)
+    until = Column(DateTime, nullable=True)
     reason = Column(String, nullable=True)
     moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
