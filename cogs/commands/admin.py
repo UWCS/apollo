@@ -2,43 +2,21 @@ import logging
 from datetime import datetime
 from enum import Enum, unique
 
-import discord
 from discord import Color, Embed, TextChannel
 from discord.ext import commands
-from discord.ext.commands import Bot, CommandError, Context, check
+from discord.ext.commands import Bot, Context, check
 from pytz import timezone, utc
 from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
-from config import CONFIG
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
 from utils import pluralise
+from utils.utils import AdminError, EnumGet, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
 """
 SHORT_HELP_TEXT = "Admin-only commands."
-
-
-class AdminError(CommandError):
-    message = None
-
-    def __init__(self, message=None, *args):
-        self.message = message
-        super().__init__(*args)
-
-
-class EnumGet:
-    """Only use this if you're an enum inheriting it!"""
-
-    @classmethod
-    def get(cls, argument: str, default=None):
-        values = {e.name.casefold(): e.name for e in list(cls)}
-        casefolded = argument.casefold()
-        if casefolded not in values:
-            return default
-        else:
-            return cls[values[casefolded]]
 
 
 @unique
@@ -55,23 +33,6 @@ class MiniKarmaMode(EnumGet, Enum):
 
     Mini = 0
     Normal = 1
-
-
-async def is_compsoc_exec_in_guild(ctx: Context):
-    """Check whether a member is an exec in the UWCS Discord"""
-    compsoc_guild = next(
-        (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
-    )
-    if not compsoc_guild:
-        return False
-    compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
-    if not compsoc_member:
-        return False
-
-    roles = [
-        discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
-    ]
-    return any(roles)
 
 
 class Admin(commands.Cog):

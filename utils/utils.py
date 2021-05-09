@@ -1,6 +1,9 @@
 from decimal import Decimal, InvalidOperation
 from typing import Iterable, Sized
 
+import discord
+from discord.ext.commands import CommandError, Context
+
 from config import CONFIG
 
 
@@ -43,3 +46,40 @@ def format_list(el: list):
     else:
         return f'{", ".join(el[:-1])}, and {el[-1]}'
 
+
+class AdminError(CommandError):
+    message = None
+
+    def __init__(self, message=None, *args):
+        self.message = message
+        super().__init__(*args)
+
+
+class EnumGet:
+    """Only use this if you're an enum inheriting it!"""
+
+    @classmethod
+    def get(cls, argument: str, default=None):
+        values = {e.name.casefold(): e.name for e in list(cls)}
+        casefolded = argument.casefold()
+        if casefolded not in values:
+            return default
+        else:
+            return cls[values[casefolded]]
+
+
+async def is_compsoc_exec_in_guild(ctx: Context):
+    """Check whether a member is an exec in the UWCS Discord"""
+    compsoc_guild = next(
+        (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
+    )
+    if not compsoc_guild:
+        return False
+    compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
+    if not compsoc_member:
+        return False
+
+    roles = [
+        discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
+    ]
+    return any(roles)
