@@ -1,3 +1,4 @@
+import logging
 from textwrap import dedent
 from typing import Optional
 
@@ -59,9 +60,11 @@ class Moderation(Cog):
         banned = []
         failed = []
 
+        logging.info(f"{ctx.author} used ban")
         for member in members:
             try:
                 await member.ban(reason=reason, delete_message_days=delete_days)
+                logging.info(f"Banned {member}")
                 banned.append(member)
             except HTTPException:
                 logging.error(f"Failed to ban {member}")
@@ -115,12 +118,15 @@ class Moderation(Cog):
         for user in users:
             try:
                 await guild.unban(user, reason=reason)
+                logging.info(f"Unbanned {user}")
                 unbanned.append(user)
             except HTTPException:
+                logging.info(f"Failed to unban {user}")
                 failed.append(user)
 
         message_parts = []
 
+        logging.info(f"{ctx.author} used unban")
         if len(unbanned) > 0:
             mentions = format_list([str(user) for user in unbanned])
             with_reason = (
@@ -156,11 +162,14 @@ class Moderation(Cog):
         kicked = []
         failed = []
 
+        logging.info(f"{ctx.author} used kick")
         for member in members:
             try:
                 await member.kick(reason=reason)
+                logging.info(f"Kicked {member}")
                 kicked.append(member)
             except HTTPException:
+                logging.warning(f"Failed to kick {member}")
                 failed.append(member)
 
         message_parts = []
