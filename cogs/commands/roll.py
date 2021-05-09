@@ -38,7 +38,7 @@ class Roll(commands.Cog):
         self.bot = bot
         self.pattern = re.compile("^\d+d\d+$")
 
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"])
     async def roll(self, ctx: Context, *message: clean_content):
         display_name = get_name_string(ctx.message)
         if len(message) == 0:
