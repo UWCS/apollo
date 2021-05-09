@@ -3,14 +3,14 @@ from textwrap import dedent
 from typing import Optional
 
 from discord import HTTPException, Member, TextChannel, User
-from discord.ext.commands import Bot, Cog, Context, Greedy, check, command
+from discord.ext.commands import Bot, Cog, Context, Greedy, check, command, group
 from discord.utils import get
 from sqlalchemy.exc import SQLAlchemyError
 
 import models
 from config import CONFIG
 from models import ModerationAction, ModerationHistory, db_session
-from utils import AdminError, format_list, is_compsoc_exec_in_guild
+from utils import AdminError, DateTimeConverter, format_list, is_compsoc_exec_in_guild
 
 
 def add_moderation_history_item(user, action, reason, moderator):
@@ -71,6 +71,109 @@ class Moderation(Cog):
 
     async def cog_command_error(self, ctx, error):
         await ctx.message.add_reaction(self.emoji["no"])
+
+    @command()
+    @only_mentions_users(True)
+    async def tempmute(
+        self,
+        ctx: Context,
+        members: Greedy[Member],
+        until: DateTimeConverter,
+        *,
+        reason: Optional[str],
+    ):
+        pass
+
+    @command()
+    @only_mentions_users(True)
+    async def mute(
+        self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
+    ):
+        pass
+
+    @command()
+    @only_mentions_users(True)
+    async def unmute(
+        self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
+    ):
+        pass
+
+    @group(invoke_without_command=True)
+    @only_mentions_users(True)
+    async def warn(
+        self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
+    ):
+        pass
+
+    @warn.command()
+    async def show(self, ctx: Context, member: Member):
+        pass
+
+    @warn.command()
+    async def remove(self, ctx: Context, member: Member, warn_id: int):
+        pass
+
+    @command()
+    @only_mentions_users(True)
+    async def kick(
+        self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
+    ):
+        if len(members) == 0:
+            await ctx.message.add_reaction(self.emoji["what"])
+
+        kicked = []
+        failed = []
+
+        logging.info(f"{ctx.author} used kick")
+        for member in members:
+            try:
+                await member.kick(reason=reason)
+                add_moderation_history_item(
+                    member, ModerationAction.KICK, reason, ctx.author
+                )
+                logging.info(f"Kicked {member}")
+                kicked.append(member)
+            except HTTPException:
+                logging.warning(f"Failed to kick {member}")
+                failed.append(member)
+
+        message_parts = []
+
+        if len(kicked) > 0:
+            mentions = format_list([member.mention for member in kicked])
+            with_reason = (
+                "with no reason given"
+                if reason is None
+                else f"with the reason \n> {reason}"
+            )
+            were = "were" if len(kicked) > 1 else "was"
+
+            message_parts.append(
+                dedent(
+                    """
+    :door: **KICKED** :door:
+    {mentions} {were} kicked {with_reason}
+    """
+                ).format(mentions=mentions, were=were, with_reason=with_reason)
+            )
+
+        if len(failed) > 0:
+            mentions = format_list([member.mention for member in failed])
+            message_parts.append(f"I failed to kick {mentions}")
+
+        await ctx.send("\n".join(message_parts))
+
+    @command()
+    @only_mentions_users(True)
+    async def tempban(
+        self,
+        ctx: Context,
+        members: Greedy[Member],
+        until: DateTimeConverter,
+        *,
+        reason: Optional[str],
+    ):
+        pass
 
     @command()
     @only_mentions_users(True)
@@ -184,56 +287,6 @@ class Moderation(Cog):
         if len(failed) > 0:
             mentions = format_list([str(user) for user in unbanned])
             message_parts.append(f"I failed to unban {mentions}")
-
-        await ctx.send("\n".join(message_parts))
-
-    @command()
-    @only_mentions_users(True)
-    async def kick(
-        self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
-    ):
-        if len(members) == 0:
-            await ctx.message.add_reaction(self.emoji["what"])
-
-        kicked = []
-        failed = []
-
-        logging.info(f"{ctx.author} used kick")
-        for member in members:
-            try:
-                await member.kick(reason=reason)
-                add_moderation_history_item(
-                    member, ModerationAction.KICK, reason, ctx.author
-                )
-                logging.info(f"Kicked {member}")
-                kicked.append(member)
-            except HTTPException:
-                logging.warning(f"Failed to kick {member}")
-                failed.append(member)
-
-        message_parts = []
-
-        if len(kicked) > 0:
-            mentions = format_list([member.mention for member in kicked])
-            with_reason = (
-                "with no reason given"
-                if reason is None
-                else f"with the reason \n> {reason}"
-            )
-            were = "were" if len(kicked) > 1 else "was"
-
-            message_parts.append(
-                dedent(
-                    """
-    :door: **KICKED** :door:
-    {mentions} {were} kicked {with_reason}
-    """
-                ).format(mentions=mentions, were=were, with_reason=with_reason)
-            )
-
-        if len(failed) > 0:
-            mentions = format_list([member.mention for member in failed])
-            message_parts.append(f"I failed to kick {mentions}")
 
         await ctx.send("\n".join(message_parts))
 
