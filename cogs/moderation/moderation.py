@@ -1,8 +1,10 @@
 import asyncio
 import logging
+from datetime import datetime
 from textwrap import dedent
 from typing import Optional
 
+import humanize
 from discord import HTTPException, Member, TextChannel, User
 from discord.ext.commands import Bot, Cog, Context, Greedy, check, command, group
 from discord.utils import get
@@ -94,7 +96,53 @@ class Moderation(Cog):
         *,
         reason: Optional[str],
     ):
-        pass
+        if len(members) == 0:
+            await ctx.message.add_reaction(self.emoji["what"])
+
+        muted = []
+        failed = []
+
+        logging.info(f"{ctx.author} used tempmute until {until} with reason {reason}")
+        for member in members:
+            try:
+                logging.critical("hi")
+                mute_role = get(ctx.guild.roles, id=840929051053129738)
+                logging.critical(mute_role)
+                await member.add_roles(mute_role, reason=reason)
+                add_moderation_history_item(member, ModerationAction.TEMPMUTE, reason, ctx.author, until)
+                logging.info(f"Tempmuted {member}")
+                muted.append(member)
+            except HTTPException:
+                logging.info(f"Failed to tempmute {member}")
+                failed.append(member)
+
+        message_parts = []
+
+        if len(muted) > 0:
+            mentions = format_list([member.mention for member in muted])
+            were = "were" if len(muted) > 1 else "was"
+            until_datetime = f"until {humanize.naturaltime(until)} (a duration of {humanize.precisedelta(until - datetime.now())})"
+            with_reason = (
+                "with no reason given"
+                if reason is None
+                else f"with the reason \n> {reason}"
+            )
+            message_parts.append(
+                dedent(
+                    f"""
+                    :speaker: **TEMPMUTED** :speaker:
+                    {mentions} {were} tempmuted {until_datetime} {with_reason}
+                    """
+                )
+            )
+
+        if len(failed) > 0:
+            mentions = format_list([member.mention for member in failed])
+            message_parts.append(f"I failed to tempmute {mentions}")
+
+        await ctx.send("\n".join(message_parts))
+
+
 
     @command()
     @only_mentions_users(True)
@@ -163,9 +211,9 @@ class Moderation(Cog):
             message_parts.append(
                 dedent(
                     """
-    :door: **KICKED** :door:
-    {mentions} {were} kicked {with_reason}
-    """
+                    :door: **KICKED** :door:
+                    {mentions} {were} kicked {with_reason}
+                    """
                 ).format(mentions=mentions, were=were, with_reason=with_reason)
             )
 
