@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from textwrap import dedent
 from typing import Optional
@@ -37,10 +38,20 @@ def add_moderation_history_item(user, action, reason, moderator):
         logging.error(e)
 
 
+async def temp_action_loop(bot):
+    await bot.wait_until_ready()
+    while not bot.is_closed():
+        await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
+
+
 class Moderation(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self._emoji = None
+        self.loop = bot.loop.create_task(temp_action_loop(bot))
+
+    async def cog_unload(self):
+        self.loop.cancel()
 
     @property
     def emoji(self):
