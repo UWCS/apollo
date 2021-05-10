@@ -195,7 +195,48 @@ class Moderation(Cog):
     async def unmute(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
     ):
-        pass
+        muted = []
+        failed = []
+
+        logging.info(f"{ctx.author} used unmute with reason {reason}")
+        for member in members:
+            try:
+                mute_role = get(ctx.guild.roles, id=840929051053129738)
+                logging.critical(mute_role)
+                await member.remove_roles(mute_role, reason=reason)
+                add_moderation_history_item(
+                    member, ModerationAction.MUTE, reason, ctx.author
+                )
+                logging.info(f"Unmuted {member}")
+                muted.append(member)
+            except HTTPException:
+                logging.info(f"Failed to unmute {member}")
+                failed.append(member)
+
+        message_parts = []
+
+        if len(muted) > 0:
+            mentions = format_list([member.mention for member in muted])
+            were = "were" if len(muted) > 1 else "was"
+            with_reason = (
+                "with no reason given"
+                if reason is None
+                else f"with the reason \n> {reason}"
+            )
+            message_parts.append(
+                dedent(
+                    f"""
+                            :speaker: **UNMUTED** :speaker:
+                            {mentions} {were} unmuted {with_reason}
+                            """
+                )
+            )
+
+        if len(failed) > 0:
+            mentions = format_list([member.mention for member in failed])
+            message_parts.append(f"I failed to unmute {mentions}")
+
+        await ctx.send("\n".join(message_parts))
 
     @group(cls=Greedy1Group, invoke_without_command=True)
     @only_mentions_users(True)
