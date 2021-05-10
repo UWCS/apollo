@@ -14,6 +14,7 @@ import models
 from config import CONFIG
 from models import ModerationAction, ModerationHistory, db_session
 from utils import AdminError, DateTimeConverter, format_list, is_compsoc_exec_in_guild
+from utils.Greedy1 import Greedy1Command, Greedy1Group
 
 
 def add_moderation_history_item(user, action, reason, moderator, until=None):
@@ -86,7 +87,7 @@ class Moderation(Cog):
     async def cog_command_error(self, ctx, error):
         await ctx.message.add_reaction(self.emoji["no"])
 
-    @command()
+    @command(cls=Greedy1Command)
     @only_mentions_users(True)
     async def tempmute(
         self,
@@ -105,7 +106,6 @@ class Moderation(Cog):
         logging.info(f"{ctx.author} used tempmute until {until} with reason {reason}")
         for member in members:
             try:
-                logging.critical("hi")
                 mute_role = get(ctx.guild.roles, id=840929051053129738)
                 logging.critical(mute_role)
                 await member.add_roles(mute_role, reason=reason)
@@ -142,23 +142,21 @@ class Moderation(Cog):
 
         await ctx.send("\n".join(message_parts))
 
-
-
-    @command()
+    @command(cls=Greedy1Command)
     @only_mentions_users(True)
     async def mute(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
     ):
         pass
 
-    @command()
+    @command(cls=Greedy1Command)
     @only_mentions_users(True)
     async def unmute(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
     ):
         pass
 
-    @group(invoke_without_command=True)
+    @group(cls=Greedy1Group, invoke_without_command=True)
     @only_mentions_users(True)
     async def warn(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
@@ -173,7 +171,7 @@ class Moderation(Cog):
     async def remove(self, ctx: Context, member: Member, warn_id: int):
         pass
 
-    @command()
+    @command(cls=Greedy1Command)
     @only_mentions_users(True)
     async def kick(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
@@ -223,7 +221,7 @@ class Moderation(Cog):
 
         await ctx.send("\n".join(message_parts))
 
-    @command()
+    @command(cls=Greedy1Command)
     @only_mentions_users(True)
     async def tempban(
         self,
@@ -235,7 +233,7 @@ class Moderation(Cog):
     ):
         pass
 
-    @command()
+    @command(cls=Greedy1Command)
     @only_mentions_users(True)
     async def ban(
         self,
@@ -301,7 +299,7 @@ class Moderation(Cog):
 
         await ctx.send("\n".join(message_parts))
 
-    @command()
+    @command(cls=Greedy1Command)
     async def unban(self, ctx: Context, users: Greedy[User], *, reason: Optional[str]):
         if len(users) == 0:
             await ctx.message.add_reaction(self.emoji["what"])
