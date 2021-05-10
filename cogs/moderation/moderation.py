@@ -37,7 +37,11 @@ def add_moderation_history_item(
         .first()
         .id
     )
-    complete = False if action in (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN) else None
+    complete = (
+        False
+        if action in (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)
+        else None
+    )
     moderation_history = ModerationHistory(
         user_id=user_id,
         action=action,
@@ -87,7 +91,9 @@ class Moderation(Cog):
             to_repeal = (
                 db_session.query(ModerationHistory)
                 .filter(
-                    ModerationHistory.action.in_((ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)),
+                    ModerationHistory.action.in_(
+                        (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)
+                    ),
                     ModerationHistory.complete == False,
                     ModerationHistory.until <= now,
                 )
@@ -97,8 +103,16 @@ class Moderation(Cog):
             bans = None
 
             for item in to_repeal:
-                db_user = db_session.query(models.User).filter(models.User.id == item.user_id).one_or_none()
-                moderator = db_session.query(models.User.username).filter(models.User.id == item.moderator_id).one_or_none()
+                db_user = (
+                    db_session.query(models.User)
+                    .filter(models.User.id == item.user_id)
+                    .one_or_none()
+                )
+                moderator = (
+                    db_session.query(models.User.username)
+                    .filter(models.User.id == item.moderator_id)
+                    .one_or_none()
+                )
                 date = humanize.naturaldate(item.timestamp)
                 if item.action == ModerationAction.TEMPMUTE:
                     user = get(self.uwcs_guild.members, id=db_user.user_uid)
@@ -356,12 +370,9 @@ class Moderation(Cog):
         db_user_id = get_database_user(member).id
 
         # Don't show any warnings that have been removed
-        removed_warnings = (
-            db_session.query(ModerationHistory.linked_item)
-            .filter(
-                ModerationHistory.action == ModerationAction.REMOVE_WARN,
-                ModerationHistory.user_id == db_user_id,
-            )
+        removed_warnings = db_session.query(ModerationHistory.linked_item).filter(
+            ModerationHistory.action == ModerationAction.REMOVE_WARN,
+            ModerationHistory.user_id == db_user_id,
         )
 
         # Get the rest of the warnings

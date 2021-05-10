@@ -1,8 +1,15 @@
-from discord.ext.commands import ArgumentParsingError, BadArgument, Command, CommandError, Group, GroupMixin
+from discord.ext.commands import (
+    ArgumentParsingError,
+    BadArgument,
+    Command,
+    CommandError,
+    Group,
+)
 
 
 class Greedy1Command(Command):
     """Implementation of Command that fails to parse if Greedy[T] does not find any arguments."""
+
     async def _transform_greedy_pos(self, ctx, param, required, converter):
         view = ctx.view
         result = []
