@@ -29,6 +29,16 @@ class Widen(commands.Cog):
         if message:
             # Convert message into a string from tuple of strings
             target_raw = message
+        elif (reference := ctx.message.reference) is not None:
+            m = reference.cached_message
+            if m is None:
+                if reference.message_id is None:
+                    return
+                channel = self.bot.get_channel(reference.channel_id)
+                m = await channel.fetch_message(reference.message_id)
+            target_raw = m.clean_content
+            if target_raw is None:
+                return
         else:
             messages = await ctx.history(limit=2).flatten()
             target_raw = messages[-1].clean_content
