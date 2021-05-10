@@ -506,7 +506,7 @@ class Moderation(Cog):
         banned = []
         failed = []
 
-        logging.info(f"{ctx.author} used ban")
+        logging.info(f"{ctx.author} used ban with reason {reason}")
         for member in members:
             try:
                 await member.ban(reason=reason, delete_message_days=delete_days)
