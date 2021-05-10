@@ -488,10 +488,63 @@ class Moderation(Cog):
         ctx: Context,
         members: Greedy[Member],
         until: DateTimeConverter,
+        delete_days: Optional[int] = 0,
         *,
         reason: Optional[str],
     ):
-        pass
+        banned = []
+        failed = []
+
+        logging.info(f"{ctx.author} used tempban with reason {reason} until {until}")
+        for member in members:
+            try:
+                await member.ban(reason=reason, delete_message_days=delete_days)
+                add_moderation_history_item(
+                    member, ModerationAction.TEMPBAN, reason, ctx.author, until
+                )
+                logging.info(f"Tempbanned {member}")
+                banned.append(member)
+            except HTTPException:
+                logging.error(f"Failed to tempban {member}")
+                failed.append(member)
+
+        message_parts = []
+
+        if len(banned) > 0:
+            mentions = format_list_of_members(failed)
+            were = "were" if len(banned) > 1 else "was"
+            until_datetime = f"until {humanize.naturaltime(until)} (a duration of {humanize.precisedelta(until - datetime.now())})"
+            with_reason = (
+                "with no reason given."
+                if reason is None
+                else f"with the reason \n> {reason}"
+            )
+            messages_deleted = (
+                "No messages were deleted."
+                if delete_days == 0
+                else f"Messages sent in the last {delete_days} day{'s' if delete_days != 1 else ''} were deleted."
+            )
+            message_parts.append(
+                dedent(
+                    """
+                :hammer: **TEMPBANNED** :hammer:
+                {mentions} {were} tempbanned {until_datetime} {with_reason}
+                {messages_deleted}
+                """
+                ).format(
+                    mentions=mentions,
+                    were=were,
+                    until_datetime=until_datetime,
+                    with_reason=with_reason,
+                    messages_deleted=messages_deleted,
+                )
+            )
+
+        if len(failed) > 0:
+            mentions = format_list_of_members(failed)
+            message_parts.append(f"I failed to tempban {mentions}")
+
+        await ctx.send("\n".join(message_parts))
 
     @command(cls=Greedy1Command)
     @only_mentions_users(True)
