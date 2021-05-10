@@ -3,7 +3,6 @@ from textwrap import dedent
 import pytest
 
 from karma.parser import KarmaItem, KarmaOperation, parse_message_content
-from tests.stubs import make_message_stub
 
 TEST_CASES = {
     # Cases with no karma
@@ -108,6 +107,10 @@ TEST_CASES = {
     "paren (reason, comma)": (
         "foobar++ (reason, comma)",
         [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason, comma")],
+    ),
+    "paren (reason (nested))": (
+        "foobar++ (reason (nested))",
+        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason (nested)")],
     ),
     "empty paren reason": (
         "foobar++ ()",
