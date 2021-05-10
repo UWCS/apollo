@@ -107,9 +107,10 @@ class Moderation(Cog):
         for member in members:
             try:
                 mute_role = get(ctx.guild.roles, id=840929051053129738)
-                logging.critical(mute_role)
                 await member.add_roles(mute_role, reason=reason)
-                add_moderation_history_item(member, ModerationAction.TEMPMUTE, reason, ctx.author, until)
+                add_moderation_history_item(
+                    member, ModerationAction.TEMPMUTE, reason, ctx.author, until
+                )
                 logging.info(f"Tempmuted {member}")
                 muted.append(member)
             except HTTPException:
@@ -129,10 +130,15 @@ class Moderation(Cog):
             )
             message_parts.append(
                 dedent(
-                    f"""
+                    """
                     :speaker: **TEMPMUTED** :speaker:
                     {mentions} {were} tempmuted {until_datetime} {with_reason}
                     """
+                ).format(
+                    mentions=mentions,
+                    were=were,
+                    until_datetime=until_datetime,
+                    with_reason=with_reason,
                 )
             )
 
@@ -177,11 +183,11 @@ class Moderation(Cog):
             )
             message_parts.append(
                 dedent(
-                    f"""
+                    """
                     :speaker: **MUTED** :speaker:
                     {mentions} {were} muted {with_reason}
                     """
-                )
+                ).format(mentions=mentions, were=were, with_reason=with_reason)
             )
 
         if len(failed) > 0:
@@ -202,7 +208,6 @@ class Moderation(Cog):
         for member in members:
             try:
                 mute_role = get(ctx.guild.roles, id=840929051053129738)
-                logging.critical(mute_role)
                 await member.remove_roles(mute_role, reason=reason)
                 add_moderation_history_item(
                     member, ModerationAction.UNMUTE, reason, ctx.author
