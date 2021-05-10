@@ -10,8 +10,13 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
-from utils import pluralise
-from utils.utils import AdminError, EnumGet, is_compsoc_exec_in_guild
+from utils import (
+    AdminError,
+    EnumGet,
+    get_database_user,
+    is_compsoc_exec_in_guild,
+    pluralise,
+)
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
@@ -68,11 +73,7 @@ class Admin(commands.Cog):
         if mode == ChannelIgnoreMode.Ignore:
             if ignored_channel is None:
                 # Create a new entry
-                user = (
-                    db_session.query(User)
-                    .filter(User.user_uid == ctx.author.id)
-                    .first()
-                )
+                user = get_database_user(ctx.author)
                 new_ignored_channel = IgnoredChannel(
                     channel=channel.id,
                     user_id=user.id,
@@ -135,11 +136,7 @@ class Admin(commands.Cog):
 
         if mode == MiniKarmaMode.Mini:
             if karma_channel is None:
-                user = (
-                    db_session.query(User)
-                    .filter(User.user_uid == ctx.author.id)
-                    .first()
-                )
+                user = get_database_user(ctx.author)
                 new_karma_channel = MiniKarmaChannel(
                     channel=channel.id,
                     user_id=user.id,

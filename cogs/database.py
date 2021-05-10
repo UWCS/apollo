@@ -9,7 +9,7 @@ from sqlalchemy_utils import ScalarListException
 from config import CONFIG
 from karma.karma import process_karma
 from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session, logging
-from utils import is_compsoc_exec_in_guild, user_is_irc_bot
+from utils import get_database_user, is_compsoc_exec_in_guild, user_is_irc_bot
 
 
 async def not_in_blacklisted_channel(ctx: Context):
@@ -34,11 +34,7 @@ class Database(Cog):
         if message.author.bot and not user_is_irc_bot(message):
             return
 
-        user = (
-            db_session.query(User)
-            .filter(User.user_uid == message.author.id)
-            .one_or_none()
-        )
+        user = get_database_user(message.author)
         if not user:
             user = User(user_uid=message.author.id, username=str(message.author))
             db_session.add(user)

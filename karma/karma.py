@@ -15,8 +15,8 @@ from karma.transaction import (
     filter_transactions,
     make_transactions,
 )
-from models import Karma, KarmaChange, MiniKarmaChannel, User
-from utils import get_name_string
+from models import Karma, KarmaChange, MiniKarmaChannel
+from utils import get_database_user, get_name_string
 
 
 def is_in_cooldown(last_change, timeout):
@@ -40,7 +40,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # TODO: Protect from byte-limit length chars
 
     # Get karma-ing user
-    user = db_session.query(User).filter(User.user_uid == message.author.id).first()
+    user = get_database_user(message.author)
 
     # Get whether the channel is on mini karma or not
     channel = (

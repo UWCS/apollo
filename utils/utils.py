@@ -1,13 +1,15 @@
 import re
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Iterable, Sized
+from typing import Iterable
 
 import dateparser
 import discord
 from discord.ext.commands import CommandError, Context
 
+import models
 from config import CONFIG
+from models import db_session
 
 
 def user_is_irc_bot(ctx):
@@ -146,6 +148,15 @@ def parse_time(time):
 
     return parsed_time
 
+
+def get_database_user_from_id(id_: int) -> models.User:
+    return (
+        db_session.query(models.User).filter(models.User.user_uid == id_).one_or_none()
+    )
+
+
+def get_database_user(user: {id}) -> models.User:
+    return get_database_user_from_id(user.id)
 
 def clean_brackets(
     str,
