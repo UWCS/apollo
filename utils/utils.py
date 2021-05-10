@@ -52,6 +52,14 @@ def format_list(el: list):
         return f'{", ".join(el[:-1])}, and {el[-1]}'
 
 
+def format_list_of_members(members, ping=True):
+    if ping:
+        el = [member.mention for member in members]
+    else:
+        el = [str(member) for member in members]
+    return format_list(el)
+
+
 class AdminError(CommandError):
     message = None
 
