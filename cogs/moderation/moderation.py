@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+from functools import cached_property
 from textwrap import dedent
 from typing import Optional
 
@@ -51,22 +52,19 @@ async def temp_action_loop(bot):
 class Moderation(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self._emoji = None
         self.loop = bot.loop.create_task(temp_action_loop(bot))
 
     async def cog_unload(self):
         self.loop.cancel()
 
-    @property
+    @cached_property
     def emoji(self):
-        if self._emoji is None:
-            self._emoji = {
-                "no": get(self.bot.emojis, id=840911865830703124),
-                "what": get(self.bot.emojis, id=840917271111008266),
-                "warn": get(self.bot.emojis, id=840911836580544512),
-                "yes": get(self.bot.emojis, id=840911879886209024),
-            }
-        return self._emoji
+        return {
+            "no": get(self.bot.emojis, id=840911865830703124),
+            "what": get(self.bot.emojis, id=840917271111008266),
+            "warn": get(self.bot.emojis, id=840911836580544512),
+            "yes": get(self.bot.emojis, id=840911879886209024),
+        }
 
     def only_mentions_users(self, react=False):
         async def predicate(ctx):
