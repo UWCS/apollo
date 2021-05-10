@@ -63,7 +63,9 @@ class Reminders(commands.Cog):
     @reminder.command(
         help='Add a reminder, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your reminder (rest of discord message).'
     )
-    async def add(self, ctx: Context, trigger_time: DateTimeConverter, *, reminder_content: str):
+    async def add(
+        self, ctx: Context, trigger_time: DateTimeConverter, *, reminder_content: str
+    ):
         now = datetime.now()
         if not trigger_time:
             await ctx.send("Incorrect time format, please see help text.")
