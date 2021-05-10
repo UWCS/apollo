@@ -6,7 +6,7 @@ from textwrap import dedent
 from typing import Optional
 
 import humanize
-from discord import HTTPException, Member, TextChannel, User
+from discord import Guild, HTTPException, Member, Role, TextChannel, User
 from discord.ext.commands import Bot, Cog, Context, Greedy, check, command, group
 from discord.utils import get
 from sqlalchemy.exc import SQLAlchemyError
@@ -36,10 +36,12 @@ def add_moderation_history_item(
         .first()
         .id
     )
+    complete = False if action in (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN) else None
     moderation_history = ModerationHistory(
         user_id=user_id,
         action=action,
         until=until,
+        complete=complete,
         reason=reason,
         moderator_id=moderator_id,
         linked_item=linked_item,
@@ -52,16 +54,10 @@ def add_moderation_history_item(
         logging.error(e)
 
 
-async def temp_action_loop(bot):
-    await bot.wait_until_ready()
-    while not bot.is_closed():
-        await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
-
-
 class Moderation(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.loop = bot.loop.create_task(temp_action_loop(bot))
+        self.loop = bot.loop.create_task(self.temp_action_loop())
 
     async def cog_unload(self):
         self.loop.cancel()
@@ -74,6 +70,56 @@ class Moderation(Cog):
             "warn": get(self.bot.emojis, id=840911836580544512),
             "yes": get(self.bot.emojis, id=840911879886209024),
         }
+
+    @cached_property
+    def uwcs_guild(self) -> Guild:
+        return get(self.bot.guilds, id=CONFIG.UWCS_DISCORD_ID)
+
+    @cached_property
+    def mute_role(self) -> Role:
+        return get(self.uwcs_guild.roles, id=840929051053129738)
+
+    async def temp_action_loop(self):
+        await self.bot.wait_until_ready()
+        while not self.bot.is_closed():
+            now = datetime.now()
+            to_repeal = (
+                db_session.query(ModerationHistory)
+                .filter(
+                    ModerationHistory.action.in_((ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)),
+                    ModerationHistory.complete == False,
+                    ModerationHistory.until <= now,
+                )
+                .all()
+            )
+
+            bans = None
+
+            for item in to_repeal:
+                db_user = db_session.query(models.User).filter(models.User.id == item.user_id).one_or_none()
+                moderator = db_session.query(models.User.username).filter(models.User.id == item.moderator_id).one_or_none()
+                date = humanize.naturaldate(item.timestamp)
+                if item.action == ModerationAction.TEMPMUTE:
+                    user = get(self.uwcs_guild.members, id=db_user.user_uid)
+                    reason = f"Removing tempmute on {db_user.username} placed by {moderator} {date}."
+                    item.complete = True
+                    logging.info(reason)
+                    await user.remove_roles(self.mute_role, reason=reason)
+                elif item.action == ModerationAction.TEMPBAN:
+                    if bans is None:
+                        bans = await self.uwcs_guild.bans()
+                    user = get(bans, user__id=db_user.user_uid)
+                    reason = f"Removing tempban on {db_user.username} placed by {moderator} {date}."
+                    item.complete = True
+                    await self.uwcs_guild.unban(user, reason=reason)
+
+            try:
+                db_session.commit()
+            except SQLAlchemyError as e:
+                db_session.rollback()
+                logging.error(e)
+
+            await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
 
     def only_mentions_users(self, react=False):
         async def predicate(ctx):
@@ -114,8 +160,7 @@ class Moderation(Cog):
         logging.info(f"{ctx.author} used tempmute until {until} with reason {reason}")
         for member in members:
             try:
-                mute_role = get(ctx.guild.roles, id=840929051053129738)
-                await member.add_roles(mute_role, reason=reason)
+                await member.add_roles(self.mute_role, reason=reason)
                 add_moderation_history_item(
                     member, ModerationAction.TEMPMUTE, reason, ctx.author, until
                 )
@@ -167,9 +212,7 @@ class Moderation(Cog):
         logging.info(f"{ctx.author} used mute with reason {reason}")
         for member in members:
             try:
-                mute_role = get(ctx.guild.roles, id=840929051053129738)
-                logging.critical(mute_role)
-                await member.add_roles(mute_role, reason=reason)
+                await member.add_roles(self.mute_role, reason=reason)
                 add_moderation_history_item(
                     member, ModerationAction.MUTE, reason, ctx.author
                 )
@@ -215,8 +258,7 @@ class Moderation(Cog):
         logging.info(f"{ctx.author} used unmute with reason {reason}")
         for member in members:
             try:
-                mute_role = get(ctx.guild.roles, id=840929051053129738)
-                await member.remove_roles(mute_role, reason=reason)
+                await member.remove_roles(self.mute_role, reason=reason)
                 add_moderation_history_item(
                     member, ModerationAction.UNMUTE, reason, ctx.author
                 )
@@ -513,16 +555,12 @@ class Moderation(Cog):
 
     @command(cls=Greedy1Command)
     async def unban(self, ctx: Context, users: Greedy[User], *, reason: Optional[str]):
-        if len(users) == 0:
-            await ctx.message.add_reaction(self.emoji["what"])
-
         unbanned = []
         failed = []
 
-        guild = self.bot.get_guild(CONFIG.UWCS_DISCORD_ID)
         for user in users:
             try:
-                await guild.unban(user, reason=reason)
+                await self.uwcs_guild.unban(user, reason=reason)
                 add_moderation_history_item(
                     user, ModerationAction.UNBAN, reason, ctx.author
                 )
