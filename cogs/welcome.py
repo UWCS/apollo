@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from pathlib import Path
 from random import choice, choices
@@ -55,7 +56,8 @@ class Welcome(Cog):
             user.last_seen = datetime.utcnow()
         try:
             db_session.commit()
-        except (ScalarListException, SQLAlchemyError):
+        except (ScalarListException, SQLAlchemyError) as e:
+            logging.error(e)
             db_session.rollback()
 
     @Cog.listener()
