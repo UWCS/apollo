@@ -151,9 +151,6 @@ class Moderation(Cog):
         *,
         reason: Optional[str],
     ):
-        if len(members) == 0:
-            await ctx.message.add_reaction(self.emoji["what"])
-
         muted = []
         failed = []
 
@@ -430,9 +427,6 @@ class Moderation(Cog):
     async def kick(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
     ):
-        if len(members) == 0:
-            await ctx.message.add_reaction(self.emoji["what"])
-
         kicked = []
         failed = []
 
@@ -497,10 +491,6 @@ class Moderation(Cog):
         *,
         reason: Optional[str],
     ):
-        if len(members) == 0:
-            await ctx.message.add_reaction(self.emoji["what"])
-            return
-
         banned = []
         failed = []
 
