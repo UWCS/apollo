@@ -18,6 +18,7 @@ from utils import (
     AdminError,
     DateTimeConverter,
     format_list,
+    format_list_of_members,
     get_database_user,
     is_compsoc_exec_in_guild,
 )
@@ -170,7 +171,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(muted) > 0:
-            mentions = format_list([member.mention for member in muted])
+            mentions = format_list_of_members(failed)
             were = "were" if len(muted) > 1 else "was"
             until_datetime = f"until {humanize.naturaltime(until)} (a duration of {humanize.precisedelta(until - datetime.now())})"
             with_reason = (
@@ -193,7 +194,7 @@ class Moderation(Cog):
             )
 
         if len(failed) > 0:
-            mentions = format_list([member.mention for member in failed])
+            mentions = format_list_of_members(failed)
             message_parts.append(f"I failed to tempmute {mentions}")
 
         await ctx.send("\n".join(message_parts))
@@ -222,7 +223,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(muted) > 0:
-            mentions = format_list([member.mention for member in muted])
+            mentions = format_list_of_members(failed)
             were = "were" if len(muted) > 1 else "was"
             with_reason = (
                 "with no reason given"
@@ -239,7 +240,7 @@ class Moderation(Cog):
             )
 
         if len(failed) > 0:
-            mentions = format_list([member.mention for member in failed])
+            mentions = format_list_of_members(failed)
             message_parts.append(f"I failed to mute {mentions}")
 
         await ctx.send("\n".join(message_parts))
@@ -268,7 +269,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(muted) > 0:
-            mentions = format_list([member.mention for member in muted])
+            mentions = format_list_of_members(failed)
             were = "were" if len(muted) > 1 else "was"
             with_reason = (
                 "with no reason given"
@@ -285,7 +286,7 @@ class Moderation(Cog):
             )
 
         if len(failed) > 0:
-            mentions = format_list([member.mention for member in failed])
+            mentions = format_list_of_members(failed)
             message_parts.append(f"I failed to unmute {mentions}")
 
         await ctx.send("\n".join(message_parts))
@@ -327,7 +328,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(warned) > 0:
-            mentions = format_list([member.mention for member in warned])
+            mentions = format_list_of_members(failed)
             were = "were" if len(warned) > 1 else "was"
             with_reason = (
                 "with no reason given"
@@ -344,7 +345,7 @@ class Moderation(Cog):
             )
 
         if len(failed) > 0:
-            mentions = format_list([member.mention for member in warned])
+            mentions = format_list_of_members(failed)
             message_parts.append(f"I failed to warn {mentions}")
 
         await ctx.send("\n".join(message_parts))
@@ -446,7 +447,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(kicked) > 0:
-            mentions = format_list([member.mention for member in kicked])
+            mentions = format_list_of_members(failed)
             with_reason = (
                 "with no reason given"
                 if reason is None
@@ -464,7 +465,7 @@ class Moderation(Cog):
             )
 
         if len(failed) > 0:
-            mentions = format_list([member.mention for member in failed])
+            mentions = format_list_of_members(failed)
             message_parts.append(f"I failed to kick {mentions}")
 
         await ctx.send("\n".join(message_parts))
@@ -510,7 +511,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(banned) > 0:
-            mentions = format_list([member.mention for member in banned])
+            mentions = format_list_of_members(failed)
             were = "were" if len(banned) > 1 else "was"
             with_reason = (
                 "with no reason given."
@@ -538,7 +539,7 @@ class Moderation(Cog):
             )
 
         if len(failed) > 0:
-            mentions = format_list([member.mention for member in failed])
+            mentions = format_list_of_members(failed)
             message_parts.append(f"I failed to ban {mentions}")
 
         await ctx.send("\n".join(message_parts))
