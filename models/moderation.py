@@ -1,6 +1,6 @@
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, func
 
 from models.models import Base, auto_str
 
@@ -34,6 +34,7 @@ class ModerationHistory(Base):
     timestamp = Column(DateTime, nullable=False, default=func.current_timestamp())
     action = Column(Enum(ModerationAction), nullable=False)
     until = Column(DateTime, nullable=True)
+    complete = Column(Boolean, nullable=True)
     reason = Column(String, nullable=True)
     moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     linked_item = Column(Integer, ForeignKey("moderation_history.id"), nullable=True)

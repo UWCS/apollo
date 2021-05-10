@@ -54,6 +54,14 @@ def upgrade():
             ),
             nullable=True,
         ),
+        sa.Column(
+            "complete",
+            sa.Boolean,
+            sa.CheckConstraint(
+                "complete IS NULL OR (complete IS NOT NULL AND action IN('TEMPMUTE', 'TEMPBAN'))"
+            ),
+            nullable=True,
+        ),
         sa.Column("reason", sa.String, nullable=True),
         sa.Column(
             "moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False
