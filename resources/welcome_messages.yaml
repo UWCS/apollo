@@ -1,7 +1,7 @@
 welcome_messages:
   message: |-
     {greetings} {name}!
-    If you want, feel free to introduce yourself in {intros} with your pronouns, interests and favourite {thing}.
+    Welcome to the server! If you want, feel free to introduce yourself here with your pronouns, interests, and favourite {thing}.
   greetings:
     - Hi
     - Hiya
@@ -37,7 +37,7 @@ welcome_messages:
         - holiday
         - letter of the alphabet
         - fruit
-        - programming language
+        - language
         - continent
         - flag
         - cardinal direction
@@ -187,4 +187,3 @@ welcome_messages:
       values:
         - hat
         - shirt
-        - shoe

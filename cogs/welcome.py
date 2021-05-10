@@ -30,7 +30,7 @@ class Category:
 class Welcome(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        with open(Path("resources") / "welcome_messages.yaml") as f:
+        with open(Path("resources", "welcome_messages.yaml")) as f:
             parsed = yaml.full_load(f).get("welcome_messages")
         self.greetings = parsed.get("greetings")
         self.categories = [Category(c) for c in parsed.get("categories")]
@@ -48,7 +48,7 @@ class Welcome(Cog):
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
-        # Add the user to our database if they've never joined before
+        """Add the user to our database if they've never joined before"""
         user = db_session.query(User).filter(User.user_uid == member.id).first()
         if not user:
             user = User(user_uid=member.id, username=str(member))
@@ -60,11 +60,13 @@ class Welcome(Cog):
         except (ScalarListException, SQLAlchemyError):
             db_session.rollback()
 
-        #  await member.send(WELCOME_MESSAGE.format(user_id=member.id))
-
-        # Join message
+    @Cog.listener()
+    async def on_member_update(self, before: Member, after: Member):
+        """Send a welcome message to members after they clear the welcome and membership screening screens."""
+        if not before.pending or after.pending:
+            return
         channel = self.bot.get_channel(CONFIG.UWCS_WELCOME_CHANNEL_ID)
-        await channel.send(self.generate_welcome_message(member.display_name))
+        await channel.send(self.generate_welcome_message(after.display_name))
 
 
 def setup(bot: Bot):

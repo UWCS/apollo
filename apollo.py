@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-from discord import Intents
-from discord.ext.commands import Bot, when_mentioned_or
+import logging
 
+from discord import Intents
+from discord.ext.commands import Bot, Context, check, when_mentioned_or
+
+from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 
 DESCRIPTION = """
@@ -15,7 +18,7 @@ EXTENSIONS = [
     "cogs.commands.admin",
     "cogs.commands.blacklist",
     "cogs.commands.counting",
-    "cogs.commands.fact",
+    "cogs.commands.date",
     "cogs.commands.flip",
     "cogs.commands.karma",
     "cogs.commands.lcalc",
@@ -39,21 +42,32 @@ bot = Bot(
 )
 
 
+@bot.command()
+@check(is_compsoc_exec_in_guild)
+async def reload_cogs(ctx: Context):
+    for extension in EXTENSIONS:
+        bot.reload_extension(extension)
+    await ctx.message.add_reaction("✅")
+
+
 @bot.event
 async def on_ready():
     if CONFIG.BOT_LOGGING:
         # TODO: Write this to a logging file?
-        print("Logged in as")
-        print(str(bot.user))
-        print("------")
+        logging.info("Logged in as")
+        logging.info(str(bot.user))
+        logging.info("------")
 
 
 if __name__ == "__main__":
+    if CONFIG.BOT_LOGGING:
+        logging.basicConfig(level=logging.WARNING)
     for extension in EXTENSIONS:
         try:
+            logging.info(f"Attempting to load extension {extension}")
             bot.load_extension(extension)
         except Exception as e:
-            exc = "{}: {}".format(type(e).__name__, e)
-            print("Failed to load extension {}\n{}".format(extension, exc))
+            exc = f"{type(e).__name__}: {e.with_traceback()}"
+            logging.error(f"Failed to load extension {extension}\n{exc}")
 
     bot.run(CONFIG.DISCORD_TOKEN)

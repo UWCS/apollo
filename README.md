@@ -1,4 +1,4 @@
-# Apollo [![Build Status](https://travis-ci.org/UWCS/apollo.svg?branch=master)](https://travis-ci.org/uwcs/apollo)
+# Apollo [![Build status](https://github.com/UWCS/apollo/actions/workflows/tests.yaml/badge.svg?branch=master)](https://github.com/UWCS/apollo/actions/workflows/tests.yaml)
 
 Apollo is a [Discord](https://discordapp.com/) bot for the [University of Warwick Computing Society](https://uwcs.co.uk).
 It is designed to augment our Discord server with a few of the user services available on our website.
@@ -9,10 +9,10 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 #### Dependencies
 
-Two dependency files are included with this project.
+Two type of dependency files are included with this project.
 The first, `requirements.txt`, only includes top-level dependencies.
 
-The second, `requirements.lock`, contains a pinned list of all dependencies.
+The second, `requirements-platform.lock`, contains a pinned list of all dependencies specific to a platform.
 
 If installing the top-level dependencies does not work, try installing the pinned dependencies.
 
@@ -54,6 +54,11 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
 
 * This project uses the Black Python formatter.
   Before submitting your code for a PR, run `black .` on the root directory of this project to bring all of your up to spec for the code style guide.
+  
+* For testing CI locally, use [act-cli](https://github.com/nektos/act).
+
+* Although the default database engine in config files is SQLite3, the current production database engine is PostgreSQL.
+  In order to test code against a PostgreSQL database, you will need to install `psycopg2` and set up a PostgreSQL instance.
 
 ### License
 

@@ -1,7 +1,7 @@
 import os
+import tempfile
 from collections import defaultdict
 from datetime import datetime, timedelta
-from functools import reduce
 from time import time
 from typing import Dict, List
 
@@ -117,8 +117,9 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
 
     # Transform the karma changes into plottable values
     for karma, changes in karma_dict.items():
-        scores = list(map(lambda k: k.score, changes))
-        time = date2num(list(map(lambda k: k.local_time, changes)))
+        scores = [k.score for k in changes]
+        time = []
+        time = date2num([k.local_time for k in changes])
 
         # Plot the values
         ax.xaxis.set_major_locator(date_locator_major)
@@ -164,12 +165,12 @@ def comma_separate(items: List[str]) -> str:
         return f'"{items[0]}"'
     elif len(items) <= 3:
         return (
-            ", ".join(map(lambda s: f'"{s}"', items[:-1]))
+            ", ".join(f'"{s}"' for s in items[:-1])
             + f'{"," if len(items) == 3 else ""} and "{items[-1]}"'
         )
     else:
         return (
-            ", ".join(map(lambda s: f'"{s}"', items[:3]))
+            ", ".join(f'"{s}"' for s in items[:3])
             + f", and {len(items) - 3} other topics"
         )
 
@@ -424,11 +425,7 @@ class Karma(commands.Cog):
                 "%H:%M %d %b %Y",
             )
             time_taken = (t_end - t_start) / 1000
-            total_changes = reduce(
-                lambda count, size: count + size,
-                map(lambda t: len(t[1]), karma_dict.items()),
-                0,
-            )
+            total_changes = sum(len(v) for v in karma_dict.values())
             # Construct the embed strings
             if karma_dict.keys():
                 embed_colour = Color.from_rgb(61, 83, 255)
@@ -441,7 +438,9 @@ class Karma(commands.Cog):
             else:
                 embed_colour = Color.from_rgb(255, 23, 68)
                 embed_description = f'The following {pluralise(failed, "problem")} occurred whilst plotting:'
-                embed_title = f"Could not plot karma for {comma_separate(list(map(lambda i: i[0], failed)))}"
+                embed_title = (
+                    f"Could not plot karma for {comma_separate([i[0] for i in failed])}"
+                )
             embed = Embed(
                 color=embed_colour, title=embed_title, description=embed_description
             )
@@ -461,9 +460,12 @@ class Karma(commands.Cog):
                 )
 
             display_name = get_name_string(ctx.message)
-            await ctx.send(
-                f"Here you go, {display_name}! :chart_with_upwards_trend:", embed=embed
+            emoji = (
+                ":chart_with_upwards_trend"
+                if total_changes > 0
+                else ":chart_with_downwards_trend:"
             )
+            await ctx.send(f"Here you go, {display_name}! {emoji}", embed=embed)
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
@@ -483,38 +485,52 @@ class Karma(commands.Cog):
         )
 
         if karma_item:
+            # Set the karma item's name to be the same as in the database
+            karma_stripped = karma_item.name
             # Get all of the changes that have some reason
             karma_changes = (
                 db_session.query(KarmaChange)
                 .filter(
-                    KarmaChange.karma_id == karma_item.id, KarmaChange.reasons != []
+                    KarmaChange.karma_id == karma_item.id,
+                    KarmaChange.reason is not None,
                 )
                 .all()
             )
             # Flatten the reasons into a single list and sort it alphabetically
-            reasons = [
-                reason
-                for sublist in [change.reasons for change in karma_changes]
-                for reason in sublist
-            ]
-            reasons = sorted(reasons, key=str.casefold)
+            reasons = sorted(
+                (
+                    r
+                    for r in (change.reason for change in karma_changes)
+                    if r is not None
+                ),
+                key=str.casefold,
+            )
 
             # If there's at least one reason
             if reasons:
-                # Handle the plurality of reason(s)
-                plural = ""
-                if len(reasons) > 1:
-                    plural = "s"
+                reasons_plural = pluralise(reasons, "reason")
 
-                result = (
-                    f'The reason{plural} for "{karma_stripped}" are as follows:\n\n'
-                )
-                for reason in reasons:
-                    result += f" • {reason}\n"
+                bullet_points = "\n".join(f" • {reason}\n" for reason in reasons)
+                result = f'The {reasons_plural} for "{karma_stripped}" are as follows:\n\n{bullet_points}'
             else:
                 result = f"There are no reasons down for that karma topic! :frowning:"
 
-            await ctx.send(result)
+            file = None
+            fp = None
+            if len(result) > 2000:
+                # Create a new temporary file that isn't deleted until we say
+                with tempfile.NamedTemporaryFile(delete=False) as fp:
+                    fp.write(result.encode("utf8"))
+
+                # Wait for the file to close before accessing it (Windows NT limitation)
+                file = File(fp.name, filename=f"{karma_stripped}.txt")
+                result = f'There are too many reasons for "{karma_stripped}" to fit in a Discord message!'
+
+            await ctx.send(result, file=file)
+
+            # Delete temporary file (if any) after message is sent
+            if fp:
+                os.remove(fp.name)
         else:
             # The item hasn't been karma'd
             result = f"\"{karma_stripped}\" hasn't been karma'd yet. :cry:"

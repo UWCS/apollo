@@ -9,13 +9,14 @@ from sqlalchemy_utils import ScalarListException
 from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from karma.karma import process_karma
-from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session
+from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session, logging
 from utils.utils import user_is_irc_bot
 
 
-def not_in_blacklisted_channel(ctx: Context):
-    return is_compsoc_exec_in_guild(ctx) or (
-        db_session.query(IgnoredChannel)
+async def not_in_blacklisted_channel(ctx: Context):
+    return (
+        await is_compsoc_exec_in_guild(ctx)
+        or db_session.query(IgnoredChannel)
         .filter(IgnoredChannel.channel == ctx.channel.id)
         .first()
         is None
@@ -34,7 +35,11 @@ class Database(Cog):
         if message.author.bot and not user_is_irc_bot(message):
             return
 
-        user = db_session.query(User).filter(User.user_uid == message.author.id).first()
+        user = (
+            db_session.query(User)
+            .filter(User.user_uid == message.author.id)
+            .one_or_none()
+        )
         if not user:
             user = User(user_uid=message.author.id, username=str(message.author))
             db_session.add(user)
@@ -43,8 +48,9 @@ class Database(Cog):
         # Commit the session so the user is available now
         try:
             db_session.commit()
-        except (ScalarListException, SQLAlchemyError):
+        except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
+            logging.error(e)
             # Something very wrong, but not way to reliably recover so abort
             return
 
@@ -61,8 +67,9 @@ class Database(Cog):
             db_session.add(logged_message)
             try:
                 db_session.commit()
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
                 return
 
             # KARMA
@@ -70,9 +77,9 @@ class Database(Cog):
             # Get all specified command prefixes for the bot
             command_prefixes = self.bot.command_prefix(self.bot, message)
             # Only process karma if the message was not a command (ie did not start with a command prefix)
-            if True not in [
+            if not any(
                 message.content.startswith(prefix) for prefix in command_prefixes
-            ]:
+            ):
                 reply = process_karma(
                     message, logged_message.id, db_session, CONFIG.KARMA_TIMEOUT
                 )
@@ -100,8 +107,9 @@ class Database(Cog):
                     db_session.add(message_diff)
                     try:
                         db_session.commit()
-                    except (ScalarListException, SQLAlchemyError):
+                    except (ScalarListException, SQLAlchemyError) as e:
                         db_session.rollback()
+                        logging.error(e)
 
     @Cog.listener()
     async def on_message_delete(self, message: Message):
@@ -118,8 +126,9 @@ class Database(Cog):
             db_message.deleted_at = datetime.utcnow()
             try:
                 db_session.commit()
-            except (ScalarListException, SQLAlchemyError):
+            except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
+                logging.error(e)
 
 
 def setup(bot: Bot):

@@ -1,6 +1,5 @@
 import html
 import re
-from functools import reduce
 
 from bs4 import BeautifulSoup
 from discord.ext import commands
@@ -47,10 +46,8 @@ class Widen(commands.Cog):
         target = "".join(soup.findAll(text=True))
 
         # Cascade the widening
-        is_wide = reduce(
-            lambda x, y: x and (ord(y) in range(0xFF01, 0xFF5F) or ord(y) == 0x3000),
-            target_raw,
-            True,
+        is_wide = all(
+            ord(c) in range(0xFF01, 0xFF5F) or ord(c) == 0x3000 for c in target_raw
         )
         if is_wide:
             widened = apply_widen("　".join([x.lstrip("@") for x in target]))

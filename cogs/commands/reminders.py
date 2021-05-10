@@ -1,7 +1,9 @@
 import asyncio
+import logging
 import re
 from datetime import datetime, timedelta
 
+import dateparser
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from sqlalchemy.exc import SQLAlchemyError
@@ -19,8 +21,11 @@ SHORT_HELP_TEXT = """Add or remove reminders."""
 
 
 def parse_time(time):
-    parsed_time = None
+    # dateparser.parse returns None if it cannot parse
+    parsed_time = dateparser.parse(time)
+
     now = datetime.now()
+
     try:
         parsed_time = datetime.strptime(time, "%Y-%m-%d %H:%M")
     except ValueError:
@@ -137,7 +142,7 @@ class Reminders(commands.Cog):
                 else:
                     author_id = (
                         db_session.query(User)
-                        .filter(User.user_uid == ctx.message.author.id)
+                        .filter(User.user_uid == ctx.author.id)
                         .first()
                         .id
                     )
@@ -162,8 +167,9 @@ class Reminders(commands.Cog):
                         await ctx.send(
                             f"Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {CONFIG.REMINDER_SEARCH_INTERVAL} seconds)."
                         )
-                    except (ScalarListException, SQLAlchemyError):
+                    except (ScalarListException, SQLAlchemyError) as e:
                         db_session.rollback()
+                        logging.error(e)
                         await ctx.send(f"Something went wrong")
                 else:
                     await ctx.send("Please include some reminder text!")
