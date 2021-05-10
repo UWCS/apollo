@@ -3,15 +3,20 @@ import logging
 from datetime import datetime
 
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context
 from humanize import precisedelta
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
-from models import Reminder, User, db_session
-from utils import DateTimeConverter, get_name_string
-from utils import parse_time, user_is_irc_bot
+from models import Reminder, db_session
+from utils import (
+    DateTimeConverter,
+    get_database_user,
+    get_database_user_from_id,
+    get_name_string,
+    user_is_irc_bot,
+)
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.
@@ -34,9 +39,7 @@ async def reminder_check(bot):
             if r.irc_name:
                 display_name = r.irc_name
             else:
-                author_uid = (
-                    db_session.query(User).filter(User.id == r.user_id).first().user_uid
-                )
+                author_uid = get_database_user_from_id(r.user_id).user_uid
                 display_name = f"<@{author_uid}>"
             channel = bot.get_channel(r.playback_channel_id)
             message = f"Reminding {display_name}: " + r.reminder_content
@@ -76,12 +79,7 @@ class Reminders(commands.Cog):
                 author_id = 1
                 irc_n = display_name
             else:
-                author_id = (
-                    db_session.query(User)
-                    .filter(User.user_uid == ctx.author.id)
-                    .first()
-                    .id
-                )
+                author_id = get_database_user(ctx.author).id
                 irc_n = None
 
             trig_at = trigger_time

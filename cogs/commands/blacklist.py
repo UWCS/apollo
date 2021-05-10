@@ -5,8 +5,8 @@ from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from models import BlockedKarma, User, db_session
-from utils import is_compsoc_exec_in_guild
+from models import BlockedKarma, db_session
+from utils import get_database_user, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Query, display, and modify the blacklisted karma topics.
@@ -34,12 +34,7 @@ class Blacklist(commands.Cog):
     @blacklist.command(help="Add a topic to the karma blacklist.")
     @check(is_compsoc_exec_in_guild)
     async def add(self, ctx: Context, item: str):
-        author_id = (
-            db_session.query(User)
-            .filter(User.user_uid == ctx.message.author.id)
-            .first()
-            .id
-        )
+        author_id = get_database_user(ctx.author).id
 
         if (
             not db_session.query(BlockedKarma)

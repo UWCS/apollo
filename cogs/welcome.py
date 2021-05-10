@@ -10,6 +10,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import User, db_session
+from utils import get_database_user
 
 
 class Category:
@@ -49,7 +50,7 @@ class Welcome(Cog):
     @Cog.listener()
     async def on_member_join(self, member: Member):
         # Add the user to our database if they've never joined before
-        user = db_session.query(User).filter(User.user_uid == member.id).first()
+        user = get_database_user(member)
         if not user:
             user = User(user_uid=member.id, username=str(member))
             db_session.add(user)
