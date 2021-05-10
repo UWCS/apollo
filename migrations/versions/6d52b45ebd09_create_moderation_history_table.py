@@ -20,6 +20,7 @@ depends_on = None
 @enum.unique
 class ModerationAction(enum.Enum):
     """Enum at the time the migration was written"""
+
     TEMPMUTE = 0
     MUTE = 1
     UNMUTE = 2
@@ -38,12 +39,34 @@ def upgrade():
         "moderation_history",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("timestamp", sa.DateTime, nullable=False, default=sa.func.current_timestamp()),
+        sa.Column(
+            "timestamp",
+            sa.DateTime,
+            nullable=False,
+            default=sa.func.current_timestamp(),
+        ),
         sa.Column("action", sa.Enum(ModerationAction), nullable=False),
-        sa.Column("until", sa.DateTime, nullable=True),
+        sa.Column(
+            "until",
+            sa.DateTime,
+            sa.CheckConstraint(
+                "until IS NULL OR (until IS NOT NULL AND action IN('TEMPMUTE', 'TEMPBAN'))"
+            ),
+            nullable=True,
+        ),
         sa.Column("reason", sa.String, nullable=True),
-        sa.Column("moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("linked_item", sa.Integer, sa.ForeignKey("moderation_history.id"), nullable=True)
+        sa.Column(
+            "moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False
+        ),
+        sa.Column(
+            "linked_item",
+            sa.Integer,
+            sa.ForeignKey("moderation_history.id"),
+            sa.CheckConstraint(
+                "linked_item IS NULL OR (linked_item IS NOT NULL AND action IN ('REMOVE_WARN', 'REMOVE_AUTOWARN'))"
+            ),
+            nullable=True,
+        ),
     )
 
 
