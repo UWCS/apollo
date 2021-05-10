@@ -248,7 +248,59 @@ class Moderation(Cog):
     async def warn(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
     ):
-        pass
+        warned = []
+        failed = []
+
+        logging.info(f"{ctx.author} used warn with reason {reason}")
+        for member in members:
+            try:
+                with_reason = (
+                    "with no reason given."
+                    if reason is None
+                    else f"with the following reason: \n> {reason}"
+                )
+                warning = dedent(
+                    """
+                    :warning: **WARNING** :warning:
+                    You have been warned in UWCS {with_reason}
+                    """
+                ).format(with_reason=with_reason)
+                # Get our DMs with the user or make new ones if they don't exist
+                channel = member.dm_channel or await member.create_dm()
+                await channel.send(warning)
+                add_moderation_history_item(
+                    member, ModerationAction.WARN, reason, ctx.author
+                )
+                logging.info(f"Warned {member}")
+                warned.append(member)
+            except HTTPException:
+                logging.info(f"Failed to warn {member}")
+                failed.append(member)
+
+        message_parts = []
+
+        if len(warned) > 0:
+            mentions = format_list([member.mention for member in warned])
+            were = "were" if len(warned) > 1 else "was"
+            with_reason = (
+                "with no reason given"
+                if reason is None
+                else f"with the reason \n> {reason}"
+            )
+            message_parts.append(
+                dedent(
+                    """
+                    :warning: **WARNED** :warning:
+                    {mentions} {were} warned {with_reason}
+                    """
+                ).format(mentions=mentions, were=were, with_reason=with_reason)
+            )
+
+        if len(failed) > 0:
+            mentions = format_list([member.mention for member in warned])
+            message_parts.append(f"I failed to warn {mentions}")
+
+        await ctx.send("\n".join(message_parts))
 
     @warn.command()
     async def show(self, ctx: Context, member: Member):
