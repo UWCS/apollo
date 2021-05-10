@@ -14,11 +14,19 @@ from sqlalchemy.exc import SQLAlchemyError
 import models
 from config import CONFIG
 from models import ModerationAction, ModerationHistory, db_session
-from utils import AdminError, DateTimeConverter, format_list, is_compsoc_exec_in_guild
+from utils import (
+    AdminError,
+    DateTimeConverter,
+    format_list,
+    get_database_user,
+    is_compsoc_exec_in_guild,
+)
 from utils.Greedy1 import Greedy1Command, Greedy1Group
 
 
-def add_moderation_history_item(user, action, reason, moderator, until=None):
+def add_moderation_history_item(
+    user, action, reason, moderator, until=None, linked_item=None
+):
     user_id = (
         db_session.query(models.User).filter(models.User.user_uid == user.id).first().id
     )
@@ -34,6 +42,7 @@ def add_moderation_history_item(user, action, reason, moderator, until=None):
         until=until,
         reason=reason,
         moderator_id=moderator_id,
+        linked_item=linked_item,
     )
     db_session.add(moderation_history)
     try:
@@ -83,6 +92,7 @@ class Moderation(Cog):
         return True
 
     async def cog_command_error(self, ctx, error):
+        logging.error(error)
         await ctx.message.add_reaction(self.emoji["no"])
 
     @command(cls=Greedy1Command)
@@ -302,11 +312,76 @@ class Moderation(Cog):
 
     @warn.command()
     async def show(self, ctx: Context, member: Member):
-        pass
+        # First we need to find the database id of the user
+        db_user_id = get_database_user(member).id
+
+        # Don't show any warnings that have been removed
+        removed_warnings = (
+            db_session.query(ModerationHistory.linked_item)
+            .filter(
+                ModerationHistory.action == ModerationAction.REMOVE_WARN,
+                ModerationHistory.user_id == db_user_id,
+            )
+        )
+
+        # Get the rest of the warnings
+        warnings = (
+            db_session.query(ModerationHistory)
+            .filter(
+                ModerationHistory.user_id == db_user_id,
+                ModerationHistory.action == ModerationAction.WARN,
+                ModerationHistory.id.notin_(removed_warnings),
+            )
+            .all()
+        )
+        if any(warnings):
+
+            def format_warning(warning: ModerationHistory):
+                moderator = (
+                    db_session.query(models.User)
+                    .filter(models.User.id == warning.moderator_id)
+                    .one_or_none()
+                    .username
+                )
+                date = humanize.naturaldate(warning.timestamp)
+                with_reason = (
+                    "with no reason provided"
+                    if warning.reason is None
+                    else f"with reason: {warning.reason}"
+                )
+                return f" • Warning {warning.id}, issued by {moderator} {date} {with_reason}"
+
+            message_parts = ["The following warnings have been issued:"] + [
+                format_warning(w) for w in warnings
+            ]
+            await ctx.send("\n".join(message_parts))
+        else:
+            await ctx.send(f"No warnings have been issued for {member.mention}")
 
     @warn.command()
-    async def remove(self, ctx: Context, member: Member, warn_id: int):
-        pass
+    async def remove(
+        self, ctx: Context, member: Member, warn_id: int, *, reason: Optional[str]
+    ):
+        valid = (
+            db_session.query(ModerationHistory)
+            .filter(
+                ModerationHistory.id == warn_id,
+                ModerationHistory.action == ModerationAction.WARN,
+            )
+            .count()
+            == 1
+        )
+        if valid:
+            add_moderation_history_item(
+                member,
+                ModerationAction.REMOVE_WARN,
+                reason,
+                ctx.author,
+                linked_item=warn_id,
+            )
+            await ctx.message.add_reaction(self.emoji["yes"])
+        else:
+            await ctx.message.add_reaction(self.emoji["what"])
 
     @command(cls=Greedy1Command)
     @only_mentions_users(True)

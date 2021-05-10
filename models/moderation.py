@@ -36,3 +36,4 @@ class ModerationHistory(Base):
     until = Column(DateTime, nullable=True)
     reason = Column(String, nullable=True)
     moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    linked_item = Column(Integer, ForeignKey("moderation_history.id"), nullable=True)

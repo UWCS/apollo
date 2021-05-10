@@ -43,6 +43,7 @@ def upgrade():
         sa.Column("until", sa.DateTime, nullable=True),
         sa.Column("reason", sa.String, nullable=True),
         sa.Column("moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
+        sa.Column("linked_item", sa.Integer, sa.ForeignKey("moderation_history.id"), nullable=True)
     )
 
 
