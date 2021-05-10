@@ -205,7 +205,7 @@ class Moderation(Cog):
                 logging.critical(mute_role)
                 await member.remove_roles(mute_role, reason=reason)
                 add_moderation_history_item(
-                    member, ModerationAction.MUTE, reason, ctx.author
+                    member, ModerationAction.UNMUTE, reason, ctx.author
                 )
                 logging.info(f"Unmuted {member}")
                 muted.append(member)
