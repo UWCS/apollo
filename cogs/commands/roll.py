@@ -23,9 +23,17 @@ LONG_HELP_TEXT = """
 Rolls an unbiased xdy (x dice with y sides).
 
 If no dice are specified, it will roll a single 1d6 (one 6-sided die).
+____________________________________________________________
 
-Multiple dice can be specified:
-"!roll 1d6 2d5 3d4" - will roll one 6-sided die, two 5-sided dice, and three 4-sided dice.
+- !r                  | (rolls a 1d6)
+- !r 1d6              | (an explicitly-defined 1d6)
+- !r d6               | (omitted dice counts default to 1)
+- !r 1d6 + 5          | (supports +, -, *, /, ^)
+- !r (1d6+1)+(1d6*10) | (supports brackets)
+- !r (1d6)d(1d6)      | (supports nested rolls)
+____________________________________________________________
+
+Note: using division returns a floating point value and is prone to errors.
 """
 
 SHORT_HELP_TEXT = """Rolls an unbiased xdy (x dice with y sides)"""
