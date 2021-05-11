@@ -29,6 +29,13 @@ class Widen(commands.Cog):
         if message:
             # Convert message into a string from tuple of strings
             target_raw = message
+        elif (reference := ctx.message.reference) is not None:
+            m = reference.resolved
+            if m is None:
+                return
+            target_raw = m.clean_content
+            if target_raw is None:
+                return
         else:
             messages = await ctx.history(limit=2).flatten()
             target_raw = messages[-1].clean_content
