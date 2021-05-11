@@ -193,9 +193,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     transaction.karma_item.operation.value
                 )
             else:
-                new_score = (
-                        last_change.score + transaction.karma_item.operation.value
-                )
+                new_score = last_change.score + transaction.karma_item.operation.value
 
             karma_change = KarmaChange(
                 karma_id=karma_item.id,

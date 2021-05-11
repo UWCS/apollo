@@ -41,9 +41,7 @@ class Welcome(Cog):
         greeting = choice(self.greetings)
         category = choices(self.categories, self.category_weights)[0]
         thing = category.generate()
-        return self.welcome_template.format(
-            greetings=greeting, name=name, thing=thing
-        )
+        return self.welcome_template.format(greetings=greeting, name=name, thing=thing)
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
