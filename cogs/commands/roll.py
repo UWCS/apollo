@@ -81,7 +81,8 @@ class Roll(commands.Cog):
         value = expression.value
         try:
             out = SUCCESS_OUT.format(
-                ping=display_name, body=f"`{repr(expression)}` | **{value}** ⟵ {clean_brackets(str(expression))}"
+                ping=display_name,
+                body=f"`{repr(expression)}` | **{value}** ⟵ {clean_brackets(str(expression))}",
             )
             await ctx.send(out)
         except OutputTooLargeError:
