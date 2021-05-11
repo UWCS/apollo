@@ -182,7 +182,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 errors.append(internal_error(truncated_name))
                 continue
         else:
-            time_delta = datetime.utcnow() - last_change
+            time_delta = datetime.utcnow() - last_change.created_at
             if is_in_cooldown(last_change, timeout):
                 errors.append(cooldown_error(truncated_name, time_delta))
                 continue
