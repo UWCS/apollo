@@ -60,7 +60,7 @@ class Roll(commands.Cog):
     @commands.command(
         help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"], rest_is_raw=True
     )
-    async def test(self, ctx: Context, *, message: clean_content):
+    async def roll(self, ctx: Context, *, message: clean_content):
         display_name = get_name_string(ctx.message)
         if len(message) == 0:
             message = "1d6"
@@ -81,7 +81,7 @@ class Roll(commands.Cog):
         value = expression.value
         try:
             out = SUCCESS_OUT.format(
-                ping=display_name, body=f"{value} ⟵ {clean_brackets(str(expression))}"
+                ping=display_name, body=f"`{repr(expression)}` | **{value}** ⟵ {clean_brackets(str(expression))}"
             )
             await ctx.send(out)
         except OutputTooLargeError:
