@@ -5,8 +5,14 @@ from enum import Enum
 from functools import cached_property
 
 from discord.ext import commands
-from discord.ext.commands import (BadArgument, Bot, Context, Converter, Greedy,
-                                  clean_content)
+from discord.ext.commands import (
+    BadArgument,
+    Bot,
+    Context,
+    Converter,
+    Greedy,
+    clean_content,
+)
 from parsita import ParseError, TextParsers, lit, opt, reg, rep
 from parsita.util import constant
 
@@ -204,41 +210,3 @@ class ExcessiveDiceRollsError(Exception):
 
 def setup(bot: Bot):
     bot.add_cog(Roll(bot))
-
-
-# display_name = get_name_string(ctx.message)
-# if len(message) == 0:
-#     rolls = ["1d6"]
-# else:
-#     rolls = [
-#         roll
-#         for roll in message
-#         if self.pattern.search(roll)
-#         and int(roll.split("d")[0]) > 0
-#         and int(roll.split("d")[1]) > 0
-#     ]
-#     if len(rolls) == 0:
-#         await ctx.send(
-#             f"Please give rolls in the form `xdy` (e.g. `1d6`), where x and y are positive {display_name}."
-#         )
-#         return
-#     # if any(map(lambda roll : int(roll.split("d")[0]) > 1000, rolls)):
-#     if sum(map(lambda roll: int(roll.split("d")[0]), rolls)) > 1000:
-#         await ctx.send(
-#             f"Please do not request excessively long dice rolls, {display_name}."
-#         )
-#         return
-# lines = [f":game_die: **DICE TIME** :game_die:\n{display_name}"] + [
-#     format_roll(roll) for roll in rolls
-# ]
-# if len(message) > 0 and len(rolls) != len(message):
-#     lines += [
-#         "\n**Note:** I didn't understand all of the inputs provided.\nPlease give rolls in the form `xdy` (e.g. `1d6`), where x and y are positive."
-#     ]
-# out = "\n".join(lines)
-# if len(out) > 2000:
-#     await ctx.send(
-#         f":no_entry_sign: **DICE CRIME** :no_entry_sign:\n_Your result was too long to fit in a single message, {display_name}!_"
-#     )
-# else:
-#     await ctx.send(out)
