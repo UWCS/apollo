@@ -199,7 +199,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 karma_id=karma_item.id,
                 user_id=user.id,
                 message_id=message_id,
-                reasons=transaction.karma_item.reason,
+                reason=transaction.karma_item.reason,
                 score=new_score,
                 change=(new_score - last_change.score),
                 created_at=datetime.utcnow(),
