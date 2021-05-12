@@ -228,9 +228,6 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     logging.error(e)
                     errors.append(internal_error(truncated_name))
                     continue
-            else:
-                errors.append(cooldown_error(truncated_name, time_delta))
-                continue
 
         # Update karma counts
         if transaction.karma_item.operation.value == 0:
