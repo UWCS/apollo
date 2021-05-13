@@ -458,7 +458,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(kicked) > 0:
-            mentions = format_list_of_members(failed)
+            mentions = format_list_of_members(failed, ping=False)
             with_reason = (
                 "with no reason given"
                 if reason is None
@@ -511,7 +511,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(banned) > 0:
-            mentions = format_list_of_members(failed)
+            mentions = format_list_of_members(failed, ping=False)
             were = "were" if len(banned) > 1 else "was"
             until_datetime = f"until {humanize.naturaltime(until)} (a duration of {humanize.precisedelta(until - datetime.now())})"
             with_reason = (
@@ -575,7 +575,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(banned) > 0:
-            mentions = format_list_of_members(failed)
+            mentions = format_list_of_members(failed, ping=False)
             were = "were" if len(banned) > 1 else "was"
             with_reason = (
                 "with no reason given."
@@ -630,7 +630,7 @@ class Moderation(Cog):
 
         logging.info(f"{ctx.author} used unban")
         if len(unbanned) > 0:
-            mentions = format_list([str(user) for user in unbanned])
+            mentions = format_list_of_members(unbanned, ping=False)
             with_reason = (
                 "with no reason given"
                 if reason is None
