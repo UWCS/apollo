@@ -94,7 +94,7 @@ class Moderation(Cog):
                     ModerationHistory.action.in_(
                         (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)
                     ),
-                    ModerationHistory.complete == False,
+                    ModerationHistory.complete == False,  # noqa
                     ModerationHistory.until <= now,
                 )
                 .all()
