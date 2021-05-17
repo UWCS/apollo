@@ -104,10 +104,11 @@ def parse_time(time, /):
 
     now = datetime.now()
 
-    try:
-        parsed_time = datetime.strptime(time, "%Y-%m-%d %H:%M")
-    except ValueError:
-        pass
+    if not parsed_time:
+        try:
+            parsed_time = datetime.strptime(time, "%Y-%m-%d %H:%M")
+        except ValueError:
+            pass
 
     if not parsed_time:
         try:
