@@ -32,18 +32,18 @@ def is_decimal(num):
         return False
 
 
-def pluralise(l, word, single="", plural="s"):
-    if len(l) > 1:
+def pluralise(el, /, word, single="", plural="s"):
+    if len(el) > 1:
         return word + plural
     else:
         return word + single
 
 
-def filter_out_none(iterable: Iterable):
+def filter_out_none(iterable: Iterable, /):
     return [i for i in iterable if i is not None]
 
 
-def format_list(el: list):
+def format_list(el: list, /):
     if len(el) == 1:
         return el[0]
     elif len(el) == 2:
@@ -52,7 +52,7 @@ def format_list(el: list):
         return f'{", ".join(el[:-1])}, and {el[-1]}'
 
 
-def format_list_of_members(members, ping=True):
+def format_list_of_members(members, /, *, ping=True):
     if ping:
         el = [member.mention for member in members]
     else:
@@ -81,7 +81,7 @@ class EnumGet:
             return cls[values[casefolded]]
 
 
-async def is_compsoc_exec_in_guild(ctx: Context):
+async def is_compsoc_exec_in_guild(ctx: Context, /):
     """Check whether a member is an exec in the UWCS Discord"""
     compsoc_guild = next(
         (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
@@ -98,7 +98,7 @@ async def is_compsoc_exec_in_guild(ctx: Context):
     return any(roles)
 
 
-def parse_time(time):
+def parse_time(time, /):
     # dateparser.parse returns None if it cannot parse
     parsed_time = dateparser.parse(
         time, settings={"DATE_ORDER": "DMY", "PREFER_DATES_FROM": "future"}
@@ -159,11 +159,11 @@ def parse_time(time):
     return parsed_time
 
 
-def get_database_user_from_id(id_: int) -> models.User:
+def get_database_user_from_id(id_: int, /) -> models.User:
     return (
         db_session.query(models.User).filter(models.User.user_uid == id_).one_or_none()
     )
 
 
-def get_database_user(user: {id}) -> models.User:
+def get_database_user(user: {id}, /) -> models.User:
     return get_database_user_from_id(user.id)
