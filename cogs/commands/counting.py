@@ -9,7 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from models import CountingRun, CountingUser
 from models import User as UserModel
 from models import db_session
-from utils import get_database_user, is_decimal
+from utils import get_database_user_from_id, is_decimal
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
@@ -104,7 +104,7 @@ class Counting(Cog):
             for player, correct in players.items():
                 # The last message sent is the incorrect one
                 wrong = 1 if msg.author.id == player else 0
-                db_user = get_database_user(player)
+                db_user = get_database_user_from_id(player)
                 # If we can't find the user, skip
                 if not db_user:
                     continue
