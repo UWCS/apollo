@@ -6,6 +6,7 @@ from typing import Iterable
 import dateparser
 import discord
 from discord.ext.commands import CommandError, Context
+from more_itertools import partition
 
 import models
 from config import CONFIG
@@ -169,6 +170,11 @@ def parse_time(time, /):
                 parsed_time = parsed_time + timedelta(seconds=int(result.group(4)[:-1]))
 
     return parsed_time
+
+
+def partition_list(pred, el, /):
+    a, b = partition(pred, el)
+    return list(a), list(b)
 
 
 def pluralise(el, /, word, single="", plural="s"):
