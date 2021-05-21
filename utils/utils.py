@@ -12,31 +12,39 @@ from config import CONFIG
 from models import db_session
 
 
-def user_is_irc_bot(ctx):
-    return ctx.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
+class AdminError(CommandError):
+    message = None
+
+    def __init__(self, message=None, *args):
+        self.message = message
+        super().__init__(*args)
 
 
-def get_name_string(message):
-    # if message.clean_content.startswith("**<"): <-- FOR TESTING
-    if user_is_irc_bot(message):
-        return message.clean_content.split(" ")[0][3:-3]
-    else:
-        return f"{message.author.mention}"
+class EnumGet:
+    """Only use this if you're an enum inheriting it!"""
+
+    @classmethod
+    def get(cls, argument: str, default=None):
+        values = {e.name.casefold(): e.name for e in list(cls)}
+        casefolded = argument.casefold()
+        if casefolded not in values:
+            return default
+        else:
+            return cls[values[casefolded]]
 
 
-def is_decimal(num):
-    try:
-        Decimal(num)
-        return True
-    except (InvalidOperation, TypeError):
-        return False
-
-
-def pluralise(el, /, word, single="", plural="s"):
-    if len(el) > 1:
-        return word + plural
-    else:
-        return word + single
+def clean_brackets(
+    str,
+    brackets=[
+        ("(", ")"),
+    ],
+):
+    """Removes matching brackets from the outside of a string
+    Only supports single-character brackets
+    """
+    while len(str) > 1 and (str[0], str[-1]) in brackets:
+        str = str[1:-1]
+    return str
 
 
 def filter_out_none(iterable: Iterable, /):
@@ -60,25 +68,22 @@ def format_list_of_members(members, /, *, ping=True):
     return format_list(el)
 
 
-class AdminError(CommandError):
-    message = None
-
-    def __init__(self, message=None, *args):
-        self.message = message
-        super().__init__(*args)
+def get_database_user_from_id(id_: int, /) -> models.User:
+    return (
+        db_session.query(models.User).filter(models.User.user_uid == id_).one_or_none()
+    )
 
 
-class EnumGet:
-    """Only use this if you're an enum inheriting it!"""
+def get_database_user(user: {id}, /) -> models.User:
+    return get_database_user_from_id(user.id)
 
-    @classmethod
-    def get(cls, argument: str, default=None):
-        values = {e.name.casefold(): e.name for e in list(cls)}
-        casefolded = argument.casefold()
-        if casefolded not in values:
-            return default
-        else:
-            return cls[values[casefolded]]
+
+def get_name_string(message):
+    # if message.clean_content.startswith("**<"): <-- FOR TESTING
+    if user_is_irc_bot(message):
+        return message.clean_content.split(" ")[0][3:-3]
+    else:
+        return f"{message.author.mention}"
 
 
 async def is_compsoc_exec_in_guild(ctx: Context, /):
@@ -96,6 +101,14 @@ async def is_compsoc_exec_in_guild(ctx: Context, /):
         discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
     ]
     return any(roles)
+
+
+def is_decimal(num):
+    try:
+        Decimal(num)
+        return True
+    except (InvalidOperation, TypeError):
+        return False
 
 
 def parse_time(time, /):
@@ -158,24 +171,12 @@ def parse_time(time, /):
     return parsed_time
 
 
-def get_database_user_from_id(id_: int, /) -> models.User:
-    return (
-        db_session.query(models.User).filter(models.User.user_uid == id_).one_or_none()
-    )
+def pluralise(el, /, word, single="", plural="s"):
+    if len(el) > 1:
+        return word + plural
+    else:
+        return word + single
 
 
-def get_database_user(user: {id}, /) -> models.User:
-    return get_database_user_from_id(user.id)
-
-def clean_brackets(
-    str,
-    brackets=[
-        ("(", ")"),
-    ],
-):
-    """Removes matching brackets from the outside of a string
-    Only supports single-character brackets
-    """
-    while len(str) > 1 and (str[0], str[-1]) in brackets:
-        str = str[1:-1]
-    return str
+def user_is_irc_bot(ctx):
+    return ctx.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
