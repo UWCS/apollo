@@ -59,6 +59,44 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
 
 * Although the default database engine in config files is SQLite3, the current production database engine is PostgreSQL.
   In order to test code against a PostgreSQL database, you will need to install `psycopg2` and set up a PostgreSQL instance.
+  
+#### Testing subsections
+
+You may want to work on a subsection of the bot without the surrounding functionality. This may be useful if you want to add a basic command but don't want the hassle of installing and working around the database requirements. You can disable parts of the bot from being loaded in at runtime by disabling their cogs.
+
+[Cogs](https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html) are a method of categorising parts of your bot with discord.py. If you are to contribute to the project, some understanding of cogs and discord.py in general would be advisable, but you can see the implementation of pre-existing commands for a basic idea of how they work.
+
+Cogs are loaded in [apollo.py](apollo.py):
+
+```py
+# The command extensions to be loaded by the bot
+EXTENSIONS = [
+    "cogs.commands.admin",
+    "cogs.commands.blacklist",
+    "cogs.commands.date",
+    "cogs.commands.flip",
+    "cogs.commands.karma",
+    "cogs.commands.misc",
+    # ...and so on
+]
+```
+
+You can simply comment out any category of commands you don't want the bot to load to avoid supporting their requirements:
+
+```py
+# The command extensions to be loaded by the bot
+EXTENSIONS = [
+    "cogs.commands.admin",
+    #    "cogs.commands.blacklist", # <- requires database
+    "cogs.commands.date",
+    "cogs.commands.flip",
+    #    "cogs.commands.karma", # <- requires database
+    "cogs.commands.misc",
+    # ...and so on
+]
+```
+
+Make sure not to commit these comments when you pull request.
 
 ### License
 
