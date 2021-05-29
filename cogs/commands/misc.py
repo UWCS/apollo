@@ -22,7 +22,9 @@ PING_HELP_TEXT = """Pong!"""
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.version = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True).stdout.decode()
+        self.version = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True
+        ).stdout.decode()
 
     @commands.command(help=ZED0_HELP_TEXT, brief=ZED0_HELP_TEXT)
     async def zed0(self, ctx: Context):
