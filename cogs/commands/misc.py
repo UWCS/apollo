@@ -1,4 +1,5 @@
 import random
+import subprocess
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
@@ -21,6 +22,9 @@ PING_HELP_TEXT = """Pong!"""
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.version = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True
+        ).stdout.decode()
 
     @commands.command(help=ZED0_HELP_TEXT, brief=ZED0_HELP_TEXT)
     async def zed0(self, ctx: Context):
@@ -86,6 +90,11 @@ We have a Terraria 1.4.1.2 server running at:
     @commands.command(help=PING_HELP_TEXT, brief=PING_HELP_TEXT)
     async def ping(self, ctx: Context):
         await ctx.send(":ping_pong:")
+
+    @commands.command(brief="Apollo's current version")
+    async def version(self, ctx: Context):
+        """Print the SHA1 hash of HEAD in the deployed Apollo repository."""
+        await ctx.send(self.version)
 
 
 def setup(bot: Bot):
