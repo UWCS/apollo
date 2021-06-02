@@ -461,8 +461,8 @@ class Karma(commands.Cog):
 
             display_name = get_name_string(ctx.message)
             emoji = (
-                ":chart_with_upwards_trend"
-                if total_changes > 0
+                ":chart_with_upwards_trend:"
+                if sum(c.change for cs in karma_dict.values() for c in cs) >= 0
                 else ":chart_with_downwards_trend:"
             )
             await ctx.send(f"Here you go, {display_name}! {emoji}", embed=embed)
