@@ -17,6 +17,8 @@ SINJO_HELP_TEXT = """o-o"""
 SERVERS_HELP_TEXT = """List of our multiplayer servers"""
 HASKELL_HELP_TEXT = """#notacult"""
 PING_HELP_TEXT = """Pong!"""
+XY_HELP_TEXT = """The XY problem is asking about your attempted solution rather than your actual problem."""
+ASK_TO_ASK_HELP_TEXT = """Don't ask to ask - just ask."""
 
 
 class Misc(commands.Cog):
@@ -95,6 +97,27 @@ We have a Terraria 1.4.1.2 server running at:
     async def version(self, ctx: Context):
         """Print the SHA1 hash of HEAD in the deployed Apollo repository."""
         await ctx.send(self.version)
+
+    @commands.command(aliases=["xyproblem"], help=XY_HELP_TEXT, brief=XY_HELP_TEXT)
+    async def xy(self, ctx: Context):
+        await ctx.send("https://xyproblem.info/")
+
+    @commands.command(
+        aliases=[
+            "asktoask",
+            "a2a",
+            "ask2ask",
+            "da2a",
+            "dont_ask_to_ask",
+            "dontask2ask",
+            "don't_ask_to_ask",
+            "don'tasktoask",
+        ],
+        help=ASK_TO_ASK_HELP_TEXT,
+        brief=ASK_TO_ASK_HELP_TEXT,
+    )
+    async def ask_to_ask(self, ctx: Context):
+        await ctx.send("https://dontasktoask.com/")
 
 
 def setup(bot: Bot):
