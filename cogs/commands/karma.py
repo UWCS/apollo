@@ -427,13 +427,13 @@ class Karma(commands.Cog):
             time_taken = (t_end - t_start) / 1000
             total_changes = sum(len(v) for v in karma_dict.values())
             # Construct the embed strings
-            if karma_dict.keys():
+            if keys := karma_dict.keys():
                 embed_colour = Color.from_rgb(61, 83, 255)
-                embed_description = f'Tracked {len(karma_dict.keys())} {pluralise(karma_dict.keys(), "topic")} with a total of {total_changes} changes'
+                embed_description = f'Tracked {len(keys)} {pluralise(keys, "topic")} with a total of {total_changes} changes'
                 embed_title = (
-                    f"Karma trend over time for {comma_separate(list(karma_dict.keys()))}"
-                    if len(karma_dict.keys()) == 1
-                    else f"Karma trends over time for {comma_separate(list(karma_dict.keys()))}"
+                    f"Karma trend over time for {comma_separate(list(keys))}"
+                    if len(keys) == 1
+                    else f"Karma trends over time for {comma_separate(list(keys))}"
                 )
             else:
                 embed_colour = Color.from_rgb(255, 23, 68)
@@ -461,8 +461,8 @@ class Karma(commands.Cog):
 
             display_name = get_name_string(ctx.message)
             emoji = (
-                ":chart_with_upwards_trend"
-                if total_changes > 0
+                ":chart_with_upwards_trend:"
+                if sum(c.change for cs in karma_dict.values() for c in cs) >= 0
                 else ":chart_with_downwards_trend:"
             )
             await ctx.send(f"Here you go, {display_name}! {emoji}", embed=embed)
