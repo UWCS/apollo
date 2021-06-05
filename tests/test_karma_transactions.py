@@ -8,11 +8,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from karma.parser import KarmaItem, KarmaOperation
-from karma.transaction import KarmaTransaction, make_transactions
+from karma.transaction import KarmaTransaction, filter_transactions, make_transactions
 from models import Base
 from tests.stubs import make_irc_message_stub, make_message_stub
 
-TEST_CASES = {
+MAKE_TEST_CASES = {
     # Simple cases
     "no item": (
         [],
@@ -77,8 +77,56 @@ TEST_CASES = {
 
 
 @pytest.mark.parametrize(
-    ["items", "message", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
+    ["items", "message", "expected"],
+    MAKE_TEST_CASES.values(),
+    ids=MAKE_TEST_CASES.keys(),
 )
-def test_transactions(items, message, expected):
+def test_make_transactions(items, message, expected):
     actual = make_transactions(items, message)
+    assert actual == expected
+
+
+FILTER_TEST_CASES = {
+    # Cases that should be filtered out
+    "empty topic": (
+        [KarmaTransaction(KarmaItem("", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "short topic": (
+        [KarmaTransaction(KarmaItem("C", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "whitespace topic": (
+        [KarmaTransaction(KarmaItem("     ", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "bypassed empty topic": (
+        [KarmaTransaction(KarmaItem("", KarmaOperation.POSITIVE, None, True), False)],
+        [],
+    ),
+    "bypassed whitespace topic": (
+        [
+            KarmaTransaction(
+                KarmaItem("     ", KarmaOperation.POSITIVE, None, True), False
+            )
+        ],
+        [],
+    ),
+    # Cases that should be unchanged
+    "typical item": (
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+    ),
+    "bypassed short topic": (
+        [KarmaTransaction(KarmaItem("C", KarmaOperation.POSITIVE, None, True), False)],
+        [KarmaTransaction(KarmaItem("C", KarmaOperation.POSITIVE, None, True), False)],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ["items", "expected"], FILTER_TEST_CASES.values(), ids=FILTER_TEST_CASES.keys()
+)
+def test_filter_transactions(items, expected):
+    actual = filter_transactions(items)
     assert actual == expected

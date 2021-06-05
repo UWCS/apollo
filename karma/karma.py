@@ -9,7 +9,12 @@ from sqlalchemy_utils import ScalarListException
 
 from cogs.commands.admin import MiniKarmaMode
 from karma.parser import parse_message_content
-from karma.transaction import KarmaTransaction, apply_blacklist, make_transactions
+from karma.transaction import (
+    KarmaTransaction,
+    apply_blacklist,
+    filter_transactions,
+    make_transactions,
+)
 from models import Karma, KarmaChange, MiniKarmaChannel, User
 from utils import get_name_string
 
@@ -25,6 +30,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # Parse the message for karma modifications
     karma_items = parse_message_content(message.content)
     transactions = make_transactions(karma_items, message)
+    transactions = filter_transactions(transactions)
     transactions = apply_blacklist(transactions, db_session)
 
     # If no karma'd items, just return

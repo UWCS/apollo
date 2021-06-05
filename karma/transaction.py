@@ -65,6 +65,25 @@ def make_transactions(
     return [KarmaTransaction.from_item(i, message) for i in truncated]
 
 
+def filter_transactions(
+    transactions: Iterable[KarmaTransaction],
+) -> List[KarmaTransaction]:
+    def pred(transaction: KarmaTransaction) -> bool:
+        return not (
+            # Short items must be bypassed
+            (
+                len(transaction.karma_item.topic) < 3
+                and not transaction.karma_item.bypass
+            )
+            # Whitespace items are not allowed
+            or transaction.karma_item.topic.isspace()
+            # Empty items are not allowed
+            or len(transaction.karma_item.topic) == 0
+        )
+
+    return [t for t in transactions if pred(t)]
+
+
 def apply_blacklist(
     transactions: Iterable[KarmaTransaction], db_session: Session
 ) -> List[KarmaTransaction]:
