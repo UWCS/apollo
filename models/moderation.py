@@ -47,3 +47,20 @@ class ModerationHistory(Base):
     reason = Column(String, nullable=True)
     moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     linked_item = Column(Integer, ForeignKey("moderation_history.id"), nullable=True)
+
+
+@auto_str
+class ModerationTemporaryActions(Base):
+    __tablename__ = "moderation_temporary_actions"
+
+    id = Column(Integer, ForeignKey("moderation_history.id"), primary_key=True, nullable=False)
+    until = Column(DateTime, nullable=False)
+    complete = Column(Boolean, nullable=False)
+
+
+@auto_str
+class ModerationLinkedItems(Base):
+    __tablename__ = "moderation_linked_items"
+
+    id = Column(Integer, ForeignKey("moderation_history.id"), primary_key=True, nullable=False)
+    linked_item = Column(Integer, ForeignKey("moderation_history.id"), nullable=False)

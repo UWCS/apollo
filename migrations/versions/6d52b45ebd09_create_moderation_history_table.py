@@ -46,39 +46,54 @@ def upgrade():
             default=sa.func.current_timestamp(),
         ),
         sa.Column("action", sa.Enum(ModerationAction), nullable=False),
+        sa.Column("reason", sa.String, nullable=True),
+        sa.Column(
+            "moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False
+        ),
+    )
+
+    op.create_table(
+        "moderation_temporary_actions",
+        sa.Column(
+            "moderation_item_id",
+            sa.Integer,
+            sa.ForeignKey("moderation_history.id"),
+            primary_key=True,
+            nullable=False,
+        ),
         sa.Column(
             "until",
             sa.DateTime,
-            sa.CheckConstraint(
-                "until IS NULL OR (until IS NOT NULL AND action IN('TEMPMUTE', 'TEMPBAN'))"
-            ),
-            nullable=True,
+            nullable=False,
         ),
         sa.Column(
             "complete",
             sa.Boolean,
-            sa.CheckConstraint(
-                "complete IS NULL OR (complete IS NOT NULL AND action IN('TEMPMUTE', 'TEMPBAN'))"
-            ),
-            nullable=True,
+            nullable=False,
         ),
-        sa.Column("reason", sa.String, nullable=True),
+    )
+
+    op.create_table(
+        "moderation_linked_items",
         sa.Column(
-            "moderator_id", sa.Integer, sa.ForeignKey("users.id"), nullable=False
+            "moderation_item_id",
+            sa.Integer,
+            sa.ForeignKey("moderation_history.id"),
+            primary_key=True,
+            nullable=False,
         ),
         sa.Column(
             "linked_item",
             sa.Integer,
             sa.ForeignKey("moderation_history.id"),
-            sa.CheckConstraint(
-                "linked_item IS NULL OR (linked_item IS NOT NULL AND action IN ('REMOVE_WARN', 'REMOVE_AUTOWARN'))"
-            ),
-            nullable=True,
+            nullable=False,
         ),
     )
 
 
 def downgrade():
+    op.drop_table("moderation_temporary_actions")
+    op.drop_table("moderation_linked_items")
     op.drop_table("moderation_history")
     bind = op.get_bind()
     sa.Enum(ModerationAction).drop(bind)
