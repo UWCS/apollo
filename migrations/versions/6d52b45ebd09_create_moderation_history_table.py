@@ -28,10 +28,12 @@ class ModerationAction(enum.Enum):
     REMOVE_WARN = 4
     AUTOWARN = 5
     REMOVE_AUTOWARN = 6
-    KICK = 7
-    TEMPBAN = 8
-    BAN = 9
-    UNBAN = 10
+    AUTOMUTE = 7
+    REMOVE_AUTOMUTE = 8
+    KICK = 9
+    TEMPBAN = 10
+    BAN = 11
+    UNBAN = 12
 
 
 def upgrade():

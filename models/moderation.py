@@ -19,6 +19,8 @@ class ModerationAction(enum.Enum):
     """Which moderation action a particular row represents.
 
     Values are specified to ensure they always match up with the database.
+    SQLAlchemy usually uses a string of the name as the database-side representation
+    but just in case it doesn't at some point they're explicitly defined.
     """
 
     TEMPMUTE = 0
@@ -28,10 +30,12 @@ class ModerationAction(enum.Enum):
     REMOVE_WARN = 4
     AUTOWARN = 5
     REMOVE_AUTOWARN = 6
-    KICK = 7
-    TEMPBAN = 8
-    BAN = 9
-    UNBAN = 10
+    AUTOMUTE = 7
+    REMOVE_AUTOMUTE = 8
+    KICK = 9
+    TEMPBAN = 10
+    BAN = 11
+    UNBAN = 12
 
 
 @auto_str
