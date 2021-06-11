@@ -43,6 +43,13 @@ def make_karma(el: list):
     )
 
 
+def make_op_regex(o):
+    non_op_pre = r"(?<![+-])"
+    non_op_post = r"(?![+-])"
+    allowed_post = r"(?=[ \t\v!,;:?]|$)"
+    return rf"{non_op_pre}{o}{non_op_post}{allowed_post}"
+
+
 class KarmaParser(TextParsers):
     anything = reg(r".") > constant(None)
 
@@ -52,11 +59,11 @@ class KarmaParser(TextParsers):
         string_topic > (lambda t: [t[1:-1], True])
     )
 
-    op_positive = reg(r"(?<![+-])\+\+(?![+-])") > constant(KarmaOperation.POSITIVE)
+    op_positive = reg(make_op_regex(r"\+\+")) > constant(KarmaOperation.POSITIVE)
     op_neutral = (
-        reg(r"(?<![+-])\+-(?![+-])") | reg(r"(?<![+-])-\+(?![+-])")
+        reg(make_op_regex(r"\+-")) | reg(make_op_regex(r"-\+"))
     ) > constant(KarmaOperation.NEUTRAL)
-    op_negative = reg(r"(?<![+-])--(?![+-])") > constant(KarmaOperation.NEGATIVE)
+    op_negative = reg(make_op_regex(r"--")) > constant(KarmaOperation.NEGATIVE)
     operator = op_positive | op_neutral | op_negative
 
     bracket_reason = reg(r"\(.+?\)") > (lambda s: s[1:-1])
