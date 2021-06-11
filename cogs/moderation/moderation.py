@@ -185,7 +185,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(muted) > 0:
-            mentions = format_list_of_members(failed)
+            mentions = format_list_of_members(muted)
             were = "were" if len(muted) > 1 else "was"
             until_datetime = f"until {humanize.naturaltime(until)} (a duration of {humanize.precisedelta(until - datetime.now())})"
             with_reason = (
@@ -237,7 +237,7 @@ class Moderation(Cog):
         message_parts = []
 
         if len(muted) > 0:
-            mentions = format_list_of_members(failed)
+            mentions = format_list_of_members(muted)
             were = "were" if len(muted) > 1 else "was"
             with_reason = (
                 "with no reason given"
@@ -264,7 +264,7 @@ class Moderation(Cog):
     async def unmute(
         self, ctx: Context, members: Greedy[Member], *, reason: Optional[str]
     ):
-        muted = []
+        unmuted = []
         failed = []
 
         logging.info(f"{ctx.author} used unmute with reason {reason}")
@@ -275,16 +275,16 @@ class Moderation(Cog):
                     member, ModerationAction.UNMUTE, reason, ctx.author
                 )
                 logging.info(f"Unmuted {member}")
-                muted.append(member)
+                unmuted.append(member)
             except HTTPException:
                 logging.info(f"Failed to unmute {member}")
                 failed.append(member)
 
         message_parts = []
 
-        if len(muted) > 0:
-            mentions = format_list_of_members(failed)
-            were = "were" if len(muted) > 1 else "was"
+        if len(unmuted) > 0:
+            mentions = format_list_of_members(unmuted)
+            were = "were" if len(unmuted) > 1 else "was"
             with_reason = (
                 "with no reason given"
                 if reason is None
