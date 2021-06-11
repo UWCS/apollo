@@ -8,7 +8,6 @@ from roll.ast import *
 
 def bin_operator(xs):
     """xs = [item, [[sep, item], ... ]]"""
-
     def rec_operator(left, pairs):
         if len(pairs) == 0:
             return left
@@ -21,10 +20,8 @@ def bin_operator(xs):
     suffix = xs[1]
     return rec_operator(item, suffix)
 
-
 def bin_operator_right(xs):
     """xs = [item, [[sep, item], ... ]]"""
-
     def rec_operator(pairs, right):
         if len(pairs) == 0:
             return right
@@ -41,40 +38,36 @@ def bin_operator_right(xs):
     prefix = [[separators[i], items[i]] for i in range(len(separators))]
     return rec_operator(prefix, right)
 
-
 def mon_operator(xs):
-    """xs = [unary_op, unary] OR primary"""
+    """xs = [unary_op, unary] OR primary
+    """
     if not isinstance(xs, list):
         return xs
     return TokenOperator(xs[0], [xs[1]])
-
 
 def maybe_dice(xs):
     """unary & opt("d" >> unary)
     xs = [unary, [unary]]
     """
-    if xs[1] == []:
+    if len(xs[1]) == 0:
         return xs[0]
     return TokenRoll(xs[0], xs[1][0])
-
 
 def maybe_ternary(xs):
     """case & opt("?" >> expr << ":" & expr)
     xs = [case, []]
     """
-    if xs[1] == []:
+    if len(xs[1]) == 0:
         return xs[0]
     return TokenTernary(xs[0], xs[1][0][0], xs[1][0][1])
-
 
 def maybe_case(xs):
     """unary & opt(":" >> "(" >> rep1sep(case_pair, ";") << ")")
     xs = [unary, [[]]]
     """
-    if xs[1] == []:
+    if len(xs[1]) == 0:
         return xs[0]
     return TokenCase(xs[0], xs[1][0])
-
 
 def let(xs):
     """assignment = identifier << "=" & expr
@@ -86,7 +79,6 @@ def let(xs):
     new_env = [Assignment(decl[0], decl[1]) for decl in decls]
     return TokenLet(new_env, expr)
 
-
 def anon(xs):
     """rep1(identifier) & expr
     xs = [[id], expr]
@@ -97,15 +89,14 @@ def anon(xs):
         return TokenFunction(ids[0], expr)
     return TokenFunction(ids[0], anon([ids[1:], expr]))
 
-
 def maybe_application(xs):
-    """xs = [expr, expr, ...]"""
+    """xs = [expr, expr, ...]
+    """
     if len(xs) == 1:
         return xs[0]
     return TokenApplication(xs[0], xs[1:])
 
-
-def func_decl_or_type(xs):  #
+def function(xs):
     """identifier & func_decl
     xs = [id, expr]
     """
@@ -113,14 +104,19 @@ def func_decl_or_type(xs):  #
 
 
 class ProgramParser(TextParsers):
+
+    # Unnecessary forward declarations - makes IDEs happier
+    # num = fwd()
+    # expr = fwd()
+    # equality, comparison, logic, term, factor, power, ternary, case, dice, unary, primary, bracketed = fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd()
+
+    # Actual grammar
     split1 = lambda item, separator: item & rep(separator & item)
     split = lambda item, separator: opt(split1(item, separator))
 
     identifier = reg(r"[a-zA-Z]\w*")
 
-    string = reg(r'".*?(?<!\\)(\\\\)*?"') | reg(r"'.*?(?<!\\)(\\\\)*?'") > (
-        lambda s: TokenString(s[1:-1])
-    )
+    string = reg(r'".*?(?<!\\)(\\\\)*?"') | reg(r"'.*?(?<!\\)(\\\\)*?'") > (lambda s: TokenString(s[1:-1]))
 
     num_int = reg(r"\d+") > int
     num_float = reg(r"(\d*\.\d+|\d+\.\d*)") > float
@@ -173,34 +169,19 @@ class ProgramParser(TextParsers):
     case = dice & opt(lit("$") >> "(" >> rep1sep(case_pair, ";") << ")") > maybe_case
     dice = unary & opt("d" >> unary) > maybe_dice
     unary = unary_op & unary | primary > mon_operator
-    primary = number | string | bracketed | let_stmt | anon_func | variable
+    primary = (number | string | bracketed | let_stmt | anon_func | variable)
     bracketed = "(" >> expr << ")"
 
-    func = identifier & func_decl > func_decl_or_type  # (func_decl | type_decl)
-    func_decl = "=" >> expr  # expr << "=" & expr
-    type_decl = "::" >> type_sig
-    type_sig = rep1(type_brac | type_num | type_string)
-    type_brac = "(" >> type_sig << ")"
-    type_num = "#"
-    type_string = "$"
+    func = identifier & "=" >> expr > function
 
     program = repsep("@" >> func | expr, ";") << opt(";") > Program
 
     main = program
 
 
-# def remove_comments(string):
-#     return re.sub(r"\/\*(?s).*\*\/|//.*", "", string)
-
-
 class DiscordParser(TextParsers):
     """Removes surrounding code blocks before the program can reach the main parser"""
-
-    main = (
-        "```" >> reg(r"(?s).*?(?=```)") << "```"
-        | "`" >> reg(r"(?s).*?(?=`)") << "`"
-        | reg(r"[^`](?s).*")
-    )
+    main = "```" >> reg(r"(?s).*?(?=```)") << "```" | "`" >> reg(r"(?s).*?(?=`)") << "`" | reg(r"[^`](?s).*")
 
 
 def parse_program(source: str):
@@ -219,16 +200,14 @@ def format_parse_error(err, source):
     found = re.search(r"(?<=but found ').*?(?=')", err.message)
     if found is None:
         last_line = source.split("\n")[-1]
-        pointer = last_line + "\n" + " " * (len(last_line) - 1) + "^"
+        pointer = last_line + "\n" + " "*(len(last_line)-1) + "^"
         return f"Found unexpected end of source\n{pointer}"
     else:
         found = found.group(0)
         try:
             line = re.findall(r"(?<=Line )\d+", err.message)[-1]
             char = re.findall(r"(?<=character )\d+", err.message)[-1]
-            pointer = (
-                source.split("\n")[int(line) - 1] + "\n" + " " * (int(char) - 1) + "^"
-            )
+            pointer = source.split("\n")[int(line)-1] + "\n" + " "*(int(char)-1) + "^"
             return f"Unexpected token {found}\nLine: {line}\nChar: {char}\n{pointer}"
-        except:
+        except IndexError:
             return f"Unexpected token {found}"

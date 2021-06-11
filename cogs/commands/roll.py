@@ -1,15 +1,10 @@
 import asyncio
 import logging
-import random
-import re
 
 from discord.ext import commands
 from discord.ext.commands import (
-    BadArgument,
     Bot,
     Context,
-    Converter,
-    Greedy,
     clean_content,
 )
 from parsita import ParseError
@@ -19,7 +14,6 @@ from cogs.parallelism import get_parallelism
 from roll.ast import MAX_ROLLS
 from roll.parser import parse_program
 from utils import get_name_string
-from utils.exceptions import InternalError, OutputTooLargeError, WarningError
 
 LONG_HELP_TEXT = """
 Rolls an unbiased xdy (x dice with y sides).
@@ -93,23 +87,20 @@ def run(message, display_name):
         if len(message) == 0:
             message = "1d6"
         message = message.strip()
-        logging.debug("\n==== Parsing ====")
+        logging.debug("==== Parsing ====")
         program = parse_program(message)
-        logging.debug("\n==== Evaluation ====")
+        logging.debug("==== Evaluation ====")
         logging.debug(program)
         values = program.reduce()
-        logging.debug("\n==== Output ====")
+        logging.debug("==== Output ====")
         string_rep = program.string_rep
         pairs_assignments = string_rep.assignments
-        pairs_expressions = [
-            (values[i], string_rep.expressions[i]) for i in range(len(values))
-        ]
+        pairs_expressions = zip(values, string_rep.expressions)
         out = SUCCESS_OUT.format(
             ping=display_name,
-            # body="\n".join([f"> **{pair[0]}**" for pair in pairs])
             body="\n".join(
-                [f"{pair[0]} = `{pair[1]}`" for pair in pairs_assignments]
-                + [f"**{pair[0]}** ⟵ `{pair[1]}`" for pair in pairs_expressions]
+                [f"{p0} = `{p1}`" for p0, p1 in pairs_assignments]
+                + [f"**{p0}** ⟵ `{p1}`" for p0, p1 in pairs_expressions]
             ),
         )
         if len(out) > MAX_ROLLS:
