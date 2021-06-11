@@ -79,6 +79,7 @@ class KarmaParser(TextParsers):
 
 def parse_message_content(content: str) -> List[KarmaItem]:
     cleaned = re.sub(r"```.*?```", " ", content, flags=re.DOTALL)
+    cleaned = re.sub(r"`.*?`", " ", cleaned, flags=re.DOTALL)
     if cleaned == "" or cleaned.isspace():
         return []
     return KarmaParser.parse_all.parse(cleaned).or_die()
