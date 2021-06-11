@@ -20,6 +20,7 @@ TEST_CASES = {
     "unrecognised operator": ("foobar==", []),
     "space between topic and operator": ("foobar ++", []),
     "no karma operator with reason": ('"foobar" for reason', []),
+    "operator embedded in link": ("https://foobar.com?slug=--asdf", []),
     # Cases with no karma because of code blocks
     "no karma code block": (
         "```foobar++```",
@@ -49,6 +50,24 @@ TEST_CASES = {
                 ```++
                 """
         ),
+        [],
+    ),
+    "no karma inline code block": (
+        "`foobar++`",
+        [],
+    ),
+    "no karma multi-line inline code block": (
+        dedent(
+            """
+                `foo
+                bar++
+                baz`
+            """
+        ),
+        [],
+    ),
+    "no karma inline code block separates topic and operator": (
+        "foobar`code block here`++",
         [],
     ),
     # Simple karma cases
