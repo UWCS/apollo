@@ -1,11 +1,9 @@
 import pytest
-
 from parsita import ParseError
 
-from roll.ast import MAX_ROLLS
 import roll.exceptions as rollerr
+from roll.ast import MAX_ROLLS
 from roll.parser import parse_program
-
 from tests.stubs import make_message_stub
 
 SIMPLE_TEST_CASES = [
@@ -125,7 +123,10 @@ FUNCTION_TEST_CASES = [
     (r"@rec = \x -> x?rec x-1:0;rec 1", 0),
     (r"@fact = \x -> x ? x*(fact x-1) : 1 ; fact 10", 3628800),
     (r"@fact = \x -> ^loop=(\n a -> n ? loop(n - 1) (n * a) : a)$loop x 1;fact 5", 120),
-    (r"@fib = \x -> ^loop=(\a1 a2 n -> (n == 0) ? a1 : ((n == 1) ? a2 : loop a2 (a1 + a2) (n - 1))) $ loop 0 1 x;fib 10", 55),
+    (
+        r"@fib = \x -> ^loop=(\a1 a2 n -> (n == 0) ? a1 : ((n == 1) ? a2 : loop a2 (a1 + a2) (n - 1))) $ loop 0 1 x;fib 10",
+        55,
+    ),
 ]
 
 ERROR_TEST_CASES = [
@@ -149,16 +150,18 @@ ERROR_TEST_CASES = [
     (r"2d(-4)", rollerr.NegativeDiceSidesError),
     (r"1$(2->1)", rollerr.CaseFailureError),
     (r"1/0", rollerr.ZeroDivisionError)
-    #(r"^x=x$x", Loop)
-    #(r"^x=x$1", ???)
-    #(r"^x=y;y=x$x+y", Loop)
-    #(r"^x=10+y;y=(1?x:0)$x+y", Loop)
+    # (r"^x=x$x", Loop)
+    # (r"^x=x$1", ???)
+    # (r"^x=y;y=x$x+y", Loop)
+    # (r"^x=10+y;y=(1?x:0)$x+y", Loop)
 ]
+
 
 @pytest.mark.parametrize(["string", "expected"], SIMPLE_TEST_CASES)
 def test_roll_deterministic(string, expected):
     actual = parse_program(string).reduce()[0].pure
     assert actual == expected
+
 
 @pytest.mark.parametrize(["string", "expected"], SIMPLE_ND_TEST_CASES)
 def test_roll_nd(string, expected):
@@ -166,10 +169,12 @@ def test_roll_nd(string, expected):
         actual = parse_program(string).reduce()[0].pure
         assert actual in expected
 
+
 @pytest.mark.parametrize(["string", "expected"], FUNCTION_TEST_CASES)
 def test_roll_functions(string, expected):
     actual = parse_program(string).reduce()[0].pure
     assert actual == expected
+
 
 @pytest.mark.parametrize(["string", "error"], ERROR_TEST_CASES)
 def test_roll_errors(string, error):
