@@ -42,6 +42,7 @@ class Parallelism(Cog):
         def work():
             result = func(*args, **kwargs)
             asyncio.run_coroutine_threadsafe(after(result), loop)
+
         return self.execute_on_thread(work, *args, **kwargs)
 
     def send_to_ctx_after_threaded(self, func, ctx, loop, /, *args, **kwargs):

@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import random
 import re
 
@@ -12,16 +14,12 @@ from discord.ext.commands import (
 )
 from parsita import ParseError
 
-import asyncio
-from cogs.parallelism import get_parallelism
-
-from roll.ast import MAX_ROLLS
 import roll.exceptions as rollerr
+from cogs.parallelism import get_parallelism
+from roll.ast import MAX_ROLLS
 from roll.parser import parse_program
 from utils import get_name_string
 from utils.exceptions import InternalError, OutputTooLargeError, WarningError
-
-import logging
 
 LONG_HELP_TEXT = """
 Rolls an unbiased xdy (x dice with y sides).
@@ -77,7 +75,7 @@ class Roll(commands.Cog):
         self.bot = bot
 
     @commands.command(
-    help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"], rest_is_raw=True
+        help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"], rest_is_raw=True
     )
     async def roll(self, ctx: Context, *, message: clean_content):
         loop = asyncio.get_event_loop()
@@ -103,24 +101,41 @@ def run(message, display_name):
         logging.debug("\n==== Output ====")
         string_rep = program.string_rep
         pairs_assignments = string_rep.assignments
-        pairs_expressions = [(values[i], string_rep.expressions[i]) for i in range(len(values))]
+        pairs_expressions = [
+            (values[i], string_rep.expressions[i]) for i in range(len(values))
+        ]
         out = SUCCESS_OUT.format(
             ping=display_name,
             # body="\n".join([f"> **{pair[0]}**" for pair in pairs])
-            body="\n".join([f"{pair[0]} = `{pair[1]}`" for pair in pairs_assignments] + [f"**{pair[0]}** ⟵ `{pair[1]}`" for pair in pairs_expressions]),
+            body="\n".join(
+                [f"{pair[0]} = `{pair[1]}`" for pair in pairs_assignments]
+                + [f"**{pair[0]}** ⟵ `{pair[1]}`" for pair in pairs_expressions]
+            ),
         )
         if len(out) > MAX_ROLLS:
             raise OutputTooLargeError
     except rollerr.WarningError as e:
-        out = WARNING_OUT.format(ping=display_name, error=e.__class__.__name__, body=f"_{e.out}_")
+        out = WARNING_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"_{e.out}_"
+        )
     except ParseError as e:
-        out = FAILURE_OUT.format(ping=display_name, error=e.__class__.__name__, body=f"```{e}```")
+        out = FAILURE_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
+        )
     except rollerr.RunTimeError as e:
-        out = FAILURE_OUT.format(ping=display_name, error=e.__class__.__name__, body=f"```{e}```")
+        out = FAILURE_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
+        )
     except rollerr.TypeError as e:
-        out = TYPE_ERROR_OUT.format(ping=display_name, error=e.__class__.__name__, body=f"```{e}```")
+        out = TYPE_ERROR_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
+        )
     except (rollerr.InternalError, Exception) as e:
-        out = INTERNAL_OUT.format(ping=display_name, error=e.__class__.__name__, body=f"**Internal error:**```{e}```")
+        out = INTERNAL_OUT.format(
+            ping=display_name,
+            error=e.__class__.__name__,
+            body=f"**Internal error:**```{e}```",
+        )
     logging.debug("")
     return out
 

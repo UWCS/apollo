@@ -2,7 +2,7 @@ from utils.exceptions import InternalError, OutputTooLargeError, WarningError
 
 
 def trace2log(trace):
-    trace = trace[1:] # The first element is always an empty let statement
+    trace = trace[1:]  # The first element is always an empty let statement
     out = "Exception in\n    " + "\nin\n    ".join([str(t) for t in reversed(trace)])
     return out
 
@@ -25,7 +25,9 @@ class TypeError(RunTimeError):
 class UndefinedIdentifierError(RunTimeError):
     """Raised when an unexpected identifier is detected"""
 
-    def __init__(self, trace, identifier, message="'{id}' is not defined in scope\n{expr}"):
+    def __init__(
+        self, trace, identifier, message="'{id}' is not defined in scope\n{expr}"
+    ):
         self.message = message.format(id=identifier, expr=trace2log(trace))
         super().__init__(self.message)
 
@@ -72,7 +74,10 @@ class FloatingPointDiceCountError(FloatingPointDiceInputError):
     """Raised when the number of rolls of a dice roll is a non-integer"""
 
     def __init__(
-        self, trace, value, message="Requested dice roll had a non-integer count: {value}\n{expr}"
+        self,
+        trace,
+        value,
+        message="Requested dice roll had a non-integer count: {value}\n{expr}",
     ):
         self.value = value
         self.message = message.format(value=value, expr=trace2log(trace))
@@ -121,7 +126,10 @@ class NegativeDiceCountError(NegativeDiceInputError):
     """Raised when the number of rolls of a dice roll is negative"""
 
     def __init__(
-        self, trace, value, message="Requested dice roll had a negative count: {value}\n{expr}"
+        self,
+        trace,
+        value,
+        message="Requested dice roll had a negative count: {value}\n{expr}",
     ):
         self.value = value
         self.message = message.format(value=value, expr=trace2log(trace))
@@ -156,6 +164,8 @@ class NoValueDefinedError(InternalError):
 class NoRollCountDefinedError(InternalError):
     """Raised when a parser token does not define a "roll_count" attribute"""
 
-    def __init__(self, trace, message='Parser token has no "roll_count" attribute\n{expr}'):
+    def __init__(
+        self, trace, message='Parser token has no "roll_count" attribute\n{expr}'
+    ):
         self.message = message.format(expr=trace2log(trace))
         super().__init__(self.message)

@@ -100,7 +100,8 @@ def maybe_application(xs):
 
 # identifier & func_decl
 # xs = [id, expr]
-def func_decl_or_type(xs):
+def func_decl_or_type(xs):  #
+    """ """
     return Assignment(xs[0], xs[1])
 
 
@@ -109,11 +110,11 @@ class ProgramParser(TextParsers):
     split1 = lambda item, separator: item & rep(separator & item)
     split = lambda item, separator: opt(split1(item, separator))
 
-
     identifier = reg(r"[a-zA-Z]\w*")
 
-
-    string = reg(r'".*?(?<!\\)(\\\\)*?"') | reg(r"'.*?(?<!\\)(\\\\)*?'") > (lambda s: TokenString(s[1:-1]))
+    string = reg(r'".*?(?<!\\)(\\\\)*?"') | reg(r"'.*?(?<!\\)(\\\\)*?'") > (
+        lambda s: TokenString(s[1:-1])
+    )
 
     num_int = reg(r"\d+") > int
     num_float = reg(r"(\d*\.\d+|\d+\.\d*)") > float
@@ -166,21 +167,18 @@ class ProgramParser(TextParsers):
     case = dice & opt(lit("$") >> "(" >> rep1sep(case_pair, ";") << ")") > maybe_case
     dice = unary & opt("d" >> unary) > maybe_dice
     unary = unary_op & unary | primary > mon_operator
-    primary = (number | string | bracketed | let_stmt | anon_func | variable)
+    primary = number | string | bracketed | let_stmt | anon_func | variable
     bracketed = "(" >> expr << ")"
 
-
-    func = identifier & func_decl > func_decl_or_type#(func_decl | type_decl)
-    func_decl = "=" >> expr #expr << "=" & expr
+    func = identifier & func_decl > func_decl_or_type  # (func_decl | type_decl)
+    func_decl = "=" >> expr  # expr << "=" & expr
     type_decl = "::" >> type_sig
     type_sig = rep1(type_brac | type_num | type_string)
     type_brac = "(" >> type_sig << ")"
     type_num = "#"
     type_string = "$"
 
-
     program = repsep("@" >> func | expr, ";") << opt(";") > Program
-
 
     main = program
 
@@ -189,9 +187,14 @@ class ProgramParser(TextParsers):
 #     return re.sub(r"\/\*(?s).*\*\/|//.*", "", string)
 
 
-"""Removes surrounding code blocks before the program can reach the main parser"""
 class DiscordParser(TextParsers):
-    main = "```" >> reg(r"(?s).*?(?=```)") << "```" | "`" >> reg(r"(?s).*?(?=`)") << "`" | reg(r"[^`](?s).*")
+    """Removes surrounding code blocks before the program can reach the main parser"""
+
+    main = (
+        "```" >> reg(r"(?s).*?(?=```)") << "```"
+        | "`" >> reg(r"(?s).*?(?=`)") << "`"
+        | reg(r"[^`](?s).*")
+    )
 
 
 def parse_program(source: str):
@@ -210,14 +213,16 @@ def format_parse_error(err, source):
     found = re.search(r"(?<=but found ').*?(?=')", err.message)
     if found is None:
         last_line = source.split("\n")[-1]
-        pointer = last_line + "\n" + " "*(len(last_line)-1) + "^"
+        pointer = last_line + "\n" + " " * (len(last_line) - 1) + "^"
         return f"Found unexpected end of source\n{pointer}"
     else:
         found = found.group(0)
         try:
             line = re.findall(r"(?<=Line )\d+", err.message)[-1]
             char = re.findall(r"(?<=character )\d+", err.message)[-1]
-            pointer = source.split("\n")[int(line)-1] + "\n" + " "*(int(char)-1) + "^"
+            pointer = (
+                source.split("\n")[int(line) - 1] + "\n" + " " * (int(char) - 1) + "^"
+            )
             return f"Unexpected token {found}\nLine: {line}\nChar: {char}\n{pointer}"
         except:
             return f"Unexpected token {found}"

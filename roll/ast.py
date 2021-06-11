@@ -1,12 +1,11 @@
+import logging
 import random
 from enum import Enum, auto
 from functools import wraps
 
-from roll.types import *
 import roll.exceptions as rollerr
+from roll.types import *
 from utils.exceptions import OutputTooLargeError
-
-import logging
 
 MAX_ROLLS = 1000
 
@@ -28,8 +27,9 @@ class Environment:
         return out
 
 
-"""A mutating object that records the variable IDs to be used in general hashing and eta-reduction hashing"""
 class HashCounter:
+    """A mutating object that records the variable IDs to be used in general hashing and eta-reduction hashing"""
+
     def __init__(self):
         self.__next_id = 0
         self.__next_scope_id = -1
@@ -61,8 +61,9 @@ class HashCounter:
         return id
 
 
-"""A decorator that updates the environment/counter to know its position in the current expression"""
 def trace(func):
+    """A decorator that updates the environment/counter to know its position in the current expression"""
+
     def wrapper(*args, **kwargs):
         # args[0] will be self (the expression token object)
         # args[1] should always be the env/map object
@@ -70,37 +71,45 @@ def trace(func):
         out = func(*args, **kwargs)
         args[1].trace.pop()
         return out
+
     return wrapper
 
 
 class Token:
     """Returns a fully reduced version of the token"""
+
     @trace
     def reduce(self, env, counter):
         raise NotImplementedError
 
     """Returns a deep copy of the token where each variable with an ID in the map is replaced by a copy with the new ID"""
+
     def substitute(self, old_to_new):
         raise NotImplementedError
 
     """Returns the type of the token, or raises a TypeError"""
+
     def type(self, env):
         raise NotImplementedError
 
     """Recursively constructs a string representation of the token"""
+
     def __str__(self):
         raise NotImplementedError
 
     """Attempts to deference the token if it is a pointer"""
+
     def dereference(self, env):
         return self
 
     """Recursively sets the IDs of variables to be unique"""
+
     @trace
     def hash_vars(self, counter, map):
         raise NotImplementedError
 
     """Returns the value of the reduced token in Python primitives"""
+
     @property
     def pure(self):
         raise NotImplementedError
@@ -197,7 +206,9 @@ class TokenRoll(Token):
         return TokenNumber(sum(random.choices(range(1, sides + 1), k=count)))
 
     def substitute(self, old_to_new):
-        return TokenRoll(self.count.substitute(old_to_new), self.sides.substitute(old_to_new))
+        return TokenRoll(
+            self.count.substitute(old_to_new), self.sides.substitute(old_to_new)
+        )
 
     def type(self, env):
         # if count.type(env) != Number or sides.type(env) != Number:
@@ -230,7 +241,12 @@ class TokenVariable(Token):
         return self.dereference(env).reduce(env, counter)
 
     def substitute(self, old_to_new):
-        return TokenVariable(self.name, old_to_new[self.identifier] if self.identifier in old_to_new else self.identifier)
+        return TokenVariable(
+            self.name,
+            old_to_new[self.identifier]
+            if self.identifier in old_to_new
+            else self.identifier,
+        )
 
     def type(self, env):
         pass
@@ -243,7 +259,7 @@ class TokenVariable(Token):
             raise rollerr.UndefinedIdentifierError(counter.trace, self.name)
 
     def __str__(self):
-        return f"{self.name}"#_{self.identifier}"
+        return f"{self.name}"  # _{self.identifier}"
 
     def dereference(self, env):
         id = self.identifier
@@ -255,6 +271,7 @@ class TokenVariable(Token):
 
 class TokenLet(Token):
     """declarations = [Assignment*]"""
+
     def __init__(self, declarations, expression):
         self.declarations = declarations
         self.expression = expression
@@ -273,7 +290,11 @@ class TokenLet(Token):
         # Copy the declarations
         new_decls = []
         for decl in self.declarations:
-            new_decls.append(Assignment(decl.name, decl.expression.substitute(old_to_new), decl.identifier))
+            new_decls.append(
+                Assignment(
+                    decl.name, decl.expression.substitute(old_to_new), decl.identifier
+                )
+            )
         # Copy the let body
         new_expr = self.expression.substitute(old_to_new)
         # Return reconstructed let statement
@@ -356,7 +377,9 @@ class TokenApplication(Token):
         decls = []
         for expr in self.rhs:
             decls.append(Assignment(out.arg_name, expr, id=out.arg_id))
-            out = out.expression # Note: this used to attempt to .dereference() - I can't remember why but it seems to work without it
+            out = (
+                out.expression
+            )  # Note: this used to attempt to .dereference() - I can't remember why but it seems to work without it
         # Substitute variables for scoped variables (allows recursion)
         substitutions = {}
         env = env.copy()
@@ -373,9 +396,17 @@ class TokenApplication(Token):
             while isfunction(out):
                 func_path.append(out)
                 out = out.expression.dereference(env)
-            func_path[-1] = TokenFunction(func_path[-1].arg_name, TokenLet(decls, out), func_path[-1].arg_id-1000)
-            for i in range(len(func_path)-1, 0, -1):
-                func_path[i-1] = TokenFunction(func_path[i-1].arg_name, func_path[i], func_path[i-1].arg_id-1000)
+            func_path[-1] = TokenFunction(
+                func_path[-1].arg_name,
+                TokenLet(decls, out),
+                func_path[-1].arg_id - 1000,
+            )
+            for i in range(len(func_path) - 1, 0, -1):
+                func_path[i - 1] = TokenFunction(
+                    func_path[i - 1].arg_name,
+                    func_path[i],
+                    func_path[i - 1].arg_id - 1000,
+                )
             result = func_path[0]
         # If it wasn't, return the fully applied function expression
         else:
@@ -465,7 +496,9 @@ class TokenOperator(Token):
     @trace
     def reduce(self, env, counter):
         try:
-            value = TokenOperator.mapping[self.op]([a.reduce(env, counter).pure for a in self.args])
+            value = TokenOperator.mapping[self.op](
+                [a.reduce(env, counter).pure for a in self.args]
+            )
         except ZeroDivisionError:
             raise rollerr.ZeroDivisionError(env.trace)
 
@@ -509,7 +542,11 @@ class TokenTernary(Token):
 
     @trace
     def reduce(self, env, counter):
-        return self.true.reduce(env, counter) if self.condition.reduce(env, counter).pure else self.false.reduce(env, counter)
+        return (
+            self.true.reduce(env, counter)
+            if self.condition.reduce(env, counter).pure
+            else self.false.reduce(env, counter)
+        )
 
     def substitute(self, old_to_new):
         condition = self.condition.substitute(old_to_new)
@@ -551,7 +588,9 @@ class TokenCase(Token):
         new_expr = self.expression.substitute(old_to_new)
         new_pairs = []
         for pair in self.pairs:
-            new_pairs.append([pair[0].substitute(old_to_new), pair[1].substitute(old_to_new)])
+            new_pairs.append(
+                [pair[0].substitute(old_to_new), pair[1].substitute(old_to_new)]
+            )
         return TokenCase(new_expr, new_pairs)
 
     def type(self, env):
@@ -592,6 +631,7 @@ class Program(Token):
         logging.debug(self.__class__.__name__, self)
 
     """Intentionally does not use the @trace decorator"""
+
     def reduce(self):
         self.hash_vars()
         out = [let.reduce(self.environment, self.counter) for let in self.lets]
@@ -603,6 +643,7 @@ class Program(Token):
         #     e.type(new_env)
 
     """Intentionally does not use the @trace decorator"""
+
     def hash_vars(self):
         map = {}
         for a in self.assignments:
@@ -628,7 +669,10 @@ class Program(Token):
             self.expressions = [str(e) for e in expressions]
             self.assignment_names = [str(a.name) for a in assignments]
             self.assignment_exprs = [str(a.expression) for a in assignments]
-            self.assignments = [(self.assignment_names[i], self.assignment_exprs[i]) for i in range(len(assignments))]
+            self.assignments = [
+                (self.assignment_names[i], self.assignment_exprs[i])
+                for i in range(len(assignments))
+            ]
 
 
 class Assignment:
