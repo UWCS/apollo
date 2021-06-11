@@ -30,6 +30,7 @@ EXTENSIONS = [
     "cogs.commands.widen",
     "cogs.database",
     "cogs.irc",
+    "cogs.parallelism",
     "cogs.welcome",
 ]
 
