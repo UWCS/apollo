@@ -86,11 +86,6 @@ class Token:
     def substitute(self, old_to_new):
         raise NotImplementedError
 
-    """Returns the type of the token, or raises a TypeError"""
-
-    def type(self, env):
-        raise NotImplementedError
-
     """Recursively constructs a string representation of the token"""
 
     def __str__(self):
@@ -126,9 +121,6 @@ class TokenNumber(Token):
     def substitute(self, _):
         return TokenNumber(self.__value)
 
-    def type(self, _):
-        return TypeNumber
-
     @trace
     def hash_vars(self, counter, map):
         pass
@@ -155,9 +147,6 @@ class TokenString(Token):
 
     def substitute(self, _):
         return TokenString(self.__value)
-
-    def type(self, _):
-        return TypeString
 
     @trace
     def hash_vars(self, counter, map):
@@ -209,11 +198,6 @@ class TokenRoll(Token):
             self.count.substitute(old_to_new), self.sides.substitute(old_to_new)
         )
 
-    def type(self, env):
-        # if count.type(env) != Number or sides.type(env) != Number:
-        #     raise rollerr.TypeError(env.trace, "Expecting ")
-        return TypeNumber
-
     @trace
     def hash_vars(self, counter, map):
         self.count.hash_vars(counter, map)
@@ -246,9 +230,6 @@ class TokenVariable(Token):
             if self.identifier in old_to_new
             else self.identifier,
         )
-
-    def type(self, env):
-        pass
 
     @trace
     def hash_vars(self, counter, map):
@@ -299,10 +280,6 @@ class TokenLet(Token):
         # Return reconstructed let statement
         return TokenLet(new_decls, new_expr)
 
-    def type(self, env):
-        new_env = self.update_env(env)
-        return self.expression.type(new_env)
-
     @trace
     def hash_vars(self, counter, map):
         new_map = map.copy()
@@ -345,9 +322,6 @@ class TokenFunction(Token):
         new_expr = self.expression.substitute(old_to_new)
         # Return reconstructed function statement
         return TokenFunction(self.arg_name, new_expr, self.arg_id)
-
-    def type(self, env):
-        pass
 
     @trace
     def hash_vars(self, counter, map):
@@ -416,9 +390,6 @@ class TokenApplication(Token):
         lhs = self.lhs.substitute(old_to_new)
         rhs = [expr.substitute(old_to_new) for expr in self.rhs]
         return TokenApplication(lhs, rhs)
-
-    def type(self, env):
-        pass
 
     @trace
     def hash_vars(self, counter, map):
@@ -513,13 +484,6 @@ class TokenOperator(Token):
             new_args.append(arg.substitute(old_to_new))
         return TokenOperator(self.op, new_args)
 
-    def type(self, env):
-        # data = TokenOperator.mapping[self.op]
-        # types = [typeof(arg) for arg in self.args]
-        # if types not in data[1]:
-        #     raise TypeError(env.trace, f"Expecting {', '.join([str(x) for x in data[1]])} but found {types}")
-        return None
-
     @trace
     def hash_vars(self, counter, map):
         for arg in self.args:
@@ -552,9 +516,6 @@ class TokenTernary(Token):
         true = self.true.substitute(old_to_new)
         false = self.false.substitute(old_to_new)
         return TokenTernary(condition, true, false)
-
-    def type(self, env):
-        return None
 
     def rolls(self, env):
         return self.condition.rolls(env) + self.true.rolls(env) + self.false.rolls(env)
@@ -591,9 +552,6 @@ class TokenCase(Token):
                 [pair[0].substitute(old_to_new), pair[1].substitute(old_to_new)]
             )
         return TokenCase(new_expr, new_pairs)
-
-    def type(self, env):
-        return None
 
     @trace
     def hash_vars(self, counter, map):
@@ -635,11 +593,6 @@ class Program(Token):
         self.hash_vars()
         out = [let.reduce(self.environment, self.counter) for let in self.lets]
         return out
-
-    def type(self):
-        pass
-        # for e in self.expressions:
-        #     e.type(new_env)
 
     """Intentionally does not use the @trace decorator"""
 
