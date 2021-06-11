@@ -60,9 +60,9 @@ class KarmaParser(TextParsers):
     )
 
     op_positive = reg(make_op_regex(r"\+\+")) > constant(KarmaOperation.POSITIVE)
-    op_neutral = (
-        reg(make_op_regex(r"\+-")) | reg(make_op_regex(r"-\+"))
-    ) > constant(KarmaOperation.NEUTRAL)
+    op_neutral = (reg(make_op_regex(r"\+-")) | reg(make_op_regex(r"-\+"))) > constant(
+        KarmaOperation.NEUTRAL
+    )
     op_negative = reg(make_op_regex(r"--")) > constant(KarmaOperation.NEGATIVE)
     operator = op_positive | op_neutral | op_negative
 
