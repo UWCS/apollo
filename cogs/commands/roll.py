@@ -109,12 +109,12 @@ def run(message, display_name):
         out = FAILURE_OUT.format(
             ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
         )
-    except rollerr.RunTimeError as e:
-        out = FAILURE_OUT.format(
-            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
-        )
     except rollerr.TypeError as e:
         out = TYPE_ERROR_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
+        )
+    except rollerr.RunTimeError as e:
+        out = FAILURE_OUT.format(
             ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
         )
     except (rollerr.InternalError, Exception) as e:
