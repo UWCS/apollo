@@ -1,21 +1,14 @@
-import random
-import re
-from dataclasses import dataclass
-from enum import Enum
-from functools import cached_property
+import asyncio
+import logging
 
 from discord.ext import commands
-from discord.ext.commands import (
-    BadArgument,
-    Bot,
-    Context,
-    Converter,
-    Greedy,
-    clean_content,
-)
-from parsita import ParseError, TextParsers, lit, opt, reg, rep
-from parsita.util import constant
+from discord.ext.commands import Bot, Context, clean_content
+from parsita import ParseError
 
+import roll.exceptions as rollerr
+from cogs.parallelism import get_parallelism
+from roll.ast import MAX_ROLLS
+from roll.parser import parse_program
 from utils import get_name_string
 from utils.exceptions import OutputTooLargeError
 
@@ -25,15 +18,14 @@ Rolls an unbiased xdy (x dice with y sides).
 If no dice are specified, it will roll a single 1d6 (one 6-sided die).
 ____________________________________________________________
 
-- !r                  | (rolls a 1d6)
-- !r 1d6              | (an explicitly-defined 1d6)
-- !r d6               | (omitted dice counts default to 1)
-- !r 1d6 + 5          | (supports +, -, *, /, ^)
-- !r (1d6+1)+(1d6*10) | (supports brackets)
-- !r (1d6)d(1d6)      | (supports nested rolls)
-____________________________________________________________
+Supports basic arithmetic:
+    !roll or !r         | rolls a 1d6
+    !r 1d6              | an explicit 1d6
+    !r 1d6 + 5          | adds 5 to a 1d6 output (supports +, -, *, /, ^)
+    !r (1d6+1)+(1d6*10) | supports brackets
+    !r (1d6)d(1d6)      | supports nested rolls
 
-Note: using division returns a floating point value and is prone to errors.
+Note: using division returns a floating point value.
 """
 
 SHORT_HELP_TEXT = """Rolls an unbiased xdy (x dice with y sides)"""
@@ -46,19 +38,21 @@ SUCCESS_OUT = """
 
 FAILURE_OUT = """
 :warning: **DICE UNDERMINE** :warning:
-{ping}
+{ping} - **{error}**
 {body}
 """
 
 WARNING_OUT = """
 :no_entry_sign: **DICE CRIME** :no_entry_sign:
-{ping}
+{ping} - **{error}**
 {body}
 """
 
-
-def clean_brackets(string):
-    return string[1:-1] if string[0] == "(" and string[-1] == ")" else string
+INTERNAL_OUT = """
+:fire: **DICE GRIME** :fire:
+{ping} - **{error}**
+{body}
+"""
 
 
 class Roll(commands.Cog):
@@ -69,152 +63,59 @@ class Roll(commands.Cog):
         help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"], rest_is_raw=True
     )
     async def roll(self, ctx: Context, *, message: clean_content):
+        loop = asyncio.get_event_loop()
         display_name = get_name_string(ctx.message)
+
+        def work():
+            return run(message, display_name)
+
+        p = await get_parallelism(self.bot)
+        p.send_to_ctx_after_threaded(work, ctx, loop)
+
+
+def run(message, display_name):
+    try:
         if len(message) == 0:
             message = "1d6"
         message = message.strip()
-        try:
-            expression = DiceParser.parse_all.parse(message).or_die()
-        except ParseError as e:
-            await ctx.send(FAILURE_OUT.format(ping=display_name, body=f"```{e}```"))
-            return
-        except ExcessiveDiceRollsError:
-            await ctx.send(
-                WARNING_OUT.format(
-                    ping=display_name,
-                    body="_You requested an excessive number of dice rolls._",
-                )
-            )
-            return
-        value = expression.value
-        try:
-            out = SUCCESS_OUT.format(
-                ping=display_name,
-                body=f"`{repr(expression)}` | **{value}** ⟵ {clean_brackets(str(expression))}",
-            )
-            await ctx.send(out)
-        except OutputTooLargeError:
-            await ctx.send(
-                WARNING_OUT.format(
-                    ping=display_name, body="_Your output was too large!_"
-                )
-            )
-
-
-class ValueConstant:
-    def __init__(self, value):
-        self.value = value
-        self.roll_count = 0
-
-    def __str__(self):
-        return str(self.value)
-
-    def __repr__(self):
-        return str(self.value)
-
-
-class ValueRoll:
-    def __init__(self, count, sides):
-        self.roll_count = count.value
-        if self.roll_count > 1000:
-            raise ExcessiveDiceRollsError
-        self.count = count
-        self.sides = sides
-        if sides.value == 1:
-            self.rolls = [1] * count.value
-        else:
-            self.rolls = random.choices(range(1, sides.value + 1), k=count.value)
-        self.value = sum(self.rolls)
-
-    def __str__(self):
-        out = str(self.rolls)
-        if len(out) > 2000:
+        logging.debug("==== Parsing ====")
+        program = parse_program(message)
+        logging.debug("==== Evaluation ====")
+        logging.debug(program)
+        values = program.reduce()
+        logging.debug("==== Output ====")
+        string_rep = program.string_rep
+        pairs_assignments = string_rep.assignments
+        pairs_expressions = zip(values, string_rep.expressions)
+        out = SUCCESS_OUT.format(
+            ping=display_name,
+            body="\n".join(
+                [f"{p0} = `{p1}`" for p0, p1 in pairs_assignments]
+                + [f"**{p0}** ⟵ `{p1}`" for p0, p1 in pairs_expressions]
+            ),
+        )
+        if len(out) > MAX_ROLLS:
             raise OutputTooLargeError
-        return out
-
-    def __repr__(self):
-        return f"{self.count}d{self.sides}"
-
-
-class BinaryOperator:
-    def __init__(self, op, lhs, rhs):
-        self.roll_count = lhs.roll_count + rhs.roll_count
-        if self.roll_count > 1000:
-            raise ExcessiveDiceRollsError
-        self.op = op
-        self.lhs = lhs
-        self.rhs = rhs
-        mapping = {
-            RollOperator.ADD: lhs.value + rhs.value,
-            RollOperator.SUB: lhs.value - rhs.value,
-            RollOperator.MUL: lhs.value * rhs.value,
-            RollOperator.DIV: lhs.value / rhs.value,
-            RollOperator.POW: lhs.value ** rhs.value,
-        }
-        self.value = mapping[self.op]
-
-    def __str__(self):
-        out = f"({self.lhs}{self.op}{self.rhs})"
-        if len(out) > 2000:
-            raise OutputTooLargeError
-        return out
-
-    def __repr__(self):
-        return f"({repr(self.lhs)}{self.op}{repr(self.rhs)})"
-
-
-class RollOperator(Enum):
-    ADD = "+"
-    SUB = "-"
-    MUL = "*"
-    DIV = "/"
-    POW = "^"
-
-    def __str__(self):
-        mapping = {
-            RollOperator.ADD: "+",
-            RollOperator.SUB: "-",
-            RollOperator.MUL: "*",
-            RollOperator.DIV: "/",
-            RollOperator.POW: "^",
-        }
-        return mapping[self]
-
-
-class DiceParser(TextParsers):
-    nat = reg(r"[1-9]\d*") > int
-
-    constant = reg(r"\d+") > (lambda x: ValueConstant(int(x)))
-    roll = die_value << "d" & die_value > (lambda xs: ValueRoll(xs[0], xs[1]))
-    naked_roll = "d" >> die_value > (lambda x: ValueRoll(ValueConstant(1), x))
-
-    value = roll | naked_roll | constant | brackets
-    die_value = constant | brackets
-
-    op_add = value << "+" & expr > (
-        lambda xs: BinaryOperator(RollOperator.ADD, xs[0], xs[1])
-    )
-    op_sub = value << "-" & expr > (
-        lambda xs: BinaryOperator(RollOperator.SUB, xs[0], xs[1])
-    )
-    op_mul = value << "*" & expr > (
-        lambda xs: BinaryOperator(RollOperator.MUL, xs[0], xs[1])
-    )
-    op_div = value << "/" & expr > (
-        lambda xs: BinaryOperator(RollOperator.DIV, xs[0], xs[1])
-    )
-    op_pow = value << "^" & expr > (
-        lambda xs: BinaryOperator(RollOperator.POW, xs[0], xs[1])
-    )
-
-    expr = op_add | op_sub | op_mul | op_div | op_pow | value
-    brackets = "(" >> expr << ")"
-
-    parse_all = expr
-
-
-class ExcessiveDiceRollsError(Exception):
-    """Raised when too many dice are rolled in a single command"""
+    except rollerr.WarningError as e:
+        out = WARNING_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"_{e.out}_"
+        )
+    except ParseError as e:
+        out = FAILURE_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
+        )
+    except rollerr.RunTimeError as e:
+        out = FAILURE_OUT.format(
+            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
+        )
+    except (rollerr.InternalError, Exception) as e:
+        out = INTERNAL_OUT.format(
+            ping=display_name,
+            error=e.__class__.__name__,
+            body=f"**Internal error:**```{e}```",
+        )
+    logging.debug("")
+    return out
 
 
 def setup(bot: Bot):
