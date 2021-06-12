@@ -6,9 +6,11 @@ from utils.exceptions import InternalError, WarningError
 
 def trace2log(trace):
     trace = trace[1:]  # The first element is always an empty let statement
-    if len(trace) > 5: # Limit the size of the trace to reduce error message size
+    if len(trace) > 5:  # Limit the size of the trace to reduce error message size
         trace = trace[:2] + ["..."] + trace[-3:]
-    out = "Exception in\n    " + "\nin\n    ".join([clean_brackets(str(t)) for t in reversed(trace)])
+    out = "Exception in\n    " + "\nin\n    ".join(
+        [clean_brackets(str(t)) for t in reversed(trace)]
+    )
     return out
 
 
