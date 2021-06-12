@@ -63,7 +63,7 @@ class DiceInputError(RunTimeError, ABC):
     @abstractmethod
     def __init__(self, trace, value, message="{value}\n{trace}"):
         self.message = message.format(trace=trace2log(trace), value=value)
-        super().__init__(self.message)
+        super().__init__([], self.message)
 
 
 class FloatingPointDiceInputError(DiceInputError, ABC):
