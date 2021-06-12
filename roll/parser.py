@@ -114,11 +114,6 @@ def function(xs):
 
 class ProgramParser(TextParsers):
 
-    # Unnecessary forward declarations - makes IDEs happier
-    # num = fwd()
-    # expr = fwd()
-    # equality, comparison, logic, term, factor, power, ternary, case, dice, unary, primary, bracketed = fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd(), fwd()
-
     # Actual grammar
     split1 = lambda item, separator: item & rep(separator & item)
     split = lambda item, separator: opt(split1(item, separator))

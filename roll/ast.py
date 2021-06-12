@@ -6,6 +6,24 @@ from enum import Enum, auto
 
 import roll.exceptions as rollerr
 
+# import * imports all tokens, operators, the Assignment class, and the root Program class
+__all__ = [
+    "TokenNumber",
+    "TokenString",
+    "TokenRoll",
+    "TokenVariable",
+    "TokenLet",
+    "TokenFunction",
+    "TokenApplication",
+    "TokenOperator",
+    "TokenTernary",
+    "TokenCase",
+    "Program",
+    "Assignment",
+    "Operator",
+]
+
+
 MAX_ROLLS = 1000
 
 
@@ -435,14 +453,14 @@ class Operator(Enum):
 
 class TokenOperator(IToken):
     mapping = {
-        Operator.EQ: lambda xs: xs[0] == xs[1],
-        Operator.NE: lambda xs: xs[0] != xs[1],
-        Operator.GE: lambda xs: xs[0] >= xs[1],
-        Operator.GT: lambda xs: xs[0] > xs[1],
-        Operator.LE: lambda xs: xs[0] <= xs[1],
-        Operator.LT: lambda xs: xs[0] < xs[1],
-        Operator.AND: lambda xs: xs[0] and xs[1],
-        Operator.OR: lambda xs: xs[0] or xs[1],
+        Operator.EQ: lambda xs: int(xs[0] == xs[1]),
+        Operator.NE: lambda xs: int(xs[0] != xs[1]),
+        Operator.GE: lambda xs: int(xs[0] >= xs[1]),
+        Operator.GT: lambda xs: int(xs[0] > xs[1]),
+        Operator.LE: lambda xs: int(xs[0] <= xs[1]),
+        Operator.LT: lambda xs: int(xs[0] < xs[1]),
+        Operator.AND: lambda xs: int(xs[0] and xs[1]),
+        Operator.OR: lambda xs: int(xs[0] or xs[1]),
         Operator.ADD: lambda xs: xs[0] + xs[1],
         Operator.SUB: lambda xs: xs[0] - xs[1],
         Operator.MUL: lambda xs: xs[0] * xs[1],

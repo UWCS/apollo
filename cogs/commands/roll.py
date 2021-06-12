@@ -48,12 +48,6 @@ WARNING_OUT = """
 {body}
 """
 
-TYPE_ERROR_OUT = """
-:arrow_lower_left: **DICE MISALIGN** :arrow_upper_right:
-{ping} - **{error}**
-{body}
-"""
-
 INTERNAL_OUT = """
 :fire: **DICE GRIME** :fire:
 {ping} - **{error}**
@@ -108,10 +102,6 @@ def run(message, display_name):
         )
     except ParseError as e:
         out = FAILURE_OUT.format(
-            ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
-        )
-    except rollerr.TypeError as e:
-        out = TYPE_ERROR_OUT.format(
             ping=display_name, error=e.__class__.__name__, body=f"```{e}```"
         )
     except rollerr.RunTimeError as e:
