@@ -1,5 +1,6 @@
 import logging
 import random
+from abc import ABC, abstractmethod
 from enum import Enum, auto
 from functools import wraps
 
@@ -73,42 +74,43 @@ def trace(func):
     return wrapper
 
 
-class Token:
-    """Returns a fully reduced version of the token"""
-
+class IToken(ABC):
     @trace
+    @abstractmethod
     def reduce(self, env, counter):
+        """Returns a fully reduced version of the token"""
         raise NotImplementedError
 
-    """Returns a deep copy of the token where each variable with an ID in the map is replaced by a copy with the new ID"""
-
+    @abstractmethod
     def substitute(self, old_to_new):
+        """Returns a deep copy of the token where each variable with an ID in the map is replaced by a copy with the new ID"""
         raise NotImplementedError
 
-    """Recursively constructs a string representation of the token"""
-
+    @abstractmethod
     def __str__(self):
+        """Recursively constructs a string representation of the token"""
         raise NotImplementedError
-
-    """Attempts to deference the token if it is a pointer"""
 
     def dereference(self, env):
+        """Attempts to deference the token if it is a pointer"""
         return self
 
-    """Recursively sets the IDs of variables to be unique"""
-
     @trace
+    @abstractmethod
     def hash_vars(self, counter, map):
+        """Recursively sets the IDs of variables to be unique"""
         raise NotImplementedError
 
-    """Returns the value of the reduced token in Python primitives"""
 
+class IPure(ABC):
     @property
+    @abstractmethod
     def pure(self):
+        """Returns the value of a reduced token in Python primitives"""
         raise NotImplementedError
 
 
-class TokenNumber(Token):
+class TokenNumber(IToken, IPure):
     def __init__(self, value):
         self.__value = value
         logging.debug(self.__class__.__name__, self)
@@ -135,7 +137,7 @@ class TokenNumber(Token):
         return isinstance(other, TokenNumber) and self.__value == other.__value
 
 
-class TokenString(Token):
+class TokenString(IToken, IPure):
     def __init__(self, value):
         self.__value = value
         logging.debug(self.__class__.__name__, self)
@@ -164,7 +166,7 @@ class TokenString(Token):
         return isinstance(other, TokenString) and self.__value == other.__value
 
 
-class TokenRoll(Token):
+class TokenRoll(IToken):
     def __init__(self, count, sides):
         self.count = count
         self.sides = sides
@@ -212,7 +214,7 @@ class TokenRoll(Token):
         return f"{count}d{sides}"
 
 
-class TokenVariable(Token):
+class TokenVariable(IToken):
     def __init__(self, name, id=None):
         self.name = name
         self.identifier = hash(name) if id is None else id
@@ -248,7 +250,7 @@ class TokenVariable(Token):
             raise rollerr.UndefinedIdentifierError(env.trace, self.name)
 
 
-class TokenLet(Token):
+class TokenLet(IToken):
     """declarations = [Assignment*]"""
 
     def __init__(self, declarations, expression):
@@ -301,7 +303,7 @@ class TokenLet(Token):
         return f"^{', '.join([f'{d.name}={d.expression}' for d in self.declarations])}${self.expression}"
 
 
-class TokenFunction(Token):
+class TokenFunction(IToken):
     def __init__(self, arg_name, expression, arg_id=None):
         self.arg_name = arg_name
         self.arg_id = arg_id if arg_id is not None else hash(arg_name)
@@ -334,7 +336,7 @@ class TokenFunction(Token):
         return f"({self.arg_name}->{self.expression})"
 
 
-class TokenApplication(Token):
+class TokenApplication(IToken):
     def __init__(self, lhs, rhs):
         self.lhs = lhs
         self.rhs = rhs
@@ -438,7 +440,7 @@ class Operator(Enum):
         return mapping[self]
 
 
-class TokenOperator(Token):
+class TokenOperator(IToken):
     mapping = {
         Operator.EQ: lambda xs: xs[0] == xs[1],
         Operator.NE: lambda xs: xs[0] != xs[1],
@@ -495,7 +497,7 @@ class TokenOperator(Token):
             return f"({str(self.args[0])}{self.op}{str(self.args[1])})"
 
 
-class TokenTernary(Token):
+class TokenTernary(IToken):
     def __init__(self, condition, true, false):
         self.condition = condition
         self.true = true
@@ -529,7 +531,7 @@ class TokenTernary(Token):
         return f"{self.condition}?{self.true}:{self.false}"
 
 
-class TokenCase(Token):
+class TokenCase(IToken):
     def __init__(self, expression, pairs):
         self.expression = expression
         self.pairs = pairs
@@ -563,7 +565,9 @@ class TokenCase(Token):
         return f"{str(self.expression)}$({'; '.join([f'{x[0]}->{x[1]}' for x in self.pairs])})"
 
 
-class Program(Token):
+class Program:
+    """Has a subset of a regular Token's functionality"""
+
     def __init__(self, expressions):
         # Sort program into function assignments and expressions
         self.expressions = []
@@ -586,16 +590,14 @@ class Program(Token):
         # Debug
         logging.debug(self.__class__.__name__, self)
 
-    """Intentionally does not use the @trace decorator"""
-
     def reduce(self):
+        """Intentionally does not use the @trace decorator"""
         self.hash_vars()
         out = [let.reduce(self.environment, self.counter) for let in self.lets]
         return out
 
-    """Intentionally does not use the @trace decorator"""
-
     def hash_vars(self):
+        """Intentionally does not use the @trace decorator"""
         map = {}
         for a in self.assignments:
             map[a.name] = self.counter.next_id

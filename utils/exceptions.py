@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 
-class WarningError(Exception):
+class WarningError(Exception, ABC):
     """Raised when a user request is flagged as potentially malicious
 
     Should define __init__(self, out: str, message: str), where out is the user-facing reply
