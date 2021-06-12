@@ -28,7 +28,7 @@ class UndefinedIdentifierError(RunTimeError):
         self, trace, identifier, message="'{id}' is not defined in scope\n{trace}"
     ):
         self.message = message.format(trace=trace2log(trace), id=identifier)
-        super().__init__(self.message)
+        super().__init__([], self.message)
 
 
 class CaseFailureError(RunTimeError):
