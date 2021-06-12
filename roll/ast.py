@@ -1,8 +1,8 @@
 import logging
 import random
 from abc import ABC, abstractmethod
+from copy import copy
 from enum import Enum, auto
-from functools import wraps
 
 import roll.exceptions as rollerr
 
@@ -33,13 +33,6 @@ class HashCounter:
         self.__next_id = 0
         self.__next_scope_id = -1
         self.trace = []
-
-    def copy(self):
-        out = HashCounter()
-        out.__next_id = self.__next_id
-        out.__next_scope_id = self.__next_scope_id
-        out.trace = self.trace
-        return out
 
     @property
     def next_id(self):
@@ -155,7 +148,7 @@ class TokenString(IToken, IPure):
 
     def __str__(self):
         unescaped = '"'
-        escaped = '"'
+        escaped = r"\""
         return f'"{self.__value.replace(unescaped, escaped)}"'
 
     @property
