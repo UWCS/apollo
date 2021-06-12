@@ -1,7 +1,17 @@
-class WarningError(Exception):
-    """Raised when a user request is flagged as potentially malicious"""
+from abc import ABC, abstractmethod
 
-    """Should define __init__(self, out: str, message: str), where out is the user-facing reply"""
+
+class WarningError(Exception):
+    """Raised when a user request is flagged as potentially malicious
+
+    Should define __init__(self, out: str, message: str), where out is the user-facing reply
+    """
+
+    @abstractmethod
+    def __init__(self, out: str, message: str):
+        self.out = out
+        self.message = message
+        super().__init__(message)
 
 
 class OutputTooLargeError(WarningError):
@@ -12,10 +22,10 @@ class OutputTooLargeError(WarningError):
         out="Your requested output was too large!",
         message="Maximum Discord message length exceeded",
     ):
-        self.out = out
-        self.message = message
-        super().__init__(self.message)
+        super().__init__(out, message)
 
 
 class InternalError(Exception):
     """Raised when something has gone wrong with the source code"""
+
+    pass

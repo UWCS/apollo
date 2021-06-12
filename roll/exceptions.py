@@ -13,6 +13,8 @@ def trace2log(trace):
 class RunTimeError(Exception):
     """Raised when an error occurs while evaluating a program"""
 
+    pass
+
 
 class TypeError(RunTimeError):
     """Raised when types mismatch"""
@@ -69,6 +71,8 @@ class ExcessiveDiceRollsError(WarningError):
 class FloatingPointDiceInputError(DiceError):
     """Raised when the number of rolls or sides of a dice roll is a non-integer"""
 
+    pass
+
 
 class FloatingPointDiceCountError(FloatingPointDiceInputError):
     """Raised when the number of rolls of a dice roll is a non-integer"""
@@ -101,6 +105,8 @@ class FloatingPointDiceSidesError(FloatingPointDiceInputError):
 class ZeroDiceInputError(DiceError):
     """Raised when the number of rolls or sides of a dice roll is zero"""
 
+    pass
+
 
 class ZeroDiceCountError(ZeroDiceInputError):
     """Raised when the number of rolls of a dice roll is zero"""
@@ -120,6 +126,8 @@ class ZeroDiceSidesError(ZeroDiceInputError):
 
 class NegativeDiceInputError(DiceError):
     """Raised when the number of rolls or sides of a dice roll is negative"""
+
+    pass
 
 
 class NegativeDiceCountError(NegativeDiceInputError):

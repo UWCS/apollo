@@ -4,7 +4,6 @@ from enum import Enum, auto
 from functools import wraps
 
 import roll.exceptions as rollerr
-from utils.exceptions import OutputTooLargeError
 
 MAX_ROLLS = 1000
 

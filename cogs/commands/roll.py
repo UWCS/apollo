@@ -10,6 +10,7 @@ from cogs.parallelism import get_parallelism
 from roll.ast import MAX_ROLLS
 from roll.parser import parse_program
 from utils import get_name_string
+from utils.exceptions import OutputTooLargeError
 
 LONG_HELP_TEXT = """
 Rolls an unbiased xdy (x dice with y sides).
