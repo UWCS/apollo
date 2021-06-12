@@ -1,11 +1,16 @@
 from abc import ABC, abstractmethod
 
+from utils import clean_brackets
 from utils.exceptions import InternalError, WarningError
 
 
 def trace2log(trace):
     trace = trace[1:]  # The first element is always an empty let statement
-    out = "Exception in\n    " + "\nin\n    ".join([str(t) for t in reversed(trace)])
+    if len(trace) > 5:  # Limit the size of the trace to reduce error message size
+        trace = trace[:2] + ["..."] + trace[-3:]
+    out = "Exception in\n    " + "\nin\n    ".join(
+        [clean_brackets(str(t)) for t in reversed(trace)]
+    )
     return out
 
 
@@ -28,7 +33,7 @@ class UndefinedIdentifierError(RunTimeError):
         self, trace, identifier, message="'{id}' is not defined in scope\n{trace}"
     ):
         self.message = message.format(trace=trace2log(trace), id=identifier)
-        super().__init__(self.message)
+        super().__init__([], self.message)
 
 
 class CaseFailureError(RunTimeError):
