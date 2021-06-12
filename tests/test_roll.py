@@ -7,7 +7,7 @@ from roll.parser import parse_program
 from tests.stubs import make_message_stub
 
 SIMPLE_TEST_CASES = [
-    #### Literals ####
+    #  Literals
     (r"1", 1),
     (r"200123500000000", 200123500000000),
     (r"-99", -99),
@@ -19,14 +19,14 @@ SIMPLE_TEST_CASES = [
     (r"''", ""),
     (r'"Foo"', "Foo"),
     (r"'Foo'", "Foo"),
-    #### Basic arithmetic ####
+    #  Basic arithmetic
     (r"1+1", 2),
     (r"10-4", 6),
     (r"12*3", 36),
     (r"18/2", 9),
     (r"36/5", 7.2),
     (r"2^2", 4),
-    #### Operation order ####
+    #  Operation order
     (r"1+2*3", 7),
     (r"(1+2)*3", 9),
     (r"10-1-1-1-1-1", 5),
@@ -36,7 +36,7 @@ SIMPLE_TEST_CASES = [
     (r"(4^3)^(2^1)", 4096),
     (r"15+2*9/3^2-3", 14),
     (r"(15+2)*9/3^(2-3)", 459),
-    #### Ternary ####
+    #  Ternary
     (r"1?69:96", 69),
     (r"0?24:420", 420),
     (r"1000?1337:-1337", 1337),
@@ -44,12 +44,12 @@ SIMPLE_TEST_CASES = [
     (r"2^0?2/10:10/2", 32),
     (r'""?"Foo":"Bar"', "Bar"),
     (r'"ASDF"?"Foo":"Bar"', "Foo"),
-    #### Case ####
+    #  Case
     (r'1$(1->"Foo";2->"Bar")', "Foo"),
     (r'2$(1->"Foo";2->"Bar")', "Bar"),
     (r'"a"$("a"->"Foo";2->"Bar")', "Foo"),
     (r'""$(0->"Foo";""->"Bar")', "Bar"),
-    #### Logic ####
+    #  Logic
     (r"!0", 1),
     (r"!1", 0),
     (r"!12341", 0),
@@ -84,28 +84,23 @@ SIMPLE_TEST_CASES = [
     (r"(1|0)&!(1&0)", 1),
     (r"0&1|1", 1),
     (r"0&(1|1)", 0),
-    #### Let ####
+    #  Let
     (r"^x=1$x", 1),
     (r"^x='str'$x", "str"),
     (r"^x=11;y=12$x+y", 23),
     (r"^x=100$^y=1$x+y", 101),
     (r"^x=5$^y=x$x+y", 10),
     (r"^x=17;y=x+1$y-x", 1),
-    #### Functions ####
+    #  Functions
     (r"(\x->x) 13337", 13337),
     (r"(\foo->foo) 'abcd'", "abcd"),
     (r"(\x -> \y -> x+y) 10 20", 30),
     (r"(\x y -> y x) 1 (\z->z+1)", 2),
     (r"(\x y -> y x) 1 (\x->x+1)", 2),
-    #### Whitespace ####
+    #  Whitespace
     (r"10 + 10 + 1", 21),
     (r"(  15 + 2)  * 9/    3 ^(2 -   3    )", 459),
     (r"( 15 + 1 ) / 2 ; 1 ; 2 ; 3 ; 4", 8),
-    #### Comments ####
-    # (r"101+201 // Comment", 302),
-    # (r"900/2 /* Comment */ ; /* */ 10", 450),
-    # (r"12*3 /*\n*\n*\n*/", 36),
-    # (r`'// Comment' ; "\* Comment *\"`, "// Comment"),
 ]
 
 SIMPLE_ND_TEST_CASES = [
