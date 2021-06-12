@@ -122,6 +122,8 @@ FUNCTION_TEST_CASES = [
         r"@fib = \x -> ^loop=(\a1 a2 n -> (n == 0) ? a1 : ((n == 1) ? a2 : loop a2 (a1 + a2) (n - 1))) $ loop 0 1 x;fib 10",
         55,
     ),
+    (r"fwd;@fwd = 1984", 1984),
+    (r"double;double;@double = 'two'", "two"),
 ]
 
 ERROR_TEST_CASES = [
