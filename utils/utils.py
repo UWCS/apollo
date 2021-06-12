@@ -33,3 +33,9 @@ def pluralise(l, word, single="", plural="s"):
 
 def filter_out_none(iterable: Iterable):
     return [i for i in iterable if i is not None]
+
+
+def clean_brackets(str, brackets=[("(", ")"),]):
+    while (str[0], str[-1]) in brackets:
+        str = str[1:-1]
+    return str

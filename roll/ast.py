@@ -603,21 +603,20 @@ class Program:
 
     def reduce(self):
         """Intentionally does not use the @trace decorator"""
-        self.hash_vars()
+        self.hash_vars(self.counter, {})
         out = [let.reduce(self.environment, self.counter) for let in self.lets]
         return out
 
-    def hash_vars(self):
-        """Intentionally does not use the @trace decorator"""
-        map = {}
+    @trace
+    def hash_vars(self, counter, map):
         for a in self.assignments:
-            map[a.name] = self.counter.next_id
-            a.identifier = self.counter.next_id
-            self.counter.pop_id()
+            map[a.name] = counter.next_id
+            a.identifier = counter.next_id
+            counter.pop_id()
         for a in self.assignments:
-            a.expression.hash_vars(self.counter, map)
+            a.expression.hash_vars(counter, map)
         for e in self.expressions:
-            e.hash_vars(self.counter, map)
+            e.hash_vars(counter, map)
 
     def __str__(self):
         if len(self.expressions) == 1:
