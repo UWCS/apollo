@@ -12,6 +12,9 @@ from sqlalchemy import (
 from models.models import Base, auto_str
 
 
+__all__ = ["Reminder"]
+
+
 @auto_str
 class Reminder(Base):
     __tablename__ = "reminders"

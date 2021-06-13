@@ -6,6 +6,9 @@ from sqlalchemy.orm import relationship
 from models.models import Base, auto_str
 
 
+__all__ = ["KarmaChange", "Karma", "BlockedKarma"]
+
+
 @auto_str
 class KarmaChange(Base):
     __tablename__ = "karma_changes"

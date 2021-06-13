@@ -10,6 +10,7 @@ from sqlalchemy import (
     String,
     func,
 )
+from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
@@ -54,14 +55,24 @@ class ModerationHistory(Base):
 class ModerationTemporaryActions(Base):
     __tablename__ = "moderation_temporary_actions"
 
-    id = Column(Integer, ForeignKey("moderation_history.id"), primary_key=True, nullable=False)
+    moderation_item_id = Column(
+        Integer, ForeignKey("moderation_history.id"), primary_key=True, nullable=False
+    )
     until = Column(DateTime, nullable=False)
     complete = Column(Boolean, nullable=False)
+
+    main_item = relationship("ModerationHistory", uselist=False)
 
 
 @auto_str
 class ModerationLinkedItems(Base):
     __tablename__ = "moderation_linked_items"
 
-    id = Column(Integer, ForeignKey("moderation_history.id"), primary_key=True, nullable=False)
+    moderation_item_id = Column(
+        Integer, ForeignKey("moderation_history.id"), primary_key=True, nullable=False
+    )
     linked_item = Column(Integer, ForeignKey("moderation_history.id"), nullable=False)
+
+    main_item = relationship(
+        "ModerationHistory", uselist=False, foreign_keys=[moderation_item_id]
+    )
