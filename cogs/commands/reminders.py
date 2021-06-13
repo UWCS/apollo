@@ -28,11 +28,9 @@ async def reminder_check(bot):
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now()
-        # I have this useless variable because its not pep8 if you compare directly to False lol
-        not_triggered = False
         reminders = (
             db_session.query(Reminder)
-            .filter(Reminder.trigger_at <= now, Reminder.triggered == not_triggered)
+            .filter(Reminder.trigger_at <= now, Reminder.triggered == False)  # noqa 712
             .all()
         )
         for r in reminders:
