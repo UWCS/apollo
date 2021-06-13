@@ -54,9 +54,7 @@ class EnumGet:
 
 def clean_brackets(
     string,
-    brackets=(
-        ("(", ")"),
-    ),
+    brackets=(("(", ")"),),
 ):
     """Removes matching brackets from the outside of a string
     Only supports single-character brackets
@@ -132,7 +130,9 @@ def is_decimal(num):
 
 def parse_time(time, /):
     # dateparser.parse returns None if it cannot parse
-    parsed_time = dateparser.parse(time, settings={"DATE_ORDER": "DMY", "PREFER_DATES_FROM": "future"})
+    parsed_time = dateparser.parse(
+        time, settings={"DATE_ORDER": "DMY", "PREFER_DATES_FROM": "future"}
+    )
 
     now = datetime.now()
 
