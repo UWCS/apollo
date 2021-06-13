@@ -35,7 +35,7 @@ class EnumGet:
 
 
 def clean_brackets(
-    str,
+    string,
     brackets=(
         ("(", ")"),
     ),
@@ -43,9 +43,9 @@ def clean_brackets(
     """Removes matching brackets from the outside of a string
     Only supports single-character brackets
     """
-    while len(str) > 1 and (str[0], str[-1]) in brackets:
-        str = str[1:-1]
-    return str
+    while len(string) > 1 and (string[0], string[-1]) in brackets:
+        string = string[1:-1]
+    return string
 
 
 def filter_out_none(iterable: Iterable, /):
