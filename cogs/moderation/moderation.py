@@ -10,10 +10,18 @@ from discord import Guild, HTTPException, Member, Role, TextChannel, User
 from discord.ext.commands import Bot, Cog, Context, Greedy, check, command, group
 from discord.utils import get
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import aliased
 
 import models
 from config import CONFIG
-from models import ModerationAction, ModerationHistory, db_session
+from models import (
+    ModerationAction,
+    ModerationHistory,
+    ModerationLinkedItems,
+    ModerationTemporaryActions,
+    User as DBUser,
+    db_session,
+)
 from utils import (
     AdminError,
     DateTimeConverter,
@@ -37,21 +45,29 @@ def add_moderation_history_item(
         .first()
         .id
     )
-    complete = (
-        False
-        if action in (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)
-        else None
-    )
     moderation_history = ModerationHistory(
         user_id=user_id,
         action=action,
-        until=until,
-        complete=complete,
         reason=reason,
         moderator_id=moderator_id,
-        linked_item=linked_item,
     )
     db_session.add(moderation_history)
+    # Flush here to generate primary keys
+    db_session.flush()
+    if until is not None:
+        moderation_temp = ModerationTemporaryActions(
+            moderation_item_id=moderation_history.id,
+            until=until,
+            complete=False,
+        )
+        db_session.add(moderation_temp)
+    if linked_item is not None:
+        moderation_linked = ModerationLinkedItems(
+            moderation_item_id=moderation_history.id,
+            linked_item=linked_item,
+        )
+        db_session.add(moderation_linked)
+
     try:
         db_session.commit()
     except SQLAlchemyError as e:
@@ -88,44 +104,36 @@ class Moderation(Cog):
         await self.bot.wait_until_ready()
         while not self.bot.is_closed():
             now = datetime.now()
+            # Since User has to be joined on twice, it must be aliased
+            mod = aliased(DBUser)
             to_repeal = (
-                db_session.query(ModerationHistory)
+                db_session.query(ModerationTemporaryActions, ModerationHistory, DBUser, mod)
+                .join(ModerationTemporaryActions.main_item)
+                .join(ModerationHistory.user)
+                .join(mod, ModerationHistory.moderator_id == mod.id)
                 .filter(
-                    ModerationHistory.action.in_(
-                        (ModerationAction.TEMPMUTE, ModerationAction.TEMPBAN)
-                    ),
-                    ModerationHistory.complete == False,  # noqa
-                    ModerationHistory.until <= now,
+                    ModerationHistory.action.in_(ModerationAction.temp_actions()),
+                    ModerationTemporaryActions.complete == False,  # noqa 712
+                    ModerationTemporaryActions.until <= now,
                 )
                 .all()
             )
 
-            bans = None
+            bans = await self.uwcs_guild.bans()
 
-            for item in to_repeal:
-                db_user = (
-                    db_session.query(models.User)
-                    .filter(models.User.id == item.user_id)
-                    .one_or_none()
-                )
-                moderator = (
-                    db_session.query(models.User.username)
-                    .filter(models.User.id == item.moderator_id)
-                    .one_or_none()
-                )
-                date = humanize.naturaldate(item.timestamp)
-                if item.action == ModerationAction.TEMPMUTE:
+            for (temp_action, main_action, db_user, moderator) in to_repeal:
+                date = humanize.naturaldate(main_action.timestamp)
+                if main_action.action == ModerationAction.TEMPMUTE:
                     user = get(self.uwcs_guild.members, id=db_user.user_uid)
-                    reason = f"Removing tempmute on {db_user.username} placed by {moderator} {date}."
-                    item.complete = True
+                    logging.critical(str(user))
+                    reason = f"Removing tempmute on {db_user.username} placed by {moderator.username} {date}."
+                    temp_action.complete = True
                     logging.info(reason)
                     await user.remove_roles(self.mute_role, reason=reason)
-                elif item.action == ModerationAction.TEMPBAN:
-                    if bans is None:
-                        bans = await self.uwcs_guild.bans()
+                elif main_action.action == ModerationAction.TEMPBAN:
                     user = get(bans, user__id=db_user.user_uid)
-                    reason = f"Removing tempban on {db_user.username} placed by {moderator} {date}."
-                    item.complete = True
+                    reason = f"Removing tempban on {db_user.username} placed by {moderator.username} {date}."
+                    temp_action.complete = True
                     await self.uwcs_guild.unban(user, reason=reason)
 
             try:

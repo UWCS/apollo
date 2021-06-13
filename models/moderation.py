@@ -38,6 +38,10 @@ class ModerationAction(enum.Enum):
     BAN = 11
     UNBAN = 12
 
+    @classmethod
+    def temp_actions(cls):
+        return cls.TEMPMUTE, cls.TEMPBAN
+
 
 @auto_str
 class ModerationHistory(Base):
@@ -49,6 +53,9 @@ class ModerationHistory(Base):
     action = Column(Enum(ModerationAction), nullable=False)
     reason = Column(String, nullable=True)
     moderator_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    user = relationship("User", uselist=False, foreign_keys=[user_id])
+    moderator = relationship("User", uselist=False, foreign_keys=[moderator_id])
 
 
 @auto_str
