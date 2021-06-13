@@ -10,6 +10,7 @@ DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
 RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you."""
 PR_HELP_TEXT = """You know what to do"""
 ISSUE_HELP_TEXT = """You know what you want someone else to do"""
+MERGE_HELP_TEXT = """You know what you've already done, but need a someone else to approve"""
 BLUESHELL_HELP_TEXT = """!blueshell"""
 AWOO_HELP_TEXT = """Tails and that"""
 SINJO_HELP_TEXT = """o-o"""
@@ -49,6 +50,10 @@ class Misc(commands.Cog):
     @commands.command(help=ISSUE_HELP_TEXT, brief=ISSUE_HELP_TEXT)
     async def issue(self, ctx: Context):
         await ctx.send("You can submit an issue for that!")
+
+    @commands.command(help=MERGE_HELP_TEXT, brief=MERGE_HELP_TEXT)
+    async def merge(self, ctx: Context):
+        await ctx.send("_**JOOOOOOOOOHN!**_")
 
     @commands.command(help=BLUESHELL_HELP_TEXT, brief=BLUESHELL_HELP_TEXT)
     async def blueshell(self, ctx: Context):
