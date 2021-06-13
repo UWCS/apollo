@@ -6,6 +6,8 @@ from discord.ext.commands import (
     Group,
 )
 
+__all__ = ["Greedy1Command", "Greedy1Group"]
+
 
 class Greedy1Command(Command):
     """Implementation of Command that fails to parse if Greedy[T] does not find any arguments."""
