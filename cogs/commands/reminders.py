@@ -101,7 +101,7 @@ class Reminders(commands.Cog):
                 )
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 await ctx.send(f"Something went wrong")
 
 

@@ -151,7 +151,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 errors.append(internal_error(truncated_name))
                 continue
 
@@ -184,7 +184,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 errors.append(internal_error(truncated_name))
                 continue
         else:
@@ -215,7 +215,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 errors.append(internal_error(truncated_name))
                 karma_change = KarmaChange(
                     karma_id=karma_item.id,
@@ -231,7 +231,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     db_session.commit()
                 except (ScalarListException, SQLAlchemyError) as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     errors.append(internal_error(truncated_name))
                     continue
 
@@ -274,6 +274,6 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     try:
         db_session.commit()
     except (ScalarListException, SQLAlchemyError) as e:
-        logging.error(e)
+        logging.exception(e)
         db_session.rollback()
     return reply.rstrip()

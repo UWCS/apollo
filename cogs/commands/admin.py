@@ -84,7 +84,7 @@ class Admin(commands.Cog):
                     await ctx.send(f"Added {channel.mention} to the ignored list.")
                 except SQLAlchemyError as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 # Entry already present
@@ -100,7 +100,7 @@ class Admin(commands.Cog):
                     await ctx.send(f"{channel.mention} is no longer being ignored.")
                 except SQLAlchemyError as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 # The entry is not present
@@ -149,7 +149,7 @@ class Admin(commands.Cog):
                     )
                 except SQLAlchemyError as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 await ctx.send(f"{channel.mention} is already on mini-karma mode!")
@@ -163,7 +163,7 @@ class Admin(commands.Cog):
                     await ctx.send(f"{channel.mention} is now on normal karma mode")
                 except SQLAlchemyError as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     await ctx.send("Something went wrong. No change has occurred")
             else:
                 await ctx.send(f"{channel.mention} is already on normal karma mode!")

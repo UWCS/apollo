@@ -72,7 +72,7 @@ def add_moderation_history_item(
         db_session.commit()
     except SQLAlchemyError as e:
         db_session.rollback()
-        logging.error(e)
+        logging.exception(e)
 
 
 class Moderation(Cog):
@@ -140,7 +140,7 @@ class Moderation(Cog):
                 db_session.commit()
             except SQLAlchemyError as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
 
             await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
 
@@ -161,7 +161,7 @@ class Moderation(Cog):
         return True
 
     async def cog_command_error(self, ctx, error):
-        logging.error(error)
+        logging.exception(error)
         await ctx.message.add_reaction(self.emoji["no"])
 
     @command(cls=Greedy1Command)

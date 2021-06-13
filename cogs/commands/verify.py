@@ -133,7 +133,7 @@ class Verify(commands.Cog):
                     )
                 except (ScalarListException, SQLAlchemyError) as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     await ctx.send("Could not verify you due to an internal error.")
 
         else:

@@ -57,7 +57,7 @@ class Welcome(Cog):
         try:
             db_session.commit()
         except (ScalarListException, SQLAlchemyError) as e:
-            logging.error(e)
+            logging.exception(e)
             db_session.rollback()
 
     @Cog.listener()

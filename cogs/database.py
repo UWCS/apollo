@@ -46,7 +46,7 @@ class Database(Cog):
             db_session.commit()
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
-            logging.error(e)
+            logging.exception(e)
             # Something very wrong, but not way to reliably recover so abort
             return
 
@@ -65,7 +65,7 @@ class Database(Cog):
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 return
 
             # KARMA
@@ -105,7 +105,7 @@ class Database(Cog):
                         db_session.commit()
                     except (ScalarListException, SQLAlchemyError) as e:
                         db_session.rollback()
-                        logging.error(e)
+                        logging.exception(e)
 
     @Cog.listener()
     async def on_message_delete(self, message: Message):
@@ -124,7 +124,7 @@ class Database(Cog):
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
 
 
 def setup(bot: Bot):

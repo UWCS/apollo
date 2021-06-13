@@ -129,7 +129,7 @@ class Counting(Cog):
                 await ctx.send("Run recorded!")
             except SQLAlchemyError as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 await ctx.send("Something went wrong. The run could not be recorded.")
 
             # Reset the cog's state.

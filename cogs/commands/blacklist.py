@@ -48,7 +48,7 @@ class Blacklist(commands.Cog):
                 await ctx.send(f"Added {item} to the karma blacklist. :pencil:")
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 await ctx.send(
                     f"Something went wrong adding {item} to the karma blacklist. No change has occurred"
                 )
@@ -77,7 +77,7 @@ class Blacklist(commands.Cog):
                 )
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 await ctx.send(
                     f"Something went wrong removing {item} to the karma blacklist. No change has occurred"
                 )
