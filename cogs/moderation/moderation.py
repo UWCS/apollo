@@ -300,11 +300,11 @@ class Moderation(Cog):
             )
             message_parts.append(
                 dedent(
-                    f"""
-                            :speaker: **UNMUTED** :speaker:
-                            {mentions} {were} unmuted {with_reason}
-                            """
-                )
+                    """
+                        :speaker: **UNMUTED** :speaker:
+                        {mentions} {were} unmuted {with_reason}
+                    """
+                ).format(mentions=mentions, were=were, with_reason=with_reason)
             )
 
         if len(failed) > 0:
