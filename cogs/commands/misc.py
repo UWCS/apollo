@@ -1,4 +1,5 @@
 import random
+import subprocess
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
@@ -20,11 +21,16 @@ SINJO_HELP_TEXT = """o-o"""
 SERVERS_HELP_TEXT = """List of our multiplayer servers"""
 HASKELL_HELP_TEXT = """#notacult"""
 PING_HELP_TEXT = """Pong!"""
+XY_HELP_TEXT = """The XY problem is asking about your attempted solution rather than your actual problem."""
+ASK_TO_ASK_HELP_TEXT = """Don't ask to ask - just ask."""
 
 
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.version = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"], capture_output=True
+        ).stdout.decode()
 
     @commands.command(help=ZED0_HELP_TEXT, brief=ZED0_HELP_TEXT)
     async def zed0(self, ctx: Context):
@@ -98,6 +104,32 @@ We have a Terraria 1.4.1.2 server running at:
     @commands.command(help=PING_HELP_TEXT, brief=PING_HELP_TEXT)
     async def ping(self, ctx: Context):
         await ctx.send(":ping_pong:")
+
+    @commands.command(brief="Apollo's current version")
+    async def version(self, ctx: Context):
+        """Print the SHA1 hash of HEAD in the deployed Apollo repository."""
+        await ctx.send(self.version)
+
+    @commands.command(aliases=["xyproblem"], help=XY_HELP_TEXT, brief=XY_HELP_TEXT)
+    async def xy(self, ctx: Context):
+        await ctx.send("https://xyproblem.info/")
+
+    @commands.command(
+        aliases=[
+            "asktoask",
+            "a2a",
+            "ask2ask",
+            "da2a",
+            "dont_ask_to_ask",
+            "dontask2ask",
+            "don't_ask_to_ask",
+            "don'tasktoask",
+        ],
+        help=ASK_TO_ASK_HELP_TEXT,
+        brief=ASK_TO_ASK_HELP_TEXT,
+    )
+    async def ask_to_ask(self, ctx: Context):
+        await ctx.send("https://dontasktoask.com/")
 
 
 def setup(bot: Bot):

@@ -6,7 +6,8 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from karma.parser import RawKarma, parse_message
+from karma.parser import KarmaItem, KarmaOperation
+from karma.transaction import KarmaTransaction, apply_blacklist
 from models import Base, BlockedKarma, User
 
 
@@ -39,79 +40,77 @@ def database():
     return db_session
 
 
-def test_blacklist_blank(database):
-    assert parse_message("", database) is None
+TEST_CASES = {
+    # Make sure the blacklist does not interfere with regular karma parsing
+    "not in blacklist": (
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+    ),
+    # Items that are on the blacklist and it blocks
+    "blacklisted item same case": (
+        [KarmaTransaction(KarmaItem("notepad", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "blacklisted item different case": (
+        [KarmaTransaction(KarmaItem("NOTEPAD", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "blacklisted item with reason": (
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, "reason"), False
+            )
+        ],
+        [],
+    ),
+    # Items on the blacklist that are bypassed
+    "blacklist bypass": (
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, None, True), False
+            )
+        ],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, None, True), False
+            )
+        ],
+    ),
+    "blacklist bypass short item": (
+        [KarmaTransaction(KarmaItem("c", KarmaOperation.POSITIVE, None, True), False)],
+        [KarmaTransaction(KarmaItem("c", KarmaOperation.POSITIVE, None, True), False)],
+    ),
+    "blacklist bypass with reason": (
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, "reason", True), False
+            )
+        ],
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, "reason", True), False
+            )
+        ],
+    ),
+    # Mixture of blacklist and non-blacklist items
+    "blacklisted item and non-blacklisted item": (
+        [
+            KarmaTransaction(
+                KarmaItem("notepad", KarmaOperation.POSITIVE, None), False
+            ),
+            KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False),
+        ],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+    ),
+}
 
 
-def test_single_not_in_blacklist(database):
-    assert parse_message("foo++", database) == [
-        RawKarma(name="foo", op="++", reason=None)
-    ]
-
-
-def test_blacklist_single_blocked_lower(database):
-    assert parse_message("c++", database) is None
-
-
-def test_blacklist_single_blocked_upper(database):
-    assert parse_message("C++", database) is None
-
-
-def test_blacklist_single_allowed_lower(database):
-    assert parse_message('"c"++', database) == [
-        RawKarma(name="c", op="++", reason=None)
-    ]
-
-
-def test_blacklist_single_allowed_upper(database):
-    assert parse_message('"C"++', database) == [
-        RawKarma(name="C", op="++", reason=None)
-    ]
-
-
-def test_blacklist_single_blocked_mixed(database):
-    assert parse_message("NoTepAD++", database) is None
-
-
-def test_blacklist_single_allowed_mixed(database):
-    assert parse_message('"NoTepAD"++', database) == [
-        RawKarma(name="NoTepAD", op="++", reason=None)
-    ]
-
-
-def test_blacklist_single_karma_quoted(database):
-    assert parse_message('"c++"', database) is None
-
-
-def test_multiple_not_in_blacklist(database):
-    assert parse_message("foo++ bar++", database) == [
-        RawKarma(name="foo", op="++", reason=None),
-        RawKarma(name="bar", op="++", reason=None),
-    ]
-
-
-def test_blacklist_multiple_blocked(database):
-    assert parse_message("c++ notepad++", database) is None
-
-
-def test_blacklist_multiple_allowed(database):
-    assert parse_message('"c"++ "notepad"++', database) == [
-        RawKarma(name="c", op="++", reason=None),
-        RawKarma(name="notepad", op="++", reason=None),
-    ]
-
-
-def test_blacklist_mixed_allowed(database):
-    assert parse_message('"c"++ notepad++', database) == [
-        RawKarma(name="c", op="++", reason=None)
-    ]
-
-
-def test_blacklist_mixed_quoted_all_blocked(database):
-    assert parse_message('"c++" notepad++', database) is None
-
-
-def test_blacklist_mixed_quoted_allowed(database):
-    assert parse_message('"c++" "notepad"++', database) == [
-        RawKarma(name="notepad", op="++", reason=None)
-    ]
+# A note on parametrised tests/table testing:
+# Don't change the test to add a new case - the test itself should be as simple as possible.
+# If adding a new test case would require changes to this test, it would be better suited as a new test function.
+@pytest.mark.parametrize(
+    ["transactions", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
+)
+def test_blacklist(database, transactions, expected):
+    actual = apply_blacklist(transactions, database)
+    assert actual == expected

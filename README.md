@@ -1,4 +1,4 @@
-# Apollo [![Build Status](https://travis-ci.org/UWCS/apollo.svg?branch=master)](https://travis-ci.org/uwcs/apollo)
+# Apollo [![Build status](https://github.com/UWCS/apollo/actions/workflows/tests.yaml/badge.svg?branch=master)](https://github.com/UWCS/apollo/actions/workflows/tests.yaml)
 
 Apollo is a [Discord](https://discordapp.com/) bot for the [University of Warwick Computing Society](https://uwcs.co.uk).
 It is designed to augment our Discord server with a few of the user services available on our website.
@@ -9,10 +9,10 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 #### Dependencies
 
-Two dependency files are included with this project.
+Two type of dependency files are included with this project.
 The first, `requirements.txt`, only includes top-level dependencies.
 
-The second, `requirements.lock`, contains a pinned list of all dependencies.
+The second, `requirements-platform.lock`, contains a pinned list of all dependencies specific to a platform.
 
 If installing the top-level dependencies does not work, try installing the pinned dependencies.
 
@@ -54,6 +54,49 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
 
 * This project uses the Black Python formatter.
   Before submitting your code for a PR, run `black .` on the root directory of this project to bring all of your up to spec for the code style guide.
+  
+* For testing CI locally, use [act-cli](https://github.com/nektos/act).
+
+* Although the default database engine in config files is SQLite3, the current production database engine is PostgreSQL.
+  In order to test code against a PostgreSQL database, you will need to install `psycopg2` and set up a PostgreSQL instance.
+  
+#### Testing subsections
+
+You may want to work on a subsection of the bot without the surrounding functionality. This may be useful if you want to add a basic command but don't want the hassle of installing and working around the database requirements. You can disable parts of the bot from being loaded in at runtime by disabling their cogs.
+
+[Cogs](https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html) are a method of categorising parts of your bot with discord.py. If you are to contribute to the project, some understanding of cogs and discord.py in general would be advisable, but you can see the implementation of pre-existing commands for a basic idea of how they work.
+
+Cogs are loaded in [apollo.py](apollo.py):
+
+```py
+# The command extensions to be loaded by the bot
+EXTENSIONS = [
+    "cogs.commands.admin",
+    "cogs.commands.blacklist",
+    "cogs.commands.date",
+    "cogs.commands.flip",
+    "cogs.commands.karma",
+    "cogs.commands.misc",
+    # ...and so on
+]
+```
+
+You can simply comment out any category of commands you don't want the bot to load to avoid supporting their requirements:
+
+```py
+# The command extensions to be loaded by the bot
+EXTENSIONS = [
+    "cogs.commands.admin",
+    #    "cogs.commands.blacklist", # <- requires database
+    "cogs.commands.date",
+    "cogs.commands.flip",
+    #    "cogs.commands.karma", # <- requires database
+    "cogs.commands.misc",
+    # ...and so on
+]
+```
+
+Make sure not to commit these comments when you pull request.
 
 ### License
 

@@ -1,353 +1,132 @@
-from karma.parser import KarmaTransaction, RawKarma, create_transactions
+import os
+from pathlib import Path
 
+import pytest
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
-def test_empty():
-    assert create_transactions("", "", []) is None
+from karma.parser import KarmaItem, KarmaOperation
+from karma.transaction import KarmaTransaction, filter_transactions, make_transactions
+from models import Base
+from tests.stubs import make_irc_message_stub, make_message_stub
 
-
-def test_simple_positive():
-    assert create_transactions(
-        "Baz", "Baz", [RawKarma(name="Foobar", op="++", reason=None)]
-    ) == [KarmaTransaction(name="Foobar", self_karma=False, net_karma=1, reasons=[])]
-
-
-def test_simple_negative():
-    assert create_transactions(
-        "Baz", "Baz", [RawKarma(name="Foobar", op="--", reason=None)]
-    ) == [KarmaTransaction(name="Foobar", self_karma=False, net_karma=-1, reasons=[])]
-
-
-def test_simple_neutral():
-    assert create_transactions(
-        "Baz", "Baz", [RawKarma(name="Foobar", op="+-", reason=None)]
-    ) == [KarmaTransaction(name="Foobar", self_karma=False, net_karma=0, reasons=[])]
-
-
-def test_self_karma_single():
-    assert create_transactions(
-        "Baz", "Baz", [RawKarma(name="Baz", op="++", reason=None)]
-    ) == [KarmaTransaction(name="Baz", self_karma=True, net_karma=1, reasons=[])]
-
-
-def test_self_karma_multiple():
-    assert (
-        create_transactions(
-            "Baz",
-            "Baz",
-            [
-                RawKarma(name="Baz", op="++", reason=None),
-                RawKarma(name="Baz", op="++", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=True, net_karma=1, reasons=[])]
-    )
-
-
-def test_self_karma_single_with_others():
-    assert create_transactions(
-        "Baz",
-        "Baz",
+MAKE_TEST_CASES = {
+    # Simple cases
+    "no item": (
+        [],
+        make_message_stub("just a normal sentence"),
+        [],
+    ),
+    "single item positive": (
+        [KarmaItem("asdf", KarmaOperation.POSITIVE, None)],
+        make_message_stub("asdf++"),
+        [KarmaTransaction(KarmaItem("asdf", KarmaOperation.POSITIVE, None), False)],
+    ),
+    "single item neutral": (
+        [KarmaItem("asdf", KarmaOperation.NEUTRAL, None)],
+        make_message_stub("asdf+-"),
+        [KarmaTransaction(KarmaItem("asdf", KarmaOperation.NEUTRAL, None), False)],
+    ),
+    "single item negative": (
+        [KarmaItem("asdf", KarmaOperation.NEGATIVE, None)],
+        make_message_stub("asdf--"),
+        [KarmaTransaction(KarmaItem("asdf", KarmaOperation.NEGATIVE, None), False)],
+    ),
+    "single item with reason": (
+        [KarmaItem("asdf", KarmaOperation.POSITIVE, "reason")],
+        make_message_stub("asdf++ (reason)"),
+        [KarmaTransaction(KarmaItem("asdf", KarmaOperation.POSITIVE, "reason"), False)],
+    ),
+    # Cases with more than one karma item
+    # Only the first item is retained
+    "duplicate item": (
         [
-            RawKarma(name="Baz", op="++", reason=None),
-            RawKarma(name="Foobar", op="++", reason=None),
+            KarmaItem("asdf", KarmaOperation.POSITIVE, None),
+            KarmaItem("asdf", KarmaOperation.POSITIVE, None),
         ],
-    ) == [
-        KarmaTransaction(name="Baz", self_karma=True, net_karma=1, reasons=[]),
-        KarmaTransaction(name="Foobar", self_karma=False, net_karma=1, reasons=[]),
-    ]
-
-
-def test_karma_double_positive():
-    assert (
-        create_transactions(
-            "Bar",
-            "Bar",
-            [
-                RawKarma(name="Baz", op="++", reason=None),
-                RawKarma(name="Baz", op="++", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
-    )
-
-
-def test_karma_double_negative():
-    assert (
-        create_transactions(
-            "Bar",
-            "Bar",
-            [
-                RawKarma(name="Baz", op="--", reason=None),
-                RawKarma(name="Baz", op="--", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=-1, reasons=[])]
-    )
-
-
-def test_karma_double_neutral():
-    assert (
-        create_transactions(
-            "Bar",
-            "Bar",
-            [
-                RawKarma(name="Baz", op="+-", reason=None),
-                RawKarma(name="Baz", op="-+", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=0, reasons=[])]
-    )
-
-
-def test_karma_positive_neutral():
-    assert (
-        create_transactions(
-            "Bar",
-            "Bar",
-            [
-                RawKarma(name="Baz", op="++", reason=None),
-                RawKarma(name="Baz", op="+-", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
-    )
-
-
-def test_karma_negative_neutral():
-    assert (
-        create_transactions(
-            "Bar",
-            "Bar",
-            [
-                RawKarma(name="Baz", op="++", reason=None),
-                RawKarma(name="Baz", op="+-", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=1, reasons=[])]
-    )
-
-
-def test_karma_positive_negative():
-    assert (
-        create_transactions(
-            "Bar",
-            "Bar",
-            [
-                RawKarma(name="Baz", op="++", reason=None),
-                RawKarma(name="Baz", op="--", reason=None),
-            ],
-        )
-        == [KarmaTransaction(name="Baz", self_karma=False, net_karma=0, reasons=[])]
-    )
-
-
-def test_simple_positive_reason():
-    assert create_transactions(
-        "Bar", "Bar", [RawKarma(name="Baz", op="++", reason="Foobar is baz")]
-    ) == [
-        KarmaTransaction(
-            name="Baz", self_karma=False, net_karma=1, reasons=["Foobar is baz"]
-        )
-    ]
-
-
-def test_simple_negative_reason():
-    assert create_transactions(
-        "Bar", "Bar", [RawKarma(name="Baz", op="--", reason="Foobar is baz")]
-    ) == [
-        KarmaTransaction(
-            name="Baz", self_karma=False, net_karma=-1, reasons=["Foobar is baz"]
-        )
-    ]
-
-
-def test_simple_neutral_reason():
-    assert create_transactions(
-        "Bar", "Bar", [RawKarma(name="Baz", op="+-", reason="Foobar is baz")]
-    ) == [
-        KarmaTransaction(
-            name="Baz", self_karma=False, net_karma=0, reasons=["Foobar is baz"]
-        )
-    ]
-
-
-def test_self_karma_single_reason():
-    assert create_transactions(
-        "Bar", "Bar", [RawKarma(name="Bar", op="++", reason="Is awesome")]
-    ) == [
-        KarmaTransaction(
-            name="Bar", self_karma=True, net_karma=1, reasons=["Is awesome"]
-        )
-    ]
-
-
-def test_self_karma_single_reason_with_comma():
-    assert create_transactions(
-        "Bar", "Bar", [RawKarma(name="Bar", op="++", reason="Is, awesome")]
-    ) == [
-        KarmaTransaction(
-            name="Bar", self_karma=True, net_karma=1, reasons=["Is, awesome"]
-        )
-    ]
-
-
-def test_self_karma_multiple_reason():
-    assert create_transactions(
-        "Bar",
-        "Bar",
+        make_message_stub("asdf++ asdf++"),
+        [KarmaTransaction(KarmaItem("asdf", KarmaOperation.POSITIVE, None), False)],
+    ),
+    "duplicate topic, different operation": (
         [
-            RawKarma(name="Bar", op="++", reason="Is awesome"),
-            RawKarma(name="Bar", op="++", reason="Is awesome"),
+            KarmaItem("asdf", KarmaOperation.POSITIVE, None),
+            KarmaItem("asdf", KarmaOperation.NEGATIVE, None),
         ],
-    ) == [
-        KarmaTransaction(
-            name="Bar",
-            self_karma=True,
-            net_karma=1,
-            reasons=["Is awesome", "Is awesome"],
-        )
-    ]
+        make_message_stub("asdf++ asdf--"),
+        [KarmaTransaction(KarmaItem("asdf", KarmaOperation.POSITIVE, None), False)],
+    ),
+    # Cases with self-karma
+    "self karma": (
+        [KarmaItem("Name", KarmaOperation.POSITIVE, None)],
+        make_message_stub("Name++"),
+        [KarmaTransaction(KarmaItem("Name", KarmaOperation.POSITIVE, None), True)],
+    ),
+    "self karma nickname": (
+        [KarmaItem("Nick", KarmaOperation.POSITIVE, None)],
+        make_message_stub("Nick++"),
+        [KarmaTransaction(KarmaItem("Nick", KarmaOperation.POSITIVE, None), True)],
+    ),
+    "irc self karma": (
+        [KarmaItem("ircname", KarmaOperation.POSITIVE, None)],
+        make_irc_message_stub("ircname++"),
+        [KarmaTransaction(KarmaItem("ircname", KarmaOperation.POSITIVE, None), True)],
+    ),
+}
 
 
-def test_self_karma_single_with_others_and_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
+@pytest.mark.parametrize(
+    ["items", "message", "expected"],
+    MAKE_TEST_CASES.values(),
+    ids=MAKE_TEST_CASES.keys(),
+)
+def test_make_transactions(items, message, expected):
+    actual = make_transactions(items, message)
+    assert actual == expected
+
+
+FILTER_TEST_CASES = {
+    # Cases that should be filtered out
+    "empty topic": (
+        [KarmaTransaction(KarmaItem("", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "short topic": (
+        [KarmaTransaction(KarmaItem("C", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "whitespace topic": (
+        [KarmaTransaction(KarmaItem("     ", KarmaOperation.POSITIVE, None), False)],
+        [],
+    ),
+    "bypassed empty topic": (
+        [KarmaTransaction(KarmaItem("", KarmaOperation.POSITIVE, None, True), False)],
+        [],
+    ),
+    "bypassed whitespace topic": (
         [
-            RawKarma(name="Bar", op="++", reason="Is awesome"),
-            RawKarma(name="Foo", op="++", reason="Is awesome too"),
+            KarmaTransaction(
+                KarmaItem("     ", KarmaOperation.POSITIVE, None, True), False
+            )
         ],
-    ) == [
-        KarmaTransaction(
-            name="Bar", self_karma=True, net_karma=1, reasons=["Is awesome"]
-        ),
-        KarmaTransaction(
-            name="Foo", self_karma=False, net_karma=1, reasons=["Is awesome too"]
-        ),
-    ]
+        [],
+    ),
+    # Cases that should be unchanged
+    "typical item": (
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+        [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
+    ),
+    "bypassed short topic": (
+        [KarmaTransaction(KarmaItem("C", KarmaOperation.POSITIVE, None, True), False)],
+        [KarmaTransaction(KarmaItem("C", KarmaOperation.POSITIVE, None, True), False)],
+    ),
+}
 
 
-def test_karma_double_positive_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason="Foobar baz 1"),
-            RawKarma(name="Baz", op="++", reason="Foobar baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=1,
-            reasons=["Foobar baz 1", "Foobar baz 2"],
-        )
-    ]
-
-
-def test_karma_double_negative_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="--", reason="Foobar baz 1"),
-            RawKarma(name="Baz", op="--", reason="Foobar baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=-1,
-            reasons=["Foobar baz 1", "Foobar baz 2"],
-        )
-    ]
-
-
-def test_karma_double_neutral_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="+-", reason="Foobar baz 1"),
-            RawKarma(name="Baz", op="-+", reason="Foobar baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=0,
-            reasons=["Foobar baz 1", "Foobar baz 2"],
-        )
-    ]
-
-
-def test_karma_double_neutral_reasons_and_commas():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="+-", reason="Foobar, baz 1"),
-            RawKarma(name="Baz", op="-+", reason="Foobar, baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=0,
-            reasons=["Foobar, baz 1", "Foobar, baz 2"],
-        )
-    ]
-
-
-def test_karma_positive_neutral_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason="Foobar baz 1"),
-            RawKarma(name="Baz", op="+-", reason="Foobar baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=1,
-            reasons=["Foobar baz 1", "Foobar baz 2"],
-        )
-    ]
-
-
-def test_karma_negative_neutral_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="--", reason="Foobar baz 1"),
-            RawKarma(name="Baz", op="+-", reason="Foobar baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=-1,
-            reasons=["Foobar baz 1", "Foobar baz 2"],
-        )
-    ]
-
-
-def test_karma_positive_negative_reasons():
-    assert create_transactions(
-        "Bar",
-        "Bar",
-        [
-            RawKarma(name="Baz", op="++", reason="Foobar baz 1"),
-            RawKarma(name="Baz", op="--", reason="Foobar baz 2"),
-        ],
-    ) == [
-        KarmaTransaction(
-            name="Baz",
-            self_karma=False,
-            net_karma=0,
-            reasons=["Foobar baz 1", "Foobar baz 2"],
-        )
-    ]
+@pytest.mark.parametrize(
+    ["items", "expected"], FILTER_TEST_CASES.values(), ids=FILTER_TEST_CASES.keys()
+)
+def test_filter_transactions(items, expected):
+    actual = filter_transactions(items)
+    assert actual == expected

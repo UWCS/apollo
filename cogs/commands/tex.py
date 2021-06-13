@@ -1,3 +1,4 @@
+import logging
 import os
 from datetime import datetime
 
@@ -67,14 +68,14 @@ class Tex(commands.Cog):
             + ".png"
         ).replace(" ", "")
         path_png = CONFIG.FIG_SAVE_PATH / filename
-        path_jpg = path_png.replace(".png", ".jpg")
+        path_jpg = path_png.with_suffix(".jpg")
         try:
             # Plot the latex and save it.
             plt.text(0, 1, tex_code, color="white")
             plt.savefig(path_png, dpi=300, bbox_inches="tight", transparent=True)
         except RuntimeError as r:
             # Failed to render latex. Report error
-            print(r)
+            logging.error(r)
             await ctx.send("Unable to render LaTeX. Please check that it's correct")
         else:
             # Generate a mask of the transparent regions in the image

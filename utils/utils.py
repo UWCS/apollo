@@ -1,4 +1,6 @@
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from typing import Iterable
+
 from config import CONFIG
 
 
@@ -14,11 +16,11 @@ def get_name_string(message):
         return f"{message.author.mention}"
 
 
-def is_number(num):
+def is_decimal(num):
     try:
         Decimal(num)
         return True
-    except:
+    except (InvalidOperation, TypeError):
         return False
 
 
@@ -27,3 +29,21 @@ def pluralise(l, word, single="", plural="s"):
         return word + plural
     else:
         return word + single
+
+
+def filter_out_none(iterable: Iterable):
+    return [i for i in iterable if i is not None]
+
+
+def clean_brackets(
+    str,
+    brackets=[
+        ("(", ")"),
+    ],
+):
+    """Removes matching brackets from the outside of a string
+    Only supports single-character brackets
+    """
+    while len(str) > 1 and (str[0], str[-1]) in brackets:
+        str = str[1:-1]
+    return str

@@ -1,9 +1,9 @@
+import logging
 from datetime import datetime
 from enum import Enum, unique
 
 import discord
 from discord import Color, Embed, TextChannel
-from discord.abc import PrivateChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandError, Context, check
 from pytz import timezone, utc
@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from cogs.commands.karma import current_milli_time
 from config import CONFIG
 from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
-from utils import get_name_string, pluralise
+from utils import pluralise
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
@@ -58,31 +58,20 @@ class MiniKarmaMode(EnumGet, Enum):
 
 
 async def is_compsoc_exec_in_guild(ctx: Context):
-    # Get the roles of the user in the UWCS discord
-    compsoc_guild = [
-        guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID
-    ][0]
+    """Check whether a member is an exec in the UWCS Discord"""
+    compsoc_guild = next(
+        (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
+    )
+    if not compsoc_guild:
+        return False
     compsoc_member = compsoc_guild.get_member(ctx.message.author.id)
     if not compsoc_member:
-        raise AdminError(
-            f"You aren't part of the UWCS discord so I'm afraid I can't let you do that. :octagonal_sign:"
-        )
+        return False
 
-    roles = list(
-        map(
-            lambda x: discord.utils.get(compsoc_member.roles, id=x),
-            CONFIG.UWCS_EXEC_ROLE_IDS,
-        )
-    )
-    if not roles:
-        if not isinstance(ctx.channel, PrivateChannel):
-            await ctx.message.delete()
-        display_name = get_name_string(ctx.message)
-        raise AdminError(
-            f"You don't have permission to run that command, {display_name}."
-        )
-    else:
-        return True
+    roles = [
+        discord.utils.get(compsoc_member.roles, id=x) for x in CONFIG.UWCS_EXEC_ROLE_IDS
+    ]
+    return any(roles)
 
 
 class Admin(commands.Cog):
@@ -118,16 +107,22 @@ class Admin(commands.Cog):
         if mode == ChannelIgnoreMode.Ignore:
             if ignored_channel is None:
                 # Create a new entry
+                user = (
+                    db_session.query(User)
+                    .filter(User.user_uid == ctx.author.id)
+                    .first()
+                )
                 new_ignored_channel = IgnoredChannel(
                     channel=channel.id,
-                    user_id=ctx.author.id,
+                    user_id=user.id,
                 )
                 db_session.add(new_ignored_channel)
                 try:
                     db_session.commit()
                     await ctx.send(f"Added {channel.mention} to the ignored list.")
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 # Entry already present
@@ -141,8 +136,9 @@ class Admin(commands.Cog):
                 try:
                     db_session.commit()
                     await ctx.send(f"{channel.mention} is no longer being ignored.")
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 # The entry is not present
@@ -178,9 +174,14 @@ class Admin(commands.Cog):
 
         if mode == MiniKarmaMode.Mini:
             if karma_channel is None:
+                user = (
+                    db_session.query(User)
+                    .filter(User.user_uid == ctx.author.id)
+                    .first()
+                )
                 new_karma_channel = MiniKarmaChannel(
                     channel=channel.id,
-                    user_id=ctx.author.id,
+                    user_id=user.id,
                 )
                 db_session.add(new_karma_channel)
                 try:
@@ -188,8 +189,9 @@ class Admin(commands.Cog):
                     await ctx.send(
                         f"Added {channel.mention} to the mini-karma channels"
                     )
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred.")
             else:
                 await ctx.send(f"{channel.mention} is already on mini-karma mode!")
@@ -201,8 +203,9 @@ class Admin(commands.Cog):
                 try:
                     db_session.commit()
                     await ctx.send(f"{channel.mention} is now on normal karma mode")
-                except SQLAlchemyError:
+                except SQLAlchemyError as e:
                     db_session.rollback()
+                    logging.error(e)
                     await ctx.send("Something went wrong. No change has occurred")
             else:
                 await ctx.send(f"{channel.mention} is already on normal karma mode!")
