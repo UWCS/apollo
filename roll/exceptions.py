@@ -50,7 +50,7 @@ class ZeroDivisionError(RunTimeError):
         super().__init__(trace, message)
 
 
-class ExcessiveDiceRollsError(WarningError, RunTimeError):
+class ExcessiveDiceRollsError(WarningError):
     """Raised when too many dice are rolled in a single command"""
 
     def __init__(

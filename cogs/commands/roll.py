@@ -75,9 +75,9 @@ class Roll(commands.Cog):
 
 def run(message, display_name):
     try:
+        message = message.strip()
         if len(message) == 0:
             message = "1d6"
-        message = message.strip()
         logging.debug("==== Parsing ====")
         program = parse_program(message)
         logging.debug("==== Evaluation ====")
@@ -114,6 +114,7 @@ def run(message, display_name):
             error=e.__class__.__name__,
             body=f"**Internal error:**```{e}```",
         )
+        logging.exception(e)
     logging.debug("")
     return out
 
