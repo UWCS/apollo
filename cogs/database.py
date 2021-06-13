@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from discord import Message
@@ -8,7 +9,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
-from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session, logging
+from models import IgnoredChannel, LoggedMessage, MessageDiff, User, db_session
 from utils import get_database_user, is_compsoc_exec_in_guild, user_is_irc_bot
 
 
