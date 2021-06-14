@@ -131,10 +131,11 @@ We have a Terraria 1.4.1.2 server running at:
     )
     async def ask_to_ask(self, ctx: Context):
         await ctx.send("https://dontasktoask.com/")
-        
+
     @commands.command(help=GIT_HELP_TEXT, brief=GIT_HELP_TEXT)
-    async def git(self,ctx: Context):
+    async def git(self, ctx: Context):
         await ctx.send("Apollo is on git at: https://github.com/UWCS/apollo")
+
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
