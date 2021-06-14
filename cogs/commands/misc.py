@@ -23,6 +23,7 @@ HASKELL_HELP_TEXT = """#notacult"""
 PING_HELP_TEXT = """Pong!"""
 XY_HELP_TEXT = """The XY problem is asking about your attempted solution rather than your actual problem."""
 ASK_TO_ASK_HELP_TEXT = """Don't ask to ask - just ask."""
+GIT_HELP_TEXT = """Apollo git repository"""
 
 
 class Misc(commands.Cog):
@@ -130,7 +131,10 @@ We have a Terraria 1.4.1.2 server running at:
     )
     async def ask_to_ask(self, ctx: Context):
         await ctx.send("https://dontasktoask.com/")
-
+        
+    @commands.command(help=GIT_HELP_TEXT, brief=GIT_HELP_TEXT)
+    async def git(self,ctx: Context):
+        await ctx.send("Apollo is on git at: https://github.com/UWCS/apollo")
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
