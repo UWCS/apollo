@@ -510,7 +510,7 @@ class Karma(commands.Cog):
             if reasons:
                 reasons_plural = pluralise(reasons, "reason")
 
-                bullet_points = "\n".join(f" • {reason}\n" for reason in reasons)
+                bullet_points = "\n".join(f" • {reason}" for reason in reasons)
                 result = f'The {reasons_plural} for "{karma_stripped}" are as follows:\n\n{bullet_points}'
             else:
                 result = f"There are no reasons down for that karma topic! :frowning:"
