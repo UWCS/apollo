@@ -21,7 +21,7 @@ If installing the top-level dependencies does not work, try installing the pinne
 1. Create a new virtual environment `python -m venv .venv`.
 2. Activate the virtual environment
    - On Linux and macOS: `source .venv/bin/activate`.
-   - On Windows: `.\venv\Scripts\activate`
+   - On Windows: `.\.venv\Scripts\activate`
 3. Check that the virtual environment has been activated.
    - On Linux and macOS: `which python`  
      Expected output: `.../.venv/bin/python`.
