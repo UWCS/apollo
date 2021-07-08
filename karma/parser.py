@@ -46,7 +46,7 @@ def make_karma(el: list):
 def make_op_regex(o):
     non_op_pre = r"(?<![+-])"
     non_op_post = r"(?![+-])"
-    allowed_post = r"(?=[ \t\v!,;:?]|$)"
+    allowed_post = r"(?=[ \t\v\n!,;:?]|$)"
     return rf"{non_op_pre}{o}{non_op_post}{allowed_post}"
 
 
