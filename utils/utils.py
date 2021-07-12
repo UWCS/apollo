@@ -65,7 +65,7 @@ def clean_brackets(
 
 
 def filter_out_none(iterable: Iterable, /):
-    return [i for i in iterable if i is not None]
+    return (i for i in iterable if i is not None)
 
 
 def format_list(el: list, /):
