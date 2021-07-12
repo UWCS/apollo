@@ -15,8 +15,8 @@ from karma.transaction import (
     filter_transactions,
     make_transactions,
 )
-from models import Karma, KarmaChange, MiniKarmaChannel, User
-from utils import get_name_string
+from models import Karma, KarmaChange, MiniKarmaChannel
+from utils import get_database_user, get_name_string
 
 
 def is_in_cooldown(last_change, timeout):
@@ -40,7 +40,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # TODO: Protect from byte-limit length chars
 
     # Get karma-ing user
-    user = db_session.query(User).filter(User.user_uid == message.author.id).first()
+    user = get_database_user(message.author)
 
     # Get whether the channel is on mini karma or not
     channel = (
@@ -151,7 +151,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 errors.append(internal_error(truncated_name))
                 continue
 
@@ -184,7 +184,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 errors.append(internal_error(truncated_name))
                 continue
         else:
@@ -215,7 +215,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 db_session.commit()
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
-                logging.error(e)
+                logging.exception(e)
                 errors.append(internal_error(truncated_name))
                 karma_change = KarmaChange(
                     karma_id=karma_item.id,
@@ -231,7 +231,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     db_session.commit()
                 except (ScalarListException, SQLAlchemyError) as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     errors.append(internal_error(truncated_name))
                     continue
 
@@ -274,6 +274,6 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     try:
         db_session.commit()
     except (ScalarListException, SQLAlchemyError) as e:
-        logging.error(e)
+        logging.exception(e)
         db_session.rollback()
     return reply.rstrip()

@@ -12,10 +12,9 @@ from discord.ext.commands import Bot, Context, check, clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
 from models import FilamentType, db_session
-from utils import get_name_string
+from utils import get_name_string, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Commands to help cost and request something is 3D printed on the UWCS 3D printer.
@@ -124,7 +123,7 @@ class PrintTools(commands.Cog, name="Print tools"):
             await ctx.send(f'"{filament_name}" added to the available filament list!')
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
-            logging.error(e)
+            logging.exception(e)
             await ctx.send(f'Could not add "{filament_name}" due to an internal error.')
 
     @printtools.command(help=DELF_LONG_TEXT, brief=DELF_HELP_TEXT)
@@ -148,7 +147,7 @@ class PrintTools(commands.Cog, name="Print tools"):
             await ctx.send(f'Removed "{filament_name}" from the filament list!')
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
-            logging.error(e)
+            logging.exception(e)
             await ctx.send(
                 f'Could not remove "{filament_name}" due to an internal error.'
             )

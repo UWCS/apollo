@@ -4,8 +4,8 @@ import logging
 from discord import Intents
 from discord.ext.commands import Bot, Context, check, when_mentioned_or
 
-from cogs.commands.admin import is_compsoc_exec_in_guild
 from config import CONFIG
+from utils.utils import is_compsoc_exec_in_guild
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.

@@ -12,6 +12,7 @@ class Config:
         self.UWCS_MEMBER_ROLE_ID: int = parsed.get("UWCS_member_role_id")
         self.UWCS_EXEC_ROLE_IDS: list[int] = parsed.get("UWCS_exec_role_ids")
         self.UWCS_WELCOME_CHANNEL_ID: int = parsed.get("UWCS_welcome_channel_id")
+        self.UWCS_INTROS_CHANNEL_ID: int = parsed.get("UWCS_intros_channel_id")
         self.DATABASE_CONNECTION: str = parsed.get("database_connection")
         self.UWCS_DISCORD_ID: int = parsed.get("UWCS_discord_id")
         self.UWCS_API_TOKEN: str = parsed.get("UWCS_api_token")

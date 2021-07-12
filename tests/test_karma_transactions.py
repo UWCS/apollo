@@ -1,15 +1,7 @@
-import os
-from pathlib import Path
-
 import pytest
-from alembic import command
-from alembic.config import Config
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 
 from karma.parser import KarmaItem, KarmaOperation
 from karma.transaction import KarmaTransaction, filter_transactions, make_transactions
-from models import Base
 from tests.stubs import make_irc_message_stub, make_message_stub
 
 MAKE_TEST_CASES = {
