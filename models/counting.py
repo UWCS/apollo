@@ -2,7 +2,6 @@ from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric
 
 from models.models import Base, auto_str
 
-
 __all__ = ["CountingRun", "CountingUser"]
 
 

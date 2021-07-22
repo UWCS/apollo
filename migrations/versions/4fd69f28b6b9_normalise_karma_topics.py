@@ -5,17 +5,13 @@ Revises: f1e50ee892b4
 Create Date: 2021-07-12 20:11:42.424516
 
 """
-import itertools as it
 import unicodedata
 from typing import Dict, List, Tuple
 
-from alembic import op
 import sqlalchemy as sa
-import sqlalchemy_utils as sau
+from alembic import op
 from sqlalchemy import orm
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import declarative_base
-
 
 # revision identifiers, used by Alembic.
 revision = "4fd69f28b6b9"

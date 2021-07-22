@@ -140,11 +140,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
         def topic_transformations():
             def query(t):
-                return (
-                    db_session.query(Karma)
-                    .filter(Karma.name.ilike(t))
-                    .one_or_none()
-                )
+                return db_session.query(Karma).filter(Karma.name.ilike(t)).one_or_none()
 
             topic = transaction.karma_item.topic.casefold()
             yield query(topic)

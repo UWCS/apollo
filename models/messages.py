@@ -5,7 +5,6 @@ from sqlalchemy_utils import EncryptedType
 from config import CONFIG
 from models.models import Base, auto_str
 
-
 __all__ = ["MessageDiff", "LoggedMessage"]
 
 

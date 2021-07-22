@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from config import CONFIG
 
-
 __all__ = ["Base", "db_session", "auto_str"]
 
 
