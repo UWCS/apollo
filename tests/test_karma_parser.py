@@ -3,7 +3,6 @@ from textwrap import dedent
 import pytest
 
 from karma.parser import KarmaItem, KarmaOperation, parse_message_content
-from tests.stubs import make_message_stub
 
 TEST_CASES = {
     # Cases with no karma

@@ -10,8 +10,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
-from models import User, db_session
-from utils import get_name_string
+from models import db_session
+from utils import get_database_user, get_name_string
 
 LONG_HELP_TEXT = """
 Allows you to verify your account with your university number to gain the 'CompSoc Member' role. Should be sent in a private message.
@@ -74,11 +74,7 @@ class Verify(commands.Cog):
                 )
             else:
                 # This *shouldn't* happen but in the small case it may, just get the user to try again. Yay async systems!
-                user = (
-                    db_session.query(User)
-                    .filter(User.user_uid == ctx.message.author.id)
-                    .first()
-                )
+                user = get_database_user(ctx.author)
                 if not user:
                     raise VerifyError(
                         message="We've hit a snag verifying your account - please try again in a few minutes!"
@@ -137,7 +133,7 @@ class Verify(commands.Cog):
                     )
                 except (ScalarListException, SQLAlchemyError) as e:
                     db_session.rollback()
-                    logging.error(e)
+                    logging.exception(e)
                     await ctx.send("Could not verify you due to an internal error.")
 
         else:
