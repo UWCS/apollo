@@ -23,6 +23,7 @@ EXTENSIONS = [
     "cogs.commands.karma",
     "cogs.commands.lcalc",
     "cogs.commands.misc",
+    "cogs.commands.quotes",
     "cogs.commands.reminders",
     "cogs.commands.roll",
     "cogs.commands.say",
