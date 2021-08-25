@@ -1,13 +1,15 @@
 import logging
+import unicodedata
 from datetime import datetime, timedelta
 
 from discord import Message
-from sqlalchemy import desc, func
+from sqlalchemy import desc
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import ScalarListException
 
 from cogs.commands.admin import MiniKarmaMode
+from config import CONFIG
 from karma.parser import parse_message_content
 from karma.transaction import (
     KarmaTransaction,
@@ -16,7 +18,7 @@ from karma.transaction import (
     make_transactions,
 )
 from models import Karma, KarmaChange, MiniKarmaChannel
-from utils import get_database_user, get_name_string
+from utils import filter_out_none, get_database_user, get_name_string
 
 
 def is_in_cooldown(last_change, timeout):
@@ -136,12 +138,25 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             errors.append(own_karma_error(truncated_name))
             continue
 
+        def topic_transformations():
+            def query(t):
+                return db_session.query(Karma).filter(Karma.name.ilike(t)).one_or_none()
+
+            topic = transaction.karma_item.topic.casefold()
+            yield query(topic)
+            yield query(topic.replace(" ", "_"))
+            yield query(topic.replace("_", " "))
+            topic = unicodedata.normalize(CONFIG.UNICODE_NORMALISATION_FORM, topic)
+            yield query(topic)
+            yield query(topic.replace(" ", "_"))
+            yield query(topic.replace("_", " "))
+            topic = "".join(c for c in topic if not unicodedata.combining(c))
+            yield query(topic)
+            yield query(topic.replace(" ", "_"))
+            yield query(topic.replace("_", " "))
+
         # Get the karma item from the database if it exists
-        karma_item = (
-            db_session.query(Karma)
-            .filter(func.lower(Karma.name) == func.lower(transaction.karma_item.topic))
-            .one_or_none()
-        )
+        karma_item = next(filter_out_none(topic_transformations()), None)
 
         # Update or create the karma item
         if not karma_item:

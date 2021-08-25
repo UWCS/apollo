@@ -127,10 +127,6 @@ TEST_CASES = {
         "foobar++ (reason, comma)",
         [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason, comma")],
     ),
-    "paren (reason (nested))": (
-        "foobar++ (reason (nested))",
-        [KarmaItem("foobar", KarmaOperation.POSITIVE, "reason (nested)")],
-    ),
     "empty paren reason": (
         "foobar++ ()",
         [KarmaItem("foobar", KarmaOperation.POSITIVE, None)],

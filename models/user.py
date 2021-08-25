@@ -6,7 +6,6 @@ from config import CONFIG
 from models import KarmaChange, LoggedMessage
 from models.models import Base, auto_str
 
-
 __all__ = ["User"]
 
 
