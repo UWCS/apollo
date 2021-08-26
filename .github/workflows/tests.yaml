@@ -46,8 +46,9 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         cp config.example.yaml config.yaml
         cp alembic.example.ini alembic.ini
-    - name: Check formatting with black
+    - name: Check formatting with isort and black
       run: |
+        isort --check-only --skip __tests__ .
         black --check --exclude __tests__ .
     - name: Test with pytest
       run: |

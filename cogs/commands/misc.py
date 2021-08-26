@@ -4,27 +4,6 @@ import subprocess
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
-ZED0_HELP_TEXT = """Very important command."""
-FAUX_HELP_TEXT = """A member of the Rust evangelical strike force."""
-GO_HELP_TEXT = """The eternal #cs meme."""
-DUNNO_HELP_TEXT = """¯\\_(ツ)_/¯"""
-RUST_HELP_TEXT = """And if you gaze long into RUST, the RUST also gazes into you."""
-PR_HELP_TEXT = """You know what to do"""
-ISSUE_HELP_TEXT = """You know what you want someone else to do"""
-MERGE_HELP_TEXT = (
-    """You know what you've already done, but need someone else to approve"""
-)
-DEPLOY_HELP_TEXT = """Push the button"""
-BLUESHELL_HELP_TEXT = """!blueshell"""
-AWOO_HELP_TEXT = """Tails and that"""
-SINJO_HELP_TEXT = """o-o"""
-SERVERS_HELP_TEXT = """List of our multiplayer servers"""
-HASKELL_HELP_TEXT = """#notacult"""
-PING_HELP_TEXT = """Pong!"""
-XY_HELP_TEXT = """The XY problem is asking about your attempted solution rather than your actual problem."""
-ASK_TO_ASK_HELP_TEXT = """Don't ask to ask - just ask."""
-GITHUB_HELP_TEXT = """Link the Apollo GitHub repository"""
-
 
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
@@ -33,58 +12,71 @@ class Misc(commands.Cog):
             ["git", "rev-parse", "--short", "HEAD"], capture_output=True
         ).stdout.decode()
 
-    @commands.command(help=ZED0_HELP_TEXT, brief=ZED0_HELP_TEXT)
+    @commands.command()
     async def zed0(self, ctx: Context):
+        """Very important command."""
         await ctx.send("¬_¬")
 
-    @commands.command(help=FAUX_HELP_TEXT, brief=FAUX_HELP_TEXT)
+    @commands.command()
     async def faux(self, ctx: Context):
+        """A member of the Rust evangelical strike force."""
         await ctx.send("RUST")
 
-    @commands.command(help=GO_HELP_TEXT, brief=GO_HELP_TEXT)
+    @commands.command()
     async def go(self, ctx: Context):
+        """The eternal #cs meme."""
         await ctx.send("lol no generics")
 
-    @commands.command(help=DUNNO_HELP_TEXT, brief=DUNNO_HELP_TEXT)
+    @commands.command()
     async def dunno(self, ctx: Context):
+        """¯\\_(ツ)_/¯"""
         await ctx.send("¯\\_(ツ)_/¯")
 
-    @commands.command(help=RUST_HELP_TEXT, brief=RUST_HELP_TEXT)
+    @commands.command()
     async def rust(self, ctx: Context):
+        """And if you gaze long into RUST, the RUST also gazes into you."""
         await ctx.send("FAUX")
 
-    @commands.command(help=PR_HELP_TEXT, brief=PR_HELP_TEXT)
+    @commands.command()
     async def pr(self, ctx: Context):
+        """You know what to do"""
         await ctx.send("You can make a pull request for that!")
 
-    @commands.command(help=ISSUE_HELP_TEXT, brief=ISSUE_HELP_TEXT)
+    @commands.command()
     async def issue(self, ctx: Context):
+        """You know what you want someone else to do"""
         await ctx.send("You can submit an issue for that!")
 
-    @commands.command(help=MERGE_HELP_TEXT, brief=MERGE_HELP_TEXT)
+    @commands.command()
     async def merge(self, ctx: Context):
+        """You know what you've already done, but need someone else to approve"""
         await ctx.send("_**JOOOOOOOOOHN!**_")
 
-    @commands.command(help=DEPLOY_HELP_TEXT, brief=DEPLOY_HELP_TEXT)
+    @commands.command()
     async def deploy(self, ctx: Context):
+        """Push the button"""
         await ctx.send("Please be patient.")
 
-    @commands.command(help=BLUESHELL_HELP_TEXT, brief=BLUESHELL_HELP_TEXT)
+    @commands.command()
     async def blueshell(self, ctx: Context):
+        """!blueshell"""
         await ctx.send(
             "<:blueshell:541726526543101973> Thank you RNGesus for the £5 donation! <:blueshell:541726526543101973>"
         )
 
-    @commands.command(help=AWOO_HELP_TEXT, brief=AWOO_HELP_TEXT)
+    @commands.command()
     async def awoo(self, ctx: Context):
+        """Tails and that"""
         await ctx.send("Aw{}~".format("o" * random.randrange(2, 5)))
 
-    @commands.command(help=SINJO_HELP_TEXT, brief=SINJO_HELP_TEXT)
+    @commands.command()
     async def sinjo(self, ctx: Context):
+        """o-o"""
         await ctx.send(":neutral_face:")
 
-    @commands.command(help=SERVERS_HELP_TEXT, brief=SERVERS_HELP_TEXT)
+    @commands.command()
     async def servers(self, ctx: Context):
+        """List of our multiplayer servers"""
         await ctx.send(
             """:video_game: Running Servers :video_game:
 We have some permanently running servers:
@@ -98,12 +90,14 @@ We have a Terraria 1.4.1.2 server running at:
 `terraria.uwcs.co.uk:7777`"""
         )
 
-    @commands.command(help=HASKELL_HELP_TEXT, brief=HASKELL_HELP_TEXT)
+    @commands.command()
     async def haskell(self, ctx: Context):
+        """#notacult"""
         await ctx.send("https://www.youtube.com/watch?v=FYFhN_0QhfQ")
 
-    @commands.command(help=PING_HELP_TEXT, brief=PING_HELP_TEXT)
+    @commands.command()
     async def ping(self, ctx: Context):
+        """Pong!"""
         await ctx.send(":ping_pong:")
 
     @commands.command(brief="Apollo's current version")
@@ -111,8 +105,9 @@ We have a Terraria 1.4.1.2 server running at:
         """Print the SHA1 hash of HEAD in the deployed Apollo repository."""
         await ctx.send(self.version)
 
-    @commands.command(aliases=["xyproblem"], help=XY_HELP_TEXT, brief=XY_HELP_TEXT)
+    @commands.command(aliases=["xyproblem"])
     async def xy(self, ctx: Context):
+        """The XY problem is asking about your attempted solution rather than your actual problem."""
         await ctx.send("https://xyproblem.info/")
 
     @commands.command(
@@ -126,14 +121,14 @@ We have a Terraria 1.4.1.2 server running at:
             "don't_ask_to_ask",
             "don'tasktoask",
         ],
-        help=ASK_TO_ASK_HELP_TEXT,
-        brief=ASK_TO_ASK_HELP_TEXT,
     )
     async def ask_to_ask(self, ctx: Context):
+        """Don't ask to ask - just ask."""
         await ctx.send("https://dontasktoask.com/")
 
-    @commands.command(help=GITHUB_HELP_TEXT, brief=GITHUB_HELP_TEXT)
+    @commands.command()
     async def github(self, ctx: Context):
+        """Link the Apollo GitHub repository"""
         await ctx.send("https://github.com/UWCS/apollo")
 
 
