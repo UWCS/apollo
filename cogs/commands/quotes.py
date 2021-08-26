@@ -37,6 +37,14 @@ def quote_by_id(id):
         .first()
     )
 
+#check if user has permissions for this quote
+async def has_quote_perms(ctx, quote):
+    is_exec = await is_compsoc_exec_in_guild(ctx)
+    author_id = get_database_user(ctx.author).id
+
+    return is_exec or author_id  in [quote.author_id, quote.submitter_id]
+
+
 class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -150,12 +158,9 @@ class Quotes(commands.Cog):
 
         if quote is None:
             await ctx.send("Invalid or missing quote ID.")
+            return
 
-        #check if user has permission to delete this quote
-        is_exec = await is_compsoc_exec_in_guild(ctx)
-        author_id = get_database_user(ctx.author).id
-
-        if is_exec or author_id in [quote.author_id, quote.submitter_id]:
+        if await has_quote_perms(ctx, quote):
             #delete quote
             db_session.query(Quote).filter(Quote.quote_id == quote.quote_id).delete()
             await ctx.send(f"Deleted quote with ID #{quote.quote_id}.")
