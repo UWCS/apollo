@@ -132,6 +132,25 @@ class Quotes(commands.Cog):
             author_id = author.id
             author_string = None
 
+        #check if mentioned user has opted out
+        if author_type == "id":
+            q = (
+                db_session.query(QuoteOptouts)
+                .filter(QuoteOptouts.user_id==author_id)
+                .count()
+            )
+        else:
+            q = (
+                db_session.query(QuoteOptouts)
+                .filter(QuoteOptouts.user_string==author_string)
+                .count()
+            )
+        
+        if q != 0:
+            await ctx.send("User has opted out of being quoted.")
+            return
+
+
         new_quote = Quote(
             submitter_type=submitter_type,
             submitter_id=submitter_id,
