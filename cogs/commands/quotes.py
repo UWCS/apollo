@@ -1,22 +1,18 @@
-from discord.ext.commands.converter import clean_content
-from utils.MaybeMention import MaybeMention
-from datetime import datetime
 import logging
+from datetime import datetime
 
+from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
-from discord import AllowedMentions
+from discord.ext.commands.converter import clean_content
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy_utils import ScalarListException
 from sqlalchemy.sql import func
+from sqlalchemy_utils import ScalarListException
 
 from models import Quote, QuoteOptouts, db_session
-from utils import (
-    get_database_user,
-    get_name_string,
-    is_compsoc_exec_in_guild,
-    user_is_irc_bot,
-)
+from utils import (get_database_user, get_name_string,
+                   is_compsoc_exec_in_guild, user_is_irc_bot)
+from utils.MaybeMention import MaybeMention
 
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text

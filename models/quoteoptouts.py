@@ -1,10 +1,4 @@
-from sqlalchemy import (
-    Column,
-    Enum,
-    ForeignKey,
-    Integer,
-    String,
-)
+from sqlalchemy import Column, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str

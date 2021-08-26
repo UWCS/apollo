@@ -1,13 +1,5 @@
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Integer,
-    String,
-    func,
-)
+from sqlalchemy import (Boolean, Column, DateTime, Enum, ForeignKey, Integer,
+                        String, func)
 from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str

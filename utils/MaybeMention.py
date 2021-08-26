@@ -1,9 +1,9 @@
-from models.user import User
+from typing import Union
+
 from discord.ext.commands import Converter, MemberConverter
 
+from models.user import User
 from utils.utils import get_database_user_from_id
-
-from typing import Union
 
 __all__ = ["MentionConverter"]
 
