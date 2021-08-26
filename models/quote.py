@@ -5,6 +5,7 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
+    relationship,
     String,
     func,
 )
@@ -28,3 +29,8 @@ class Quote(Base):
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     edited = Column(Boolean, nullable=False)
     edited_at = Column(DateTime, nullable=True)
+    
+    author = relationship(
+        "User",
+        uselist=False
+    )

@@ -72,10 +72,8 @@ class Quotes(commands.Cog):
 
             #get quote author
             if q.author_type == 'id':
-                print(q.author_type)
-                print(q.author_id)
-                print(get_database_user_from_id(1))
-                author_uid = get_database_user_from_id(q.author_id).user_uid
+                #note, this will be replaced with a util function or similar later
+                author_uid = q.user.user_uid
                 author = f"<@{author_uid}>"
             else:
                 author = q.author_string
