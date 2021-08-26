@@ -143,7 +143,7 @@ class Quotes(commands.Cog):
             logging.exception(e)
             await ctx.send(f"Something went wrong")
 
-    @quote.command(help="Delete a quote, formate !quote delete #ID.")
+    @quote.command(help="Delete a quote, format !quote delete #ID.")
     async def delete(self, ctx: Context, argument=None):
         
         quote = quote_by_id(argument)
