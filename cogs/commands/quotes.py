@@ -238,16 +238,12 @@ class Quotes(commands.Cog):
             f.delete()
             await ctx.send(f"Purged {to_delete} quotes from author.")
 
-    @quote.command(help="Opt out of being quoted. Only exec can opt out on behalf of others.")
+    @quote.command(help="Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others.")
     async def optout(self, ctx: Context, target: MaybeMention=None):
         user_type = "id"
 
         # get the author's id/name
         display_name = get_name_string(ctx.message)
-
-        #set self as target if none provided
-        if target is None:
-            target = await MaybeMention().convert(ctx, ctx.author)
 
         #get target details and check if we have permission
         if user_is_irc_bot(ctx):
@@ -255,12 +251,13 @@ class Quotes(commands.Cog):
             user_id = None
             user_string = display_name
             
-            if user_string != target:
+            if target is not None and user_string != target:
                 await ctx.send("You do not have permission to opt-out that user.")
                 return
         else:
             author_id = get_database_user(ctx.author).id
             
+            #opt out a user by string
             if isinstance(target,str):
                 if await is_compsoc_exec_in_guild(ctx):
                     user_type = "string"
@@ -269,7 +266,13 @@ class Quotes(commands.Cog):
                 else:
                     await ctx.send("You do not have permission to opt-out that user.")
                     return
-            elif author_id == target.id or await is_compsoc_exec_in_guild(ctx):
+            #opt out ourself
+            elif target is None:
+                target = ctx.author
+                user_id = author_id
+                user_string = None
+            #opt out a different user
+            elif await is_compsoc_exec_in_guild(ctx):
                 user_id = target.id
                 user_string = None
             else:
@@ -309,6 +312,43 @@ class Quotes(commands.Cog):
             db_session.rollback()
             logging.exception(e)
             await ctx.send(f"Something went wrong")
+
+    @quote.command(help="Opt in to being quoted if you have previously opted out, format !quote optin.")
+    async def optin(self, ctx: Context):
+        user_type = "id"
+
+        if user_is_irc_bot(ctx):
+            user_type = "string"
+            user_id = None
+            user_string = get_name_string(ctx.message)
+        else:
+            user_id = get_database_user(ctx.author).id
+            submitter_string = None
+
+        #check to see if target is opted out already
+        if user_type == "id":
+            q = (
+                db_session.query(QuoteOptouts)
+                .filter(QuoteOptouts.user_id == user_id)
+            )
+        else:
+            q = (
+                db_session.query(QuoteOptouts)
+                .filter(QuoteOptouts.user_string == user_string)
+
+            )
+        if q.first() is None:
+            await ctx.send("User is already opted in.")
+            return
+
+        try:
+            q.delete()
+            await ctx.send(f"User has opted in to being quoted.")
+        except (ScalarListException, SQLAlchemyError) as e:
+            db_session.rollback()
+            logging.exception(e)
+            await ctx.send(f"Something went wrong")
+
 
 
 
