@@ -10,8 +10,12 @@ from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
 from models import Quote, QuoteOptouts, db_session
-from utils import (get_database_user, get_name_string,
-                   is_compsoc_exec_in_guild, user_is_irc_bot)
+from utils import (
+    get_database_user,
+    get_name_string,
+    is_compsoc_exec_in_guild,
+    user_is_irc_bot,
+)
 from utils.MaybeMention import MaybeMention
 
 LONG_HELP_TEXT = """
