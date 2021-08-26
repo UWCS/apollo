@@ -9,8 +9,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = '93b6baa20f6d'
-down_revision = 'aa6b0d2498fe'
+revision = "93b6baa20f6d"
+down_revision = "aa6b0d2498fe"
 branch_labels = None
 depends_on = None
 
@@ -19,9 +19,11 @@ def upgrade():
     op.create_table(
         "quotes-opt-out",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
-        sa.Column("user_type", sa.Enum("id","string", name="user_type"), nullable=False),
+        sa.Column(
+            "user_type", sa.Enum("id", "string", name="user_type"), nullable=False
+        ),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
-        sa.Column("user_string", sa.String, nullable=True)
+        sa.Column("user_string", sa.String, nullable=True),
     )
 
 
