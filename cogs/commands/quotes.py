@@ -1,3 +1,4 @@
+from discord.ext.commands.converter import clean_content
 from utils.MaybeMention import MaybeMention
 from models.user import User
 from datetime import datetime
@@ -14,8 +15,8 @@ from sqlalchemy.sql import func
 from models import Quote, db_session
 from utils import (
     get_database_user,
-    get_database_user_from_id,
     get_name_string,
+    is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
 
@@ -131,6 +132,36 @@ class Quotes(commands.Cog):
             logging.exception(e)
             await ctx.send(f"Something went wrong")
 
+    @quote.command(help="Delete a quote, formate !quote delete #ID.")
+    async def delete(self, ctx: Context, *args: clean_content):
+        if len(args) != 1:
+            await ctx.send("Invalid format.")
+            return
+        if args[0][0] != "#" or len(args[0]) < 2 or not args[0][1:].isnumeric():
+            await ctx.send("Invalid quote ID.")
+            return
+        
+        id = int(args[0][1:])
+
+        q = (
+            db_session.query(Quote)
+            .filter(Quote.quote_id == id)
+            .first()
+        )
+        if q is None:
+            await ctx.send("No quote found with that ID.")
+            return
+
+        #check if user has permission to delete this quote
+        is_exec = await is_compsoc_exec_in_guild(ctx)
+        author_id = get_database_user(ctx.author).id
+
+        if is_exec or author_id in [q.author_id, q.submitter_id]:
+            #delete quote
+            db_session.query(Quote).filter(Quote.quote_id == id).delete()
+            await ctx.send(f"Deleted quote with ID #{id}.")
+        else:
+            await ctx.send("You do not have permission to delete that quote.")
 
 def setup(bot: Bot):
     bot.add_cog(Quotes(bot))
