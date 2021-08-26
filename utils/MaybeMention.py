@@ -1,5 +1,5 @@
 from models.user import User
-from discord.ext.commands import Converter
+from discord.ext.commands import Converter, MemberConverter
 
 from utils.utils import get_database_user_from_id
 
@@ -9,14 +9,19 @@ import re
 __all__ = ["MentionConverter"]
 
 
-#if the argument is a mention, see if a corresponding user exists in the database. else, return the string.
+#return one of the following in descending order:
+#a user from the database
+#the username as a string
+#the mention as a string
 class MaybeMention(Converter):
     async def convert(self, ctx, argument) -> Union[User, str]:
         try:
-            id = re.match(r"<@!?(?P<id>\d+)>",argument).group('id')
-            member = get_database_user_from_id(int(id))
-            if member is None:
-                return argument
-            return member
+            member = await MemberConverter().convert(ctx, argument)
+            user = get_database_user_from_id(int(member.id))
+
+            if user is None:
+                return member.name
+            
+            return user
         except:
             return argument

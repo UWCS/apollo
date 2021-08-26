@@ -1,11 +1,14 @@
 from utils.MaybeMention import MaybeMention
+from models.user import User
 from datetime import datetime
 import logging
+from random import choice
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
+from sqlalchemy.sql import func
 
 from models import Quote, db_session
 from utils import (
@@ -25,10 +28,66 @@ class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def quote(self, ctx: Context):
-        if not ctx.invoked_subcommand:
-            await ctx.send("Subcommand not found.")
+    @commands.group(invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    async def quote(self, ctx: Context, argument=None):
+        
+        #pick any quote
+        if argument is None:
+            query = db_session.query(Quote)
+        else:
+            mention = await MaybeMention.convert(self, ctx, argument)
+
+            if isinstance(mention, str):
+                #pick from string-authors
+                if mention[0] == "@":
+                    query = (
+                        db_session.query(Quote)
+                        .filter(Quote.author_string == mention[1:])
+                    )
+                #find specific quote
+                elif mention.isnumeric():
+                    query = (
+                        db_session.query(Quote)
+                        .filter(Quote.quote_id == int(mention))
+                    )
+                #pick from quotes containing the text
+                else:
+                    query = (
+                        db_session.query(Quote)
+                        .filter(Quote.quote.contains(mention))
+                    )
+            #pick from id-authors
+            else:
+                query = (
+                    db_session.query(Quote).
+                    filter(Quote.author_id == mention.id)
+                )
+        
+        #select a random quote if one exists
+        q = query.order_by(func.random()).first()
+
+        if q is None:
+            message = "Invalid subcommand or no quote matched the criteria"
+        else:
+
+            #get quote author
+            if q.author_type == 'id':
+                print(q.author_type)
+                print(q.author_id)
+                print(get_database_user_from_id(1))
+                author_uid = get_database_user_from_id(q.author_id).user_uid
+                author = f"<@{author_uid}>"
+            else:
+                author = q.author_string
+
+            date = q.created_at.strftime("%d/%m/%Y")
+
+            #create message
+            message = f"#{q.quote_id}: {q.quote} - {author} ({date})"
+
+        #send message with no pings
+        await ctx.send(message)
+
 
     @quote.command(help="Add a quote, format !quote add <author> <quote text>.")
     async def add(self, ctx: Context, author: MaybeMention, *, quote_text: str):
