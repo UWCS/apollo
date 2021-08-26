@@ -97,13 +97,17 @@ class Quotes(commands.Cog):
             date = q.created_at.strftime("%d/%m/%Y")
 
             # create message
-            message = f"#{q.quote_id}: {q.quote} - {author} ({date})"
+            message = f"**#{q.quote_id}:** \"{q.quote}\" - {author} ({date})"
 
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
-    @quote.command(help="Add a quote, format !quote add <author> <quote text>.")
-    async def add(self, ctx: Context, author: MaybeMention, *, quote_text: str):
+    @quote.command(help="Add a quote, format !quote add <author> \"<quote text>\".")
+    async def add(self, ctx: Context, author: MaybeMention, *args: clean_content):
+        if len(args) != 1:
+            await ctx.send("Invalid format.")
+            return
+
         submitter_type = "id"
         author_type = "id"
         now = datetime.now()
@@ -135,7 +139,7 @@ class Quotes(commands.Cog):
             author_type=author_type,
             author_id=author_id,
             author_string=author_string,
-            quote=quote_text,
+            quote=args[0],
             created_at=now,
             edited=False,
             edited_at=None,
