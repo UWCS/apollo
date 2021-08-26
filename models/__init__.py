@@ -4,6 +4,7 @@ from models.karma import *
 from models.messages import *
 from models.models import *
 from models.quote import *
+from models.quoteoptouts import *
 from models.printing import *
 from models.reminder import *
 from models.user import *

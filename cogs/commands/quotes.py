@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 from sqlalchemy.sql import func
 
-from models import Quote, db_session
+from models import Quote, QuoteOptouts, db_session
 from utils import (
     get_database_user,
     get_name_string,
@@ -218,6 +218,78 @@ class Quotes(commands.Cog):
         else:
             f.delete()
             await ctx.send(f"Purged {to_delete} quotes from author.")
+
+    @quote.command(help="Opt out of being quoted. Only exec can opt out on behalf of others.")
+    async def optout(self, ctx: Context, target: MaybeMention=None):
+        user_type = "id"
+
+        # get the author's id/name
+        display_name = get_name_string(ctx.message)
+
+        #set self as target if none provided
+        if target is None:
+            target = await MaybeMention().convert(ctx, ctx.author)
+
+        #get target details and check if we have permission
+        if user_is_irc_bot(ctx):
+            user_type = "string"
+            user_id = None
+            user_string = display_name
+            
+            if user_string != target:
+                await ctx.send("You do not have permission to opt-out that user.")
+                return
+        else:
+            author_id = get_database_user(ctx.author).id
+            
+            if isinstance(target,str):
+                if await is_compsoc_exec_in_guild(ctx):
+                    user_type = "string"
+                    user_id = None
+                    user_string = target
+                else:
+                    await ctx.send("You do not have permission to opt-out that user.")
+                    return
+            elif author_id == target.id or await is_compsoc_exec_in_guild(ctx):
+                user_id = target.id
+                user_string = None
+            else:
+                await ctx.send("You do not have permission to opt-out that user.")
+                return
+
+        #check to see if target is opted out already
+        if user_type == "id":
+            q = (
+                db_session.query(QuoteOptouts)
+                .filter(QuoteOptouts.user_id == user_id)
+                .count()
+            )
+        else:
+            q = (
+                db_session.query(QuoteOptouts)
+                .filter(QuoteOptouts.user_string == user_string)
+                .count()
+            )
+        if q != 0:
+            await ctx.send("User has already opted out.")
+            return
+
+        #opt out
+        outpout = QuoteOptouts(
+            user_type=user_type,
+            user_id=user_id,
+            user_string=user_string
+        )
+        db_session.add(outpout)
+        try:
+            db_session.commit()
+             #purge old quotes
+            await Quotes.purge(self, ctx, target)
+            await ctx.send(f"User has been opted out of quotes. They may opt in again later with the optin command.")
+        except (ScalarListException, SQLAlchemyError) as e:
+            db_session.rollback()
+            logging.exception(e)
+            await ctx.send(f"Something went wrong")
 
 
 
