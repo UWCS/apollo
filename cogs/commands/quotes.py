@@ -195,5 +195,31 @@ class Quotes(commands.Cog):
         else:
             ctx.send("You do not have permission to update that quote.")
 
+    @quote.command(help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves.")
+    async def purge(self, ctx: Context, target: MaybeMention):
+        if isinstance(target, str):
+            f = (
+                db_session.query(Quote)
+                .filter(Quote.author_string == target)
+            )
+        else:
+            f = (
+                db_session.query(Quote)
+                .filter(Quote.author_id == target.id)
+            )
+        
+        quotes = f.all()
+        to_delete = len(quotes)
+
+        if to_delete == 0:
+            await ctx.send("Author has no quotes to purge.")
+        elif not await has_quote_perms(ctx, quotes[0]):
+            await ctx.send("You do not have permission to purge this author.")
+        else:
+            f.delete()
+            await ctx.send(f"Purged {to_delete} quotes from author.")
+
+
+
 def setup(bot: Bot):
     bot.add_cog(Quotes(bot))
