@@ -8,6 +8,7 @@ from sqlalchemy import (
     String,
     func,
 )
+from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
@@ -25,3 +26,8 @@ class Reminder(Base):
     triggered = Column(Boolean, nullable=False)
     playback_channel_id = Column(BigInteger, nullable=False)
     irc_name = Column(String, nullable=True)
+
+    user = relationship(
+        "User",
+        uselist=False,
+    )
