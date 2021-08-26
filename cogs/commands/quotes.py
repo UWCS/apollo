@@ -167,5 +167,29 @@ class Quotes(commands.Cog):
         else:
             await ctx.send("You do not have permission to delete that quote.")
 
+    @quote.command(help="Update a quote, format !quote update #ID \"<new text>\".")
+    async def update(self, ctx: Context, *args: clean_content):
+        if len(args) != 2:
+            await ctx.send("Invalid format.")
+            return
+
+        quote = quote_by_id(args[0])
+
+        if quote is None:
+            await ctx.send("Invalid or missing quote ID.")
+            return
+        
+        if await has_quote_perms(ctx, quote):
+            #update quote
+            q_update = {
+                Quote.quote : args[1],
+                Quote.edited : True,
+                Quote.edited_at : datetime.now()
+            }
+            db_session.query(Quote).filter(Quote.quote_id == quote.quote_id).update(q_update)
+            await ctx.send(f"Updated quote with ID #{quote.quote_id}.")
+        else:
+            ctx.send("You do not have permission to update that quote.")
+
 def setup(bot: Bot):
     bot.add_cog(Quotes(bot))
