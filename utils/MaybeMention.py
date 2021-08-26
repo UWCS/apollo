@@ -4,7 +4,6 @@ from discord.ext.commands import Converter, MemberConverter
 from utils.utils import get_database_user_from_id
 
 from typing import Union
-import re
 
 __all__ = ["MentionConverter"]
 

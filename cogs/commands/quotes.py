@@ -1,9 +1,7 @@
 from discord.ext.commands.converter import clean_content
 from utils.MaybeMention import MaybeMention
-from models.user import User
 from datetime import datetime
 import logging
-from random import choice
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
@@ -25,6 +23,19 @@ Pull a random quote. Pull quotes by ID using "#ID", by author using "@username",
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
+def quote_by_id(id):
+    if(
+        not id or
+        id[0] != "#" or
+        len(id) < 2 or
+        not id[1:].isnumeric()
+    ):
+        return None
+    return (
+        db_session.query(Quote)
+        .filter(Quote.quote_id == int(id[1:]))
+        .first()
+    )
 
 class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
@@ -133,33 +144,21 @@ class Quotes(commands.Cog):
             await ctx.send(f"Something went wrong")
 
     @quote.command(help="Delete a quote, formate !quote delete #ID.")
-    async def delete(self, ctx: Context, *args: clean_content):
-        if len(args) != 1:
-            await ctx.send("Invalid format.")
-            return
-        if args[0][0] != "#" or len(args[0]) < 2 or not args[0][1:].isnumeric():
-            await ctx.send("Invalid quote ID.")
-            return
+    async def delete(self, ctx: Context, argument=None):
         
-        id = int(args[0][1:])
+        quote = quote_by_id(argument)
 
-        q = (
-            db_session.query(Quote)
-            .filter(Quote.quote_id == id)
-            .first()
-        )
-        if q is None:
-            await ctx.send("No quote found with that ID.")
-            return
+        if quote is None:
+            await ctx.send("Invalid or missing quote ID.")
 
         #check if user has permission to delete this quote
         is_exec = await is_compsoc_exec_in_guild(ctx)
         author_id = get_database_user(ctx.author).id
 
-        if is_exec or author_id in [q.author_id, q.submitter_id]:
+        if is_exec or author_id in [quote.author_id, quote.submitter_id]:
             #delete quote
-            db_session.query(Quote).filter(Quote.quote_id == id).delete()
-            await ctx.send(f"Deleted quote with ID #{id}.")
+            db_session.query(Quote).filter(Quote.quote_id == quote.quote_id).delete()
+            await ctx.send(f"Deleted quote with ID #{quote.quote_id}.")
         else:
             await ctx.send("You do not have permission to delete that quote.")
 
