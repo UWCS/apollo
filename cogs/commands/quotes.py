@@ -5,7 +5,8 @@ import logging
 from random import choice
 
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context
+from discord import AllowedMentions
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 from sqlalchemy.sql import func
@@ -19,7 +20,7 @@ from utils import (
 )
 
 LONG_HELP_TEXT = """
-Record, edit, and delete quotes. Quotes may also be randomly drawn or queried by ID number. You may also opt out of being quoted.
+Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
@@ -28,64 +29,58 @@ class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.group(
+        invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
+    )
     async def quote(self, ctx: Context, argument=None):
-        
-        #pick any quote
+
+        # pick any quote
         if argument is None:
             query = db_session.query(Quote)
         else:
             mention = await MaybeMention.convert(self, ctx, argument)
 
             if isinstance(mention, str):
-                #pick from string-authors
-                if mention[0] == "@":
-                    query = (
-                        db_session.query(Quote)
-                        .filter(Quote.author_string == mention[1:])
+                if mention[0] == "#" and mention[1:].isnumeric:
+                    query = db_session.query(Quote).filter(
+                        Quote.quote_id == int(mention[1:])
                     )
-                #find specific quote
-                elif mention.isnumeric():
-                    query = (
-                        db_session.query(Quote)
-                        .filter(Quote.quote_id == int(mention))
+                # pick from string-authors
+                elif mention[0] == "@":
+                    query = db_session.query(Quote).filter(
+                        Quote.author_string == mention[1:]
                     )
-                #pick from quotes containing the text
+                # find specific quote
+                # pick from quotes containing the text
                 else:
-                    query = (
-                        db_session.query(Quote)
-                        .filter(Quote.quote.contains(mention))
+                    query = db_session.query(Quote).filter(
+                        Quote.quote.contains(mention)
                     )
-            #pick from id-authors
+            # pick from id-authors
             else:
-                query = (
-                    db_session.query(Quote).
-                    filter(Quote.author_id == mention.id)
-                )
-        
-        #select a random quote if one exists
+                query = db_session.query(Quote).filter(Quote.author_id == mention.id)
+
+        # select a random quote if one exists
         q = query.order_by(func.random()).first()
 
         if q is None:
             message = "Invalid subcommand or no quote matched the criteria"
         else:
 
-            #get quote author
-            if q.author_type == 'id':
-                #note, this will be replaced with a util function or similar later
-                author_uid = q.user.user_uid
-                author = f"<@{author_uid}>"
+            # get quote author
+            if q.author_type == "id":
+                # note: we pull just the username for now until i can figure out how to display mentions on mobile.
+                author = q.author.username
             else:
                 author = q.author_string
 
             date = q.created_at.strftime("%d/%m/%Y")
 
-            #create message
+            # create message
             message = f"#{q.quote_id}: {q.quote} - {author} ({date})"
 
-        #send message with no pings
-        await ctx.send(message)
-
+        # send message with no pings
+        await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
     @quote.command(help="Add a quote, format !quote add <author> <quote text>.")
     async def add(self, ctx: Context, author: MaybeMention, *, quote_text: str):

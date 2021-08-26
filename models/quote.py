@@ -5,10 +5,10 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
-    relationship,
     String,
     func,
 )
+from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
@@ -29,8 +29,5 @@ class Quote(Base):
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
     edited = Column(Boolean, nullable=False)
     edited_at = Column(DateTime, nullable=True)
-    
-    author = relationship(
-        "User",
-        uselist=False
-    )
+
+    author = relationship("User", uselist=False, foreign_keys=author_id)

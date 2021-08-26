@@ -9,10 +9,10 @@ import re
 __all__ = ["MentionConverter"]
 
 
-#return one of the following in descending order:
-#a user from the database
-#the username as a string
-#the mention as a string
+# return one of the following in descending order:
+# a user from the database
+# the username as a string
+# the mention as a string
 class MaybeMention(Converter):
     async def convert(self, ctx, argument) -> Union[User, str]:
         try:
@@ -21,7 +21,7 @@ class MaybeMention(Converter):
 
             if user is None:
                 return member.name
-            
+
             return user
         except:
             return argument
