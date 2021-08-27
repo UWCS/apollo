@@ -13,7 +13,7 @@ class MentionType(Enum):
     STRING = 1
 
 class Mention:
-    def Mention(self,type,id,string):
+    def __init__(self,type,id,string):
         self.type   :MentionType = type
         self.id     :int = id
         self.string :str = string
@@ -40,6 +40,6 @@ class MentionConverter(Converter):
             if user is None:
                 return Mention(MentionType.STRING,None,member.name)
 
-            return Mention(MentionType.ID,user,None)
+            return Mention(MentionType.ID,user.id,None)
         except:
             return Mention(MentionType.STRING,None,argument)

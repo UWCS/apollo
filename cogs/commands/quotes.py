@@ -122,7 +122,7 @@ class Quotes(commands.Cog):
             submitter_type=submitter_type,
             submitter_id=submitter_id,
             submitter_string=submitter_string,
-            author_type=author.type,
+            author_type=author.type_str(),
             author_id=author.id,
             author_string=author.string,
             quote=args[0],
