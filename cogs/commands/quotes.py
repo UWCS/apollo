@@ -19,7 +19,7 @@ from utils import (
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
-from utils.MaybeMention import MaybeMention
+from utils.mentions import MentionConverter
 
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
