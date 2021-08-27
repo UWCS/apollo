@@ -17,7 +17,7 @@ from utils import (
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
-from utils.mentions import Mention, MentionConverter, MentionType
+from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
 
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
@@ -28,25 +28,28 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 def is_id(string) -> bool:
     return re.match("^#\d+$", string)
 
-class QuoteQuery(Converter):
+def quotes_query(query):
+    res = parse_mention(query)
+
+    #by discord user
+    if res.is_id_type():
+        return db_session.query(Quote).filter(Quote.author_id == res.id)
+    
+    # by id
+    if is_id(query):
+        return db_session.query(Quote).filter(Quote.quote_id == int(query[1:]))
+
+    #by other author
+    if query[0] == "@" and len(query) > 1:
+        return db_session.query(Quote).filter(Quote.author_string == query[1:])
+
+    # by topic
+    return db_session.query(Quote).filter(Quote.quote.contains(query))
+
+
+class QueryConverter(Converter):
     async def convert(self, ctx, argument):
-        # by id
-        if is_id(argument):
-            return db_session.query(Quote).filter(Quote.quote_id == int(argument[1:]))
-
-        res = await MentionConverter.convert(self, ctx, argument)
-
-        # by author id
-        if res.is_id_type():
-            return db_session.query(Quote).filter(Quote.author_id == res.id)
-
-        # by author string
-        if res.string[0] == "@" and len(res.string) > 1:
-            return db_session.query(Quote).filter(Quote.author_string == res.string[1:])
-
-        # by topic
-        return db_session.query(Quote).filter(Quote.quote.contains(res.string))
-
+        return quotes_query(argument)
 
 # check if user has permissions for this quote
 async def has_quote_perms(ctx, quote):
@@ -62,7 +65,7 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, arg: QuoteQuery = None):
+    async def quote(self, ctx: Context, arg: QueryConverter = None):
         query = arg or db_session.query(Quote)
 
         # select a random quote if one exists
@@ -134,7 +137,7 @@ class Quotes(commands.Cog):
             await ctx.send("Invalid quote ID.")
             return
 
-        quote = await QuoteQuery.convert(self, ctx, argument)
+        quote = quotes_query(argument)
 
         if quote.first() is None:
             await ctx.send("No quote with that ID was found.")
@@ -163,7 +166,7 @@ class Quotes(commands.Cog):
             await ctx.send("Invalid or missing quote ID.")
             return
 
-        quote = await QuoteQuery.convert(self, ctx, args[0])
+        quote = quotes_query(args[0])
 
         if await has_quote_perms(ctx, quote.first()):
             # update quote

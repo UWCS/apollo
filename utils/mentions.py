@@ -31,9 +31,9 @@ class Mention:
         return "string"
 
 
-def parse_mention(string) -> Mention:
-    if re.match("^<@!?\d+>$"):
-        uid = int(re.search("\d+",)[0])
+def parse_mention(string ) -> Mention:
+    if re.match("^<@!?\d+>$",string):
+        uid = int(re.search("\d+", string)[0])
         user = get_database_user_from_id(uid)
 
         if user is not None:
