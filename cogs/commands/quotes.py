@@ -26,27 +26,30 @@ Pull a random quote. Pull quotes by ID using "#ID", by author using "@username",
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
+
 def is_id(string) -> bool:
-    return re.match("^#\d+$",string)
+    return re.match("^#\d+$", string)
+
 
 class QuoteQuery(Converter):
-    async def convert(self,ctx, argument):
-        #by id
+    async def convert(self, ctx, argument):
+        # by id
         if is_id(argument):
             return db_session.query(Quote).filter(Quote.quote_id == int(argument[1:]))
-        
-        res = await MentionConverter.convert(self,ctx, argument)
 
-        #by author id
+        res = await MentionConverter.convert(self, ctx, argument)
+
+        # by author id
         if res.is_id_type():
             return db_session.query(Quote).filter(Quote.author_id == res.id)
-        
-        #by author string
+
+        # by author string
         if res.string[0] == "@" and len(res.string) > 1:
             return db_session.query(Quote).filter(Quote.author_string == res.string[1:])
 
-        #by topic
+        # by topic
         return db_session.query(Quote).filter(Quote.quote.contains(res.string))
+
 
 # check if user has permissions for this quote
 async def has_quote_perms(ctx, quote):
@@ -63,11 +66,11 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, arg: QuoteQuery=None):
+    async def quote(self, ctx: Context, arg: QuoteQuery = None):
         query = arg or db_session.query(Quote)
 
         # select a random quote if one exists
-        q : Quote = query.order_by(func.random()).first()
+        q: Quote = query.order_by(func.random()).first()
 
         if q is None:
             message = "No quote matched the criteria"
@@ -75,7 +78,9 @@ class Quotes(commands.Cog):
             date = q.created_at.strftime("%d/%m/%Y")
 
             # create message
-            message = f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
+            message = (
+                f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
+            )
 
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
@@ -94,7 +99,7 @@ class Quotes(commands.Cog):
         if user_is_irc_bot(ctx):
             submitter = Mention(MentionType.STRING, None, display_name)
         else:
-            submitter = Mention(MentionType.ID, get_database_user(ctx.author).id,None)
+            submitter = Mention(MentionType.ID, get_database_user(ctx.author).id, None)
 
         # check if mentioned user has opted out
         if author.is_id_type():
@@ -144,7 +149,7 @@ class Quotes(commands.Cog):
             await ctx.send("Invalid quote ID.")
             return
 
-        quote = await QuoteQuery.convert(self,ctx,argument)
+        quote = await QuoteQuery.convert(self, ctx, argument)
 
         if quote.first() is None:
             await ctx.send("No quote with that ID was found.")
@@ -164,7 +169,7 @@ class Quotes(commands.Cog):
             await ctx.send("You do not have permission to delete that quote.")
 
     @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
-    async def update(self, ctx: Context, *args: clean_content):       
+    async def update(self, ctx: Context, *args: clean_content):
         if len(args) != 2:
             await ctx.send("Invalid format.")
             return
@@ -177,11 +182,13 @@ class Quotes(commands.Cog):
 
         if await has_quote_perms(ctx, quote.first()):
             # update quote
-            quote.update({
-                Quote.quote: args[1],
-                Quote.edited: True,
-                Quote.edited_at: datetime.now(),
-            })
+            quote.update(
+                {
+                    Quote.quote: args[1],
+                    Quote.edited: True,
+                    Quote.edited_at: datetime.now(),
+                }
+            )
             await ctx.send(f"Updated quote with ID {args[0]}.")
         else:
             ctx.send("You do not have permission to update that quote.")
@@ -190,7 +197,7 @@ class Quotes(commands.Cog):
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
     async def purge(self, ctx: Context, target: MentionConverter):
-        #get quotes
+        # get quotes
         if target.is_id_type():
             f = db_session.query(Quote).filter(Quote.author_id == target.id)
         else:
@@ -216,7 +223,7 @@ class Quotes(commands.Cog):
 
         # get target details and check if we have permission
         if user_is_irc_bot(ctx):
-            user = Mention(MentionType.STRING,None,display_name)
+            user = Mention(MentionType.STRING, None, display_name)
 
             if target is not None and user.string != target.string:
                 target = None
@@ -230,7 +237,7 @@ class Quotes(commands.Cog):
             else:
                 if not await is_compsoc_exec_in_guild(ctx):
                     target = None
-        
+
         if target is None:
             await ctx.send("You do not have permission to opt-out that user.")
             return
@@ -278,7 +285,7 @@ class Quotes(commands.Cog):
         if user_is_irc_bot(ctx):
             user = Mention(MentionType.STRING, None, get_name_string(ctx.message))
         else:
-            user = Mention(MentionType.ID,get_database_user(ctx.author).id, None)
+            user = Mention(MentionType.ID, get_database_user(ctx.author).id, None)
 
         # check to see if target is opted out already
         if user.is_id_type():
