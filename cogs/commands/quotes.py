@@ -29,6 +29,40 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 def is_id(string) -> bool:
     return re.match("^#\d+$", string)
 
+def user_opted_out(user: Mention):
+    # check if mentioned user has opted out
+    if user.is_id_type():
+        q = (
+            db_session.query(QuoteOptouts)
+            .filter(QuoteOptouts.user_id == user.id)
+            .count()
+        )
+    else:
+        q = (
+            db_session.query(QuoteOptouts)
+            .filter(QuoteOptouts.user_string == user.string)
+            .count()
+        )
+
+    return q != 0
+
+def ctx_to_mention(ctx):
+    if user_is_irc_bot(ctx):
+        return Mention(MentionType.STRING,None,get_name_string(ctx))
+    else:
+        return Mention(MentionType.ID,get_database_user(ctx.author).id,None)
+
+
+# check if user has permissions for this quote
+def has_quote_perms(is_exec, requester: Mention, quote:Quote):
+    if is_exec:
+        return True
+
+    if quote.author_type == "id":
+        return requester.id == quote.author_id
+    
+    return requester.string == quote.author_string
+
 def quote_str(q:Quote) -> str:
     date = q.created_at.strftime("%d/%m/%Y") 
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
@@ -66,22 +100,28 @@ def add_quote(author: Mention, quote, time, db_session = db_session) -> Quote:
     
     return new_quote
 
-def user_opted_out(user: Mention):
-    # check if mentioned user has opted out
-    if user.is_id_type():
-        q = (
-            db_session.query(QuoteOptouts)
-            .filter(QuoteOptouts.user_id == user.id)
-            .count()
-        )
-    else:
-        q = (
-            db_session.query(QuoteOptouts)
-            .filter(QuoteOptouts.user_string == user.string)
-            .count()
-        )
+def delete_quote(is_exec, requester: Mention, argument, db_session = db_session) -> str:
+    if argument is None or not is_id(argument):
+        return "Invalid quote ID."
 
-    return q != 0
+    quote = quotes_query(argument,db_session)
+
+    if quote.one_or_none() is None:
+        return "No quote with that ID was found."
+
+    if has_quote_perms(is_exec, requester, quote.first()):
+        # delete quote
+        try:
+            quote.delete()
+            db_session.commit()
+            return f"Deleted quote with ID {argument}."
+        except (ScalarListException, SQLAlchemyError) as e:
+            db_session.rollback()
+            logging.exception(e)
+            return f"Something went wrong"
+    else:
+        return "You do not have permission to delete that quote."
+
 
 
 class QueryConverter(Converter):
@@ -89,15 +129,6 @@ class QueryConverter(Converter):
         return quotes_query(argument)
 
 
-# check if user has permissions for this quote
-async def has_quote_perms(ctx, quote):
-    if user_is_irc_bot(ctx):
-        return False
-
-    is_exec = await is_compsoc_exec_in_guild(ctx)
-    author_id = get_database_user(ctx.author).id
-
-    return is_exec or author_id == quote.author_id
 
 
 class Quotes(commands.Cog):
@@ -145,39 +176,14 @@ class Quotes(commands.Cog):
             db_session.rollback()
             logging.exception(e)
             await ctx.send(f"Something went wrong")
-            return None
 
     @quote.command(help="Delete a quote, format !quote delete #ID.")
-    async def delete(self, ctx: Context, argument=None) -> Quote:
+    async def delete(self, ctx: Context, argument=None):
+        requester = ctx_to_mention(ctx)
+        is_exec = is_compsoc_exec_in_guild(ctx)
 
-        if argument is None or not is_id(argument):
-            await ctx.send("Invalid quote ID.")
-            return
-
-        quote = quotes_query(argument)
-
-        if quote.first() is None:
-            await ctx.send("No quote with that ID was found.")
-            return
-
-        to_delete = quote.first()
-
-        if await has_quote_perms(ctx, quote):
-            # delete quote
-            try:
-                quote.delete()
-                db_session.commit()
-                await ctx.send(f"Deleted quote with ID {argument}.")
-
-                return to_delete
-            except (ScalarListException, SQLAlchemyError) as e:
-                db_session.rollback()
-                logging.exception(e)
-                await ctx.send(f"Something went wrong")
-                return None
-        else:
-            await ctx.send("You do not have permission to delete that quote.")
-            return None
+        result = delete_quote(is_exec,requester,argument)
+        ctx.send(result)
 
     @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
     async def update(self, ctx: Context, *args: clean_content) -> Quote:
@@ -190,8 +196,11 @@ class Quotes(commands.Cog):
             return
 
         quote = quotes_query(args[0])
+        is_exec = await is_compsoc_exec_in_guild(ctx)
 
-        if await has_quote_perms(ctx, quote.first()):
+        requester = ctx_to_mention(ctx)
+
+        if has_quote_perms(is_exec, requester, quote.first()):
             # update quote
             quote.update(
                 {

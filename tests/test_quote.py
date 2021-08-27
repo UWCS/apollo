@@ -1,5 +1,6 @@
 import os
 from discord.ext.commands.context import Context
+from discord.ext.commands.bot import Bot
 import pytest
 from datetime import datetime
 
@@ -8,11 +9,10 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from cogs.commands.quotes import quotes_query, add_quote, quote_str
+from config import CONFIG
+from cogs.commands.quotes import quotes_query, add_quote, quote_str, delete_quote
 from models import Base, User, Quote, QuoteOptouts
 from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
-
-
 
 TEST_QUOTES = [
         Quote(
@@ -129,12 +129,53 @@ QUERY_QUOTES = {
 }
 
 ADD_QUOTES = {
-    "Discord user adding a quote": (
-        Mention(MentionType.ID,1,None),
+    "Discord user quote": (
+        "<@!1000>",
         "Foo said this",
-        datetime(2000,10,10),
+        datetime(1998,12,24),
         "#7",
-        "**#7:** \"Foo said this\" - <@1000> (10/10/2000)"
+        "**#7:** \"Foo said this\" - <@1000> (24/12/1998)",
+        7
+    ),
+    "Unregistered user quote":(
+        "<@!1034>",
+        "Unknown user said this",
+        datetime(1998,12,24),
+        "#8",
+        "**#8:** \"Unknown user said this\" - <@!1034> (24/12/1998)",
+        8
+    ),
+    "IRC user/string quote":(
+        "Foobar",
+        "Foobar said this",
+        datetime(1998,12,24),
+        "#9",
+        "**#9:** \"Foobar said this\" - Foobar (24/12/1998)",
+        9
+    )
+}
+
+DELETE_QUOTES = {
+    "Discord user deleting own quote": (
+        False,
+        "<@!1000>",
+        "#7",
+        "Deleted quote with ID #7.",
+        8
+    ),
+    "Discord user deleting someone else's quote": (
+        False,
+        "<@!1000>",
+        "#8",
+        "You do not have permission to delete that quote.",
+        8
+    ),
+    "Exec user deleting other quote": (
+        True,
+        "<@!3001>",
+        "#8",
+        "Deleted quote with ID #8.",
+        7
     )
 }
 
@@ -148,12 +189,27 @@ def test_query_quotes(database, query,expected):
     assert actual == expected
 
 @pytest.mark.parametrize(
-    ["mention","quote","time","new_id","expected"],
+    ["mention","quote","time","new_id","expected","db_size"],
     ADD_QUOTES.values(),
     ids=ADD_QUOTES.keys()
 )
-def test_add_quotes(database,mention,quote,time,new_id,expected):
-    add_quote(mention,quote,time,database)
-    q = quotes_query(new_id,database).first()
+def test_add_quotes(database,mention,quote,time,new_id,expected,db_size):
+    m = parse_mention(mention,database)
+    add_quote(m,quote,time,database)
+    q = quotes_query(new_id,database).one_or_none()
 
     assert quote_str(q) == expected
+    assert database.query(Quote).count() == db_size
+
+@pytest.mark.parametrize(
+    ["is_exec","user","to_delete","expected","db_size"],
+    DELETE_QUOTES.values(),
+    ids=DELETE_QUOTES.keys()
+)
+def test_delete_quotes(database,is_exec,user,to_delete,expected,db_size):
+    print(database.query(Quote).all()[6])
+    m = parse_mention(user,database)
+    actual = delete_quote(is_exec, m, to_delete,database)
+    
+    assert actual == expected
+    assert database.query(Quote).count() == db_size
