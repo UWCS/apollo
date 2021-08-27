@@ -1,6 +1,7 @@
 import logging
 import re
 from datetime import datetime
+from typing import List
 
 from discord import AllowedMentions
 from discord.ext import commands
@@ -69,10 +70,13 @@ class QueryConverter(Converter):
 
 # check if user has permissions for this quote
 async def has_quote_perms(ctx, quote):
+    if user_is_irc_bot(ctx):
+        return False
+
     is_exec = await is_compsoc_exec_in_guild(ctx)
     author_id = get_database_user(ctx.author).id
 
-    return is_exec or author_id in [quote.author_id, quote.submitter_id]
+    return is_exec or author_id == quote.author_id
 
 class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
@@ -81,7 +85,7 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, arg: QueryConverter = None):
+    async def quote(self, ctx: Context, arg: QueryConverter = None) -> Quote:
         query = arg or db_session.query(Quote)
 
         # select a random quote if one exists
@@ -99,9 +103,10 @@ class Quotes(commands.Cog):
 
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
+        return
 
     @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
-    async def add(self, ctx: Context, author: MentionConverter, *args: clean_content):
+    async def add(self, ctx: Context, author: MentionConverter, *args: clean_content) -> Quote:
         if len(args) != 1:
             await ctx.send("Invalid format.")
             return
@@ -127,13 +132,15 @@ class Quotes(commands.Cog):
             await ctx.send(
                 f"Thanks {get_name_string(ctx.message)}, I have saved this quote with the ID {new_quote.quote_id}."
             )
+            return new_quote
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
             await ctx.send(f"Something went wrong")
+            return None
 
     @quote.command(help="Delete a quote, format !quote delete #ID.")
-    async def delete(self, ctx: Context, argument=None):
+    async def delete(self, ctx: Context, argument=None) -> Quote:
 
         if argument is None or not is_id(argument):
             await ctx.send("Invalid quote ID.")
@@ -144,6 +151,8 @@ class Quotes(commands.Cog):
         if quote.first() is None:
             await ctx.send("No quote with that ID was found.")
             return
+        
+        to_delete = quote.first()
 
         if await has_quote_perms(ctx, quote):
             # delete quote
@@ -151,15 +160,19 @@ class Quotes(commands.Cog):
                 quote.delete()
                 db_session.commit()
                 await ctx.send(f"Deleted quote with ID {argument}.")
+
+                return to_delete
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
                 logging.exception(e)
                 await ctx.send(f"Something went wrong")
+                return None
         else:
             await ctx.send("You do not have permission to delete that quote.")
+            return None
 
     @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
-    async def update(self, ctx: Context, *args: clean_content):
+    async def update(self, ctx: Context, *args: clean_content) -> Quote:
         if len(args) != 2:
             await ctx.send("Invalid format.")
             return
@@ -180,13 +193,15 @@ class Quotes(commands.Cog):
                 }
             )
             await ctx.send(f"Updated quote with ID {args[0]}.")
+            return quote.first()
         else:
             ctx.send("You do not have permission to update that quote.")
+            return None
 
     @quote.command(
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
-    async def purge(self, ctx: Context, target: MentionConverter):
+    async def purge(self, ctx: Context, target: MentionConverter) -> List[Quote]:
         # get quotes
         if target.is_id_type():
             f = db_session.query(Quote).filter(Quote.author_id == target.id)
@@ -200,14 +215,16 @@ class Quotes(commands.Cog):
             await ctx.send("Author has no quotes to purge.")
         elif not await has_quote_perms(ctx, quotes[0]):
             await ctx.send("You do not have permission to purge this author.")
+            return None
         else:
             f.delete()
             await ctx.send(f"Purged {to_delete} quotes from author.")
+            return quotes
 
     @quote.command(
         help="Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."
     )
-    async def optout(self, ctx: Context, target: MentionConverter = None):
+    async def optout(self, ctx: Context, target: MentionConverter = None) -> QuoteOptouts:
         # get the author's id/name
         display_name = get_name_string(ctx.message)
 
@@ -230,7 +247,7 @@ class Quotes(commands.Cog):
 
         if target is None:
             await ctx.send("You do not have permission to opt-out that user.")
-            return
+            return None
 
         # check to see if target is opted out already
         if target.is_id_type():
@@ -247,7 +264,7 @@ class Quotes(commands.Cog):
             )
         if q != 0:
             await ctx.send("User has already opted out.")
-            return
+            return None
 
         # opt out
         outpout = QuoteOptouts(
@@ -261,16 +278,17 @@ class Quotes(commands.Cog):
             await ctx.send(
                 f"User has been opted out of quotes. They may opt in again later with the optin command."
             )
+            return outpout
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
             await ctx.send(f"Something went wrong")
+            return None
 
     @quote.command(
         help="Opt in to being quoted if you have previously opted out, format !quote optin."
     )
-    async def optin(self, ctx: Context):
-        user_type = "id"
+    async def optin(self, ctx: Context) -> QuoteOptouts:
 
         if user_is_irc_bot(ctx):
             user = Mention(MentionType.STRING, None, get_name_string(ctx.message))
@@ -286,15 +304,19 @@ class Quotes(commands.Cog):
             )
         if q.first() is None:
             await ctx.send("User is already opted in.")
-            return
+            return None
+
+        deleted_record = q.first()
 
         try:
             q.delete()
             await ctx.send(f"User has opted in to being quoted.")
+            return deleted_record
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
             await ctx.send(f"Something went wrong")
+            return None
 
 
 def setup(bot: Bot):
