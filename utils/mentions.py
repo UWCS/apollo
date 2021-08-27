@@ -1,4 +1,5 @@
 from enum import Enum
+import re
 from typing import Union
 
 from discord.ext.commands import Converter, MemberConverter
@@ -30,19 +31,16 @@ class Mention:
         return "string"
 
 
-# return one of the following in descending order:
-# a user from the database
-# the username as a string
-# the mention as a string
+def parse_mention(string) -> Mention:
+    if re.match("^<@!?\d+>$"):
+        uid = int(re.search("\d+",)[0])
+        user = get_database_user_from_id(uid)
+
+        if user is not None:
+            return Mention(MentionType.ID, user.id, None)
+    
+    return Mention(MentionType.STRING, None, string)
+
 class MentionConverter(Converter):
     async def convert(self, ctx, argument) -> Mention:
-        try:
-            member = await MemberConverter().convert(ctx, argument)
-            user = get_database_user_from_id(int(member.id))
-
-            if user is None:
-                return Mention(MentionType.STRING, None, member.name)
-
-            return Mention(MentionType.ID, user.id, None)
-        except:
-            return Mention(MentionType.STRING, None, argument)
+        return parse_mention(argument)

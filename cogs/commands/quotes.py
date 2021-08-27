@@ -28,7 +28,6 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 def is_id(string) -> bool:
     return re.match("^#\d+$", string)
 
-
 class QuoteQuery(Converter):
     async def convert(self, ctx, argument):
         # by id
