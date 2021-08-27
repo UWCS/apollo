@@ -94,7 +94,7 @@ class Quotes(commands.Cog):
         if user_is_irc_bot(ctx):
             submitter = Mention(MentionType.STRING, None, display_name)
         else:
-            submitter = Mention(MentionType.ID, get_database_user(ctx.author).id)
+            submitter = Mention(MentionType.ID, get_database_user(ctx.author).id,None)
 
         # check if mentioned user has opted out
         if author.is_id_type():
@@ -191,10 +191,10 @@ class Quotes(commands.Cog):
     )
     async def purge(self, ctx: Context, target: MentionConverter):
         #get quotes
-        if target.type == "string":
-            f = db_session.query(Quote).filter(Quote.author_string == target)
-        else:
+        if target.is_id_type():
             f = db_session.query(Quote).filter(Quote.author_id == target.id)
+        else:
+            f = db_session.query(Quote).filter(Quote.author_string == target.string)
 
         quotes = f.all()
         to_delete = len(quotes)
@@ -276,19 +276,16 @@ class Quotes(commands.Cog):
         user_type = "id"
 
         if user_is_irc_bot(ctx):
-            user_type = "string"
-            user_id = None
-            user_string = get_name_string(ctx.message)
+            user = Mention(MentionType.STRING, None, get_name_string(ctx.message))
         else:
-            user_id = get_database_user(ctx.author).id
-            submitter_string = None
+            user = Mention(MentionType.ID,get_database_user(ctx.author).id, None)
 
         # check to see if target is opted out already
-        if user_type == "id":
-            q = db_session.query(QuoteOptouts).filter(QuoteOptouts.user_id == user_id)
+        if user.is_id_type():
+            q = db_session.query(QuoteOptouts).filter(QuoteOptouts.user_id == user.id)
         else:
             q = db_session.query(QuoteOptouts).filter(
-                QuoteOptouts.user_string == user_string
+                QuoteOptouts.user_string == user.string
             )
         if q.first() is None:
             await ctx.send("User is already opted in.")
