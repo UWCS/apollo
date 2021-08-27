@@ -46,6 +46,22 @@ def quotes_query(query):
     # by topic
     return db_session.query(Quote).filter(Quote.quote.contains(query))
 
+def user_opted_out(user: Mention):
+    # check if mentioned user has opted out
+    if user.is_id_type():
+        q = (
+            db_session.query(QuoteOptouts)
+            .filter(QuoteOptouts.user_id == user.id)
+            .count()
+        )
+    else:
+        q = (
+            db_session.query(QuoteOptouts)
+            .filter(QuoteOptouts.user_string == user.string)
+            .count()
+        )
+
+    return q != 0
 
 class QueryConverter(Converter):
     async def convert(self, ctx, argument):
@@ -92,21 +108,7 @@ class Quotes(commands.Cog):
 
         now = datetime.now()
 
-        # check if mentioned user has opted out
-        if author.is_id_type():
-            q = (
-                db_session.query(QuoteOptouts)
-                .filter(QuoteOptouts.user_id == author.id)
-                .count()
-            )
-        else:
-            q = (
-                db_session.query(QuoteOptouts)
-                .filter(QuoteOptouts.user_string == author.string)
-                .count()
-            )
-
-        if q != 0:
+        if user_opted_out(author):
             await ctx.send("User has opted out of being quoted.")
             return
 
