@@ -1,15 +1,18 @@
 import logging
+import re
 from datetime import datetime
+from typing import Optional
 
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, Converter
 from discord.ext.commands.converter import clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
+from sqlalchemy.sql.selectable import CompoundSelect
 from sqlalchemy_utils import ScalarListException
 
-from models import Quote, QuoteOptouts, db_session
+from models import User, Quote, QuoteOptouts, db_session
 from utils import (
     get_database_user,
     get_name_string,
@@ -23,12 +26,27 @@ Pull a random quote. Pull quotes by ID using "#ID", by author using "@username",
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
+def is_id(string) -> bool:
+    return re.match("^#\d+$",string)
 
-def quote_by_id(id):
-    if not id or id[0] != "#" or len(id) < 2 or not id[1:].isnumeric():
-        return None
-    return db_session.query(Quote).filter(Quote.quote_id == int(id[1:])).first()
+class QuoteQuery(Converter):
+    async def convert(self,ctx, argument):
+        #by id
+        if is_id(argument):
+            return db_session.query(Quote).filter(Quote.quote_id == int(argument[1:]))
+        
+        res = await MaybeMention.convert(self,ctx, argument)
 
+        #by author id
+        if isinstance(res, User):
+            return db_session.query(Quote).filter(Quote.author_id == res.id)
+        
+        #by author string
+        if res[0] == "@" and len(res) > 1:
+            return db_session.query(Quote).filter(Quote.author_string == res[1:])
+
+        #by topic
+        return db_session.query(Quote).filter(Quote.quote.contains(res))
 
 # check if user has permissions for this quote
 async def has_quote_perms(ctx, quote):
@@ -45,52 +63,19 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, argument=None):
-
-        # pick any quote
-        if argument is None:
-            query = db_session.query(Quote)
-        else:
-            mention = await MaybeMention.convert(self, ctx, argument)
-
-            if isinstance(mention, str):
-                if mention[0] == "#" and mention[1:].isnumeric:
-                    query = db_session.query(Quote).filter(
-                        Quote.quote_id == int(mention[1:])
-                    )
-                # pick from string-authors
-                elif mention[0] == "@":
-                    query = db_session.query(Quote).filter(
-                        Quote.author_string == mention[1:]
-                    )
-                # find specific quote
-                # pick from quotes containing the text
-                else:
-                    query = db_session.query(Quote).filter(
-                        Quote.quote.contains(mention)
-                    )
-            # pick from id-authors
-            else:
-                query = db_session.query(Quote).filter(Quote.author_id == mention.id)
+    async def quote(self, ctx: Context, arg: QuoteQuery=None):
+        query = arg or db_session.query(Quote)
 
         # select a random quote if one exists
-        q = query.order_by(func.random()).first()
+        q : Quote = query.order_by(func.random()).first()
 
         if q is None:
-            message = "Invalid subcommand or no quote matched the criteria"
+            message = "No quote matched the criteria"
         else:
-
-            # get quote author
-            if q.author_type == "id":
-                # note: we pull just the username for now until i can figure out how to display mentions on mobile.
-                author = q.author.username
-            else:
-                author = q.author_string
-
             date = q.created_at.strftime("%d/%m/%Y")
 
             # create message
-            message = f'**#{q.quote_id}:** "{q.quote}" - {author} ({date})'
+            message = f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
@@ -169,42 +154,49 @@ class Quotes(commands.Cog):
     @quote.command(help="Delete a quote, format !quote delete #ID.")
     async def delete(self, ctx: Context, argument=None):
 
-        quote = quote_by_id(argument)
+        if argument is None or not is_id(argument):
+            await ctx.send("Invalid quote ID.")
+            return
 
-        if quote is None:
-            await ctx.send("Invalid or missing quote ID.")
+        quote = await QuoteQuery.convert(self,ctx,argument)
+
+        if quote.first() is None:
+            await ctx.send("No quote with that ID was found.")
             return
 
         if await has_quote_perms(ctx, quote):
             # delete quote
-            db_session.query(Quote).filter(Quote.quote_id == quote.quote_id).delete()
-            await ctx.send(f"Deleted quote with ID #{quote.quote_id}.")
+            try:
+                quote.delete()
+                db_session.commit()
+                await ctx.send(f"Deleted quote with ID {argument}.")
+            except (ScalarListException, SQLAlchemyError) as e:
+                db_session.rollback()
+                logging.exception(e)
+                await ctx.send(f"Something went wrong")
         else:
             await ctx.send("You do not have permission to delete that quote.")
 
     @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
-    async def update(self, ctx: Context, *args: clean_content):
+    async def update(self, ctx: Context, *args: clean_content):       
         if len(args) != 2:
             await ctx.send("Invalid format.")
             return
 
-        quote = quote_by_id(args[0])
-
-        if quote is None:
+        if not is_id(args[0]):
             await ctx.send("Invalid or missing quote ID.")
             return
 
-        if await has_quote_perms(ctx, quote):
+        quote = await QuoteQuery.convert(self, ctx, args[0])
+
+        if await has_quote_perms(ctx, quote.first()):
             # update quote
-            q_update = {
+            quote.update({
                 Quote.quote: args[1],
                 Quote.edited: True,
                 Quote.edited_at: datetime.now(),
-            }
-            db_session.query(Quote).filter(Quote.quote_id == quote.quote_id).update(
-                q_update
-            )
-            await ctx.send(f"Updated quote with ID #{quote.quote_id}.")
+            })
+            await ctx.send(f"Updated quote with ID {args[0]}.")
         else:
             ctx.send("You do not have permission to update that quote.")
 
@@ -212,6 +204,7 @@ class Quotes(commands.Cog):
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
     async def purge(self, ctx: Context, target: MaybeMention):
+        #get quotes
         if isinstance(target, str):
             f = db_session.query(Quote).filter(Quote.author_string == target)
         else:
@@ -270,6 +263,7 @@ class Quotes(commands.Cog):
             else:
                 await ctx.send("You do not have permission to opt-out that user.")
                 return
+        
 
         # check to see if target is opted out already
         if user_type == "id":

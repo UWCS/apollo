@@ -31,3 +31,8 @@ class Quote(Base):
     edited_at = Column(DateTime, nullable=True)
 
     author = relationship("User", uselist=False, foreign_keys=author_id)
+
+    def author_to_string(self) -> str:
+        if self.author_type == "id":
+            return f"<@{self.author.user_uid}>"
+        return self.author_string
