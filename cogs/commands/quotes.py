@@ -29,23 +29,25 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 def is_id(string) -> bool:
     return re.match("^#\d+$", string)
 
+
 def quotes_query(query):
     res = parse_mention(query)
 
-    #by discord user
+    # by discord user
     if res.is_id_type():
         return db_session.query(Quote).filter(Quote.author_id == res.id)
-    
+
     # by id
     if is_id(query):
         return db_session.query(Quote).filter(Quote.quote_id == int(query[1:]))
 
-    #by other author
+    # by other author
     if query[0] == "@" and len(query) > 1:
         return db_session.query(Quote).filter(Quote.author_string == query[1:])
 
     # by topic
     return db_session.query(Quote).filter(Quote.quote.contains(query))
+
 
 def user_opted_out(user: Mention):
     # check if mentioned user has opted out
@@ -64,9 +66,11 @@ def user_opted_out(user: Mention):
 
     return q != 0
 
+
 class QueryConverter(Converter):
     async def convert(self, ctx, argument):
         return quotes_query(argument)
+
 
 # check if user has permissions for this quote
 async def has_quote_perms(ctx, quote):
@@ -77,6 +81,7 @@ async def has_quote_perms(ctx, quote):
     author_id = get_database_user(ctx.author).id
 
     return is_exec or author_id == quote.author_id
+
 
 class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
@@ -106,7 +111,9 @@ class Quotes(commands.Cog):
         return
 
     @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
-    async def add(self, ctx: Context, author: MentionConverter, *args: clean_content) -> Quote:
+    async def add(
+        self, ctx: Context, author: MentionConverter, *args: clean_content
+    ) -> Quote:
         if len(args) != 1:
             await ctx.send("Invalid format.")
             return
@@ -151,7 +158,7 @@ class Quotes(commands.Cog):
         if quote.first() is None:
             await ctx.send("No quote with that ID was found.")
             return
-        
+
         to_delete = quote.first()
 
         if await has_quote_perms(ctx, quote):
@@ -224,7 +231,9 @@ class Quotes(commands.Cog):
     @quote.command(
         help="Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."
     )
-    async def optout(self, ctx: Context, target: MentionConverter = None) -> QuoteOptouts:
+    async def optout(
+        self, ctx: Context, target: MentionConverter = None
+    ) -> QuoteOptouts:
         # get the author's id/name
         display_name = get_name_string(ctx.message)
 
