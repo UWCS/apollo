@@ -56,7 +56,6 @@ async def has_quote_perms(ctx, quote):
 
     return is_exec or author_id in [quote.author_id, quote.submitter_id]
 
-
 class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -91,14 +90,6 @@ class Quotes(commands.Cog):
 
         now = datetime.now()
 
-        # get the submitter's id/name
-        display_name = get_name_string(ctx.message)
-
-        if user_is_irc_bot(ctx):
-            submitter = Mention(MentionType.STRING, None, display_name)
-        else:
-            submitter = Mention(MentionType.ID, get_database_user(ctx.author).id, None)
-
         # check if mentioned user has opted out
         if author.is_id_type():
             q = (
@@ -118,9 +109,6 @@ class Quotes(commands.Cog):
             return
 
         new_quote = Quote(
-            submitter_type=submitter.type_str(),
-            submitter_id=submitter.id,
-            submitter_string=submitter.string,
             author_type=author.type_str(),
             author_id=author.id,
             author_string=author.string,
@@ -133,7 +121,7 @@ class Quotes(commands.Cog):
         try:
             db_session.commit()
             await ctx.send(
-                f"Thanks {display_name}, I have saved this quote with the ID {new_quote.quote_id}."
+                f"Thanks {get_name_string(ctx.message)}, I have saved this quote with the ID {new_quote.quote_id}."
             )
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()

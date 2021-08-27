@@ -24,13 +24,6 @@ def upgrade():
             "quote_id", sa.Integer, primary_key=True, autoincrement=True, nullable=False
         ),
         sa.Column(
-            "submitter_type",
-            sa.Enum("id", "string", name="submitter_type"),
-            nullable=False,
-        ),
-        sa.Column("submitter_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
-        sa.Column("submitter_string", sa.String, nullable=True),
-        sa.Column(
             "author_type", sa.Enum("id", "string", name="author_type"), nullable=False
         ),
         sa.Column("author_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
