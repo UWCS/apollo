@@ -90,7 +90,7 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, arg: QueryConverter = None) -> Quote:
+    async def quote(self, ctx: Context, arg: QueryConverter = None) -> str:
         query = arg or db_session.query(Quote)
 
         # select a random quote if one exists
@@ -108,7 +108,7 @@ class Quotes(commands.Cog):
 
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
-        return
+        return message
 
     @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
     async def add(
