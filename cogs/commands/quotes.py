@@ -1,7 +1,6 @@
 import logging
 import re
 from datetime import datetime
-from typing import Optional
 
 from discord import AllowedMentions
 from discord.ext import commands
@@ -9,12 +8,15 @@ from discord.ext.commands import Bot, Context, Converter
 from discord.ext.commands.converter import clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
-from sqlalchemy.sql.selectable import CompoundSelect
 from sqlalchemy_utils import ScalarListException
 
-from models import Quote, QuoteOptouts, User, db_session
-from utils import (get_database_user, get_name_string,
-                   is_compsoc_exec_in_guild, user_is_irc_bot)
+from models import Quote, QuoteOptouts, db_session
+from utils import (
+    get_database_user,
+    get_name_string,
+    is_compsoc_exec_in_guild,
+    user_is_irc_bot,
+)
 from utils.mentions import Mention, MentionConverter, MentionType
 
 LONG_HELP_TEXT = """
