@@ -19,7 +19,7 @@ from utils import (
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
-from utils.mentions import MentionConverter
+from utils.mentions import Mention, MentionConverter, MentionType
 
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
@@ -35,18 +35,18 @@ class QuoteQuery(Converter):
         if is_id(argument):
             return db_session.query(Quote).filter(Quote.quote_id == int(argument[1:]))
         
-        res = await MaybeMention.convert(self,ctx, argument)
+        res = await MentionConverter.convert(self,ctx, argument)
 
         #by author id
-        if isinstance(res, User):
+        if res.is_id_type():
             return db_session.query(Quote).filter(Quote.author_id == res.id)
         
         #by author string
-        if res[0] == "@" and len(res) > 1:
-            return db_session.query(Quote).filter(Quote.author_string == res[1:])
+        if res.string[0] == "@" and len(res.string) > 1:
+            return db_session.query(Quote).filter(Quote.author_string == res.string[1:])
 
         #by topic
-        return db_session.query(Quote).filter(Quote.quote.contains(res))
+        return db_session.query(Quote).filter(Quote.quote.contains(res.string))
 
 # check if user has permissions for this quote
 async def has_quote_perms(ctx, quote):
@@ -81,13 +81,12 @@ class Quotes(commands.Cog):
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
     @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
-    async def add(self, ctx: Context, author: MaybeMention, *args: clean_content):
+    async def add(self, ctx: Context, author: MentionConverter, *args: clean_content):
         if len(args) != 1:
             await ctx.send("Invalid format.")
             return
 
         submitter_type = "id"
-        author_type = "id"
         now = datetime.now()
 
         # get the submitter's id/name
@@ -101,26 +100,17 @@ class Quotes(commands.Cog):
             submitter_id = get_database_user(ctx.author).id
             submitter_string = None
 
-        # get the mentioned user's id/name
-        if isinstance(author, str):
-            author_type = "string"
-            author_id = None
-            author_string = author
-        else:
-            author_id = author.id
-            author_string = None
-
         # check if mentioned user has opted out
-        if author_type == "id":
+        if author.is_id_type():
             q = (
                 db_session.query(QuoteOptouts)
-                .filter(QuoteOptouts.user_id == author_id)
+                .filter(QuoteOptouts.user_id == author.id)
                 .count()
             )
         else:
             q = (
                 db_session.query(QuoteOptouts)
-                .filter(QuoteOptouts.user_string == author_string)
+                .filter(QuoteOptouts.user_string == author.string)
                 .count()
             )
 
@@ -132,9 +122,9 @@ class Quotes(commands.Cog):
             submitter_type=submitter_type,
             submitter_id=submitter_id,
             submitter_string=submitter_string,
-            author_type=author_type,
-            author_id=author_id,
-            author_string=author_string,
+            author_type=author.type,
+            author_id=author.id,
+            author_string=author.string,
             quote=args[0],
             created_at=now,
             edited=False,
@@ -203,9 +193,9 @@ class Quotes(commands.Cog):
     @quote.command(
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
-    async def purge(self, ctx: Context, target: MaybeMention):
+    async def purge(self, ctx: Context, target: MentionConverter):
         #get quotes
-        if isinstance(target, str):
+        if target.type == "string":
             f = db_session.query(Quote).filter(Quote.author_string == target)
         else:
             f = db_session.query(Quote).filter(Quote.author_id == target.id)
@@ -224,58 +214,42 @@ class Quotes(commands.Cog):
     @quote.command(
         help="Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."
     )
-    async def optout(self, ctx: Context, target: MaybeMention = None):
-        user_type = "id"
-
+    async def optout(self, ctx: Context, target: MentionConverter = None):
         # get the author's id/name
         display_name = get_name_string(ctx.message)
 
         # get target details and check if we have permission
         if user_is_irc_bot(ctx):
-            user_type = "string"
-            user_id = None
-            user_string = display_name
+            user = Mention(MentionType.STRING,None,display_name)
 
-            if target is not None and user_string != target:
-                await ctx.send("You do not have permission to opt-out that user.")
-                return
+            if target is not None and user.string != target.string:
+                target = None
         else:
-            author_id = get_database_user(ctx.author).id
+            requester_id = get_database_user(ctx.author).id
 
-            # opt out a user by string
-            if isinstance(target, str):
-                if await is_compsoc_exec_in_guild(ctx):
-                    user_type = "string"
-                    user_id = None
-                    user_string = target
-                else:
-                    await ctx.send("You do not have permission to opt-out that user.")
-                    return
             # opt out ourself
-            elif target is None:
-                target = ctx.author
-                user_id = author_id
-                user_string = None
+            if target is None:
+                target = Mention(MentionType.ID, requester_id, None)
             # opt out a different user
-            elif await is_compsoc_exec_in_guild(ctx):
-                user_id = target.id
-                user_string = None
             else:
-                await ctx.send("You do not have permission to opt-out that user.")
-                return
+                if not await is_compsoc_exec_in_guild(ctx):
+                    target = None
         
+        if target is None:
+            await ctx.send("You do not have permission to opt-out that user.")
+            return
 
         # check to see if target is opted out already
-        if user_type == "id":
+        if target.is_id_type():
             q = (
                 db_session.query(QuoteOptouts)
-                .filter(QuoteOptouts.user_id == user_id)
+                .filter(QuoteOptouts.user_id == target.id)
                 .count()
             )
         else:
             q = (
                 db_session.query(QuoteOptouts)
-                .filter(QuoteOptouts.user_string == user_string)
+                .filter(QuoteOptouts.user_string == target.string)
                 .count()
             )
         if q != 0:
@@ -284,7 +258,7 @@ class Quotes(commands.Cog):
 
         # opt out
         outpout = QuoteOptouts(
-            user_type=user_type, user_id=user_id, user_string=user_string
+            user_type=target.type_str(), user_id=target.id, user_string=target.string
         )
         db_session.add(outpout)
         try:

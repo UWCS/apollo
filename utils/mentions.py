@@ -8,11 +8,24 @@ from utils.utils import get_database_user_from_id
 
 __all__ = ["MentionConverter"]
 
+class MentionType(Enum):
+    ID = 0,
+    STRING = 1
+
 class Mention:
     def Mention(self,type,id,string):
-        self.type   :str = type
+        self.type   :MentionType = type
         self.id     :int = id
         self.string :str = string
+
+    def is_id_type(self):
+        return self.type == MentionType.ID
+
+    def type_str(self):
+        if self.type == MentionType.ID:
+            return "id"
+        
+        return "string"
 
 # return one of the following in descending order:
 # a user from the database
@@ -25,8 +38,8 @@ class MentionConverter(Converter):
             user = get_database_user_from_id(int(member.id))
 
             if user is None:
-                return Mention("string",None,member.name)
+                return Mention(MentionType.STRING,None,member.name)
 
-            return Mention("id",user,None)
+            return Mention(MentionType.ID,user,None)
         except:
-            return Mention("string",None,argument)
+            return Mention(MentionType.STRING,None,argument)
