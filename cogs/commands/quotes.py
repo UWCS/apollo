@@ -29,9 +29,12 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 def is_id(string) -> bool:
     return re.match("^#\d+$", string)
 
+def quote_str(q:Quote) -> str:
+    date = q.created_at.strftime("%d/%m/%Y") 
+    return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
-def quotes_query(query):
-    res = parse_mention(query)
+def quotes_query(query, db_session = db_session):
+    res = parse_mention(query, db_session)
 
     # by discord user
     if res.is_id_type():
@@ -48,6 +51,20 @@ def quotes_query(query):
     # by topic
     return db_session.query(Quote).filter(Quote.quote.contains(query))
 
+def add_quote(author: Mention, quote, time, db_session = db_session) -> Quote:
+    new_quote = Quote(
+        author_type=author.type_str(),
+        author_id=author.id,
+        author_string=author.string,
+        quote=quote,
+        created_at=time,
+        edited=False,
+        edited_at=None,
+    )
+    db_session.add(new_quote)
+    db_session.commit()
+    
+    return new_quote
 
 def user_opted_out(user: Mention):
     # check if mentioned user has opted out
@@ -90,7 +107,7 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, arg: QueryConverter = None) -> str:
+    async def quote(self, ctx: Context, arg: QueryConverter = None):
         query = arg or db_session.query(Quote)
 
         # select a random quote if one exists
@@ -99,47 +116,31 @@ class Quotes(commands.Cog):
         if q is None:
             message = "No quote matched the criteria"
         else:
-            date = q.created_at.strftime("%d/%m/%Y")
-
             # create message
-            message = (
-                f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
-            )
+            message = quote_str(q)
 
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
-        return message
 
     @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
     async def add(
         self, ctx: Context, author: MentionConverter, *args: clean_content
-    ) -> Quote:
+    ):
+        now = datetime.now()
+
         if len(args) != 1:
             await ctx.send("Invalid format.")
             return
-
-        now = datetime.now()
 
         if user_opted_out(author):
             await ctx.send("User has opted out of being quoted.")
             return
 
-        new_quote = Quote(
-            author_type=author.type_str(),
-            author_id=author.id,
-            author_string=author.string,
-            quote=args[0],
-            created_at=now,
-            edited=False,
-            edited_at=None,
-        )
-        db_session.add(new_quote)
         try:
-            db_session.commit()
+            new_quote = add_quote(author, args[0], now)
             await ctx.send(
                 f"Thanks {get_name_string(ctx.message)}, I have saved this quote with the ID {new_quote.quote_id}."
             )
-            return new_quote
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)

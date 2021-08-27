@@ -1,11 +1,10 @@
 from enum import Enum
 import re
-from typing import Union
 
-from discord.ext.commands import Converter, MemberConverter
+from discord.ext.commands import Converter
 
 from models.user import User
-from utils.utils import get_database_user_from_id
+from models import db_session
 
 __all__ = ["MentionConverter"]
 
@@ -31,11 +30,11 @@ class Mention:
         return "string"
 
 
-def parse_mention(string) -> Mention:
+def parse_mention(string, db_session=db_session) -> Mention:
     if re.match("^<@!?\d+>$", string):
         uid = int(re.search("\d+", string)[0])
-        user = get_database_user_from_id(uid)
-
+        user = db_session.query(User).filter(User.user_uid == uid).one_or_none()
+        
         if user is not None:
             return Mention(MentionType.ID, user.id, None)
 
