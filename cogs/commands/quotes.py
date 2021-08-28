@@ -19,7 +19,7 @@ from utils import (
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
-from utils.mentions import *
+from utils.mentions import Mention, MakeMention, MentionConverter
 
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
@@ -42,7 +42,7 @@ class QuoteException(Exception):
         err: QuoteError,
         msg=None,
     ):
-        self.message = (msg,)
+        self.message = msg
         self.err = err
 
 
@@ -73,10 +73,10 @@ def ctx_to_mention(ctx):
         return MakeMention.id_mention(get_database_user(ctx.author).id)
 
 
-""" check if user has permissions for this quote """
 
 
 def has_quote_perms(is_exec, requester: Mention, quote: Quote):
+    """ check if user has permissions for this quote """
     if is_exec:
         return True
 
@@ -323,7 +323,9 @@ class Quotes(commands.Cog):
         now = datetime.now()
 
         try:
-            result = f"Thank you {requester}, recorded quote with ID #{add_quote(author, quote, now)}."
+            quote_id = add_quote(author, quote, now)
+
+            result = f"Thank you {requester}, recorded quote with ID #{quote_id}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: no quote to record."
@@ -341,7 +343,8 @@ class Quotes(commands.Cog):
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         try:
-            result = f"Deleted quote with ID {delete_quote(is_exec, requester, query)}."
+            quote_id = delete_quote(is_exec, requester, query)
+            result = f"Deleted quote with ID {quote_id}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: provide quote ID."
@@ -361,7 +364,8 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
 
         try:
-            result = f"Updated quote with ID {update_quote(is_exec, requester, quote_id, argument)}."
+            quote_id = update_quote(is_exec, requester, quote_id, argument)
+            result = f"Updated quote with ID {quote_id}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: supply a valid ID and update text."
@@ -381,7 +385,8 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
 
         try:
-            result = f"Deleted {purge_quotes(is_exec, requester, target)} quotes."
+            purged = purge_quotes(is_exec, requester, target)
+            result = f"Deleted {purged} quotes."
         except QuoteException as e:
             if e.err == QuoteError.NOT_PERMITTED:
                 result = "You do not have permission to purge these quote."
@@ -397,7 +402,8 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
 
         try:
-            result = f"Deleted {opt_out_of_quotes(is_exec, requester, target)} quotes.\nUser can opt back in with the !quote optin command."
+            purged = opt_out_of_quotes(is_exec, requester, target)
+            result = f"Deleted {purged} quotes.\nUser can opt back in with the !quote optin command."
         except QuoteException as e:
             if e.err == QuoteError.NOT_PERMITTED:
                 result = "You do not have permission to opt out this user."
