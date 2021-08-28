@@ -180,6 +180,9 @@ def update_quote(
 def purge_quotes(
     is_exec, requester: Mention, target: Mention, db_session=db_session
 ) -> str:
+    if target is None:
+        return "Need an author to purge."
+
     # get quotes
     if target.is_id_type():
         f = db_session.query(Quote).filter(Quote.author_id == target.id)
@@ -221,8 +224,6 @@ def opt_out_of_quotes(
             permission = False
     else:
         # discord user check (with exec override)
-        print(requester.id != target.id)
-        print(is_exec)
         if requester.id != target.id and not is_exec:
             permission = False
 
@@ -253,9 +254,9 @@ def opt_out_of_quotes(
         db_session.add(optout)
         db_session.commit()
         # purge old quotes
-        purge_quotes(is_exec, requester, target, db_session)
+        deleted = purge_quotes(is_exec, requester, target, db_session)
         db_session.commit()
-        return "User has been opted out of quotes. They may opt in again later with the optin command."
+        return f"{deleted}\nUser has been opted out of quotes. They may opt in again later with the optin command."
     except (ScalarListException, SQLAlchemyError) as e:
         db_session.rollback()
         logging.exception(e)
@@ -319,7 +320,7 @@ class Quotes(commands.Cog):
 
         result = add_quote(requester, author, quote, now)
 
-        ctx.send(result)
+        await ctx.send(result)
 
     @quote.command(help="Delete a quote, format !quote delete #ID.")
     async def delete(self, ctx: Context, argument=None):
@@ -342,7 +343,8 @@ class Quotes(commands.Cog):
     @quote.command(
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
-    async def purge(self, ctx: Context, target: MentionConverter) -> List[Quote]:
+    async def purge(self, ctx: Context, target: MentionConverter=None) -> List[Quote]:
+        
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         requester = ctx_to_mention(ctx)
