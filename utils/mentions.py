@@ -34,7 +34,7 @@ def parse_mention(string, db_session=db_session) -> Mention:
     if re.match("^<@!?\d+>$", string):
         uid = int(re.search("\d+", string)[0])
         user = db_session.query(User).filter(User.user_uid == uid).one_or_none()
-        
+
         if user is not None:
             return Mention(MentionType.ID, user.id, None)
 

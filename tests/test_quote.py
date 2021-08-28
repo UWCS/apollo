@@ -11,66 +11,76 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from config import CONFIG
-from cogs.commands.quotes import opt_out_of_quotes, quotes_query, add_quote, quote_str, delete_quote, update_quote, purge_quotes, opt_in_to_quotes
+from cogs.commands.quotes import (
+    opt_out_of_quotes,
+    quotes_query,
+    add_quote,
+    quote_str,
+    delete_quote,
+    update_quote,
+    purge_quotes,
+    opt_in_to_quotes,
+)
 from models import Base, User, Quote, QuoteOptouts
 from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
 
 TEST_QUOTES = [
-        Quote(
-            author_type="id",
-            author_id=1,
-            author_string=None,
-            quote="talking to myself!",
-            created_at=datetime(2018,10,11),
-            edited=False,
-            edited_at=None,
-        ),
-        Quote(
-            author_type="string",
-            author_id=None,
-            author_string="ircguy",
-            quote="talking to myself! on irc!",
-            created_at=datetime(2018,10,12),
-            edited=False,
-            edited_at=None,
-        ),
-        Quote(
-            author_type="id",
-            author_id=2,
-            author_string=None,
-            quote="talking to someone else!",
-            created_at=datetime(2018,10,13),
-            edited=False,
-            edited_at=None,
-        ),
-        Quote(
-            author_type="string",
-            author_id=None,
-            author_string="ircguy",
-            quote="talking to someone else! on irc!",
-            created_at=datetime(2018,10,14),
-            edited=False,
-            edited_at=None,
-        ),
-        Quote(
-            author_type="id",
-            author_id=1,
-            author_string=None,
-            quote="talking about someone else! from irc!",
-            created_at=datetime(2018,10,15),
-            edited=False,
-            edited_at=None,
-        ),
-        Quote(
-            author_type="string",
-            author_id=None,
-            author_string="ircguy2",
-            quote="something about FOSS idk",
-            created_at=datetime(2018,10,16),
-            edited=False,
-            edited_at=None,
-        ),
-    ]
+    Quote(
+        author_type="id",
+        author_id=1,
+        author_string=None,
+        quote="talking to myself!",
+        created_at=datetime(2018, 10, 11),
+        edited=False,
+        edited_at=None,
+    ),
+    Quote(
+        author_type="string",
+        author_id=None,
+        author_string="ircguy",
+        quote="talking to myself! on irc!",
+        created_at=datetime(2018, 10, 12),
+        edited=False,
+        edited_at=None,
+    ),
+    Quote(
+        author_type="id",
+        author_id=2,
+        author_string=None,
+        quote="talking to someone else!",
+        created_at=datetime(2018, 10, 13),
+        edited=False,
+        edited_at=None,
+    ),
+    Quote(
+        author_type="string",
+        author_id=None,
+        author_string="ircguy",
+        quote="talking to someone else! on irc!",
+        created_at=datetime(2018, 10, 14),
+        edited=False,
+        edited_at=None,
+    ),
+    Quote(
+        author_type="id",
+        author_id=1,
+        author_string=None,
+        quote="talking about someone else! from irc!",
+        created_at=datetime(2018, 10, 15),
+        edited=False,
+        edited_at=None,
+    ),
+    Quote(
+        author_type="string",
+        author_id=None,
+        author_string="ircguy2",
+        quote="something about FOSS idk",
+        created_at=datetime(2018, 10, 16),
+        edited=False,
+        edited_at=None,
+    ),
+]
+
 
 @pytest.fixture(scope="module")
 def database():
@@ -106,27 +116,13 @@ def database():
     db_session.commit()
     return db_session
 
+
 QUERY_QUOTES = {
-    "By ID": (
-        "#1",
-        [TEST_QUOTES[0]]
-    ),
-    "By Author (Discord)": (
-        "<@!1337>",
-        [TEST_QUOTES[2]]
-    ),
-    "By Author (IRC/String)": (
-        "@ircguy",
-        [TEST_QUOTES[1],TEST_QUOTES[3]]
-    ),
-    "By Topic": (
-        "irc",
-        [TEST_QUOTES[1],TEST_QUOTES[3],TEST_QUOTES[4]]
-    ),
-    "No valid quotes": (
-        "blargleargle",
-        []
-    )
+    "By ID": ("#1", [TEST_QUOTES[0]]),
+    "By Author (Discord)": ("<@!1337>", [TEST_QUOTES[2]]),
+    "By Author (IRC/String)": ("@ircguy", [TEST_QUOTES[1], TEST_QUOTES[3]]),
+    "By Topic": ("irc", [TEST_QUOTES[1], TEST_QUOTES[3], TEST_QUOTES[4]]),
+    "No valid quotes": ("blargleargle", []),
 }
 
 ADD_QUOTES = {
@@ -134,38 +130,38 @@ ADD_QUOTES = {
         "<@!1000>",
         "<@!1000>",
         "Foo said this",
-        datetime(1998,12,24),
+        datetime(1998, 12, 24),
         "#7",
-        "**#7:** \"Foo said this\" - <@1000> (24/12/1998)",
-        7
+        '**#7:** "Foo said this" - <@1000> (24/12/1998)',
+        7,
     ),
-    "Unregistered user quote":(
+    "Unregistered user quote": (
         "<@!1000>",
         "<@!1034>",
         "Unknown user said this",
-        datetime(1998,12,24),
+        datetime(1998, 12, 24),
         "#8",
-        "**#8:** \"Unknown user said this\" - <@!1034> (24/12/1998)",
-        8
+        '**#8:** "Unknown user said this" - <@!1034> (24/12/1998)',
+        8,
     ),
-    "IRC user/string quote":(
+    "IRC user/string quote": (
         "Barfoo",
         "Foobar",
         "Foobar said this",
-        datetime(1998,12,24),
+        datetime(1998, 12, 24),
         "#9",
-        "**#9:** \"Foobar said this\" - Foobar (24/12/1998)",
-        9
+        '**#9:** "Foobar said this" - Foobar (24/12/1998)',
+        9,
     ),
-    "Add quote from opted out user":(
+    "Add quote from opted out user": (
         "ircguy",
         "<@!3000>",
         "This is the one thing we didn't want to happen.",
-        datetime(1984,1,1),
+        datetime(1984, 1, 1),
         "#10",
         None,
-        9
-    )
+        9,
+    ),
 }
 
 DELETE_QUOTES = {
@@ -174,50 +170,50 @@ DELETE_QUOTES = {
         "<@!1000>",
         "#7",
         "Deleted quote with ID #7.",
-        8
+        8,
     ),
     "Discord user deleting someone else's quote": (
         False,
         "<@!1000>",
         "#8",
         "You do not have permission to delete that quote.",
-        8
+        8,
     ),
     "Exec user deleting other quote": (
         True,
         "<@!3001>",
         "#8",
         "Deleted quote with ID #8.",
-        7
+        7,
     ),
     "IRC/String user deleting their quote": (
         False,
         "Foobar",
         "#9",
         "Deleted quote with ID #9.",
-        6
+        6,
     ),
     "Discord user deleting IRC user quote": (
         False,
         "<@!1000>",
         "#2",
         "You do not have permission to delete that quote.",
-        6
+        6,
     ),
     "IRC user deleting Discord user quote": (
         False,
         "ircguy",
         "#1",
         "You do not have permission to delete that quote.",
-        6
+        6,
     ),
     "Delete non-existing quote": (
         False,
         "<@!1000>",
         "#100",
         "No quote with that ID was found.",
-        6
-    )
+        6,
+    ),
 }
 
 UPDATE_QUOTES = {
@@ -227,7 +223,7 @@ UPDATE_QUOTES = {
         "#1",
         "updated quote",
         "Updated quote with ID #1.",
-        "**#1:** \"updated quote\" - <@1000> (11/10/2018)"
+        '**#1:** "updated quote" - <@1000> (11/10/2018)',
     ),
     "Discord user updating someone else's quote": (
         False,
@@ -235,7 +231,7 @@ UPDATE_QUOTES = {
         "#3",
         "updated quote",
         "You do not have permission to update that quote.",
-        "**#3:** \"talking to someone else!\" - <@1337> (13/10/2018)"
+        '**#3:** "talking to someone else!" - <@1337> (13/10/2018)',
     ),
     "Exec updating someone else's quote": (
         True,
@@ -243,7 +239,7 @@ UPDATE_QUOTES = {
         "#3",
         "Exec updated this quote",
         "Updated quote with ID #3.",
-        "**#3:** \"Exec updated this quote\" - <@1337> (13/10/2018)"
+        '**#3:** "Exec updated this quote" - <@1337> (13/10/2018)',
     ),
     "IRC user updating their quote": (
         False,
@@ -251,7 +247,7 @@ UPDATE_QUOTES = {
         "#2",
         "Updated from IRC",
         "Updated quote with ID #2.",
-        "**#2:** \"Updated from IRC\" - ircguy (12/10/2018)"
+        '**#2:** "Updated from IRC" - ircguy (12/10/2018)',
     ),
     "IRC user updating someone else's quote": (
         False,
@@ -259,7 +255,7 @@ UPDATE_QUOTES = {
         "#6",
         "Updated from IRC",
         "You do not have permission to update that quote.",
-        "**#6:** \"something about FOSS idk\" - ircguy2 (16/10/2018)"
+        '**#6:** "something about FOSS idk" - ircguy2 (16/10/2018)',
     ),
     "Updating non-existing quote": (
         False,
@@ -267,8 +263,8 @@ UPDATE_QUOTES = {
         "#100",
         "updating a non-quote",
         "No quote with that ID was found.",
-        None
-    )
+        None,
+    ),
 }
 
 PURGE_QUOTES = {
@@ -277,36 +273,36 @@ PURGE_QUOTES = {
         "<@1000>",
         "<@1000>",
         "Purged 2 quotes from author.",
-        4
+        4,
     ),
     "Discord user purging other user": (
         False,
         "<@1000>",
         "<@1337>",
         "You do not have permission to purge this author.",
-        4
+        4,
     ),
     "Exec purging other user": (
         True,
         "<@3001>",
         "<@1337>",
         "Purged 1 quotes from author.",
-        3
+        3,
     ),
     "IRC user self-purge": (
         False,
         "ircguy",
         "ircguy",
         "Purged 2 quotes from author.",
-        1
+        1,
     ),
     "Purging author with no quotes": (
         False,
         "<@1000>",
         "<@1000>",
         "Author has no quotes to purge.",
-        1
-    )
+        1,
+    ),
 }
 
 OPTOUTS = {
@@ -317,7 +313,7 @@ OPTOUTS = {
         "User has been opted out of quotes. They may opt in again later with the optin command.",
         "User has opted out of being quoted.",
         2,
-        1
+        1,
     ),
     "Discord user opting out other user": (
         False,
@@ -326,7 +322,7 @@ OPTOUTS = {
         "You do not have permission to opt-out that user.",
         "Thanks <@1000>, I have saved this quote with the ID #7.",
         2,
-        2
+        2,
     ),
     "Exec opting out other user": (
         True,
@@ -335,8 +331,8 @@ OPTOUTS = {
         "User has been opted out of quotes. They may opt in again later with the optin command.",
         "User has opted out of being quoted.",
         3,
-        2
-    )
+        2,
+    ),
 }
 
 OPTINS = {
@@ -344,111 +340,124 @@ OPTINS = {
         "<@1000>",
         "Thanks <@1000>, I have saved this quote with the ID #8.",
         2,
-        3
+        3,
     ),
     "Discord user opting in but has already opted in": (
         "<@1000>",
         "Thanks <@1000>, I have saved this quote with the ID #9.",
         2,
-        4
+        4,
     ),
     "IRC user opting in": (
         "ircguy",
         "Thanks ircguy, I have saved this quote with the ID #10.",
         1,
-        5
-    )
+        5,
+    ),
 }
 
+
 @pytest.mark.parametrize(
-    ["query","expected"],
-    QUERY_QUOTES.values(),
-    ids=QUERY_QUOTES.keys()
+    ["query", "expected"], QUERY_QUOTES.values(), ids=QUERY_QUOTES.keys()
 )
-def test_query_quotes(database, query,expected):
+def test_query_quotes(database, query, expected):
     actual = quotes_query(query, database).all()
     assert actual == expected
 
+
 @pytest.mark.parametrize(
-    ["requester","mention","quote","time","new_id","expected","db_size"],
+    ["requester", "mention", "quote", "time", "new_id", "expected", "db_size"],
     ADD_QUOTES.values(),
-    ids=ADD_QUOTES.keys()
+    ids=ADD_QUOTES.keys(),
 )
-def test_add_quotes(database,requester,mention,quote,time,new_id,expected,db_size):
-    m = parse_mention(mention,database)
-    add_quote(requester,m,quote,time,database)
-    q = quotes_query(new_id,database).one_or_none()
+def test_add_quotes(
+    database, requester, mention, quote, time, new_id, expected, db_size
+):
+    m = parse_mention(mention, database)
+    add_quote(requester, m, quote, time, database)
+    q = quotes_query(new_id, database).one_or_none()
 
     assert quote_str(q) == expected
     assert database.query(Quote).count() == db_size
 
+
 @pytest.mark.parametrize(
-    ["is_exec","user","to_delete","expected","db_size"],
+    ["is_exec", "user", "to_delete", "expected", "db_size"],
     DELETE_QUOTES.values(),
-    ids=DELETE_QUOTES.keys()
+    ids=DELETE_QUOTES.keys(),
 )
-def test_delete_quotes(database,is_exec,user,to_delete,expected,db_size):
-    m = parse_mention(user,database)
-    actual = delete_quote(is_exec, m, to_delete,database)
-    
+def test_delete_quotes(database, is_exec, user, to_delete, expected, db_size):
+    m = parse_mention(user, database)
+    actual = delete_quote(is_exec, m, to_delete, database)
+
     assert actual == expected
     assert database.query(Quote).count() == db_size
 
+
 @pytest.mark.parametrize(
-    ["is_exec","user","to_update","new_text","expected","expected_quote"],
+    ["is_exec", "user", "to_update", "new_text", "expected", "expected_quote"],
     UPDATE_QUOTES.values(),
-    ids=UPDATE_QUOTES.keys()
+    ids=UPDATE_QUOTES.keys(),
 )
-def test_update_quotes(database,is_exec,user,to_update,new_text,expected,expected_quote):
-    m = parse_mention(user,database)
+def test_update_quotes(
+    database, is_exec, user, to_update, new_text, expected, expected_quote
+):
+    m = parse_mention(user, database)
     actual = update_quote(is_exec, m, to_update, new_text, database)
     actual_quote = quote_str(quotes_query(to_update, database).one_or_none())
 
     assert actual == expected
     assert actual_quote == expected_quote
 
+
 @pytest.mark.parametrize(
-    ["is_exec","user","target","expected","db_size"],
+    ["is_exec", "user", "target", "expected", "db_size"],
     PURGE_QUOTES.values(),
-    ids=PURGE_QUOTES.keys()
+    ids=PURGE_QUOTES.keys(),
 )
-def test_purge_quotes(database,is_exec,user,target,expected,db_size):
-    u = parse_mention(user,database)
-    t = parse_mention(target,database)
-    actual = purge_quotes(is_exec,u,t,database)
+def test_purge_quotes(database, is_exec, user, target, expected, db_size):
+    u = parse_mention(user, database)
+    t = parse_mention(target, database)
+    actual = purge_quotes(is_exec, u, t, database)
 
     assert actual == expected
     assert database.query(Quote).count() == db_size
 
+
 @pytest.mark.parametrize(
-    ["is_exec", "requester", "target", "expected", "try_quote", "oo_size","q_size"],
+    ["is_exec", "requester", "target", "expected", "try_quote", "oo_size", "q_size"],
     OPTOUTS.values(),
-    ids=OPTOUTS.keys()
+    ids=OPTOUTS.keys(),
 )
-def test_optout(database,is_exec,requester,target,expected,try_quote,oo_size,q_size):
+def test_optout(
+    database, is_exec, requester, target, expected, try_quote, oo_size, q_size
+):
     if target is None:
         target = requester
-    
-    r = parse_mention(requester,database)
-    t = parse_mention(target,database)
-    actual = opt_out_of_quotes(is_exec,r,t,database)
-    actual_from_quote = add_quote(requester,t,"quote thingy",datetime.now(),database)
+
+    r = parse_mention(requester, database)
+    t = parse_mention(target, database)
+    actual = opt_out_of_quotes(is_exec, r, t, database)
+    actual_from_quote = add_quote(
+        requester, t, "quote thingy", datetime.now(), database
+    )
 
     assert actual == expected
     assert database.query(QuoteOptouts).count() == oo_size
     assert actual_from_quote == try_quote
     assert database.query(Quote).count() == q_size
 
-@pytest.mark.parametrize(
-    ["requester", "try_quote", "oo_size","q_size"],
-    OPTINS.values(),
-    ids=OPTINS.keys()
-)
-def test_optin(database,requester,try_quote,oo_size,q_size):
-    r = parse_mention(requester,database)
 
-    opt_in_to_quotes(r,database)
-    actual_from_quote = add_quote(requester, r, "quote thingy", datetime.now(),database)
+@pytest.mark.parametrize(
+    ["requester", "try_quote", "oo_size", "q_size"], OPTINS.values(), ids=OPTINS.keys()
+)
+def test_optin(database, requester, try_quote, oo_size, q_size):
+    r = parse_mention(requester, database)
+
+    opt_in_to_quotes(r, database)
+    actual_from_quote = add_quote(
+        requester, r, "quote thingy", datetime.now(), database
+    )
 
     assert database.query(QuoteOptouts).count() == oo_size
     assert actual_from_quote == try_quote

@@ -30,6 +30,7 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 def is_id(string) -> bool:
     return re.match("^#\d+$", string)
 
+
 def user_opted_out(user: Mention, db_session=db_session):
     # check if mentioned user has opted out
     if user.is_id_type():
@@ -47,30 +48,33 @@ def user_opted_out(user: Mention, db_session=db_session):
 
     return q != 0
 
+
 def ctx_to_mention(ctx):
     if user_is_irc_bot(ctx):
-        return Mention(MentionType.STRING,None,get_name_string(ctx))
+        return Mention(MentionType.STRING, None, get_name_string(ctx))
     else:
-        return Mention(MentionType.ID,get_database_user(ctx.author).id,None)
+        return Mention(MentionType.ID, get_database_user(ctx.author).id, None)
 
 
 # check if user has permissions for this quote
-def has_quote_perms(is_exec, requester: Mention, quote:Quote):
+def has_quote_perms(is_exec, requester: Mention, quote: Quote):
     if is_exec:
         return True
 
     if quote.author_type == "id":
         return requester.id == quote.author_id
-    
+
     return requester.string == quote.author_string
 
-def quote_str(q:Quote) -> str:
+
+def quote_str(q: Quote) -> str:
     if q is None:
         return None
-    date = q.created_at.strftime("%d/%m/%Y") 
+    date = q.created_at.strftime("%d/%m/%Y")
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
-def quotes_query(query, db_session = db_session):
+
+def quotes_query(query, db_session=db_session):
     res = parse_mention(query, db_session)
 
     # by discord user
@@ -88,11 +92,12 @@ def quotes_query(query, db_session = db_session):
     # by topic
     return db_session.query(Quote).filter(Quote.quote.contains(query))
 
-def add_quote(requester, author: Mention, quote, time, db_session = db_session) -> Quote:
+
+def add_quote(requester, author: Mention, quote, time, db_session=db_session) -> Quote:
     if quote is None:
         return "Invalid format."
 
-    if user_opted_out(author,db_session):
+    if user_opted_out(author, db_session):
         return "User has opted out of being quoted."
 
     new_quote = Quote(
@@ -114,11 +119,12 @@ def add_quote(requester, author: Mention, quote, time, db_session = db_session) 
         logging.exception(e)
         return "Something went wrong"
 
-def delete_quote(is_exec, requester: Mention, argument, db_session = db_session) -> str:
+
+def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -> str:
     if argument is None or not is_id(argument):
         return "Invalid quote ID."
 
-    quote = quotes_query(argument,db_session)
+    quote = quotes_query(argument, db_session)
 
     if quote.one_or_none() is None:
         return "No quote with that ID was found."
@@ -136,10 +142,13 @@ def delete_quote(is_exec, requester: Mention, argument, db_session = db_session)
     else:
         return "You do not have permission to delete that quote."
 
-def update_quote(is_exec, requester: Mention, quote_id, new_text, db_session = db_session) -> str:
+
+def update_quote(
+    is_exec, requester: Mention, quote_id, new_text, db_session=db_session
+) -> str:
     if not is_id(quote_id):
         return "Invalid quote ID."
-    
+
     if new_text is None:
         return "Invalid format."
 
@@ -147,7 +156,7 @@ def update_quote(is_exec, requester: Mention, quote_id, new_text, db_session = d
 
     if quote.one_or_none() is None:
         return "No quote with that ID was found."
-    
+
     if has_quote_perms(is_exec, requester, quote.one_or_none()):
         # update quote
         try:
@@ -167,7 +176,10 @@ def update_quote(is_exec, requester: Mention, quote_id, new_text, db_session = d
     else:
         return "You do not have permission to update that quote."
 
-def purge_quotes(is_exec, requester: Mention, target: Mention, db_session = db_session) -> str:
+
+def purge_quotes(
+    is_exec, requester: Mention, target: Mention, db_session=db_session
+) -> str:
     # get quotes
     if target.is_id_type():
         f = db_session.query(Quote).filter(Quote.author_id == target.id)
@@ -192,20 +204,23 @@ def purge_quotes(is_exec, requester: Mention, target: Mention, db_session = db_s
         logging.exception(e)
         return f"Something went wrong"
 
-def opt_out_of_quotes(is_exec, requester: Mention, target: Mention=None, db_session = db_session) -> str:
-    #if no target, target ourself
+
+def opt_out_of_quotes(
+    is_exec, requester: Mention, target: Mention = None, db_session=db_session
+) -> str:
+    # if no target, target ourself
     if target is None:
         target = requester
-    
-    #check if requester has permission
+
+    # check if requester has permission
     permission = True
 
     if not requester.is_id_type():
-        #IRC user permission check
+        # IRC user permission check
         if requester.string != target.string and not is_exec:
             permission = False
     else:
-        #discord user check (with exec override)
+        # discord user check (with exec override)
         print(requester.id != target.id)
         print(is_exec)
         if requester.id != target.id and not is_exec:
@@ -214,7 +229,7 @@ def opt_out_of_quotes(is_exec, requester: Mention, target: Mention=None, db_sess
     if not permission:
         return "You do not have permission to opt-out that user."
 
-    #check if user has opted out
+    # check if user has opted out
     if target.is_id_type():
         q = (
             db_session.query(QuoteOptouts)
@@ -230,7 +245,7 @@ def opt_out_of_quotes(is_exec, requester: Mention, target: Mention=None, db_sess
     if q != 0:
         return "User has already opted out."
 
-    #opt out user
+    # opt out user
     optout = QuoteOptouts(
         user_type=target.type_str(), user_id=target.id, user_string=target.string
     )
@@ -246,7 +261,8 @@ def opt_out_of_quotes(is_exec, requester: Mention, target: Mention=None, db_sess
         logging.exception(e)
         return "Something went wrong"
 
-def opt_in_to_quotes(requester: Mention, db_session = db_session) -> str:
+
+def opt_in_to_quotes(requester: Mention, db_session=db_session) -> str:
     # check to see if target is opted out already
     if requester.is_id_type():
         q = db_session.query(QuoteOptouts).filter(QuoteOptouts.user_id == requester.id)
@@ -257,8 +273,8 @@ def opt_in_to_quotes(requester: Mention, db_session = db_session) -> str:
 
     if q.one_or_none() is None:
         return "User is already opted in."
-    
-    #opt in
+
+    # opt in
     try:
         q.delete()
         db_session.commit()
@@ -267,7 +283,6 @@ def opt_in_to_quotes(requester: Mention, db_session = db_session) -> str:
         db_session.rollback()
         logging.exception(e)
         return "Something went wrong"
-
 
 
 class QueryConverter(Converter):
@@ -298,13 +313,11 @@ class Quotes(commands.Cog):
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
     @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
-    async def add(
-        self, ctx: Context, author: MentionConverter, quote=None
-    ):
-        requester  = get_name_string(ctx)
+    async def add(self, ctx: Context, author: MentionConverter, quote=None):
+        requester = get_name_string(ctx)
         now = datetime.now()
-        
-        result = add_quote(requester,author,quote,now)
+
+        result = add_quote(requester, author, quote, now)
 
         ctx.send(result)
 
@@ -313,7 +326,7 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
-        result = delete_quote(is_exec,requester,argument)
+        result = delete_quote(is_exec, requester, argument)
         await ctx.send(result)
 
     @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
@@ -347,12 +360,10 @@ class Quotes(commands.Cog):
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         requester = ctx_to_mention(ctx)
-        
+
         result = opt_out_of_quotes(is_exec, requester, target)
 
         await ctx.send(result)
-
-
 
     @quote.command(
         help="Opt in to being quoted if you have previously opted out, format !quote optin."
