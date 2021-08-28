@@ -17,58 +17,16 @@ from cogs.commands.quotes import (
     quotes_query,
     update_quote,
 )
-from models import Base, Quote, QuoteOptouts, User
+from models import Base, Quote, QuoteOptouts, User, MakeQuote
 from utils.mentions import MentionType, parse_mention
 
 TEST_QUOTES = [
-    Quote(
-        author_type=MentionType.ID,
-        author_id=1,
-        author_string=None,
-        quote="talking to myself!",
-        created_at=datetime(2018, 10, 11),
-        edited_at=None,
-    ),
-    Quote(
-        author_type=MentionType.STRING,
-        author_id=None,
-        author_string="ircguy",
-        quote="talking to myself! on irc!",
-        created_at=datetime(2018, 10, 12),
-        edited_at=None,
-    ),
-    Quote(
-        author_type=MentionType.ID,
-        author_id=2,
-        author_string=None,
-        quote="talking to someone else!",
-        created_at=datetime(2018, 10, 13),
-        edited_at=None,
-    ),
-    Quote(
-        author_type=MentionType.STRING,
-        author_id=None,
-        author_string="ircguy",
-        quote="talking to someone else! on irc!",
-        created_at=datetime(2018, 10, 14),
-        edited_at=None,
-    ),
-    Quote(
-        author_type=MentionType.ID,
-        author_id=1,
-        author_string=None,
-        quote="talking about someone else! from irc!",
-        created_at=datetime(2018, 10, 15),
-        edited_at=None,
-    ),
-    Quote(
-        author_type=MentionType.STRING,
-        author_id=None,
-        author_string="ircguy2",
-        quote="something about FOSS idk",
-        created_at=datetime(2018, 10, 16),
-        edited_at=None,
-    ),
+    MakeQuote.id_quote(1,"talking to myself!", datetime(2018,10,11)),
+    MakeQuote.string_quote("ircguy","talking to myself! on irc!",datetime(2018, 10, 12)),
+    MakeQuote.id_quote(2,"talking to someone else!",datetime(2018,10,13)),
+    MakeQuote.string_quote("ircguy","talking to someone else! on irc!",datetime(2018,10,14)),
+    MakeQuote.id_quote(1,"taking about someone else! from irc!",datetime(2018,10,15)),
+    MakeQuote.string_quote("ircguy2","something about FOSS idk",datetime(2018,10,16))
 ]
 
 

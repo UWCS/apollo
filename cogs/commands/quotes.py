@@ -10,7 +10,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
-from models import Quote, QuoteOptouts, db_session
+from models import db_session
+from models.quote import *
 from utils import (
     get_database_user,
     get_name_string,
@@ -94,14 +95,10 @@ def add_quote(requester, author: Mention, quote, time, db_session=db_session) ->
     if user_opted_out(author, db_session):
         return "User has opted out of being quoted."
 
-    new_quote = Quote(
-        author_type=author.type,
-        author_id=author.id,
-        author_string=author.string,
-        quote=quote,
-        created_at=time,
-        edited_at=None,
-    )
+    if author.is_id_type():
+        new_quote = MakeQuote.id_quote(author.id,quote,time)
+    else:
+        new_quote = MakeQuote.string_quote(author.string,quote,time)
 
     try:
         db_session.add(new_quote)

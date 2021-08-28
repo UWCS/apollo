@@ -13,7 +13,7 @@ from sqlalchemy.orm import relationship
 from models.models import Base, auto_str
 from utils.mentions import MentionType
 
-__all__ = ["Quote","QuoteOptouts"]
+__all__ = ["Quote","QuoteOptouts","MakeQuote"]
 
 
 @auto_str
@@ -34,6 +34,21 @@ class Quote(Base):
             return f"<@{self.author.user_uid}>"
         return self.author_string
 
+class MakeQuote:
+    def id_quote(id,quote,created):
+        return Quote(
+            author_type=MentionType.ID,
+            author_id=id,
+            quote=quote,
+            created_at=created
+        )
+    def string_quote(string,quote,created):
+        return Quote(
+            author_type=MentionType.STRING,
+            author_string=string,
+            quote=quote,
+            created_at=created
+        )
 
 @auto_str
 class QuoteOptouts(Base):
