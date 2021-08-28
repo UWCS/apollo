@@ -1,7 +1,7 @@
 import logging
 import re
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 from typing import Optional
 
 from discord import AllowedMentions

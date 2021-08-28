@@ -1,13 +1,4 @@
-from sqlalchemy import (
-    Column,
-    DateTime,
-    Enum,
-    ForeignKey,
-    Integer,
-    String,
-    Text,
-    func,
-)
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
