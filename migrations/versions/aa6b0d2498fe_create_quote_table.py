@@ -6,10 +6,11 @@ Create Date: 2021-08-25 19:04:15.265036
 
 """
 from datetime import datetime
-from utils.mentions import MentionType
 
 import sqlalchemy as sa
 from alembic import op
+
+from utils.mentions import MentionType
 
 # revision identifiers, used by Alembic.
 revision = "aa6b0d2498fe"
@@ -17,15 +18,14 @@ down_revision = "4fd69f28b6b9"
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     op.create_table(
         "quotes",
         sa.Column(
             "quote_id", sa.Integer, primary_key=True, autoincrement=True, nullable=False
         ),
-        sa.Column(
-            "author_type", sa.Enum(MentionType), nullable=False
-        ),
+        sa.Column("author_type", sa.Enum(MentionType), nullable=False),
         sa.Column("author_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
         sa.Column("author_string", sa.String, nullable=True),
         sa.Column("quote", sa.Text, nullable=False),
@@ -35,13 +35,10 @@ def upgrade():
     op.create_table(
         "quotes_opt_out",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
-        sa.Column(
-            "user_type", sa.Enum(MentionType), nullable=False
-        ),
+        sa.Column("user_type", sa.Enum(MentionType), nullable=False),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
         sa.Column("user_string", sa.String, nullable=True),
     )
-
 
 
 def downgrade():
