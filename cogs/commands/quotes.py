@@ -305,7 +305,7 @@ class Quotes(commands.Cog):
         now = datetime.now()
 
         try:
-            result = add_quote(requester, author, quote, now)
+            result = f"Thank you {requester}, recorded quote with ID #{add_quote(requester, author, quote, now)}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: no quote to record."
@@ -323,7 +323,7 @@ class Quotes(commands.Cog):
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         try:
-            result = delete_quote(is_exec, requester, argument)
+            result = f"Deleted quote with ID {delete_quote(is_exec, requester, argument)}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: provide quote ID."
@@ -343,7 +343,7 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
         
         try:
-            result = update_quote(is_exec, requester, quote_id, argument)
+            result = f"Updated quote with ID {update_quote(is_exec, requester, quote_id, argument)}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: supply a valid ID and update text."
@@ -363,7 +363,7 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
 
         try:
-            result = purge_quotes(is_exec, requester, target)
+            result = f"Deleted {purge_quotes(is_exec, requester, target)} quotes."
         except QuoteException as e:
             if e.err == QuoteError.NOT_PERMITTED:
                 result = "You do not have permission to purge these quote."
@@ -381,7 +381,7 @@ class Quotes(commands.Cog):
         requester = ctx_to_mention(ctx)
         
         try:
-            result = opt_out_of_quotes(is_exec, requester, target)
+            result = f"Deleted {opt_out_of_quotes(is_exec, requester, target)} quotes.\nUser can opt back in with the !quote optin command."
         except QuoteException as e:
             if e.err == QuoteError.NOT_PERMITTED:
                 result = "You do not have permission to opt out this user."
@@ -398,11 +398,12 @@ class Quotes(commands.Cog):
         user = ctx_to_mention(ctx)
 
         try:
-            result = opt_in_to_quotes(user)
+            opt_in_to_quotes(user)
+            result = "User has opted in to being quoted."
         except QuoteException as e:
             if e.err == QuoteError.NO_OP:
                 resul = "User has already opted in."
-                
+
         await ctx.send(result)
 
 

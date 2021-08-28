@@ -52,7 +52,7 @@ class MakeQuote:
 
 @auto_str
 class QuoteOptouts(Base):
-    __tablename__ = "quotes-opt-out"
+    __tablename__ = "quotes_opt_out"
     id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
     user_type = Column(Enum(MentionType), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
