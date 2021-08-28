@@ -1,7 +1,7 @@
 import logging
 import re
 from datetime import datetime
-from enum import Enum
+from enum import Enum, auto, unique
 from typing import Optional
 
 from discord import AllowedMentions
@@ -26,14 +26,14 @@ Pull a random quote. Pull quotes by ID using "#ID", by author using "@username",
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
-
+@unique
 class QuoteError(Enum):
-    BAD_FORMAT = 1
-    NOT_PERMITTED = (2,)
-    NOT_FOUND = (3,)
-    OPTED_OUT = (4,)
-    DB_ERROR = (5,)
-    NO_OP = 6
+    BAD_FORMAT = auto()
+    NOT_PERMITTED = auto()
+    NOT_FOUND = auto()
+    OPTED_OUT = auto()
+    DB_ERROR = auto()
+    NO_OP = auto()
 
 
 class QuoteException(Exception):
