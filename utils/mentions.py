@@ -6,11 +6,11 @@ from discord.ext.commands import Converter
 from models import db_session
 from models.user import User
 
-__all__ = ["MentionConverter"]
+__all__ = ["MentionType","Mention","parse_mention","MentionConverter"]
 
 
 class MentionType(Enum):
-    ID = (0,)
+    ID = 0
     STRING = 1
 
 
@@ -31,6 +31,8 @@ class Mention:
 
 
 def parse_mention(string, db_session=db_session) -> Mention:
+    if string is None:
+        return None
     if re.match("^<@!?\d+>$", string):
         uid = int(re.search("\d+", string)[0])
         user = db_session.query(User).filter(User.user_uid == uid).one_or_none()

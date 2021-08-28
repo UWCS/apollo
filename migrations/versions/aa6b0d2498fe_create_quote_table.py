@@ -6,6 +6,7 @@ Create Date: 2021-08-25 19:04:15.265036
 
 """
 from datetime import datetime
+from utils.mentions import MentionType
 
 import sqlalchemy as sa
 from alembic import op
@@ -16,7 +17,6 @@ down_revision = "4fd69f28b6b9"
 branch_labels = None
 depends_on = None
 
-
 def upgrade():
     op.create_table(
         "quotes",
@@ -24,16 +24,27 @@ def upgrade():
             "quote_id", sa.Integer, primary_key=True, autoincrement=True, nullable=False
         ),
         sa.Column(
-            "author_type", sa.Enum("id", "string", name="author_type"), nullable=False
+            "author_type", sa.Enum(MentionType), nullable=False
         ),
         sa.Column("author_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
         sa.Column("author_string", sa.String, nullable=True),
-        sa.Column("quote", sa.String, nullable=False),
+        sa.Column("quote", sa.Text, nullable=False),
         sa.Column("created_at", sa.DateTime, nullable=False, default=datetime.utcnow()),
         sa.Column("edited", sa.Boolean, nullable=False),
         sa.Column("edited_at", sa.DateTime, nullable=True),
     )
+    op.create_table(
+        "quotes_opt_out",
+        sa.Column("id", sa.Integer, primary_key=True, nullable=False),
+        sa.Column(
+            "user_type", sa.Enum("id", "string", name="user_type"), nullable=False
+        ),
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
+        sa.Column("user_string", sa.String, nullable=True),
+    )
+
 
 
 def downgrade():
     op.drop_table("quotes")
+    op.drop_table("quotes_opt_out")

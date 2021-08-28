@@ -1,18 +1,16 @@
 import logging
 import re
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, Converter
-from discord.ext.commands.converter import clean_content
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
-from sqlalchemy.sql.operators import is_
 from sqlalchemy_utils import ScalarListException
 
-from models import Quote, QuoteOptouts, db_session, quote
+from models import Quote, QuoteOptouts, db_session
 from utils import (
     get_database_user,
     get_name_string,
@@ -28,25 +26,21 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
 
 def is_id(string) -> bool:
-    return re.match("^#\d+$", string)
+    if not isinstance(string, str):
+        return False
+    return re.fullmatch("#\d+", string) is not None
 
 
+"""check if mentioned user has opted out"""
 def user_opted_out(user: Mention, db_session=db_session):
-    # check if mentioned user has opted out
     if user.is_id_type():
-        q = (
-            db_session.query(QuoteOptouts)
-            .filter(QuoteOptouts.user_id == user.id)
-            .count()
-        )
+        f = QuoteOptouts.user_id == user.id
     else:
-        q = (
-            db_session.query(QuoteOptouts)
-            .filter(QuoteOptouts.user_string == user.string)
-            .count()
-        )
+        f = QuoteOptouts.user_string == user.string
+        
+    q = db_session.query(QuoteOptouts).filter(f).one_or_none()
 
-    return q != 0
+    return q is not None
 
 
 def ctx_to_mention(ctx):
@@ -56,7 +50,7 @@ def ctx_to_mention(ctx):
         return Mention(MentionType.ID, get_database_user(ctx.author).id, None)
 
 
-# check if user has permissions for this quote
+""" check if user has permissions for this quote """
 def has_quote_perms(is_exec, requester: Mention, quote: Quote):
     if is_exec:
         return True
@@ -67,7 +61,7 @@ def has_quote_perms(is_exec, requester: Mention, quote: Quote):
     return requester.string == quote.author_string
 
 
-def quote_str(q: Quote) -> str:
+def quote_str(q: Quote) -> Optional[str]:
     if q is None:
         return None
     date = q.created_at.strftime("%d/%m/%Y")
@@ -82,18 +76,18 @@ def quotes_query(query, db_session=db_session):
         return db_session.query(Quote).filter(Quote.author_id == res.id)
 
     # by id
-    if is_id(query):
-        return db_session.query(Quote).filter(Quote.quote_id == int(query[1:]))
+    if is_id(res.string):
+        return db_session.query(Quote).filter(Quote.quote_id == int(res.string[1:]))
 
     # by other author
-    if query[0] == "@" and len(query) > 1:
-        return db_session.query(Quote).filter(Quote.author_string == query[1:])
+    if res.string[0] == "@" and len(res.string) > 1:
+        return db_session.query(Quote).filter(Quote.author_string == res.string[1:])
 
     # by topic
-    return db_session.query(Quote).filter(Quote.quote.contains(query))
+    return db_session.query(Quote).filter(Quote.quote.contains(res.string))
 
 
-def add_quote(requester, author: Mention, quote, time, db_session=db_session) -> Quote:
+def add_quote(requester, author: Mention, quote, time, db_session=db_session) -> str:
     if quote is None:
         return "Invalid format."
 
@@ -124,15 +118,15 @@ def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -
     if argument is None or not is_id(argument):
         return "Invalid quote ID."
 
-    quote = quotes_query(argument, db_session)
+    quote = quotes_query(argument, db_session).one_or_none()
 
-    if quote.one_or_none() is None:
+    if quote is None:
         return "No quote with that ID was found."
 
-    if has_quote_perms(is_exec, requester, quote.first()):
+    if has_quote_perms(is_exec, requester, quote):
         # delete quote
         try:
-            quote.delete()
+            db_session.delete(quote)
             db_session.commit()
             return f"Deleted quote with ID {argument}."
         except (ScalarListException, SQLAlchemyError) as e:
@@ -152,21 +146,17 @@ def update_quote(
     if new_text is None:
         return "Invalid format."
 
-    quote = quotes_query(quote_id, db_session)
+    quote = quotes_query(quote_id, db_session).one_or_none()
 
-    if quote.one_or_none() is None:
+    if quote is None:
         return "No quote with that ID was found."
 
-    if has_quote_perms(is_exec, requester, quote.one_or_none()):
+    if has_quote_perms(is_exec, requester, quote):
         # update quote
         try:
-            quote.update(
-                {
-                    Quote.quote: new_text,
-                    Quote.edited: True,
-                    Quote.edited_at: datetime.now(),
-                }
-            )
+            quote.quote = new_text
+            quote.edited = True
+            quote.edited_at = datetime.now()
             db_session.commit()
             return f"Updated quote with ID {quote_id}."
         except (ScalarListException, SQLAlchemyError) as e:
@@ -180,9 +170,6 @@ def update_quote(
 def purge_quotes(
     is_exec, requester: Mention, target: Mention, db_session=db_session
 ) -> str:
-    if target is None:
-        return "Need an author to purge."
-
     # get quotes
     if target.is_id_type():
         f = db_session.query(Quote).filter(Quote.author_id == target.id)
@@ -190,12 +177,12 @@ def purge_quotes(
         f = db_session.query(Quote).filter(Quote.author_string == target.string)
 
     quotes = f.all()
-    to_delete = len(quotes)
+    to_delete = f.count()
 
     if to_delete == 0:
         return "Author has no quotes to purge."
 
-    if not any([has_quote_perms(is_exec, requester, q) for q in quotes]):
+    if not any(has_quote_perms(is_exec, requester, q) for q in quotes):
         return "You do not have permission to purge this author."
 
     try:
@@ -218,13 +205,12 @@ def opt_out_of_quotes(
     # check if requester has permission
     permission = True
 
-    if not requester.is_id_type():
-        # IRC user permission check
-        if requester.string != target.string and not is_exec:
-            permission = False
-    else:
+    if requester.is_id_type():
         # discord user check (with exec override)
         if requester.id != target.id and not is_exec:
+            permission = False
+    else:
+        if requester.string != target.string and not is_exec:
             permission = False
 
     if not permission:
@@ -232,18 +218,13 @@ def opt_out_of_quotes(
 
     # check if user has opted out
     if target.is_id_type():
-        q = (
-            db_session.query(QuoteOptouts)
-            .filter(QuoteOptouts.user_id == target.id)
-            .count()
-        )
+        f = QuoteOptouts.user_id == target.id
     else:
-        q = (
-            db_session.query(QuoteOptouts)
-            .filter(QuoteOptouts.user_string == target.string)
-            .count()
-        )
-    if q != 0:
+        f = QuoteOptouts.user_string == target.string
+
+    q = db_session.query(QuoteOptouts).filter(f).one_or_none()
+
+    if q is not None:
         return "User has already opted out."
 
     # opt out user
@@ -313,68 +294,53 @@ class Quotes(commands.Cog):
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
-    @quote.command(help='Add a quote, format !quote add <author> "<quote text>".')
-    async def add(self, ctx: Context, author: MentionConverter, quote=None):
+    @quote.command()
+    async def add(self, ctx: Context, author: MentionConverter, *, quote):
+        """Add a quote, format !quote add <author> <quote text>"""
         requester = get_name_string(ctx)
         now = datetime.now()
-
         result = add_quote(requester, author, quote, now)
-
         await ctx.send(result)
 
-    @quote.command(help="Delete a quote, format !quote delete #ID.")
-    async def delete(self, ctx: Context, argument=None):
+    @quote.command()
+    async def delete(self, ctx: Context, argument):
+        """Delete a quote, format !quote delete #ID."""
         requester = ctx_to_mention(ctx)
         is_exec = await is_compsoc_exec_in_guild(ctx)
-
         result = delete_quote(is_exec, requester, argument)
         await ctx.send(result)
 
-    @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
-    async def update(self, ctx: Context, quote_id, argument=None) -> Quote:
+    @quote.command()
+    async def update(self, ctx: Context, quote_id, *, argument):
+        """Update a quote, format !quote update #ID <new text>"""
         is_exec = await is_compsoc_exec_in_guild(ctx)
-
         requester = ctx_to_mention(ctx)
-
         result = update_quote(is_exec, requester, quote_id, argument)
-
         await ctx.send(result)
 
-    @quote.command(
-        help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
-    )
-    async def purge(self, ctx: Context, target: MentionConverter = None) -> List[Quote]:
-
+    @quote.command()
+    async def purge(self, ctx: Context, target: MentionConverter):
+        """Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."""
         is_exec = await is_compsoc_exec_in_guild(ctx)
-
         requester = ctx_to_mention(ctx)
-
         result = purge_quotes(is_exec, requester, target)
-
         await ctx.send(result)
 
-    @quote.command(
-        help="Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."
-    )
+    @quote.command()
     async def optout(
         self, ctx: Context, target: MentionConverter = None
-    ) -> QuoteOptouts:
+    ):
+        """Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."""
         is_exec = await is_compsoc_exec_in_guild(ctx)
-
         requester = ctx_to_mention(ctx)
-
         result = opt_out_of_quotes(is_exec, requester, target)
-
         await ctx.send(result)
 
-    @quote.command(
-        help="Opt in to being quoted if you have previously opted out, format !quote optin."
-    )
-    async def optin(self, ctx: Context) -> QuoteOptouts:
+    @quote.command()
+    async def optin(self, ctx: Context):
+        """Opt in to being quoted if you have previously opted out, format !quote optin."""
         user = ctx_to_mention(ctx)
-
         result = opt_in_to_quotes(user)
-
         await ctx.send(result)
 
 

@@ -1,6 +1,10 @@
 import os
 from datetime import datetime
 
+from discord.ext.commands.context import Context
+from discord.message import Message
+from tests.stubs import TEST_USER
+
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -17,7 +21,6 @@ from cogs.commands.quotes import (
     quotes_query,
     update_quote,
 )
-from config import CONFIG
 from models import Base, Quote, QuoteOptouts, User
 from utils.mentions import parse_mention
 
