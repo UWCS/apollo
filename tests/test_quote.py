@@ -1,28 +1,25 @@
 import os
-from re import purge
-from discord.ext.commands.context import Context
-from discord.ext.commands.bot import Bot
-import pytest
 from datetime import datetime
 
+import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
-from config import CONFIG
 from cogs.commands.quotes import (
-    opt_out_of_quotes,
-    quotes_query,
     add_quote,
-    quote_str,
     delete_quote,
-    update_quote,
-    purge_quotes,
     opt_in_to_quotes,
+    opt_out_of_quotes,
+    purge_quotes,
+    quote_str,
+    quotes_query,
+    update_quote,
 )
-from models import Base, User, Quote, QuoteOptouts
-from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
+from config import CONFIG
+from models import Base, Quote, QuoteOptouts, User
+from utils.mentions import parse_mention
 
 TEST_QUOTES = [
     Quote(

@@ -1,10 +1,10 @@
-from enum import Enum
 import re
+from enum import Enum
 
 from discord.ext.commands import Converter
 
-from models.user import User
 from models import db_session
+from models.user import User
 
 __all__ = ["MentionConverter"]
 
