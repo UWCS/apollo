@@ -11,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
-from models import Quote, QuoteOptouts, db_session
+from models import Quote, QuoteOptouts, db_session, quote
 from utils import (
     get_database_user,
     get_name_string,
@@ -64,6 +64,8 @@ def has_quote_perms(is_exec, requester: Mention, quote:Quote):
     return requester.string == quote.author_string
 
 def quote_str(q:Quote) -> str:
+    if q is None:
+        return None
     date = q.created_at.strftime("%d/%m/%Y") 
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
@@ -122,13 +124,40 @@ def delete_quote(is_exec, requester: Mention, argument, db_session = db_session)
     else:
         return "You do not have permission to delete that quote."
 
+def update_quote(is_exec, requester: Mention, quote_id, new_text, db_session = db_session) -> str:
+    if not is_id(quote_id):
+        return "Invalid quote ID."
+    
+    if new_text is None:
+        return "Invalid format."
 
+    quote = quotes_query(quote_id, db_session)
+
+    if quote.one_or_none() is None:
+        return "No quote with that ID was found."
+    
+    if has_quote_perms(is_exec, requester, quote.one_or_none()):
+        # update quote
+        try:
+            quote.update(
+                {
+                    Quote.quote: new_text,
+                    Quote.edited: True,
+                    Quote.edited_at: datetime.now(),
+                }
+            )
+            db_session.commit()
+            return f"Updated quote with ID {quote_id}."
+        except (ScalarListException, SQLAlchemyError) as e:
+            db_session.rollback()
+            logging.exception(e)
+            return f"Something went wrong"
+    else:
+        return "You do not have permission to update that quote."
 
 class QueryConverter(Converter):
     async def convert(self, ctx, argument):
         return quotes_query(argument)
-
-
 
 
 class Quotes(commands.Cog):
@@ -180,40 +209,20 @@ class Quotes(commands.Cog):
     @quote.command(help="Delete a quote, format !quote delete #ID.")
     async def delete(self, ctx: Context, argument=None):
         requester = ctx_to_mention(ctx)
-        is_exec = is_compsoc_exec_in_guild(ctx)
+        is_exec = await is_compsoc_exec_in_guild(ctx)
 
         result = delete_quote(is_exec,requester,argument)
-        ctx.send(result)
+        await ctx.send(result)
 
     @quote.command(help='Update a quote, format !quote update #ID "<new text>".')
-    async def update(self, ctx: Context, *args: clean_content) -> Quote:
-        if len(args) != 2:
-            await ctx.send("Invalid format.")
-            return
-
-        if not is_id(args[0]):
-            await ctx.send("Invalid or missing quote ID.")
-            return
-
-        quote = quotes_query(args[0])
+    async def update(self, ctx: Context, quote_id, argument=None) -> Quote:
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         requester = ctx_to_mention(ctx)
 
-        if has_quote_perms(is_exec, requester, quote.first()):
-            # update quote
-            quote.update(
-                {
-                    Quote.quote: args[1],
-                    Quote.edited: True,
-                    Quote.edited_at: datetime.now(),
-                }
-            )
-            await ctx.send(f"Updated quote with ID {args[0]}.")
-            return quote.first()
-        else:
-            ctx.send("You do not have permission to update that quote.")
-            return None
+        result = update_quote(is_exec, requester, quote_id, argument)
+
+        await ctx.send(result)
 
     @quote.command(
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
