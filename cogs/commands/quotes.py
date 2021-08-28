@@ -100,7 +100,6 @@ def add_quote(requester, author: Mention, quote, time, db_session=db_session) ->
         author_string=author.string,
         quote=quote,
         created_at=time,
-        edited=False,
         edited_at=None,
     )
 
@@ -155,7 +154,6 @@ def update_quote(
         # update quote
         try:
             quote.quote = new_text
-            quote.edited = True
             quote.edited_at = datetime.now()
             db_session.commit()
             return f"Updated quote with ID {quote_id}."

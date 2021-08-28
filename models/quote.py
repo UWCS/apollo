@@ -26,7 +26,6 @@ class Quote(Base):
     author_string = Column(String, nullable=True)
     quote = Column(Text, nullable=False)
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
-    edited = Column(Boolean, nullable=False)
     edited_at = Column(DateTime, nullable=True)
 
     author = relationship("User", uselist=False, foreign_keys=author_id)

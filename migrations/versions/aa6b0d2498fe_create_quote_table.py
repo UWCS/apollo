@@ -30,7 +30,6 @@ def upgrade():
         sa.Column("author_string", sa.String, nullable=True),
         sa.Column("quote", sa.Text, nullable=False),
         sa.Column("created_at", sa.DateTime, nullable=False, default=datetime.utcnow()),
-        sa.Column("edited", sa.Boolean, nullable=False),
         sa.Column("edited_at", sa.DateTime, nullable=True),
     )
     op.create_table(
