@@ -343,8 +343,8 @@ class Quotes(commands.Cog):
     @quote.command(
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
-    async def purge(self, ctx: Context, target: MentionConverter=None) -> List[Quote]:
-        
+    async def purge(self, ctx: Context, target: MentionConverter = None) -> List[Quote]:
+
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         requester = ctx_to_mention(ctx)
