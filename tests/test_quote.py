@@ -19,22 +19,22 @@ from cogs.commands.quotes import (
     quotes_query,
     update_quote,
 )
-from models import Base, MakeQuote, Quote, QuoteOptouts, User
-from utils.mentions import MentionType, parse_mention
+from models import Base, Quote, QuoteOptouts, User
+from utils.mentions import MentionType, MentionConverter, Mention
 
 TEST_QUOTES = [
-    MakeQuote.id_quote(1, "talking to myself!", datetime(2018, 10, 11)),
-    MakeQuote.string_quote(
+    Quote.id_quote(1, "talking to myself!", datetime(2018, 10, 11)),
+    Quote.string_quote(
         "ircguy", "talking to myself! on irc!", datetime(2018, 10, 12)
     ),
-    MakeQuote.id_quote(2, "talking to someone else!", datetime(2018, 10, 13)),
-    MakeQuote.string_quote(
+    Quote.id_quote(2, "talking to someone else!", datetime(2018, 10, 13)),
+    Quote.string_quote(
         "ircguy", "talking to someone else! on irc!", datetime(2018, 10, 14)
     ),
-    MakeQuote.id_quote(
+    Quote.id_quote(
         1, "taking about someone else! from irc!", datetime(2018, 10, 15)
     ),
-    MakeQuote.string_quote(
+    Quote.string_quote(
         "ircguy2", "something about FOSS idk", datetime(2018, 10, 16)
     ),
 ]
@@ -85,8 +85,8 @@ QUERY_QUOTES = {
 
 ADD_QUOTES = {
     "Discord user quote": (
-        "<@!1000>",
-        "<@!1000>",
+        Mention.id_mention(1),
+        Mention.id_mention(1),
         "Foo said this",
         datetime(1998, 12, 24),
         "#7",
@@ -94,7 +94,7 @@ ADD_QUOTES = {
         7,
     ),
     "Unregistered user quote": (
-        "<@!1000>",
+        Mention.id_mention(1),
         "<@!1034>",
         "Unknown user said this",
         datetime(1998, 12, 24),
@@ -127,7 +127,7 @@ ADD_FAIL = {
 DELETE_QUOTES = {
     "Discord user deleting own quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#7",
         "#7",
         8,
@@ -151,14 +151,14 @@ DELETE_QUOTES = {
 DELETE_FAIL = {
     "Discord user deleting someone else's quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#3",
         QuoteError.NOT_PERMITTED,
         6,
     ),
     "Discord user deleting IRC user quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#2",
         QuoteError.NOT_PERMITTED,
         6,
@@ -172,7 +172,7 @@ DELETE_FAIL = {
     ),
     "Delete non-existing quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#100",
         QuoteError.NOT_FOUND,
         6,
@@ -182,7 +182,7 @@ DELETE_FAIL = {
 UPDATE_QUOTES = {
     "Discord user updating their quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#1",
         "updated quote",
         "#1",
@@ -209,7 +209,7 @@ UPDATE_QUOTES = {
 UPDATE_FAIL = {
     "Discord user updating someone else's quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#3",
         "updated quote",
         QuoteError.NOT_PERMITTED,
@@ -225,7 +225,7 @@ UPDATE_FAIL = {
     ),
     "Updating non-existing quote": (
         False,
-        "<@!1000>",
+        Mention.id_mention(1),
         "#100",
         "updating a non-quote",
         QuoteError.NOT_FOUND,
@@ -345,8 +345,7 @@ def test_query_quotes(database, query, expected):
 def test_add_quotes(
     database, requester, mention, quote, time, new_id, expected, db_size
 ):
-    m = parse_mention(mention, database)
-    add_quote(requester, m, quote, time, database)
+    add_quote(requester, mention, quote, time, database)
     q = quotes_query(new_id, database).one_or_none()
     actual = quote_str(q)
 
@@ -360,9 +359,8 @@ def test_add_quotes(
     ids=ADD_FAIL.keys(),
 )
 def test_add_fails(database, requester, mention, quote, time, error, db_size):
-    m = parse_mention(mention, database)
     try:
-        add_quote(requester, m, quote, time, database)
+        add_quote(requester, mention, quote, time, database)
     except QuoteException as e:
         assert e.err == error
 
@@ -375,8 +373,7 @@ def test_add_fails(database, requester, mention, quote, time, error, db_size):
     ids=DELETE_QUOTES.keys(),
 )
 def test_delete_quotes(database, is_exec, user, to_delete, expected, db_size):
-    m = parse_mention(user, database)
-    actual = delete_quote(is_exec, m, to_delete, database)
+    actual = delete_quote(is_exec, user, to_delete, database)
 
     assert actual == expected
     assert database.query(Quote).count() == db_size
@@ -388,9 +385,8 @@ def test_delete_quotes(database, is_exec, user, to_delete, expected, db_size):
     ids=DELETE_FAIL.keys(),
 )
 def test_delete_fails(database, is_exec, user, to_delete, error, db_size):
-    m = parse_mention(user, database)
     try:
-        delete_quote(is_exec, m, to_delete, database)
+        delete_quote(is_exec, user, to_delete, database)
     except QuoteException as e:
         assert e.err == error
 
@@ -405,8 +401,7 @@ def test_delete_fails(database, is_exec, user, to_delete, error, db_size):
 def test_update_quotes(
     database, is_exec, user, to_update, new_text, expected, expected_quote
 ):
-    m = parse_mention(user, database)
-    actual = update_quote(is_exec, m, to_update, new_text, database)
+    actual = update_quote(is_exec, user, to_update, new_text, database)
     actual_quote = quote_str(quotes_query(to_update, database).one_or_none())
 
     assert actual == expected
@@ -421,10 +416,9 @@ def test_update_quotes(
 def test_update_fails(
     database, is_exec, user, to_update, new_text, error, expected_quote
 ):
-    m = parse_mention(user, database)
 
     try:
-        update_quote(is_exec, m, to_update, new_text, database)
+        update_quote(is_exec, user, to_update, new_text, database)
     except QuoteException as e:
         assert e.err == error
 
@@ -438,9 +432,7 @@ def test_update_fails(
     ids=PURGE_QUOTES.keys(),
 )
 def test_purge_quotes(database, is_exec, user, target, expected, db_size):
-    u = parse_mention(user, database)
-    t = parse_mention(target, database)
-    actual = purge_quotes(is_exec, u, t, database)
+    actual = purge_quotes(is_exec, user, target, database)
 
     assert actual == expected
     assert database.query(Quote).count() == db_size
@@ -452,11 +444,8 @@ def test_purge_quotes(database, is_exec, user, target, expected, db_size):
     ids=PURGE_FAIL.keys(),
 )
 def test_purge_fails(database, is_exec, user, target, error, db_size):
-    u = parse_mention(user, database)
-    t = parse_mention(target, database)
-
     try:
-        purge_quotes(is_exec, u, t, database)
+        purge_quotes(is_exec, user, target, database)
     except QuoteException as e:
         assert e == error
 
@@ -472,12 +461,10 @@ def test_optout(database, is_exec, requester, target, expected, oo_size, q_size)
     if target is None:
         target = requester
 
-    r = parse_mention(requester, database)
-    t = parse_mention(target, database)
-    actual = opt_out_of_quotes(is_exec, r, t, database)
+    actual = opt_out_of_quotes(is_exec, requester, target, database)
 
     try:
-        add_quote(requester, t, "quote thingy", datetime.now(), database)
+        add_quote(requester, target, "quote thingy", datetime.now(), database)
     except QuoteException as e:
         assert e.err == QuoteError.OPTED_OUT
 
@@ -495,11 +482,8 @@ def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_si
     if target is None:
         target = requester
 
-    r = parse_mention(requester, database)
-    t = parse_mention(target, database)
-
     try:
-        opt_out_of_quotes(is_exec, r, t, database)
+        opt_out_of_quotes(is_exec, requester, target, database)
     except QuoteException as e:
         assert e.err == error
 
@@ -511,11 +495,10 @@ def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_si
     ["requester", "try_quote", "oo_size", "q_size"], OPTINS.values(), ids=OPTINS.keys()
 )
 def test_optin(database, requester, try_quote, oo_size, q_size):
-    r = parse_mention(requester, database)
 
-    opt_in_to_quotes(r, database)
+    opt_in_to_quotes(requester, database)
     actual_from_quote = add_quote(
-        requester, r, "quote thingy", datetime.now(), database
+        requester, requester, "quote thingy", datetime.now(), database
     )
 
     assert database.query(QuoteOptouts).count() == oo_size
@@ -529,15 +512,14 @@ def test_optin(database, requester, try_quote, oo_size, q_size):
     ids=OPTIN_FAIL.keys(),
 )
 def test_optin_fails(database, requester, try_quote, oo_size, q_size):
-    r = parse_mention(requester, database)
 
     try:
-        opt_in_to_quotes(r, database)
+        opt_in_to_quotes(requester, database)
     except QuoteException as e:
         e.err == QuoteError.NO_OP
 
     actual_from_quote = add_quote(
-        requester, r, "quote thingy", datetime.now(), database
+        requester, requester, "quote thingy", datetime.now(), database
     )
 
     assert database.query(QuoteOptouts).count() == oo_size

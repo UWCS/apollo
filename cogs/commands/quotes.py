@@ -121,9 +121,9 @@ def add_quote(author: Mention, quote, time, db_session=db_session) -> str:
         raise QuoteException(QuoteError.OPTED_OUT)
 
     if author.is_id_type():
-        new_quote = MakeQuote.id_quote(author.id, quote, time)
+        new_quote = Quote.id_quote(author.id, quote, time)
     else:
-        new_quote = MakeQuote.string_quote(author.string, quote, time)
+        new_quote = Quote.string_quote(author.string, quote, time)
 
     try:
         db_session.add(new_quote)
