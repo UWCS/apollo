@@ -1,7 +1,8 @@
 import logging
 import re
+from enum import Enum
 from datetime import datetime
-from typing import List, Optional
+from typing import Union, Optional
 
 from discord import AllowedMentions
 from discord.ext import commands
@@ -25,6 +26,19 @@ Pull a random quote. Pull quotes by ID using "#ID", by author using "@username",
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
+class QuoteError(Enum):
+    BAD_FORMAT=1
+    NOT_PERMITTED=2,
+    NOT_FOUND=3,
+    OPTED_OUT=4,
+    DB_ERROR=5,
+    NO_OP=6
+
+class QuoteException(Exception):
+    def __init__(self,err:QuoteError,msg=None,):
+        self.message=msg,
+        self.err=err
+
 
 def is_id(string) -> bool:
     if not isinstance(string, str):
@@ -33,7 +47,7 @@ def is_id(string) -> bool:
 
 
 """check if mentioned user has opted out"""
-def user_opted_out(user: Mention, db_session=db_session):
+def user_opted_out(user: Mention, db_session=db_session) -> bool:
     if user.is_id_type():
         f = QuoteOptouts.user_id == user.id
     else:
@@ -90,10 +104,10 @@ def quotes_query(query, db_session=db_session):
 
 def add_quote(requester, author: Mention, quote, time, db_session=db_session) -> str:
     if quote is None:
-        return "Invalid format."
+        raise QuoteException(QuoteError.BAD_FORMAT)
 
     if user_opted_out(author, db_session):
-        return "User has opted out of being quoted."
+        raise QuoteException(QuoteError.OPTED_OUT)
 
     if author.is_id_type():
         new_quote = MakeQuote.id_quote(author.id,quote,time)
@@ -103,49 +117,49 @@ def add_quote(requester, author: Mention, quote, time, db_session=db_session) ->
     try:
         db_session.add(new_quote)
         db_session.commit()
-        return f"Thanks {requester}, I have saved this quote with the ID #{new_quote.quote_id}."
+        return str(new_quote.quote_id)
     except (ScalarListException, SQLAlchemyError) as e:
         db_session.rollback()
         logging.exception(e)
-        return "Something went wrong"
+        raise QuoteException(QuoteError.DB_ERROR)
 
 
 def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -> str:
     if argument is None or not is_id(argument):
-        return "Invalid quote ID."
+        raise QuoteException(QuoteError.BAD_FORMAT)
 
     quote = quotes_query(argument, db_session).one_or_none()
 
     if quote is None:
-        return "No quote with that ID was found."
+        raise QuoteException(QuoteError.NOT_FOUND)
 
     if has_quote_perms(is_exec, requester, quote):
         # delete quote
         try:
             db_session.delete(quote)
             db_session.commit()
-            return f"Deleted quote with ID {argument}."
+            return argument
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
-            return f"Something went wrong"
+            raise QuoteException(QuoteError.DB_ERROR)
     else:
-        return "You do not have permission to delete that quote."
+        raise QuoteException(QuoteError.NOT_PERMITTED)
 
 
 def update_quote(
     is_exec, requester: Mention, quote_id, new_text, db_session=db_session
 ) -> str:
     if not is_id(quote_id):
-        return "Invalid quote ID."
+        raise QuoteException(QuoteError.BAD_FORMAT)
 
     if new_text is None:
-        return "Invalid format."
+        raise QuoteException(QuoteError.BAD_FORMAT)
 
     quote = quotes_query(quote_id, db_session).one_or_none()
 
     if quote is None:
-        return "No quote with that ID was found."
+        raise QuoteException(QuoteError.NOT_FOUND)
 
     if has_quote_perms(is_exec, requester, quote):
         # update quote
@@ -153,13 +167,13 @@ def update_quote(
             quote.quote = new_text
             quote.edited_at = datetime.now()
             db_session.commit()
-            return f"Updated quote with ID {quote_id}."
+            return quote_id
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
-            return f"Something went wrong"
+            raise QuoteException(QuoteError.DB_ERROR)
     else:
-        return "You do not have permission to update that quote."
+        raise QuoteException(QuoteError.NOT_PERMITTED)
 
 
 def purge_quotes(
@@ -174,20 +188,17 @@ def purge_quotes(
     quotes = f.all()
     to_delete = f.count()
 
-    if to_delete == 0:
-        return "Author has no quotes to purge."
-
-    if not any(has_quote_perms(is_exec, requester, q) for q in quotes):
-        return "You do not have permission to purge this author."
+    if any(not has_quote_perms(is_exec, requester, q) for q in quotes):
+        raise QuoteException(QuoteError.NOT_PERMITTED)
 
     try:
         f.delete()
         db_session.commit()
-        return f"Purged {to_delete} quotes from author."
+        return str(to_delete)
     except (ScalarListException, SQLAlchemyError) as e:
         db_session.rollback()
         logging.exception(e)
-        return f"Something went wrong"
+        raise QuoteException(QuoteError.DB_ERROR)
 
 
 def opt_out_of_quotes(
@@ -209,7 +220,7 @@ def opt_out_of_quotes(
             permission = False
 
     if not permission:
-        return "You do not have permission to opt-out that user."
+        raise QuoteException(QuoteError.NOT_PERMITTED)
 
     # check if user has opted out
     if target.is_id_type():
@@ -220,7 +231,7 @@ def opt_out_of_quotes(
     q = db_session.query(QuoteOptouts).filter(f).one_or_none()
 
     if q is not None:
-        return "User has already opted out."
+        raise QuoteException(QuoteError.OPTED_OUT)
 
     # opt out user
     optout = QuoteOptouts(
@@ -232,11 +243,11 @@ def opt_out_of_quotes(
         # purge old quotes
         deleted = purge_quotes(is_exec, requester, target, db_session)
         db_session.commit()
-        return f"{deleted}\nUser has been opted out of quotes. They may opt in again later with the optin command."
+        return deleted
     except (ScalarListException, SQLAlchemyError) as e:
         db_session.rollback()
         logging.exception(e)
-        return "Something went wrong"
+        raise QuoteException(QuoteError.DB_ERROR)
 
 
 def opt_in_to_quotes(requester: Mention, db_session=db_session) -> str:
@@ -249,17 +260,17 @@ def opt_in_to_quotes(requester: Mention, db_session=db_session) -> str:
         )
 
     if q.one_or_none() is None:
-        return "User is already opted in."
+        raise QuoteException(QuoteError.NO_OP)
 
     # opt in
     try:
         q.delete()
         db_session.commit()
-        return "User has opted in to being quoted."
+        return "OK"
     except (ScalarListException, SQLAlchemyError) as e:
         db_session.rollback()
         logging.exception(e)
-        return "Something went wrong"
+        raise QuoteException(QuoteError.DB_ERROR)
 
 
 class QueryConverter(Converter):
