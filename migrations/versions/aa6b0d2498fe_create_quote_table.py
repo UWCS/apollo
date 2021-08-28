@@ -36,7 +36,7 @@ def upgrade():
         "quotes_opt_out",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
         sa.Column(
-            "user_type", sa.Enum("id", "string", name="user_type"), nullable=False
+            "user_type", sa.Enum(MentionType), nullable=False
         ),
         sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id"), nullable=True),
         sa.Column("user_string", sa.String, nullable=True),

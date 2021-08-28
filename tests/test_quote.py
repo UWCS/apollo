@@ -101,7 +101,7 @@ def database():
     db_session.add_all(TEST_QUOTES)
 
     # Add some opt-outs
-    db_session.add(QuoteOptouts(user_type="id", user_id=3, user_string=None))
+    db_session.add(QuoteOptouts(user_type=MentionType.ID, user_id=3, user_string=None))
 
     db_session.commit()
     return db_session

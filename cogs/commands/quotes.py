@@ -17,7 +17,7 @@ from utils import (
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
-from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
+from utils.mentions import *
 
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
@@ -45,9 +45,9 @@ def user_opted_out(user: Mention, db_session=db_session):
 
 def ctx_to_mention(ctx):
     if user_is_irc_bot(ctx):
-        return Mention(MentionType.STRING, None, get_name_string(ctx))
+        return MakeMention.string_mention(get_name_string(ctx))
     else:
-        return Mention(MentionType.ID, get_database_user(ctx.author).id, None)
+        return MakeMention.id_mention(get_database_user(ctx.author).id)
 
 
 """ check if user has permissions for this quote """
@@ -227,7 +227,7 @@ def opt_out_of_quotes(
 
     # opt out user
     optout = QuoteOptouts(
-        user_type=target.type_str(), user_id=target.id, user_string=target.string
+        user_type=target.type, user_id=target.id, user_string=target.string
     )
     try:
         db_session.add(optout)
