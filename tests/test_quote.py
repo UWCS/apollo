@@ -8,8 +8,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from cogs.commands.quotes import (
-    QuoteException,
     QuoteError,
+    QuoteException,
     add_quote,
     delete_quote,
     opt_in_to_quotes,
@@ -19,7 +19,7 @@ from cogs.commands.quotes import (
     quotes_query,
     update_quote,
 )
-from models import Base, Quote, QuoteOptouts, User, MakeQuote
+from models import Base, MakeQuote, Quote, QuoteOptouts, User
 from utils.mentions import MentionType, parse_mention
 
 TEST_QUOTES = [
