@@ -155,6 +155,32 @@ def update_quote(is_exec, requester: Mention, quote_id, new_text, db_session = d
     else:
         return "You do not have permission to update that quote."
 
+def purge_quotes(is_exec, requester: Mention, target: Mention, db_session = db_session) -> str:
+    # get quotes
+    if target.is_id_type():
+        f = db_session.query(Quote).filter(Quote.author_id == target.id)
+    else:
+        f = db_session.query(Quote).filter(Quote.author_string == target.string)
+
+    quotes = f.all()
+    to_delete = len(quotes)
+
+    if to_delete == 0:
+        return "Author has no quotes to purge."
+
+    if not any([has_quote_perms(is_exec, requester, q) for q in quotes]):
+        return "You do not have permission to purge this author."
+
+    try:
+        f.delete()
+        db_session.commit()
+        return f"Purged {to_delete} quotes from author."
+    except (ScalarListException, SQLAlchemyError) as e:
+        db_session.rollback()
+        logging.exception(e)
+        return f"Something went wrong"
+
+
 class QueryConverter(Converter):
     async def convert(self, ctx, argument):
         return quotes_query(argument)
@@ -228,24 +254,13 @@ class Quotes(commands.Cog):
         help="Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."
     )
     async def purge(self, ctx: Context, target: MentionConverter) -> List[Quote]:
-        # get quotes
-        if target.is_id_type():
-            f = db_session.query(Quote).filter(Quote.author_id == target.id)
-        else:
-            f = db_session.query(Quote).filter(Quote.author_string == target.string)
+        is_exec = await is_compsoc_exec_in_guild(ctx)
 
-        quotes = f.all()
-        to_delete = len(quotes)
+        requester = ctx_to_mention(ctx)
 
-        if to_delete == 0:
-            await ctx.send("Author has no quotes to purge.")
-        elif not await has_quote_perms(ctx, quotes[0]):
-            await ctx.send("You do not have permission to purge this author.")
-            return None
-        else:
-            f.delete()
-            await ctx.send(f"Purged {to_delete} quotes from author.")
-            return quotes
+        result = purge_quotes(is_exec, requester, target)
+
+        await ctx.send(result)
 
     @quote.command(
         help="Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."

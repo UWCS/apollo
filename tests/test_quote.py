@@ -1,4 +1,5 @@
 import os
+from re import purge
 from discord.ext.commands.context import Context
 from discord.ext.commands.bot import Bot
 import pytest
@@ -10,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from config import CONFIG
-from cogs.commands.quotes import quotes_query, add_quote, quote_str, delete_quote, update_quote
+from cogs.commands.quotes import quotes_query, add_quote, quote_str, delete_quote, update_quote, purge_quotes
 from models import Base, User, Quote, QuoteOptouts
 from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
 
@@ -258,6 +259,44 @@ UPDATE_QUOTES = {
     )
 }
 
+PURGE_QUOTES = {
+    "Discord user self-purge": (
+        False,
+        "<@1000>",
+        "<@1000>",
+        "Purged 2 quotes from author.",
+        4
+    ),
+    "Discord user purging other user": (
+        False,
+        "<@1000>",
+        "<@1337>",
+        "You do not have permission to purge this author.",
+        4
+    ),
+    "Exec purging other user": (
+        True,
+        "<@3001>",
+        "<@1337>",
+        "Purged 1 quotes from author.",
+        3
+    ),
+    "IRC user self-purge": (
+        False,
+        "ircguy",
+        "ircguy",
+        "Purged 2 quotes from author.",
+        1
+    ),
+    "Purging author with no quotes": (
+        False,
+        "<@1000>",
+        "<@1000>",
+        "Author has no quotes to purge.",
+        1
+    )
+}
+
 @pytest.mark.parametrize(
     ["query","expected"],
     QUERY_QUOTES.values(),
@@ -290,7 +329,7 @@ def test_delete_quotes(database,is_exec,user,to_delete,expected,db_size):
     actual = delete_quote(is_exec, m, to_delete,database)
     
     assert actual == expected
-    assert database.query(Quote).count() == db_size#
+    assert database.query(Quote).count() == db_size
 
 @pytest.mark.parametrize(
     ["is_exec","user","to_update","new_text","expected","expected_quote"],
@@ -304,3 +343,16 @@ def test_update_quotes(database,is_exec,user,to_update,new_text,expected,expecte
 
     assert actual == expected
     assert actual_quote == expected_quote
+
+@pytest.mark.parametrize(
+    ["is_exec","user","target","expected","db_size"],
+    PURGE_QUOTES.values(),
+    ids=PURGE_QUOTES.keys()
+)
+def test_purge_quotes(database,is_exec,user,target,expected,db_size):
+    u = parse_mention(user,database)
+    t = parse_mention(target,database)
+    actual = purge_quotes(is_exec,u,t,database)
+
+    assert actual == expected
+    assert database.query(Quote).count() == db_size
