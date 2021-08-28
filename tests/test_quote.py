@@ -1,10 +1,6 @@
 import os
 from datetime import datetime
 
-from discord.ext.commands.context import Context
-from discord.message import Message
-from tests.stubs import TEST_USER
-
 import pytest
 from alembic import command
 from alembic.config import Config
@@ -22,61 +18,55 @@ from cogs.commands.quotes import (
     update_quote,
 )
 from models import Base, Quote, QuoteOptouts, User
-from utils.mentions import parse_mention
+from utils.mentions import MentionType, parse_mention
 
 TEST_QUOTES = [
     Quote(
-        author_type="id",
+        author_type=MentionType.ID,
         author_id=1,
         author_string=None,
         quote="talking to myself!",
         created_at=datetime(2018, 10, 11),
-        edited=False,
         edited_at=None,
     ),
     Quote(
-        author_type="string",
+        author_type=MentionType.STRING,
         author_id=None,
         author_string="ircguy",
         quote="talking to myself! on irc!",
         created_at=datetime(2018, 10, 12),
-        edited=False,
         edited_at=None,
     ),
     Quote(
-        author_type="id",
+        author_type=MentionType.ID,
         author_id=2,
         author_string=None,
         quote="talking to someone else!",
         created_at=datetime(2018, 10, 13),
-        edited=False,
         edited_at=None,
     ),
     Quote(
-        author_type="string",
+        author_type=MentionType.STRING,
         author_id=None,
         author_string="ircguy",
         quote="talking to someone else! on irc!",
         created_at=datetime(2018, 10, 14),
-        edited=False,
         edited_at=None,
     ),
     Quote(
-        author_type="id",
+        author_type=MentionType.ID,
         author_id=1,
         author_string=None,
         quote="talking about someone else! from irc!",
         created_at=datetime(2018, 10, 15),
-        edited=False,
         edited_at=None,
     ),
     Quote(
-        author_type="string",
+        author_type=MentionType.STRING,
         author_id=None,
         author_string="ircguy2",
         quote="something about FOSS idk",
         created_at=datetime(2018, 10, 16),
-        edited=False,
         edited_at=None,
     ),
 ]

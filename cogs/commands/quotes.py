@@ -55,7 +55,7 @@ def has_quote_perms(is_exec, requester: Mention, quote: Quote):
     if is_exec:
         return True
 
-    if quote.author_type == "id":
+    if quote.author_type == MentionType.ID:
         return requester.id == quote.author_id
 
     return requester.string == quote.author_string
@@ -95,7 +95,7 @@ def add_quote(requester, author: Mention, quote, time, db_session=db_session) ->
         return "User has opted out of being quoted."
 
     new_quote = Quote(
-        author_type=author.type_str(),
+        author_type=author.type,
         author_id=author.id,
         author_string=author.string,
         quote=quote,
