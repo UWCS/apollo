@@ -51,9 +51,11 @@ jobs:
         isort --check-only --skip __tests__ .
         black --check --exclude __tests__ .
     - name: Test with pytest
+      if: ${{ success() || failure() }}
       run: |
         pytest -v
     - name: Check upgrade migrations
+      if: ${{ success() || failure() }}
       run: |
         alembic upgrade head
     - name: Check downgrade migrations
