@@ -25,12 +25,20 @@ from models import Base, Quote, QuoteOptouts, User, MakeQuote
 from utils.mentions import MentionType, parse_mention
 
 TEST_QUOTES = [
-    MakeQuote.id_quote(1,"talking to myself!", datetime(2018,10,11)),
-    MakeQuote.string_quote("ircguy","talking to myself! on irc!",datetime(2018, 10, 12)),
-    MakeQuote.id_quote(2,"talking to someone else!",datetime(2018,10,13)),
-    MakeQuote.string_quote("ircguy","talking to someone else! on irc!",datetime(2018,10,14)),
-    MakeQuote.id_quote(1,"taking about someone else! from irc!",datetime(2018,10,15)),
-    MakeQuote.string_quote("ircguy2","something about FOSS idk",datetime(2018,10,16))
+    MakeQuote.id_quote(1, "talking to myself!", datetime(2018, 10, 11)),
+    MakeQuote.string_quote(
+        "ircguy", "talking to myself! on irc!", datetime(2018, 10, 12)
+    ),
+    MakeQuote.id_quote(2, "talking to someone else!", datetime(2018, 10, 13)),
+    MakeQuote.string_quote(
+        "ircguy", "talking to someone else! on irc!", datetime(2018, 10, 14)
+    ),
+    MakeQuote.id_quote(
+        1, "taking about someone else! from irc!", datetime(2018, 10, 15)
+    ),
+    MakeQuote.string_quote(
+        "ircguy2", "something about FOSS idk", datetime(2018, 10, 16)
+    ),
 ]
 
 
@@ -104,7 +112,7 @@ ADD_QUOTES = {
         "#9",
         '**#9:** "Foobar said this" - Foobar (24/12/1998)',
         9,
-    )
+    ),
 }
 
 ADD_FAIL = {
@@ -114,7 +122,7 @@ ADD_FAIL = {
         "This is the one thing we didn't want to happen.",
         datetime(1984, 1, 1),
         QuoteError.OPTED_OUT,
-        9
+        9,
     )
 }
 
@@ -139,7 +147,7 @@ DELETE_QUOTES = {
         "#9",
         "#9",
         6,
-    )
+    ),
 }
 
 DELETE_FAIL = {
@@ -170,7 +178,7 @@ DELETE_FAIL = {
         "#100",
         QuoteError.NOT_FOUND,
         6,
-    )
+    ),
 }
 
 UPDATE_QUOTES = {
@@ -197,7 +205,7 @@ UPDATE_QUOTES = {
         "Updated from IRC",
         "#2",
         '**#2:** "Updated from IRC" - ircguy (12/10/2018)',
-    )
+    ),
 }
 
 UPDATE_FAIL = {
@@ -248,10 +256,10 @@ PURGE_QUOTES = {
         "ircguy",
         "2",
         1,
-    )
+    ),
 }
 
-PURGE_FAIL =  {
+PURGE_FAIL = {
     "Discord user purging other user": (
         False,
         "<@1000>",
@@ -265,7 +273,7 @@ PURGE_FAIL =  {
         "<@1000>",
         QuoteError.NOT_FOUND,
         1,
-    )
+    ),
 }
 
 OPTOUTS = {
@@ -322,6 +330,7 @@ OPTIN_FAIL = {
     )
 }
 
+
 @pytest.mark.parametrize(
     ["query", "expected"], QUERY_QUOTES.values(), ids=QUERY_QUOTES.keys()
 )
@@ -346,19 +355,21 @@ def test_add_quotes(
     assert actual == expected
     assert database.query(Quote).count() == db_size
 
+
 @pytest.mark.parametrize(
-    ["requester","mention","quote","time","error","db_size"],
+    ["requester", "mention", "quote", "time", "error", "db_size"],
     ADD_FAIL.values(),
-    ids=ADD_FAIL.keys()
+    ids=ADD_FAIL.keys(),
 )
-def test_add_fails(database,requester,mention,quote,time,error,db_size):
-    m = parse_mention(mention,database)
+def test_add_fails(database, requester, mention, quote, time, error, db_size):
+    m = parse_mention(mention, database)
     try:
-        add_quote(requester,m,quote,time,database)
+        add_quote(requester, m, quote, time, database)
     except QuoteException as e:
         assert e.err == error
-    
+
     assert database.query(Quote).count() == db_size
+
 
 @pytest.mark.parametrize(
     ["is_exec", "user", "to_delete", "expected", "db_size"],
@@ -367,24 +378,26 @@ def test_add_fails(database,requester,mention,quote,time,error,db_size):
 )
 def test_delete_quotes(database, is_exec, user, to_delete, expected, db_size):
     m = parse_mention(user, database)
-    actual = delete_quote(is_exec,m,to_delete,database)
+    actual = delete_quote(is_exec, m, to_delete, database)
 
     assert actual == expected
     assert database.query(Quote).count() == db_size
 
+
 @pytest.mark.parametrize(
-    ["is_exec","user","to_delete","error","db_size"],
+    ["is_exec", "user", "to_delete", "error", "db_size"],
     DELETE_FAIL.values(),
     ids=DELETE_FAIL.keys(),
 )
-def test_delete_fails(database,is_exec,user,to_delete,error,db_size):
-    m = parse_mention(user,database)
+def test_delete_fails(database, is_exec, user, to_delete, error, db_size):
+    m = parse_mention(user, database)
     try:
-        delete_quote(is_exec,m,to_delete,database)
+        delete_quote(is_exec, m, to_delete, database)
     except QuoteException as e:
         assert e.err == error
-    
+
     assert database.query(Quote).count() == db_size
+
 
 @pytest.mark.parametrize(
     ["is_exec", "user", "to_update", "new_text", "expected", "expected_quote"],
@@ -401,21 +414,25 @@ def test_update_quotes(
     assert actual == expected
     assert actual_quote == expected_quote
 
+
 @pytest.mark.parametrize(
-    ["is_exec","user","to_update","new_text","error","expected_quote"],
+    ["is_exec", "user", "to_update", "new_text", "error", "expected_quote"],
     UPDATE_FAIL.values(),
     ids=UPDATE_FAIL.keys(),
 )
-def test_update_fails(database,is_exec,user,to_update,new_text,error,expected_quote):
+def test_update_fails(
+    database, is_exec, user, to_update, new_text, error, expected_quote
+):
     m = parse_mention(user, database)
 
     try:
-        update_quote(is_exec,m,to_update,new_text,database)
+        update_quote(is_exec, m, to_update, new_text, database)
     except QuoteException as e:
         assert e.err == error
-    
+
     actual_quote = quote_str(quotes_query(to_update, database).one_or_none())
     assert actual_quote == expected_quote
+
 
 @pytest.mark.parametrize(
     ["is_exec", "user", "target", "expected", "db_size"],
@@ -430,30 +447,30 @@ def test_purge_quotes(database, is_exec, user, target, expected, db_size):
     assert actual == expected
     assert database.query(Quote).count() == db_size
 
+
 @pytest.mark.parametrize(
-    ["is_exec","user","target","error","db_size"],
+    ["is_exec", "user", "target", "error", "db_size"],
     PURGE_FAIL.values(),
-    ids=PURGE_FAIL.keys()
+    ids=PURGE_FAIL.keys(),
 )
 def test_purge_fails(database, is_exec, user, target, error, db_size):
     u = parse_mention(user, database)
     t = parse_mention(target, database)
 
     try:
-        purge_quotes(is_exec,u,t,database)
+        purge_quotes(is_exec, u, t, database)
     except QuoteException as e:
         assert e == error
 
     assert database.query(Quote).count() == db_size
+
 
 @pytest.mark.parametrize(
     ["is_exec", "requester", "target", "expected", "oo_size", "q_size"],
     OPTOUTS.values(),
     ids=OPTOUTS.keys(),
 )
-def test_optout(
-    database, is_exec, requester, target, expected, oo_size, q_size
-):
+def test_optout(database, is_exec, requester, target, expected, oo_size, q_size):
     if target is None:
         target = requester
 
@@ -462,9 +479,7 @@ def test_optout(
     actual = opt_out_of_quotes(is_exec, r, t, database)
 
     try:
-        add_quote(
-            requester, t, "quote thingy", datetime.now(), database
-        )
+        add_quote(requester, t, "quote thingy", datetime.now(), database)
     except QuoteException as e:
         assert e.err == QuoteError.OPTED_OUT
 
@@ -472,12 +487,13 @@ def test_optout(
     assert database.query(QuoteOptouts).count() == oo_size
     assert database.query(Quote).count() == q_size
 
+
 @pytest.mark.parametrize(
-    ["is_exec","requester","target","error","oo_size","q_size"],
+    ["is_exec", "requester", "target", "error", "oo_size", "q_size"],
     OPTOUT_FAIL.values(),
     ids=OPTOUT_FAIL.keys(),
 )
-def test_optout_fails(database, is_exec,requester,target,error,oo_size,q_size):
+def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_size):
     if target is None:
         target = requester
 
@@ -485,12 +501,13 @@ def test_optout_fails(database, is_exec,requester,target,error,oo_size,q_size):
     t = parse_mention(target, database)
 
     try:
-        opt_out_of_quotes(is_exec,r,t,database)
+        opt_out_of_quotes(is_exec, r, t, database)
     except QuoteException as e:
         assert e.err == error
 
     assert database.query(QuoteOptouts).count() == oo_size
     assert database.query(Quote).count() == q_size
+
 
 @pytest.mark.parametrize(
     ["requester", "try_quote", "oo_size", "q_size"], OPTINS.values(), ids=OPTINS.keys()
@@ -507,16 +524,17 @@ def test_optin(database, requester, try_quote, oo_size, q_size):
     assert actual_from_quote == try_quote
     assert database.query(Quote).count() == q_size
 
+
 @pytest.mark.parametrize(
-    ["requester","try_quote","oo_size","q_size"],
+    ["requester", "try_quote", "oo_size", "q_size"],
     OPTIN_FAIL.values(),
-    ids=OPTIN_FAIL.keys()
+    ids=OPTIN_FAIL.keys(),
 )
-def test_optin_fails(database,requester,try_quote,oo_size,q_size):
-    r = parse_mention(requester,database)
+def test_optin_fails(database, requester, try_quote, oo_size, q_size):
+    r = parse_mention(requester, database)
 
     try:
-        opt_in_to_quotes(r,database)
+        opt_in_to_quotes(r, database)
     except QuoteException as e:
         e.err == QuoteError.NO_OP
 

@@ -6,7 +6,7 @@ from discord.ext.commands import Converter
 from models import db_session
 from models.user import User
 
-__all__ = ["MakeMention","MentionType","Mention","parse_mention","MentionConverter"]
+__all__ = ["MakeMention", "MentionType", "Mention", "parse_mention", "MentionConverter"]
 
 
 class MentionType(Enum):
@@ -23,12 +23,14 @@ class Mention:
     def is_id_type(self):
         return self.type == MentionType.ID
 
+
 class MakeMention:
     def id_mention(id):
-        return Mention(MentionType.ID,id,None)
-    
+        return Mention(MentionType.ID, id, None)
+
     def string_mention(string):
-        return Mention(MentionType.STRING,None,string)
+        return Mention(MentionType.STRING, None, string)
+
 
 def parse_mention(string, db_session=db_session) -> Mention:
     if string is None:

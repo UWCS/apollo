@@ -27,18 +27,24 @@ Pull a random quote. Pull quotes by ID using "#ID", by author using "@username",
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
+
 class QuoteError(Enum):
-    BAD_FORMAT=1
-    NOT_PERMITTED=2,
-    NOT_FOUND=3,
-    OPTED_OUT=4,
-    DB_ERROR=5,
-    NO_OP=6
+    BAD_FORMAT = 1
+    NOT_PERMITTED = (2,)
+    NOT_FOUND = (3,)
+    OPTED_OUT = (4,)
+    DB_ERROR = (5,)
+    NO_OP = 6
+
 
 class QuoteException(Exception):
-    def __init__(self,err:QuoteError,msg=None,):
-        self.message=msg,
-        self.err=err
+    def __init__(
+        self,
+        err: QuoteError,
+        msg=None,
+    ):
+        self.message = (msg,)
+        self.err = err
 
 
 def is_id(string) -> bool:
@@ -48,12 +54,14 @@ def is_id(string) -> bool:
 
 
 """check if mentioned user has opted out"""
+
+
 def user_opted_out(user: Mention, db_session=db_session) -> bool:
     if user.is_id_type():
         f = QuoteOptouts.user_id == user.id
     else:
         f = QuoteOptouts.user_string == user.string
-        
+
     q = db_session.query(QuoteOptouts).filter(f).one_or_none()
 
     return q is not None
@@ -67,6 +75,8 @@ def ctx_to_mention(ctx):
 
 
 """ check if user has permissions for this quote """
+
+
 def has_quote_perms(is_exec, requester: Mention, quote: Quote):
     if is_exec:
         return True
@@ -111,9 +121,9 @@ def add_quote(requester, author: Mention, quote, time, db_session=db_session) ->
         raise QuoteException(QuoteError.OPTED_OUT)
 
     if author.is_id_type():
-        new_quote = MakeQuote.id_quote(author.id,quote,time)
+        new_quote = MakeQuote.id_quote(author.id, quote, time)
     else:
-        new_quote = MakeQuote.string_quote(author.string,quote,time)
+        new_quote = MakeQuote.string_quote(author.string, quote, time)
 
     try:
         db_session.add(new_quote)
@@ -323,7 +333,9 @@ class Quotes(commands.Cog):
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         try:
-            result = f"Deleted quote with ID {delete_quote(is_exec, requester, argument)}."
+            result = (
+                f"Deleted quote with ID {delete_quote(is_exec, requester, argument)}."
+            )
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: provide quote ID."
@@ -341,7 +353,7 @@ class Quotes(commands.Cog):
         """Update a quote, format !quote update #ID <new text>"""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
-        
+
         try:
             result = f"Updated quote with ID {update_quote(is_exec, requester, quote_id, argument)}."
         except QuoteException as e:
@@ -373,13 +385,11 @@ class Quotes(commands.Cog):
         await ctx.send(result)
 
     @quote.command()
-    async def optout(
-        self, ctx: Context, target: MentionConverter = None
-    ):
+    async def optout(self, ctx: Context, target: MentionConverter = None):
         """Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
-        
+
         try:
             result = f"Deleted {opt_out_of_quotes(is_exec, requester, target)} quotes.\nUser can opt back in with the !quote optin command."
         except QuoteException as e:
