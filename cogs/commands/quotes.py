@@ -8,6 +8,7 @@ from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, Converter
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.base import NOT_EXTENSION
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
@@ -150,10 +151,7 @@ def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -
 def update_quote(
     is_exec, requester: Mention, quote_id, new_text, db_session=db_session
 ) -> str:
-    if not is_id(quote_id):
-        raise QuoteException(QuoteError.BAD_FORMAT)
-
-    if new_text is None:
+    if not is_id(quote_id) or new_text is None:
         raise QuoteException(QuoteError.BAD_FORMAT)
 
     quote = quotes_query(quote_id, db_session).one_or_none()
@@ -305,7 +303,17 @@ class Quotes(commands.Cog):
         """Add a quote, format !quote add <author> <quote text>"""
         requester = get_name_string(ctx)
         now = datetime.now()
-        result = add_quote(requester, author, quote, now)
+
+        try:
+            result = add_quote(requester, author, quote, now)
+        except QuoteException as e:
+            if e.err == QuoteError.BAD_FORMAT:
+                result = "Invalid format: no quote to record."
+            elif e.err == QuoteError.OPTED_OUT:
+                result = "Invalid Author: User has opted out of being quoted."
+            elif e.err == QuoteError.DB_ERROR:
+                result = "Database error."
+
         await ctx.send(result)
 
     @quote.command()
@@ -313,7 +321,19 @@ class Quotes(commands.Cog):
         """Delete a quote, format !quote delete #ID."""
         requester = ctx_to_mention(ctx)
         is_exec = await is_compsoc_exec_in_guild(ctx)
-        result = delete_quote(is_exec, requester, argument)
+
+        try:
+            result = delete_quote(is_exec, requester, argument)
+        except QuoteException as e:
+            if e.err == QuoteError.BAD_FORMAT:
+                result = "Invalid format: provide quote ID."
+            elif e.err == QuoteError.NOT_FOUND:
+                result = "Invalid ID: no quote found with that ID."
+            elif e.err == QuoteError.NOT_PERMITTED:
+                result = "You do not have permission to delete this quote."
+            elif e.err == QuoteError.DB_ERROR:
+                result = "Database error."
+
         await ctx.send(result)
 
     @quote.command()
@@ -321,7 +341,19 @@ class Quotes(commands.Cog):
         """Update a quote, format !quote update #ID <new text>"""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
-        result = update_quote(is_exec, requester, quote_id, argument)
+        
+        try:
+            result = update_quote(is_exec, requester, quote_id, argument)
+        except QuoteException as e:
+            if e.err == QuoteError.BAD_FORMAT:
+                result = "Invalid format: supply a valid ID and update text."
+            elif e.err == QuoteError.NOT_FOUND:
+                result = "Error: no quote with that ID found."
+            elif e.err == QuoteError.NOT_PERMITTED:
+                result = "You do not have permission to update this quote."
+            elif e.err == QuoteError.DB_ERROR:
+                result = "Database error."
+
         await ctx.send(result)
 
     @quote.command()
@@ -329,7 +361,15 @@ class Quotes(commands.Cog):
         """Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
-        result = purge_quotes(is_exec, requester, target)
+
+        try:
+            result = purge_quotes(is_exec, requester, target)
+        except QuoteException as e:
+            if e.err == QuoteError.NOT_PERMITTED:
+                result = "You do not have permission to purge these quote."
+            elif e.err == QuoteError.DB_ERROR:
+                result = "Database error."
+
         await ctx.send(result)
 
     @quote.command()
@@ -339,14 +379,30 @@ class Quotes(commands.Cog):
         """Opt out of being quoted, format !quote optout. Only exec can opt out on behalf of others."""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
-        result = opt_out_of_quotes(is_exec, requester, target)
+        
+        try:
+            result = opt_out_of_quotes(is_exec, requester, target)
+        except QuoteException as e:
+            if e.err == QuoteError.NOT_PERMITTED:
+                result = "You do not have permission to opt out this user."
+            elif e.err == QuoteError.OPTED_OUT:
+                result = "User has already opted out."
+            elif e.err == QuoteError.DB_ERROR:
+                result = "Database error."
+
         await ctx.send(result)
 
     @quote.command()
     async def optin(self, ctx: Context):
         """Opt in to being quoted if you have previously opted out, format !quote optin."""
         user = ctx_to_mention(ctx)
-        result = opt_in_to_quotes(user)
+
+        try:
+            result = opt_in_to_quotes(user)
+        except QuoteException as e:
+            if e.err == QuoteError.NO_OP:
+                resul = "User has already opted in."
+                
         await ctx.send(result)
 
 
