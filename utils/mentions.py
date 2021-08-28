@@ -7,7 +7,7 @@ import utils
 from models import db_session
 from models.user import User
 
-__all__ = ["MakeMention", "MentionType", "Mention", "MentionConverter"]
+__all__ = ["MentionType", "Mention", "MentionConverter"]
 
 
 class MentionType(Enum):
@@ -24,13 +24,14 @@ class Mention:
     def is_id_type(self):
         return self.type == MentionType.ID
 
-
-class MakeMention:
+    @staticmethod
     def id_mention(id):
         return Mention(MentionType.ID, id, None)
 
+    @staticmethod
     def string_mention(string):
         return Mention(MentionType.STRING, None, string)
+
 
 class MentionConverter(Converter):
     async def convert(self,ctx, obj) -> Mention:
@@ -43,7 +44,7 @@ class MentionConverter(Converter):
             uid = utils.get_database_user_from_id(discord_user.id)
 
             if uid is not None:
-                return MakeMention.id_mention(uid.id)
+                return Mention.id_mention(uid.id)
         except:
-            return MakeMention.string_mention(obj)
-        return MakeMention.string_mention(obj)
+            return Mention.string_mention(obj)
+        return Mention.string_mention(obj)
