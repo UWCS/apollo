@@ -1,7 +1,5 @@
-from logging import error
 import os
 from datetime import datetime
-from re import purge
 
 import pytest
 from alembic import command

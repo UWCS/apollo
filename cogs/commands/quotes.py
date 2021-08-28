@@ -2,13 +2,12 @@ import logging
 import re
 from enum import Enum
 from datetime import datetime
-from typing import Union, Optional
+from typing import Optional
 
 from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, Converter
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm.base import NOT_EXTENSION
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
