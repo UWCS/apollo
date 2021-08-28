@@ -11,7 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from config import CONFIG
-from cogs.commands.quotes import quotes_query, add_quote, quote_str, delete_quote, update_quote, purge_quotes
+from cogs.commands.quotes import opt_out_of_quotes, quotes_query, add_quote, quote_str, delete_quote, update_quote, purge_quotes, opt_in_to_quotes
 from models import Base, User, Quote, QuoteOptouts
 from utils.mentions import Mention, MentionConverter, MentionType, parse_mention
 
@@ -132,6 +132,7 @@ QUERY_QUOTES = {
 ADD_QUOTES = {
     "Discord user quote": (
         "<@!1000>",
+        "<@!1000>",
         "Foo said this",
         datetime(1998,12,24),
         "#7",
@@ -139,6 +140,7 @@ ADD_QUOTES = {
         7
     ),
     "Unregistered user quote":(
+        "<@!1000>",
         "<@!1034>",
         "Unknown user said this",
         datetime(1998,12,24),
@@ -147,11 +149,21 @@ ADD_QUOTES = {
         8
     ),
     "IRC user/string quote":(
+        "Barfoo",
         "Foobar",
         "Foobar said this",
         datetime(1998,12,24),
         "#9",
         "**#9:** \"Foobar said this\" - Foobar (24/12/1998)",
+        9
+    ),
+    "Add quote from opted out user":(
+        "ircguy",
+        "<@!3000>",
+        "This is the one thing we didn't want to happen.",
+        datetime(1984,1,1),
+        "#10",
+        None,
         9
     )
 }
@@ -297,6 +309,57 @@ PURGE_QUOTES = {
     )
 }
 
+OPTOUTS = {
+    "Discord user opt-out": (
+        False,
+        "<@1000>",
+        None,
+        "User has been opted out of quotes. They may opt in again later with the optin command.",
+        "User has opted out of being quoted.",
+        2,
+        1
+    ),
+    "Discord user opting out other user": (
+        False,
+        "<@1000>",
+        "<@1337>",
+        "You do not have permission to opt-out that user.",
+        "Thanks <@1000>, I have saved this quote with the ID #7.",
+        2,
+        2
+    ),
+    "Exec opting out other user": (
+        True,
+        "<@3001>",
+        "ircguy",
+        "User has been opted out of quotes. They may opt in again later with the optin command.",
+        "User has opted out of being quoted.",
+        3,
+        2
+    )
+}
+
+OPTINS = {
+    "Discord user opting in": (
+        "<@1000>",
+        "Thanks <@1000>, I have saved this quote with the ID #8.",
+        2,
+        3
+    ),
+    "Discord user opting in but has already opted in": (
+        "<@1000>",
+        "Thanks <@1000>, I have saved this quote with the ID #9.",
+        2,
+        4
+    ),
+    "IRC user opting in": (
+        "ircguy",
+        "Thanks ircguy, I have saved this quote with the ID #10.",
+        1,
+        5
+    )
+}
+
 @pytest.mark.parametrize(
     ["query","expected"],
     QUERY_QUOTES.values(),
@@ -307,13 +370,13 @@ def test_query_quotes(database, query,expected):
     assert actual == expected
 
 @pytest.mark.parametrize(
-    ["mention","quote","time","new_id","expected","db_size"],
+    ["requester","mention","quote","time","new_id","expected","db_size"],
     ADD_QUOTES.values(),
     ids=ADD_QUOTES.keys()
 )
-def test_add_quotes(database,mention,quote,time,new_id,expected,db_size):
+def test_add_quotes(database,requester,mention,quote,time,new_id,expected,db_size):
     m = parse_mention(mention,database)
-    add_quote(m,quote,time,database)
+    add_quote(requester,m,quote,time,database)
     q = quotes_query(new_id,database).one_or_none()
 
     assert quote_str(q) == expected
@@ -356,3 +419,37 @@ def test_purge_quotes(database,is_exec,user,target,expected,db_size):
 
     assert actual == expected
     assert database.query(Quote).count() == db_size
+
+@pytest.mark.parametrize(
+    ["is_exec", "requester", "target", "expected", "try_quote", "oo_size","q_size"],
+    OPTOUTS.values(),
+    ids=OPTOUTS.keys()
+)
+def test_optout(database,is_exec,requester,target,expected,try_quote,oo_size,q_size):
+    if target is None:
+        target = requester
+    
+    r = parse_mention(requester,database)
+    t = parse_mention(target,database)
+    actual = opt_out_of_quotes(is_exec,r,t,database)
+    actual_from_quote = add_quote(requester,t,"quote thingy",datetime.now(),database)
+
+    assert actual == expected
+    assert database.query(QuoteOptouts).count() == oo_size
+    assert actual_from_quote == try_quote
+    assert database.query(Quote).count() == q_size
+
+@pytest.mark.parametrize(
+    ["requester", "try_quote", "oo_size","q_size"],
+    OPTINS.values(),
+    ids=OPTINS.keys()
+)
+def test_optin(database,requester,try_quote,oo_size,q_size):
+    r = parse_mention(requester,database)
+
+    opt_in_to_quotes(r,database)
+    actual_from_quote = add_quote(requester, r, "quote thingy", datetime.now(),database)
+
+    assert database.query(QuoteOptouts).count() == oo_size
+    assert actual_from_quote == try_quote
+    assert database.query(Quote).count() == q_size
