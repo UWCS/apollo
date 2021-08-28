@@ -93,26 +93,27 @@ def quote_str(q: Quote) -> Optional[str]:
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
 
-def quotes_query(query, db_session=db_session):
-    res = parse_mention(query, db_session)
-
+def quotes_query(query: Mention, db_session=db_session):
     # by discord user
-    if res.is_id_type():
-        return db_session.query(Quote).filter(Quote.author_id == res.id)
+    if query.is_id_type():
+        return db_session.query(Quote).filter(Quote.author_id == query.id)
 
     # by id
-    if is_id(res.string):
-        return db_session.query(Quote).filter(Quote.quote_id == int(res.string[1:]))
+    if is_id(query.string):
+        return db_session.query(Quote).filter(Quote.quote_id == int(query.string[1:]))
 
     # by other author
-    if res.string[0] == "@" and len(res.string) > 1:
-        return db_session.query(Quote).filter(Quote.author_string == res.string[1:])
+    if len(query.string) > 1 and query.string[0] == "@":
+        return db_session.query(Quote).filter(Quote.author_string == query.string[1:])
+
+    if len(query.string) > 1 and query.string[1] == "@":
+        return db_session.query(Quote).filter(Quote.author_string == query.string)
 
     # by topic
-    return db_session.query(Quote).filter(Quote.quote.contains(res.string))
+    return db_session.query(Quote).filter(Quote.quote.contains(query.string))
 
 
-def add_quote(requester, author: Mention, quote, time, db_session=db_session) -> str:
+def add_quote(author: Mention, quote, time, db_session=db_session) -> str:
     if quote is None:
         raise QuoteException(QuoteError.BAD_FORMAT)
 
@@ -134,11 +135,13 @@ def add_quote(requester, author: Mention, quote, time, db_session=db_session) ->
         raise QuoteException(QuoteError.DB_ERROR)
 
 
-def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -> str:
-    if argument is None or not is_id(argument):
+def delete_quote(
+    is_exec, requester: Mention, query, db_session=db_session
+) -> str:
+    if query is None or not is_id(query.string):
         raise QuoteException(QuoteError.BAD_FORMAT)
 
-    quote = quotes_query(argument, db_session).one_or_none()
+    quote = quotes_query(query, db_session).one_or_none()
 
     if quote is None:
         raise QuoteException(QuoteError.NOT_FOUND)
@@ -148,7 +151,7 @@ def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -
         try:
             db_session.delete(quote)
             db_session.commit()
-            return argument
+            return query.string
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
@@ -160,7 +163,7 @@ def delete_quote(is_exec, requester: Mention, argument, db_session=db_session) -
 def update_quote(
     is_exec, requester: Mention, quote_id, new_text, db_session=db_session
 ) -> str:
-    if not is_id(quote_id) or new_text is None:
+    if not is_id(quote_id.string) or new_text is None:
         raise QuoteException(QuoteError.BAD_FORMAT)
 
     quote = quotes_query(quote_id, db_session).one_or_none()
@@ -174,7 +177,7 @@ def update_quote(
             quote.quote = new_text
             quote.edited_at = datetime.now()
             db_session.commit()
-            return quote_id
+            return quote_id.string
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
@@ -186,6 +189,7 @@ def update_quote(
 def purge_quotes(
     is_exec, requester: Mention, target: Mention, db_session=db_session
 ) -> str:
+
     # get quotes
     if target.is_id_type():
         f = db_session.query(Quote).filter(Quote.author_id == target.id)
@@ -281,8 +285,9 @@ def opt_in_to_quotes(requester: Mention, db_session=db_session) -> str:
 
 
 class QueryConverter(Converter):
-    async def convert(self, ctx, argument):
-        return quotes_query(argument)
+    async def convert(self,ctx, argument):
+        query = await MentionConverter.convert(ctx,argument)
+        return quotes_query(query)
 
 
 class Quotes(commands.Cog):
@@ -292,8 +297,12 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, arg: QueryConverter = None):
-        query = arg or db_session.query(Quote)
+    async def quote(self, ctx: Context, *, arg: MentionConverter=None):
+
+        if arg is not None:
+            query = quotes_query(arg)
+        else:
+            query = db_session.query(Quote)
 
         # select a random quote if one exists
         q: Quote = query.order_by(func.random()).first()
@@ -314,7 +323,7 @@ class Quotes(commands.Cog):
         now = datetime.now()
 
         try:
-            result = f"Thank you {requester}, recorded quote with ID #{add_quote(requester, author, quote, now)}."
+            result = f"Thank you {requester}, recorded quote with ID #{add_quote(author, quote, now)}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: no quote to record."
@@ -326,15 +335,13 @@ class Quotes(commands.Cog):
         await ctx.send(result)
 
     @quote.command()
-    async def delete(self, ctx: Context, argument):
+    async def delete(self, ctx: Context, query:MentionConverter):
         """Delete a quote, format !quote delete #ID."""
         requester = ctx_to_mention(ctx)
         is_exec = await is_compsoc_exec_in_guild(ctx)
 
         try:
-            result = (
-                f"Deleted quote with ID {delete_quote(is_exec, requester, argument)}."
-            )
+            result = f"Deleted quote with ID {delete_quote(is_exec, requester, query)}."
         except QuoteException as e:
             if e.err == QuoteError.BAD_FORMAT:
                 result = "Invalid format: provide quote ID."
@@ -348,7 +355,7 @@ class Quotes(commands.Cog):
         await ctx.send(result)
 
     @quote.command()
-    async def update(self, ctx: Context, quote_id, *, argument):
+    async def update(self, ctx: Context, quote_id:MentionConverter, *, argument):
         """Update a quote, format !quote update #ID <new text>"""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)

@@ -1,12 +1,13 @@
-import re
 from enum import Enum
 
 from discord.ext.commands import Converter
+from discord.ext.commands.converter import MemberConverter
 
+import utils
 from models import db_session
 from models.user import User
 
-__all__ = ["MakeMention", "MentionType", "Mention", "parse_mention", "MentionConverter"]
+__all__ = ["MakeMention", "MentionType", "Mention", "MentionConverter"]
 
 
 class MentionType(Enum):
@@ -31,20 +32,18 @@ class MakeMention:
     def string_mention(string):
         return Mention(MentionType.STRING, None, string)
 
-
-def parse_mention(string, db_session=db_session) -> Mention:
-    if string is None:
-        return None
-    if re.match("^<@!?\d+>$", string):
-        uid = int(re.search("\d+", string)[0])
-        user = db_session.query(User).filter(User.user_uid == uid).one_or_none()
-
-        if user is not None:
-            return MakeMention.id_mention(user.id)
-
-    return MakeMention.string_mention(string)
-
-
 class MentionConverter(Converter):
-    async def convert(self, ctx, argument) -> Mention:
-        return parse_mention(argument)
+    async def convert(self,ctx, obj) -> Mention:
+        if obj is None:
+            return None
+
+        try:
+            member_converter = MemberConverter()
+            discord_user = await member_converter.convert(ctx,obj)
+            uid = utils.get_database_user_from_id(discord_user.id)
+
+            if uid is not None:
+                return MakeMention.id_mention(uid.id)
+        except:
+            return MakeMention.string_mention(obj)
+        return MakeMention.string_mention(obj)
