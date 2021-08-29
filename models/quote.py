@@ -40,6 +40,7 @@ class Quote(Base):
             created_at=created,
         )
 
+
 @auto_str
 class QuoteOptouts(Base):
     __tablename__ = "quotes_opt_out"

@@ -6,7 +6,6 @@ from discord.ext.commands.converter import MemberConverter
 
 import utils
 
-
 __all__ = ["MentionType", "Mention", "MentionConverter"]
 
 
@@ -20,13 +19,15 @@ class Mention:
         self.type: MentionType = type
         self.id: int = id
         self.string: str = string
-    
-    def __eq__(self,other_m):
-        return all([
-            self.type == other_m.type,
-            self.id == other_m.id,
-            self.string == other_m.string
-        ])
+
+    def __eq__(self, other_m):
+        return all(
+            [
+                self.type == other_m.type,
+                self.id == other_m.id,
+                self.string == other_m.string,
+            ]
+        )
 
     def is_id_type(self):
         return self.type == MentionType.ID
@@ -41,10 +42,10 @@ class Mention:
 
 
 class MentionConverter(Converter):
-    async def convert(self,ctx, string) -> Mention:
+    async def convert(self, ctx, string) -> Mention:
         try:
             member_converter = MemberConverter()
-            discord_user = await member_converter.convert(ctx,string)
+            discord_user = await member_converter.convert(ctx, string)
             uid = utils.get_database_user_from_id(discord_user.id)
 
             if uid is not None:

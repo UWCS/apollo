@@ -17,26 +17,20 @@ from cogs.commands.quotes import (
     purge_quotes,
     quote_str,
     quotes_query,
-    update_quote
+    update_quote,
 )
 from models import Base, Quote, QuoteOptouts, User
-from utils.mentions import MentionType, Mention
+from utils.mentions import Mention, MentionType
 
 TEST_QUOTES = [
     Quote.id_quote(1, "talking to myself!", datetime(2018, 10, 11)),
-    Quote.string_quote(
-        "ircguy", "talking to myself! on irc!", datetime(2018, 10, 12)
-    ),
+    Quote.string_quote("ircguy", "talking to myself! on irc!", datetime(2018, 10, 12)),
     Quote.id_quote(2, "talking to someone else!", datetime(2018, 10, 13)),
     Quote.string_quote(
         "ircguy", "talking to someone else! on irc!", datetime(2018, 10, 14)
     ),
-    Quote.id_quote(
-        1, "taking about someone else! from irc!", datetime(2018, 10, 15)
-    ),
-    Quote.string_quote(
-        "ircguy2", "something about FOSS idk", datetime(2018, 10, 16)
-    ),
+    Quote.id_quote(1, "taking about someone else! from irc!", datetime(2018, 10, 15)),
+    Quote.string_quote("ircguy2", "something about FOSS idk", datetime(2018, 10, 16)),
 ]
 
 
@@ -77,8 +71,11 @@ def database():
 
 QUERY_QUOTES = {
     "By ID": (1, [TEST_QUOTES[0]]),
-    "By Author (Discord)": (Mention.id_mention(1), [TEST_QUOTES[0],TEST_QUOTES[4]]),
-    "By Author (IRC/String)": (Mention.string_mention("ircguy"), [TEST_QUOTES[1], TEST_QUOTES[3]]),
+    "By Author (Discord)": (Mention.id_mention(1), [TEST_QUOTES[0], TEST_QUOTES[4]]),
+    "By Author (IRC/String)": (
+        Mention.string_mention("ircguy"),
+        [TEST_QUOTES[1], TEST_QUOTES[3]],
+    ),
     "By Topic": ("irc", [TEST_QUOTES[1], TEST_QUOTES[3], TEST_QUOTES[4]]),
     "No valid quotes": ("blargleargle", []),
 }
@@ -331,9 +328,7 @@ def test_query_quotes(database, query, expected):
     ADD_QUOTES.values(),
     ids=ADD_QUOTES.keys(),
 )
-def test_add_quotes(
-    database, mention, quote, time, new_id, expected, db_size
-):
+def test_add_quotes(database, mention, quote, time, new_id, expected, db_size):
     add_quote(mention, quote, time, database)
     q = quotes_query(new_id, database).one_or_none()
     actual = quote_str(q)
@@ -375,7 +370,7 @@ def test_delete_quotes(database, is_exec, user, to_delete, expected, db_size):
 def test_delete_fails(database, is_exec, user, to_delete, error, db_size):
     with pytest.raises(QuoteException) as e:
         delete_quote(is_exec, user, to_delete, database)
-    
+
     assert e.value.err == error
     assert database.query(Quote).count() == db_size
 
@@ -468,7 +463,7 @@ def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_si
 
     with pytest.raises(QuoteException) as e:
         opt_out_of_quotes(is_exec, requester, target, database)
-    
+
     assert e.value.err == error
     assert database.query(QuoteOptouts).count() == oo_size
     assert database.query(Quote).count() == q_size
@@ -480,9 +475,7 @@ def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_si
 def test_optin(database, requester, try_quote, oo_size, q_size):
 
     opt_in_to_quotes(requester, database)
-    actual_from_quote = add_quote(
-        requester, "quote thingy", datetime.now(), database
-    )
+    actual_from_quote = add_quote(requester, "quote thingy", datetime.now(), database)
 
     assert database.query(QuoteOptouts).count() == oo_size
     assert actual_from_quote == try_quote
@@ -497,11 +490,8 @@ def test_optin(database, requester, try_quote, oo_size, q_size):
 def test_optin_fails(database, requester, try_quote, oo_size, q_size):
     with pytest.raises(QuoteException) as e:
         opt_in_to_quotes(requester, database)
-    
 
-    actual_from_quote = add_quote(
-        requester, "quote thingy", datetime.now(), database
-    )
+    actual_from_quote = add_quote(requester, "quote thingy", datetime.now(), database)
 
     assert e.value.err == QuoteError.NO_OP
     assert database.query(QuoteOptouts).count() == oo_size

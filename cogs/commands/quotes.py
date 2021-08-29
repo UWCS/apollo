@@ -2,8 +2,8 @@ import logging
 import re
 from datetime import datetime
 from enum import Enum, auto, unique
-from typing import Optional, Union
 from functools import singledispatch
+from typing import Optional, Union
 
 from discord import AllowedMentions
 from discord.ext import commands
@@ -29,6 +29,7 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
 MC = MentionConverter()
 
+
 @unique
 class QuoteError(Enum):
     BAD_FORMAT = auto()
@@ -48,15 +49,18 @@ class QuoteException(Exception):
         self.message = msg
         self.err = err
 
+
 QuoteID = int
 
+
 class QuoteIDConverter(Converter):
-    async def convert(self,ctx,string):
-        if not re.fullmatch("#\d+",string):
+    async def convert(self, ctx, string):
+        if not re.fullmatch("#\d+", string):
             raise QuoteException(QuoteError.BAD_FORMAT)
-        
-        quote_id : QuoteID = int(string[1:])
+
+        quote_id: QuoteID = int(string[1:])
         return int(string[1:])
+
 
 def is_id(string) -> bool:
     if not isinstance(string, str):
@@ -85,13 +89,11 @@ def ctx_to_mention(ctx):
         return Mention.id_mention(get_database_user(ctx.author).id)
 
 
-
-
 def has_quote_perms(is_exec, requester: Mention, quote: Quote):
-    """ check if user has permissions for this quote """
+    """check if user has permissions for this quote"""
     if is_exec:
         return True
-    
+
     if quote.author_type == MentionType.ID:
         return requester.id == quote.author_id
 
@@ -102,22 +104,25 @@ def quote_str(q: Quote) -> Optional[str]:
     """Generate the quote string for posting"""
     if q is None:
         return None
-    
+
     date = q.created_at.strftime("%d/%m/%Y")
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
+
 @singledispatch
-def quotes_query(query:str, db_session=db_session):
+def quotes_query(query: str, db_session=db_session):
     """query by topic"""
     return db_session.query(Quote).filter(Quote.quote.contains(query))
 
+
 @quotes_query.register
-def _(query:QuoteID, db_session=db_session):
+def _(query: QuoteID, db_session=db_session):
     """query by ID"""
     return db_session.query(Quote).filter(Quote.quote_id == query)
 
+
 @quotes_query.register
-def _(query:Mention, db_session=db_session):
+def _(query: Mention, db_session=db_session):
     """query by Mention"""
     if query.is_id_type():
         return db_session.query(Quote).filter(Quote.author_id == query.id)
@@ -149,7 +154,7 @@ def add_quote(author: Mention, quote, time, db_session=db_session) -> str:
 
 
 def delete_quote(
-    is_exec, requester: Mention, query:QuoteID, db_session=db_session
+    is_exec, requester: Mention, query: QuoteID, db_session=db_session
 ) -> str:
 
     quote = quotes_query(query, db_session).one_or_none()
@@ -172,9 +177,9 @@ def delete_quote(
 
 
 def update_quote(
-    is_exec, requester: Mention, quote_id:QuoteID, new_text, db_session=db_session
+    is_exec, requester: Mention, quote_id: QuoteID, new_text, db_session=db_session
 ) -> str:
-        
+
     quote = quotes_query(quote_id, db_session).one_or_none()
 
     if quote is None:
@@ -293,19 +298,20 @@ def opt_in_to_quotes(requester: Mention, db_session=db_session) -> str:
 
 
 class QueryInputConverter(Converter):
-    async def convert(self,ctx,argument) -> Union[Mention,QuoteID,str]:
+    async def convert(self, ctx, argument) -> Union[Mention, QuoteID, str]:
         if is_id(argument):
             return int(argument[1:])
-        
+
         if argument[0] == "@":
             return Mention.string_mention(argument[1:])
 
-        argument = await MC.convert(ctx,argument)
+        argument = await MC.convert(ctx, argument)
 
         if argument.is_id_type():
             return argument
 
         return argument.string
+
 
 class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
@@ -314,7 +320,7 @@ class Quotes(commands.Cog):
     @commands.group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
-    async def quote(self, ctx: Context, *, query_arg:QueryInputConverter=None):
+    async def quote(self, ctx: Context, *, query_arg: QueryInputConverter = None):
         if query_arg is not None:
             query = quotes_query(query_arg)
         else:
@@ -353,7 +359,7 @@ class Quotes(commands.Cog):
         await ctx.send(result)
 
     @quote.command()
-    async def delete(self, ctx: Context, query:QuoteIDConverter):
+    async def delete(self, ctx: Context, query: QuoteIDConverter):
         """Delete a quote, format !quote delete #ID."""
         requester = ctx_to_mention(ctx)
         is_exec = await is_compsoc_exec_in_guild(ctx)
@@ -374,7 +380,7 @@ class Quotes(commands.Cog):
         await ctx.send(result)
 
     @quote.command()
-    async def update(self, ctx: Context, quote_id:QuoteIDConverter, *, argument:str):
+    async def update(self, ctx: Context, quote_id: QuoteIDConverter, *, argument: str):
         """Update a quote, format !quote update #ID <new text>"""
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
