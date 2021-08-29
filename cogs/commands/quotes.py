@@ -2,7 +2,7 @@ import logging
 import re
 from datetime import datetime
 from enum import Enum, auto, unique
-from typing import Optional, Union, NewType
+from typing import Optional, Union
 from functools import singledispatch
 
 from discord import AllowedMentions

@@ -17,8 +17,7 @@ from cogs.commands.quotes import (
     purge_quotes,
     quote_str,
     quotes_query,
-    update_quote,
-    QuoteID
+    update_quote
 )
 from models import Base, Quote, QuoteOptouts, User
 from utils.mentions import MentionType, Mention
