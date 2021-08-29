@@ -142,7 +142,6 @@ def add_quote(author: Mention, quote, time, db_session=db_session) -> str:
         new_quote = Quote.id_quote(author.id, quote, time)
     else:
         new_quote = Quote.string_quote(author.string, quote, time)
-
     try:
         db_session.add(new_quote)
         db_session.commit()
@@ -310,7 +309,7 @@ class QueryInputConverter(Converter):
         if argument.is_id_type():
             return argument
 
-        return argument.string
+        return argument
 
 
 class Quotes(commands.Cog):

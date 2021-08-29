@@ -43,12 +43,13 @@ class Mention:
 
 class MentionConverter(Converter):
     async def convert(self, ctx, string) -> Mention:
+        member_converter = MemberConverter()
         try:
-            member_converter = MemberConverter()
             discord_user = await member_converter.convert(ctx, string)
             uid = utils.get_database_user_from_id(discord_user.id)
 
             if uid is not None:
                 return Mention.id_mention(uid.id)
+            return Mention.string_mention(string)
         except:
             return Mention.string_mention(string)
