@@ -18,9 +18,10 @@ from cogs.commands.quotes import (
     quote_str,
     quotes_query,
     update_quote,
+    QuoteID
 )
 from models import Base, Quote, QuoteOptouts, User
-from utils.mentions import MentionType, MentionConverter, Mention
+from utils.mentions import MentionType, Mention
 
 TEST_QUOTES = [
     Quote.id_quote(1, "talking to myself!", datetime(2018, 10, 11)),
@@ -76,9 +77,9 @@ def database():
 
 
 QUERY_QUOTES = {
-    "By ID": ("#1", [TEST_QUOTES[0]]),
-    "By Author (Discord)": ("<@!1337>", [TEST_QUOTES[2]]),
-    "By Author (IRC/String)": ("@ircguy", [TEST_QUOTES[1], TEST_QUOTES[3]]),
+    "By ID": (1, [TEST_QUOTES[0]]),
+    "By Author (Discord)": (Mention.id_mention(1), [TEST_QUOTES[0],TEST_QUOTES[4]]),
+    "By Author (IRC/String)": (Mention.string_mention("ircguy"), [TEST_QUOTES[1], TEST_QUOTES[3]]),
     "By Topic": ("irc", [TEST_QUOTES[1], TEST_QUOTES[3], TEST_QUOTES[4]]),
     "No valid quotes": ("blargleargle", []),
 }
@@ -86,28 +87,25 @@ QUERY_QUOTES = {
 ADD_QUOTES = {
     "Discord user quote": (
         Mention.id_mention(1),
-        Mention.id_mention(1),
         "Foo said this",
         datetime(1998, 12, 24),
-        "#7",
+        7,
         '**#7:** "Foo said this" - <@1000> (24/12/1998)',
         7,
     ),
     "Unregistered user quote": (
-        Mention.id_mention(1),
-        "<@!1034>",
+        Mention.string_mention("<@!1034>"),
         "Unknown user said this",
         datetime(1998, 12, 24),
-        "#8",
+        8,
         '**#8:** "Unknown user said this" - <@!1034> (24/12/1998)',
         8,
     ),
     "IRC user/string quote": (
-        "Barfoo",
-        "Foobar",
+        Mention.string_mention("Foobar"),
         "Foobar said this",
         datetime(1998, 12, 24),
-        "#9",
+        9,
         '**#9:** "Foobar said this" - Foobar (24/12/1998)',
         9,
     ),
@@ -115,8 +113,7 @@ ADD_QUOTES = {
 
 ADD_FAIL = {
     "Add quote from opted out user": (
-        "ircguy",
-        "<@!3000>",
+        Mention.id_mention(3),
         "This is the one thing we didn't want to happen.",
         datetime(1984, 1, 1),
         QuoteError.OPTED_OUT,
@@ -128,22 +125,22 @@ DELETE_QUOTES = {
     "Discord user deleting own quote": (
         False,
         Mention.id_mention(1),
-        "#7",
-        "#7",
+        7,
+        "7",
         8,
     ),
     "Exec user deleting other quote": (
         True,
-        "<@!3001>",
-        "#8",
-        "#8",
+        Mention.string_mention("<@!3001>"),
+        8,
+        "8",
         7,
     ),
     "IRC/String user deleting their quote": (
         False,
-        "Foobar",
-        "#9",
-        "#9",
+        Mention.string_mention("Foobar"),
+        9,
+        "9",
         6,
     ),
 }
@@ -152,28 +149,28 @@ DELETE_FAIL = {
     "Discord user deleting someone else's quote": (
         False,
         Mention.id_mention(1),
-        "#3",
+        3,
         QuoteError.NOT_PERMITTED,
         6,
     ),
     "Discord user deleting IRC user quote": (
         False,
         Mention.id_mention(1),
-        "#2",
+        2,
         QuoteError.NOT_PERMITTED,
         6,
     ),
     "IRC user deleting Discord user quote": (
         False,
-        "ircguy",
-        "#1",
+        Mention.string_mention("ircguy"),
+        1,
         QuoteError.NOT_PERMITTED,
         6,
     ),
     "Delete non-existing quote": (
         False,
         Mention.id_mention(1),
-        "#100",
+        100,
         QuoteError.NOT_FOUND,
         6,
     ),
@@ -183,25 +180,25 @@ UPDATE_QUOTES = {
     "Discord user updating their quote": (
         False,
         Mention.id_mention(1),
-        "#1",
+        1,
         "updated quote",
-        "#1",
+        "1",
         '**#1:** "updated quote" - <@1000> (11/10/2018)',
     ),
     "Exec updating someone else's quote": (
         True,
-        "<@!3000>",
-        "#3",
+        Mention.string_mention("<@!3000>"),
+        3,
         "Exec updated this quote",
-        "#3",
+        "3",
         '**#3:** "Exec updated this quote" - <@1337> (13/10/2018)',
     ),
     "IRC user updating their quote": (
         False,
-        "ircguy",
-        "#2",
+        Mention.string_mention("ircguy"),
+        2,
         "Updated from IRC",
-        "#2",
+        "2",
         '**#2:** "Updated from IRC" - ircguy (12/10/2018)',
     ),
 }
@@ -210,15 +207,15 @@ UPDATE_FAIL = {
     "Discord user updating someone else's quote": (
         False,
         Mention.id_mention(1),
-        "#3",
+        3,
         "updated quote",
         QuoteError.NOT_PERMITTED,
         '**#3:** "Exec updated this quote" - <@1337> (13/10/2018)',
     ),
     "IRC user updating someone else's quote": (
         False,
-        "ircguy",
-        "#6",
+        Mention.string_mention("ircguy"),
+        6,
         "Updated from IRC",
         QuoteError.NOT_PERMITTED,
         '**#6:** "something about FOSS idk" - ircguy2 (16/10/2018)',
@@ -226,7 +223,7 @@ UPDATE_FAIL = {
     "Updating non-existing quote": (
         False,
         Mention.id_mention(1),
-        "#100",
+        100,
         "updating a non-quote",
         QuoteError.NOT_FOUND,
         None,
@@ -236,22 +233,22 @@ UPDATE_FAIL = {
 PURGE_QUOTES = {
     "Discord user self-purge": (
         False,
-        "<@1000>",
-        "<@1000>",
+        Mention.id_mention(1),
+        Mention.id_mention(1),
         "2",
         4,
     ),
     "Exec purging other user": (
         True,
-        "<@3001>",
-        "<@1337>",
+        Mention.string_mention("<@3001>"),
+        Mention.id_mention(2),
         "1",
         3,
     ),
     "IRC user self-purge": (
         False,
-        "ircguy",
-        "ircguy",
+        Mention.string_mention("ircguy"),
+        Mention.string_mention("ircguy"),
         "2",
         1,
     ),
@@ -260,24 +257,17 @@ PURGE_QUOTES = {
 PURGE_FAIL = {
     "Discord user purging other user": (
         False,
-        "<@1000>",
-        "<@1337>",
+        Mention.id_mention(1),
+        Mention.id_mention(2),
         QuoteError.NOT_PERMITTED,
         1,
-    ),
-    "Purging author with no quotes": (
-        False,
-        "<@1000>",
-        "<@1000>",
-        QuoteError.NOT_FOUND,
-        1,
-    ),
+    )
 }
 
 OPTOUTS = {
     "Discord user opt-out": (
         False,
-        "<@1000>",
+        Mention.id_mention(1),
         None,
         "0",
         2,
@@ -285,8 +275,8 @@ OPTOUTS = {
     ),
     "Exec opting out other user": (
         True,
-        "<@3001>",
-        "ircguy",
+        Mention.string_mention("<@3001>"),
+        Mention.string_mention("ircguy"),
         "0",
         3,
         1,
@@ -296,8 +286,8 @@ OPTOUTS = {
 OPTOUT_FAIL = {
     "Discord user opting out other user": (
         False,
-        "<@1000>",
-        "<@1337>",
+        Mention.id_mention(1),
+        Mention.id_mention(2),
         QuoteError.NOT_PERMITTED,
         3,
         1,
@@ -306,13 +296,13 @@ OPTOUT_FAIL = {
 
 OPTINS = {
     "Discord user opting in": (
-        "<@1000>",
+        Mention.id_mention(1),
         "7",
         2,
         2,
     ),
     "IRC user opting in": (
-        "ircguy",
+        Mention.string_mention("ircguy"),
         "8",
         1,
         3,
@@ -321,7 +311,7 @@ OPTINS = {
 
 OPTIN_FAIL = {
     "Discord user opting in but has already opted in": (
-        "<@1000>",
+        Mention.id_mention(1),
         "9",
         1,
         4,
@@ -338,14 +328,14 @@ def test_query_quotes(database, query, expected):
 
 
 @pytest.mark.parametrize(
-    ["requester", "mention", "quote", "time", "new_id", "expected", "db_size"],
+    ["mention", "quote", "time", "new_id", "expected", "db_size"],
     ADD_QUOTES.values(),
     ids=ADD_QUOTES.keys(),
 )
 def test_add_quotes(
-    database, requester, mention, quote, time, new_id, expected, db_size
+    database, mention, quote, time, new_id, expected, db_size
 ):
-    add_quote(requester, mention, quote, time, database)
+    add_quote(mention, quote, time, database)
     q = quotes_query(new_id, database).one_or_none()
     actual = quote_str(q)
 
@@ -354,16 +344,15 @@ def test_add_quotes(
 
 
 @pytest.mark.parametrize(
-    ["requester", "mention", "quote", "time", "error", "db_size"],
+    ["mention", "quote", "time", "error", "db_size"],
     ADD_FAIL.values(),
     ids=ADD_FAIL.keys(),
 )
-def test_add_fails(database, requester, mention, quote, time, error, db_size):
-    try:
-        add_quote(requester, mention, quote, time, database)
-    except QuoteException as e:
-        assert e.err == error
+def test_add_fails(database, mention, quote, time, error, db_size):
+    with pytest.raises(QuoteException) as e:
+        add_quote(mention, quote, time, database)
 
+    assert e.value.err == error
     assert database.query(Quote).count() == db_size
 
 
@@ -385,11 +374,10 @@ def test_delete_quotes(database, is_exec, user, to_delete, expected, db_size):
     ids=DELETE_FAIL.keys(),
 )
 def test_delete_fails(database, is_exec, user, to_delete, error, db_size):
-    try:
+    with pytest.raises(QuoteException) as e:
         delete_quote(is_exec, user, to_delete, database)
-    except QuoteException as e:
-        assert e.err == error
-
+    
+    assert e.value.err == error
     assert database.query(Quote).count() == db_size
 
 
@@ -416,12 +404,10 @@ def test_update_quotes(
 def test_update_fails(
     database, is_exec, user, to_update, new_text, error, expected_quote
 ):
-
-    try:
+    with pytest.raises(QuoteException) as e:
         update_quote(is_exec, user, to_update, new_text, database)
-    except QuoteException as e:
-        assert e.err == error
 
+    assert e.value.err == error
     actual_quote = quote_str(quotes_query(to_update, database).one_or_none())
     assert actual_quote == expected_quote
 
@@ -444,11 +430,10 @@ def test_purge_quotes(database, is_exec, user, target, expected, db_size):
     ids=PURGE_FAIL.keys(),
 )
 def test_purge_fails(database, is_exec, user, target, error, db_size):
-    try:
+    with pytest.raises(QuoteException) as e:
         purge_quotes(is_exec, user, target, database)
-    except QuoteException as e:
-        assert e == error
 
+    assert e.value.err == error
     assert database.query(Quote).count() == db_size
 
 
@@ -464,7 +449,7 @@ def test_optout(database, is_exec, requester, target, expected, oo_size, q_size)
     actual = opt_out_of_quotes(is_exec, requester, target, database)
 
     try:
-        add_quote(requester, target, "quote thingy", datetime.now(), database)
+        add_quote(target, "quote thingy", datetime.now(), database)
     except QuoteException as e:
         assert e.err == QuoteError.OPTED_OUT
 
@@ -482,11 +467,10 @@ def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_si
     if target is None:
         target = requester
 
-    try:
+    with pytest.raises(QuoteException) as e:
         opt_out_of_quotes(is_exec, requester, target, database)
-    except QuoteException as e:
-        assert e.err == error
-
+    
+    assert e.value.err == error
     assert database.query(QuoteOptouts).count() == oo_size
     assert database.query(Quote).count() == q_size
 
@@ -498,7 +482,7 @@ def test_optin(database, requester, try_quote, oo_size, q_size):
 
     opt_in_to_quotes(requester, database)
     actual_from_quote = add_quote(
-        requester, requester, "quote thingy", datetime.now(), database
+        requester, "quote thingy", datetime.now(), database
     )
 
     assert database.query(QuoteOptouts).count() == oo_size
@@ -512,16 +496,15 @@ def test_optin(database, requester, try_quote, oo_size, q_size):
     ids=OPTIN_FAIL.keys(),
 )
 def test_optin_fails(database, requester, try_quote, oo_size, q_size):
-
-    try:
+    with pytest.raises(QuoteException) as e:
         opt_in_to_quotes(requester, database)
-    except QuoteException as e:
-        e.err == QuoteError.NO_OP
+    
 
     actual_from_quote = add_quote(
-        requester, requester, "quote thingy", datetime.now(), database
+        requester, "quote thingy", datetime.now(), database
     )
 
+    assert e.value.err == QuoteError.NO_OP
     assert database.query(QuoteOptouts).count() == oo_size
     assert actual_from_quote == try_quote
     assert database.query(Quote).count() == q_size

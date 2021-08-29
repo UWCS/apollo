@@ -20,6 +20,13 @@ class Mention:
         self.type: MentionType = type
         self.id: int = id
         self.string: str = string
+    
+    def __eq__(self,other_m):
+        return all([
+            self.type == other_m.type,
+            self.id == other_m.id,
+            self.string == other_m.string
+        ])
 
     def is_id_type(self):
         return self.type == MentionType.ID

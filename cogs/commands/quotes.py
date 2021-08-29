@@ -100,6 +100,9 @@ def has_quote_perms(is_exec, requester: Mention, quote: Quote):
 
 def quote_str(q: Quote) -> Optional[str]:
     """Generate the quote string for posting"""
+    if q is None:
+        return None
+    
     date = q.created_at.strftime("%d/%m/%Y")
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
 
@@ -183,7 +186,7 @@ def update_quote(
             quote.quote = new_text
             quote.edited_at = datetime.now()
             db_session.commit()
-            return quote_id
+            return str(quote_id)
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
@@ -195,6 +198,8 @@ def update_quote(
 def purge_quotes(
     is_exec, requester: Mention, target: Mention, db_session=db_session
 ) -> str:
+    if not is_exec and requester != target:
+        raise QuoteException(QuoteError.NOT_PERMITTED)
 
     # get quotes
     if target.is_id_type():
@@ -204,9 +209,6 @@ def purge_quotes(
 
     quotes = f.all()
     to_delete = f.count()
-
-    if any(not has_quote_perms(is_exec, requester, q) for q in quotes):
-        raise QuoteException(QuoteError.NOT_PERMITTED)
 
     try:
         f.delete()
