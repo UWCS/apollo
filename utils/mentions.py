@@ -1,11 +1,11 @@
 from enum import Enum
+from typing import Union
 
 from discord.ext.commands import Converter
 from discord.ext.commands.converter import MemberConverter
 
 import utils
-from models import db_session
-from models.user import User
+
 
 __all__ = ["MentionType", "Mention", "MentionConverter"]
 
@@ -34,17 +34,13 @@ class Mention:
 
 
 class MentionConverter(Converter):
-    async def convert(self,ctx, obj) -> Mention:
-        if obj is None:
-            return None
-
+    async def convert(self,ctx, string) -> Mention:
         try:
             member_converter = MemberConverter()
-            discord_user = await member_converter.convert(ctx,obj)
+            discord_user = await member_converter.convert(ctx,string)
             uid = utils.get_database_user_from_id(discord_user.id)
 
             if uid is not None:
                 return Mention.id_mention(uid.id)
         except:
-            return Mention.string_mention(obj)
-        return Mention.string_mention(obj)
+            return Mention.string_mention(string)
