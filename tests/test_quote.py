@@ -19,7 +19,7 @@ from cogs.commands.quotes import (
     quotes_query,
     update_quote,
 )
-from models import Base, Quote, QuoteOptouts, User
+from models import Base, Quote, QuoteOptouts, User, quote
 from utils.mentions import Mention, MentionType
 
 TEST_QUOTES = [
@@ -401,9 +401,14 @@ def test_update_fails(
     with pytest.raises(QuoteException) as e:
         update_quote(is_exec, user, to_update, new_text, database)
 
+    actual_quote = quotes_query(to_update, database).one_or_none()
+
     assert e.value.err == error
-    actual_quote = quote_str(quotes_query(to_update, database).one_or_none())
-    assert actual_quote == expected_quote
+    if actual_quote is None:
+        assert actual_quote == expected_quote
+    else:
+        assert actual_quote == quote_str(expected_quote)
+
 
 
 @pytest.mark.parametrize(

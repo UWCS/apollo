@@ -100,10 +100,8 @@ def has_quote_perms(is_exec, requester: Mention, quote: Quote):
     return requester.string == quote.author_string
 
 
-def quote_str(q: Quote) -> Optional[str]:
+def quote_str(q: Quote) -> str:
     """Generate the quote string for posting"""
-    if q is None:
-        return None
 
     date = q.created_at.strftime("%d/%m/%Y")
     return f'**#{q.quote_id}:** "{q.quote}" - {q.author_to_string()} ({date})'
@@ -326,7 +324,7 @@ class Quotes(commands.Cog):
             query = db_session.query(Quote)
 
         # select a random quote if one exists
-        q: Quote = query.order_by(func.random()).first()
+        q: Optional[Quote] = query.order_by(func.random()).first()
 
         if q is None:
             message = "No quote matched the criteria"
