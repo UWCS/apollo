@@ -144,6 +144,8 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
 
             topic = transaction.karma_item.topic.casefold()
             yield query(topic)
+            if len(topic) <= 1:
+                return
             yield query(topic.replace(" ", "_"))
             yield query(topic.replace("_", " "))
             topic = unicodedata.normalize(CONFIG.UNICODE_NORMALISATION_FORM, topic)
