@@ -402,12 +402,11 @@ def test_update_fails(
         update_quote(is_exec, user, to_update, new_text, database)
 
     actual_quote = quotes_query(to_update, database).one_or_none()
-
     assert e.value.err == error
     if actual_quote is None:
         assert actual_quote == expected_quote
     else:
-        assert actual_quote == quote_str(expected_quote)
+        assert quote_str(actual_quote) == expected_quote
 
 
 
