@@ -13,7 +13,7 @@ from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
 from models import db_session
-from models.quote import *
+from models.quote import Quote, QuoteOptouts
 from utils import (
     get_database_user,
     get_name_string,
