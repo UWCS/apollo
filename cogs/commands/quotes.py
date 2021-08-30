@@ -31,6 +31,7 @@ MYSTERY_ERROR = "Magical mystery error! go yell at the tech officer."
 
 MC = MentionConverter()
 
+
 @unique
 class QuoteError(Enum):
     BAD_FORMAT = auto()
