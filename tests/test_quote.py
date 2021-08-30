@@ -409,7 +409,6 @@ def test_update_fails(
         assert quote_str(actual_quote) == expected_quote
 
 
-
 @pytest.mark.parametrize(
     ["is_exec", "user", "target", "expected", "db_size"],
     PURGE_QUOTES.values(),

@@ -62,7 +62,7 @@ class QuoteIDConverter(Converter):
         return int(string[1:])
 
 
-def is_id(string:str) -> bool:
+def is_id(string: str) -> bool:
     return re.fullmatch("#\d+", string) is not None
 
 
