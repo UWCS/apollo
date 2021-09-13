@@ -300,7 +300,7 @@ class QueryInputConverter(Converter):
         if argument[0] == "@":
             return Mention.string_mention(argument[1:])
 
-        argument = await MC.convert(ctx, argument
+        argument = await MC.convert(ctx, argument)
 
         return argument
 
