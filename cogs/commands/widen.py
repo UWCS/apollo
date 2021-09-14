@@ -27,7 +27,6 @@ class Widen(commands.Cog):
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, rest_is_raw=True)
     async def widen(self, ctx: Context, *, message):
         if message:
-            # Convert message into a string from tuple of strings
             target_raw = message
         elif (reference := ctx.message.reference) is not None:
             m = reference.resolved
