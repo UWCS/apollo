@@ -302,9 +302,6 @@ class QueryInputConverter(Converter):
 
         argument = await MC.convert(ctx, argument)
 
-        if argument.is_id_type():
-            return argument
-
         return argument
 
 
