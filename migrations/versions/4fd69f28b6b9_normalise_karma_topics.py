@@ -12,7 +12,6 @@ from typing import Dict, List, Tuple
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import orm
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base
 
 # revision identifiers, used by Alembic.
@@ -124,8 +123,7 @@ def upgrade():
                 if any(
                     c
                     for c in karma_item.changes
-                    if c.user_id == change.user_id
-                    and c.message_id == change.message_id
+                    if c.user_id == change.user_id and c.message_id == change.message_id
                 ):
                     print(
                         f"Duplicate karma entry post-normalisation found "
