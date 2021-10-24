@@ -66,10 +66,7 @@ class Karma(Base):
     neutrals = sa.Column(sa.Integer, nullable=False, default=0)
 
     changes = sa.orm.relationship(
-        "KarmaChange",
-        back_populates="karma",
-        order_by=KarmaChange.created_at.asc(),
-        cascade="save-update, merge, delete, delete-orphan",
+        "KarmaChange", back_populates="karma", order_by=KarmaChange.created_at.asc()
     )
 
 
@@ -81,8 +78,6 @@ def upgrade():
     def topic_transformations(k: Karma):
         topic = k.name.casefold()
         yield topic
-        if len(topic) <= 1:
-            return
         yield topic.replace(" ", "_")
         yield topic.replace("_", " ")
         topic = unicodedata.normalize("NFKD", topic)
@@ -122,6 +117,7 @@ def upgrade():
             karma_item.neutrals += duplicate.neutrals
             for change in duplicate.changes:
                 change.karma_id = karma_item.id
+                change.karma = karma_item
             session.delete(duplicate)
 
     session.commit()
