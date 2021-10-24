@@ -5,12 +5,14 @@ Revises: f1e50ee892b4
 Create Date: 2021-07-12 20:11:42.424516
 
 """
+import sys
 import unicodedata
 from typing import Dict, List, Tuple
 
 import sqlalchemy as sa
 from alembic import op
 from sqlalchemy import orm
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import declarative_base
 
 # revision identifiers, used by Alembic.
@@ -72,7 +74,7 @@ class Karma(Base):
 
 def upgrade():
     bind = op.get_bind()
-    session = orm.Session(bind=bind)
+    session = orm.Session(bind=bind, autoflush=False)
     karma_items = session.query(Karma).order_by(Karma.added.asc())
 
     def topic_transformations(k: Karma):
@@ -117,11 +119,32 @@ def upgrade():
             karma_item.pluses += duplicate.pluses
             karma_item.minuses += duplicate.minuses
             karma_item.neutrals += duplicate.neutrals
-            for change in duplicate.changes:
-                print(f"{change.karma.name} ({change.karma_id}) -> {karma_item.name} ({karma_item.id})")
-                change.karma_id = karma_item.id
-                change.karma = karma_item
+            while duplicate.changes:
+                change = duplicate.changes.pop()
+                if any(
+                    c
+                    for c in karma_item.changes
+                    if c.user_id == change.user_id
+                    and c.message_id == change.message_id
+                ):
+                    print(
+                        f"Duplicate karma entry post-normalisation found "
+                        f"({change!r} "
+                        f"topic: {duplicate.name} -> {karma_item.name}, "
+                        f"karma_id: {duplicate.id} -> {karma_item.id}, "
+                        f"user_id: {change.user_id}, "
+                        f"message_id: {change.message_id}): "
+                        f"deleting. "
+                        f"This occurs when the same item post-normalisation is karma'd more than once in the same message.",
+                        file=sys.stderr,
+                    )
+                    session.delete(change)
+                else:
+                    change.karma = karma_item
+                    change.karma_id = karma_item.id
+                session.flush()
             session.delete(duplicate)
+            session.flush()
 
     session.commit()
     session.close()
