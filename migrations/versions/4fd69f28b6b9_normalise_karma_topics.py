@@ -78,6 +78,8 @@ def upgrade():
     def topic_transformations(k: Karma):
         topic = k.name.casefold()
         yield topic
+        if len(topic) <= 1:
+            return
         yield topic.replace(" ", "_")
         yield topic.replace("_", " ")
         topic = unicodedata.normalize("NFKD", topic)
@@ -116,6 +118,7 @@ def upgrade():
             karma_item.minuses += duplicate.minuses
             karma_item.neutrals += duplicate.neutrals
             for change in duplicate.changes:
+                print(f"{change.karma.name} ({change.karma_id}) -> {karma_item.name} ({karma_item.id})")
                 change.karma_id = karma_item.id
                 change.karma = karma_item
             session.delete(duplicate)
