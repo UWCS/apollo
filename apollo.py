@@ -55,7 +55,6 @@ async def reload_cogs(ctx: Context):
 @bot.event
 async def on_ready():
     if CONFIG.BOT_LOGGING:
-        # TODO: Write this to a logging file?
         logging.info("Logged in as")
         logging.info(str(bot.user))
         logging.info("------")
