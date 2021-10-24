@@ -35,7 +35,7 @@ packaging==20.9
 parsita==1.4.1
 pathspec==0.8.1
 Pillow==8.1.2
-pkg-resources==0.0.0
+pkg_resources==0.0.0
 pluggy==0.13.1
 pretend==1.0.9
 psycopg2==2.8.6
