@@ -498,6 +498,7 @@ class Karma(commands.Cog):
                     return "－"
                 else:
                     return "＝"
+
             # Get all of the changes that have some reason
             karma_changes = (
                 db_session.query(KarmaChange)
@@ -511,7 +512,9 @@ class Karma(commands.Cog):
             reasons = sorted(
                 (
                     (r, p)
-                    for (r, p) in ((change.reason, prefix(change)) for change in karma_changes)
+                    for (r, p) in (
+                        (change.reason, prefix(change)) for change in karma_changes
+                    )
                     if r is not None
                 ),
                 key=lambda t: t[0].casefold(),
@@ -521,7 +524,9 @@ class Karma(commands.Cog):
             if reasons:
                 reasons_plural = pluralise(reasons, "reason")
 
-                bullet_points = "\n".join(f" {prefix} {reason}" for (reason, prefix) in reasons)
+                bullet_points = "\n".join(
+                    f" {prefix} {reason}" for (reason, prefix) in reasons
+                )
                 result = f'The {reasons_plural} for "{karma_stripped}" are as follows:\n\n{bullet_points}'
             else:
                 result = f"There are no reasons down for that karma topic! :frowning:"
