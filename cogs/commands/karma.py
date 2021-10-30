@@ -487,6 +487,17 @@ class Karma(commands.Cog):
         if karma_item:
             # Set the karma item's name to be the same as in the database
             karma_stripped = karma_item.name
+            # Local function for getting prefix of karma reason
+            # These are full width unicode characters to ensure that the text remains
+            # aligned when not in a monospace font
+
+            def prefix(change: KarmaChange):
+                if change.change > 0:
+                    return "＋"
+                elif change.change < 0:
+                    return "－"
+                else:
+                    return "＝"
             # Get all of the changes that have some reason
             karma_changes = (
                 db_session.query(KarmaChange)
@@ -499,18 +510,18 @@ class Karma(commands.Cog):
             # Flatten the reasons into a single list and sort it alphabetically
             reasons = sorted(
                 (
-                    r
-                    for r in (change.reason for change in karma_changes)
+                    (r, p)
+                    for (r, p) in ((change.reason, prefix(change)) for change in karma_changes)
                     if r is not None
                 ),
-                key=str.casefold,
+                key=lambda t: t[0].casefold(),
             )
 
             # If there's at least one reason
             if reasons:
                 reasons_plural = pluralise(reasons, "reason")
 
-                bullet_points = "\n".join(f" • {reason}" for reason in reasons)
+                bullet_points = "\n".join(f" {prefix} {reason}" for (reason, prefix) in reasons)
                 result = f'The {reasons_plural} for "{karma_stripped}" are as follows:\n\n{bullet_points}'
             else:
                 result = f"There are no reasons down for that karma topic! :frowning:"
