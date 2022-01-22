@@ -11,6 +11,7 @@ from more_itertools import partition
 import models
 from config import CONFIG
 from models import db_session
+from utils.typing import Identifiable
 
 __all__ = [
     "AdminError",
@@ -91,7 +92,7 @@ def get_database_user_from_id(id_: int, /) -> models.User:
     )
 
 
-def get_database_user(user: {id}, /) -> models.User:
+def get_database_user(user: Identifiable, /) -> models.User:
     return get_database_user_from_id(user.id)
 
 
