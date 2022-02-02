@@ -131,6 +131,10 @@ We have a Terraria 1.4.1.2 server running at:
         """Link the Apollo GitHub repository"""
         await ctx.send("https://github.com/UWCS/apollo")
 
+    @commands.command()
+    async def paperwork(self, ctx: Context):
+        """UWCS Prop 65"""
+        await ctx.send("WARNING: This user offers advice known to the State of CompSoc to cause employment harm.")
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))
