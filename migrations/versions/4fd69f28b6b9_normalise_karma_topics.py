@@ -110,7 +110,7 @@ def upgrade():
             # Otherwise, we must have a new item so inset it into the dictionary with an empty list.
             karma_mapping[karma.name] = karma, []
 
-    # Now we must update all of the karma_changes of the values in the dictionary to point at the de-duplicated
+    # Now we must update all the karma_changes of the values in the dictionary to point at the de-duplicated
     # Karma entries.
     # At the same time, we have to re-calculate several columns on the existing items.
     for karma_item, duplicates in karma_mapping.values():

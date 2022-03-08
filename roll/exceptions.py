@@ -63,7 +63,7 @@ class ExcessiveDiceRollsError(WarningError):
 
 
 class DiceInputError(RunTimeError, ABC):
-    """Raised when there is an issue with the inputs of a dice roll"""
+    """Raised when there is an issue with the inputs of a die roll"""
 
     @abstractmethod
     def __init__(self, trace, value, message="{value}\n{trace}"):
@@ -72,13 +72,13 @@ class DiceInputError(RunTimeError, ABC):
 
 
 class FloatingPointDiceInputError(DiceInputError, ABC):
-    """Raised when the number of rolls or sides of a dice roll is a non-integer"""
+    """Raised when the number of rolls or sides of a die roll is a non-integer"""
 
     pass
 
 
 class FloatingPointDiceCountError(FloatingPointDiceInputError):
-    """Raised when the number of rolls of a dice roll is a non-integer"""
+    """Raised when the number of rolls of a die roll is a non-integer"""
 
     def __init__(
         self,
@@ -90,7 +90,7 @@ class FloatingPointDiceCountError(FloatingPointDiceInputError):
 
 
 class FloatingPointDiceSidesError(FloatingPointDiceInputError):
-    """Raised when the number of sides of a dice roll is a non-integer"""
+    """Raised when the number of sides of a die roll is a non-integer"""
 
     def __init__(
         self,
@@ -102,33 +102,33 @@ class FloatingPointDiceSidesError(FloatingPointDiceInputError):
 
 
 class ZeroDiceInputError(DiceInputError):
-    """Raised when the number of rolls or sides of a dice roll is zero"""
+    """Raised when the number of rolls or sides of a die roll is zero"""
 
     pass
 
 
 class ZeroDiceCountError(ZeroDiceInputError):
-    """Raised when the number of rolls of a dice roll is zero"""
+    """Raised when the number of rolls of a die roll is zero"""
 
     def __init__(self, trace, message="Requested dice roll a count of zero\n{trace}"):
         super().__init__(trace, 0, message)
 
 
 class ZeroDiceSidesError(ZeroDiceInputError):
-    """Raised when the number of sides of a dice roll is zero"""
+    """Raised when the number of sides of a die roll is zero"""
 
     def __init__(self, trace, message="Requested dice roll had zero sides\n{trace}"):
         super().__init__(trace, 0, message)
 
 
 class NegativeDiceInputError(DiceInputError):
-    """Raised when the number of rolls or sides of a dice roll is negative"""
+    """Raised when the number of rolls or sides of a die roll is negative"""
 
     pass
 
 
 class NegativeDiceCountError(NegativeDiceInputError):
-    """Raised when the number of rolls of a dice roll is negative"""
+    """Raised when the number of rolls of a die roll is negative"""
 
     def __init__(
         self,
@@ -140,7 +140,7 @@ class NegativeDiceCountError(NegativeDiceInputError):
 
 
 class NegativeDiceSidesError(NegativeDiceInputError):
-    """Raised when the number of sides of a dice roll is negative"""
+    """Raised when the number of sides of a die roll is negative"""
 
     def __init__(
         self,

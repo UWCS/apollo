@@ -16,7 +16,7 @@ depends_on = None
 
 
 def upgrade():
-    # so Sqlite DOES NOT support ALTER operations so to update columns you gotta do batch updates
+    # Sqlite DOES NOT support ALTER operations so to update columns you have to do batch updates
     with op.batch_alter_table("blacklist") as batch_op:
         batch_op.alter_column(
             "added_at", nullable=False, server_default=sa.func.current_timestamp()

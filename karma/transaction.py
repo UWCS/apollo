@@ -90,7 +90,7 @@ def apply_blacklist(
     def is_on_blacklist(karma_transaction: KarmaTransaction):
         """Query the database to test whether an item is on the blacklist.
 
-        Returns true when the item is one the blacklist.
+        Returns true when the item is on the blacklist.
         """
         # If possible, don't query the database
         if karma_transaction.karma_item.bypass:
@@ -102,7 +102,7 @@ def apply_blacklist(
             )
             .one_or_none()
         )
-        # If we find the item then it is one the blacklist
+        # If we find the item then it is on the blacklist
         return query is not None
 
     return [

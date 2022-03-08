@@ -364,7 +364,7 @@ class TokenApplication(IToken):
             decls.append(Assignment(out.arg_name, expr, id=out.arg_id))
             out = (
                 out.expression
-            )  # Note: this used to attempt to .dereference() - I can't remember why but it seems to work without it
+            )  # Note: this used to attempt to .dereference() - I can't remember why, but it seems to work without it
         # Substitute variables for scoped variables (allows recursion)
         substitutions = {}
         env = env.copy()

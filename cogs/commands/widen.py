@@ -46,7 +46,7 @@ class Widen(commands.Cog):
         )  # Escape any other text in prep for de-markdownify
 
         # Convert it to HTML and then remove all tags to get the raw text
-        # A side effect of this is that any text that looks like a HTML tag will be removed
+        # A side effect of this is that any text that looks like an HTML tag will be removed
         target_html = markdown(target_raw)
         soup = BeautifulSoup(target_html, "lxml")
         target = "".join(soup.findAll(text=True))

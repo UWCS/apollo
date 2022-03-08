@@ -73,7 +73,8 @@ class Verify(commands.Cog):
                     "settings: https://uwcs.co.uk/accounts/profile/update/"
                 )
             else:
-                # This *shouldn't* happen but in the small case it may, just get the user to try again. Yay async systems!
+                # This *shouldn't* happen but in the small case it may, just get the user to try again. Yay, async
+                # systems!
                 user = get_database_user(ctx.author)
                 if not user:
                     raise VerifyError(
@@ -93,7 +94,7 @@ class Verify(commands.Cog):
                         "ID - please make sure you've set your tag correctly and try again."
                     )
 
-                # Get all of the objects necessary to apply the roles
+                # Get all the objects necessary to apply the roles
                 compsoc_guild = [
                     guild
                     for guild in ctx.bot.guilds

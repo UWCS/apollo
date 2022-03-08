@@ -73,7 +73,7 @@ class Reminders(commands.Cog):
             # HURRAY the time is valid and not in the past, add the reminder
             display_name = get_name_string(ctx.message)
 
-            # set the id to a random value if the author was the bridge bot, since we wont be using it anyways
+            # Set the id to a random value if the author was the bridge bot, since we won't be using it anyway
             # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
             if user_is_irc_bot(ctx):
                 author_id = 1

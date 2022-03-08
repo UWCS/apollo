@@ -223,7 +223,7 @@ def purge_quotes(
 def opt_out_of_quotes(
     is_exec, requester: Mention, target: Mention = None, session=db_session
 ) -> str:
-    # if no target, target ourself
+    # if no target, target ourselves
     if target is None:
         target = requester
 

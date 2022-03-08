@@ -45,7 +45,7 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
 
 ### Contributor Notes
 
-* When writing anything that needs to reply back to a specific username, please do `from utils import get_name_string` and get the display string using this function, with the discord `Message` object as the argument (e.g. `display_name = get_name_string(ctx.message)`).
+* When writing anything that needs to reply to a specific username, please do `from utils import get_name_string` and get the display string using this function, with the discord `Message` object as the argument (e.g. `display_name = get_name_string(ctx.message)`).
   This will return either a discord username, formatted correctly, or an irc nickname depending on the source of the message.
   Finally, this can be used as normal in a format string e.g. `await ctx.send(f'Sorry {display_name}, that won't work.')`.
 
