@@ -2,9 +2,7 @@ import pytest
 from parsita import ParseError
 
 import roll.exceptions as rollerr
-from roll.ast import MAX_ROLLS
 from roll.parser import parse_program
-from tests.stubs import make_message_stub
 
 SIMPLE_TEST_CASES = [
     #  Literals

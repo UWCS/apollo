@@ -1,7 +1,6 @@
 import logging
 import random
 from abc import ABC, abstractmethod
-from copy import copy
 from enum import Enum, auto
 
 import roll.exceptions as rollerr

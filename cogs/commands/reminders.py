@@ -13,7 +13,6 @@ from models import Reminder, db_session
 from utils import (
     DateTimeConverter,
     get_database_user,
-    get_database_user_from_id,
     get_name_string,
     user_is_irc_bot,
 )

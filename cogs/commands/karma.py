@@ -118,7 +118,6 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
     # Transform the karma changes into plottable values
     for karma, changes in karma_dict.items():
         scores = [k.score for k in changes]
-        time = []
         time = date2num([k.local_time for k in changes])
 
         # Plot the values
