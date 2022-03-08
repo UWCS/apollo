@@ -12,7 +12,7 @@ class Parallelism(Cog):
         self._thread_pool = None
         self._process_pool = None
 
-    @staticmethod
+    @classmethod
     async def get(cls, bot: Bot) -> Parallelism:
         await bot.wait_until_ready()
         return bot.get_cog(cls.__name__)

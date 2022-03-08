@@ -69,7 +69,7 @@ class Roll(commands.Cog):
         def work():
             return run(message, display_name)
 
-        p = await Parallelism.get()
+        p = await Parallelism.get(self.bot)
         p.send_to_ctx_after_threaded(work, ctx, loop)
 
 
