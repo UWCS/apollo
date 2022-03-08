@@ -101,7 +101,7 @@ class FloatingPointDiceSidesError(FloatingPointDiceInputError):
         super().__init__(trace, value, message)
 
 
-class ZeroDiceInputError(DiceInputError):
+class ZeroDiceInputError(DiceInputError, ABC):
     """Raised when the number of rolls or sides of a die roll is zero"""
 
     pass
@@ -121,7 +121,7 @@ class ZeroDiceSidesError(ZeroDiceInputError):
         super().__init__(trace, 0, message)
 
 
-class NegativeDiceInputError(DiceInputError):
+class NegativeDiceInputError(DiceInputError, ABC):
     """Raised when the number of rolls or sides of a die roll is negative"""
 
     pass
