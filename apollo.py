@@ -68,8 +68,7 @@ def main():
             logging.info(f"Attempting to load extension {extension}")
             bot.load_extension(extension)
         except Exception as e:
-            exc = f"{type(e).__name__}: {e.with_traceback()}"
-            logging.error(f"Failed to load extension {extension}\n{exc}")
+            logging.exception("Failed to load extension {extension}", exc_info=e)
     bot.run(CONFIG.DISCORD_TOKEN)
 
 
