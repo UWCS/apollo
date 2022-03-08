@@ -8,6 +8,7 @@ import roll.exceptions as rollerr
 
 # import * imports all tokens, operators, the Assignment class, and the root Program class
 __all__ = [
+    "MAX_ROLLS",
     "TokenNumber",
     "TokenString",
     "TokenRoll",
