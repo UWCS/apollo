@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import concurrent.futures
 
@@ -9,6 +11,11 @@ class Parallelism(Cog):
         self.bot = bot
         self._thread_pool = None
         self._process_pool = None
+
+    @staticmethod
+    async def get(cls, bot: Bot) -> Parallelism:
+        await bot.wait_until_ready()
+        return bot.get_cog(cls.__name__)
 
     @property
     def thread_pool(self):
@@ -47,11 +54,6 @@ class Parallelism(Cog):
 
     def send_to_ctx_after_threaded(self, func, ctx, loop, /, *args, **kwargs):
         return self.run_coro_after_threaded(func, ctx.send, loop, *args, **kwargs)
-
-
-async def get_parallelism(bot: Bot) -> Parallelism:
-    await bot.wait_until_ready()
-    return bot.get_cog("Parallelism")
 
 
 def setup(bot: Bot):

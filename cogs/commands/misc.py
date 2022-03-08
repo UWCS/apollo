@@ -131,6 +131,13 @@ We have a Terraria 1.4.1.2 server running at:
         """Link the Apollo GitHub repository"""
         await ctx.send("https://github.com/UWCS/apollo")
 
+    @commands.command()
+    async def babbage(self, ctx: Context):
+        """I am not able rightly to apprehend the kind of confusion of ideas that could provoke such a question."""
+        await ctx.send(
+            "Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?"
+        )
+
 
 def setup(bot: Bot):
     bot.add_cog(Misc(bot))

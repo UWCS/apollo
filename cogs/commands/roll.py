@@ -6,7 +6,7 @@ from discord.ext.commands import Bot, Context, clean_content
 from parsita import ParseError
 
 import roll.exceptions as rollerr
-from cogs.parallelism import get_parallelism
+from cogs.parallelism import Parallelism
 from roll.ast import MAX_ROLLS
 from roll.parser import parse_program
 from utils import get_name_string
@@ -69,7 +69,7 @@ class Roll(commands.Cog):
         def work():
             return run(message, display_name)
 
-        p = await get_parallelism(self.bot)
+        p = await Parallelism.get()
         p.send_to_ctx_after_threaded(work, ctx, loop)
 
 
