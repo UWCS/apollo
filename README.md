@@ -34,7 +34,8 @@ If installing the top-level dependencies does not work, try installing the pinne
 5. Copy `config.example.yaml` to `config.yaml` and configure the fields.
 6. Copy `alembic.example.ini` to `alembic.ini`.
 7. Set up the database by running migrations with `alembic upgrade head`.
-   - The default database location is `sqlite:///:memory:` (in both `config.example.py` and `alembic.example.ini`).
+   - The default database location is `postgresql://apollo:apollo@localhost/apollo` (in both `config.example.yaml` and `alembic.example.ini`).
+     This requires PostgreSQL to be installed, with a database called `apollo` and a user with name and password `apollo` with access to it.
      For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///local.sqlite3`.
 8. On the [Discord developer portal](https://discord.com/developers/), make sure that your bot has the required intents.
    - Currently, only the Members intent is necessary.
@@ -57,8 +58,8 @@ Run `apollo.py` - either with `python apollo.py` or just by executing the file.
   
 * For testing CI locally, use [act-cli](https://github.com/nektos/act).
 
-* Although the default database engine in config files is SQLite3, the current production database engine is PostgreSQL.
-  In order to test code against a PostgreSQL database, you will need to install `psycopg2` and set up a PostgreSQL instance.
+* The current production database engine is PostgreSQL.
+  You may wish to use another database engine such as MySQL or SQLite for local testing.
   
 #### Testing subsections
 
