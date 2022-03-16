@@ -28,6 +28,7 @@ EXTENSIONS = [
     "cogs.commands.roll",
     "cogs.commands.say",
     "cogs.commands.tex",
+    "cogs.commands.vote",
     "cogs.commands.widen",
     "cogs.database",
     "cogs.irc",

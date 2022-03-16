@@ -1,7 +1,7 @@
 discord.py~=1.6.0
 SQLAlchemy~=1.4.13
 SQLAlchemy-Utils~=0.37.2
-psycopg2-binary~=2.8.6
+
 cryptography~=3.4.6
 pytz~=2021.1
 matplotlib~=3.3.4
