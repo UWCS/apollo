@@ -29,7 +29,7 @@ EXTENSIONS = [
     "cogs.commands.lcalc",
     "cogs.commands.misc",
     "cogs.commands.quotes",
-    "cogs.commands.reminders",
+    # "cogs.commands.reminders",
     "cogs.commands.roll",
     "cogs.commands.roomsearch",
     "cogs.commands.say",
