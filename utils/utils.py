@@ -11,6 +11,7 @@ from more_itertools import partition
 import models
 from config import CONFIG
 from models import db_session
+from models.user import User
 from utils.typing import Identifiable
 
 __all__ = [
@@ -86,13 +87,13 @@ def format_list_of_members(members, /, *, ping=True):
     return format_list(el)
 
 
-def get_database_user_from_id(id_: int, /) -> models.User:
+def get_database_user_from_id(id_: int, /) -> User:
     return (
-        db_session.query(models.User).filter(models.User.user_uid == id_).one_or_none()
+        db_session.query(User).filter(User.user_uid == id_).one_or_none()
     )
 
 
-def get_database_user(user: Identifiable, /) -> models.User:
+def get_database_user(user: Identifiable, /) -> User:
     return get_database_user_from_id(user.id)
 
 
