@@ -46,37 +46,30 @@ class Vote(Base):
 @auto_str
 class UserVote(Base):
     __tablename__ = "user_vote"
-    vote_id = Column(Integer, ForeignKey("vote.id"), primary_key=True, nullable=False)
+    vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
-    choice = Column(
-        Integer, ForeignKey("vote_choice.id"), primary_key=True, nullable=False
-    )
+    choice = Column(Integer, primary_key=True, nullable=False)
     preference = Column(Integer, nullable=False, server_default="0")
+    ForeignKeyConstraint(("vote_id", "choice"), ("vote_choice.vote_id", "vote_choice.choice_index"))
 
 
 @auto_str
 class VoteChoice(Base):
     __tablename__ = "vote_choice"
-    vote_id = Column(
-        Integer,
-        ForeignKey("vote.id", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=False,
-    )
+    vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     choice_index = Column(Integer, primary_key=True, nullable=False)
     choice = Column(String, nullable=False)
 
 
-#
 @auto_str
 class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
     vote_id = Column(Integer, primary_key=True, nullable=False)
     choice_index = Column(Integer, primary_key=True, nullable=False)
     emoji = Column(String)
-    msg = Column(Integer, ForeignKey("discord_vote_message"))
+    msg = Column(Integer, ForeignKey("discord_vote_message.message_id"))
     # choice = relationship("VoteChoice")
-    ForeignKeyConstraint((vote_id, choice_index), (VoteChoice.vote_id, VoteChoice.choice_index))
+    ForeignKeyConstraint(("vote_id", "choice_index"), ("vote_choice.vote_id", "vote_choice.choice_index"))
 
 
 @auto_str

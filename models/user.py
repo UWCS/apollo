@@ -3,7 +3,8 @@ from sqlalchemy.orm import relationship
 from sqlalchemy_utils import EncryptedType
 
 from config import CONFIG
-from models import KarmaChange, LoggedMessage
+from models.karma import KarmaChange
+from models.messages import LoggedMessage
 from models.models import Base, auto_str
 
 __all__ = ["User"]
