@@ -106,7 +106,7 @@ This project is distributed under the MIT license.
 The MIT License (MIT)
 =====================
 
-Copyright © 2018 David Richardson
+Copyright © 2022 Apollo Contributors
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
