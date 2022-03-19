@@ -1,8 +1,8 @@
 """Add vote tables
 
-Revision ID: aa391f91a273
+Revision ID: 49eb6e4220ef
 Revises: aa6b0d2498fe
-Create Date: 2022-03-19 14:53:06.865811
+Create Date: 2022-03-19 15:40:06.645310
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'aa391f91a273'
+revision = '49eb6e4220ef'
 down_revision = 'aa6b0d2498fe'
 branch_labels = None
 depends_on = None
@@ -59,7 +59,7 @@ def upgrade():
     sa.Column('choices_start_index', sa.Integer(), nullable=False),
     sa.Column('numb_choices', sa.Integer(), server_default='20', nullable=False),
     sa.Column('part', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['vote_id'], ['discord_vote.id'], ),
+    sa.ForeignKeyConstraint(['vote_id'], ['discord_vote.id'], ondelete='CASCADE'),
     sa.ForeignKeyConstraint(['vote_id'], ['vote.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('message_id')
     )
@@ -67,8 +67,9 @@ def upgrade():
     sa.Column('vote_id', sa.Integer(), nullable=False),
     sa.Column('choice_index', sa.Integer(), nullable=False),
     sa.Column('emoji', sa.String(), nullable=True),
-    sa.Column('msg', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['msg'], ['discord_vote_message.message_id'], ),
+    sa.Column('msg_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['msg_id'], ['discord_vote_message.message_id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['vote_id', 'choice_index'], ['vote_choice.vote_id', 'vote_choice.choice_index'], ),
     sa.PrimaryKeyConstraint('vote_id', 'choice_index')
     )
     # ### end Alembic commands ###

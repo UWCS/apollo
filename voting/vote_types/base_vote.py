@@ -8,13 +8,13 @@ class BaseVote:
 
     def create_vote(self, title, owner_id, choices: List[str], type=VoteType.basic, vote_limit=None, seats=None) -> Tuple[Vote, List[VoteChoice]]:
 
-        new_vote = Vote(title=title, owner_id=owner_id, type=type, vote_limit=vote_limit, seats=seats)
+        new_vote = Vote(title=title, owner_id=owner_id, type=type, vote_limit=vote_limit, seats=seats, ranked_choice=False)
         db_session.add(new_vote)
         db_session.flush()  # Ensure vote id is fetched
 
         choice_objs = []
         for i, choice in enumerate(choices):
-            new_choice = VoteChoice(vote=new_vote, choice_index=i, choice=choice)
+            new_choice = VoteChoice(vote_id=new_vote.id, choice_index=i, choice=choice)
             db_session.add(new_choice)
             choice_objs.append(new_choice)
 

@@ -11,6 +11,7 @@ from sqlalchemy import (
     Boolean,
     ForeignKeyConstraint
 )
+from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
@@ -23,6 +24,23 @@ class VoteType(enum.Enum):
     approval = 2
     stv = 3
     ranked_pairs = 4
+
+@auto_str
+class VoteChoice(Base):
+    __tablename__ = "vote_choice"
+    vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
+    choice_index = Column(Integer, primary_key=True, nullable=False)
+    choice = Column(String, nullable=False)
+
+
+@auto_str
+class UserVote(Base):
+    __tablename__ = "user_vote"
+    vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
+    choice = Column(Integer, primary_key=True, nullable=False)
+    preference = Column(Integer, nullable=False, server_default="0")
+    ForeignKeyConstraint(("vote_id", "choice"), ("vote_choice.vote_id", "vote_choice.choice_index"), ondelete="CASCADE")
 
 
 @auto_str
@@ -37,28 +55,21 @@ class Vote(Base):
     seats = Column(Integer, nullable=False, server_default="1")
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
 
-    # choices = relationship(
-    #     "VoteChoice", backref="vote", order_by=VoteChoice.choice_index
-    # )
-    # votes = relationship("UserVote", backref="vote")
+    choices = relationship(VoteChoice, backref="vote")
+    votes = relationship(UserVote, backref="vote")
 
 
 @auto_str
-class UserVote(Base):
-    __tablename__ = "user_vote"
-    vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
-    choice = Column(Integer, primary_key=True, nullable=False)
-    preference = Column(Integer, nullable=False, server_default="0")
-    ForeignKeyConstraint(("vote_id", "choice"), ("vote_choice.vote_id", "vote_choice.choice_index"))
+class DiscordVoteMessage(Base):
+    __tablename__ = "discord_vote_message"
+    message_id = Column(Integer, primary_key=True)
+    channel_id = Column(Integer, nullable=False)
+    vote_id = Column(Integer, ForeignKey("discord_vote.id", ondelete="CASCADE"), ForeignKey("vote.id", ondelete="CASCADE"), nullable=False)
+    choices_start_index = Column(Integer, nullable=False)
+    numb_choices = Column(Integer, nullable=False, server_default="20")
+    part = Column(Integer, nullable=False)
 
-
-@auto_str
-class VoteChoice(Base):
-    __tablename__ = "vote_choice"
-    vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
-    choice_index = Column(Integer, primary_key=True, nullable=False)
-    choice = Column(String, nullable=False)
+    vote = relationship(Vote, overlaps="vote")
 
 
 @auto_str
@@ -67,24 +78,11 @@ class DiscordVoteChoice(Base):
     vote_id = Column(Integer, primary_key=True, nullable=False)
     choice_index = Column(Integer, primary_key=True, nullable=False)
     emoji = Column(String)
-    msg = Column(Integer, ForeignKey("discord_vote_message.message_id"))
-    # choice = relationship("VoteChoice")
-    ForeignKeyConstraint(("vote_id", "choice_index"), ("vote_choice.vote_id", "vote_choice.choice_index"))
+    msg_id = Column(Integer, ForeignKey("discord_vote_message.message_id", ondelete="CASCADE"))
+    ForeignKeyConstraint((vote_id, choice_index), (VoteChoice.vote_id, VoteChoice.choice_index))
 
-
-@auto_str
-class DiscordVoteMessage(Base):
-    __tablename__ = "discord_vote_message"
-    message_id = Column(Integer, primary_key=True)
-    channel_id = Column(Integer, nullable=False)
-    vote_id = Column(Integer, ForeignKey("discord_vote.id"), ForeignKey("vote.id", ondelete="CASCADE"), nullable=False)
-    choices_start_index = Column(Integer, nullable=False)
-    numb_choices = Column(Integer, nullable=False, server_default="20")
-    part = Column(Integer, nullable=False)
-
-    # discord_vote = relationship("DiscordVote")
-    # vote = relationship("Vote")
-    # overlaps = "discord_vote"
+    msg = relationship(DiscordVoteMessage)
+    choice = relationship(VoteChoice)
 
 
 # Currently pretty useless
@@ -93,5 +91,9 @@ class DiscordVote(Base):
     __tablename__ = "discord_vote"
     id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     allowed_role_id = Column(Integer)
-    # messages = relationship("DiscordVoteMessage", backref="vote", order_by=DiscordVoteMessage.part)
-    # vote = relationship("Vote")
+
+    messages = relationship(DiscordVoteMessage, backref="discord_vote", overlaps="vote")
+    vote = relationship(Vote, overlaps="vote")
+
+
+

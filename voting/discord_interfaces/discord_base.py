@@ -4,7 +4,7 @@ from typing import List, Tuple, NamedTuple, Iterable
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session
-from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage
+from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType
 from utils import get_database_user, get_database_user_from_id
 from voting.emoji_list import default_emojis
 from voting.vote_types.base_vote import base_vote
@@ -21,11 +21,12 @@ class DiscordBase:
 
     async def create_vote(self, ctx: Context, args: List[str], vote_limit=None, seats=None):
         title, emoji_choices = self.parse_choices(args)
+        choices = [c.prompt for c in emoji_choices]
 
         try:
             # Create DB entry for vote
-            owner_id = get_database_user_from_id(ctx.author.id)  # Questionable
-            vote_obj, choices_obj = self.vote_type.create_vote(title, owner_id, args, vote_limit, seats)
+            owner = get_database_user_from_id(ctx.author.id)  # Questionable
+            vote_obj, choices_obj = self.vote_type.create_vote(title, owner.id, choices, VoteType.basic, vote_limit, seats)
             new_dc_vote = DiscordVote(vote=vote_obj)
             db_session.add(new_dc_vote)
 
@@ -55,7 +56,7 @@ class DiscordBase:
             db_session.commit()
         except SQLAlchemyError:
             db_session.rollback()
-            await (await ctx.send("Error creating vote")).delete(delay=10)
+            await ctx.send("Error creating vote")
             raise
 
         # Add reactions to message, takes a while, so do last
@@ -97,9 +98,9 @@ class DiscordBase:
             if len(chunk)+1 > per_msg or msg_len + line_len > len_per_msg:
                 yield chunk
                 chunk, msg_len = [], 0
-            chunk.append((i, choices))
+            chunk.append((i, choice))
             msg_len += line_len
-        yield chunk
+        if chunk: yield chunk
 
     def create_embed(self, title: str, chunk: List[Tuple[int, Choice]]):
         embed = discord.Embed(title=self.get_title(title), description=self.get_description())
