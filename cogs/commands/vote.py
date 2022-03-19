@@ -38,6 +38,7 @@ class Vote(commands.Cog):
     async def basic(self, ctx: Context, *args: clean_content):
         # noinspection PyTypeChecker
         choices = split_args(" ".join(args))
+        print(choices)
         await discord_base.create_vote(ctx, choices)
 
 
@@ -50,7 +51,8 @@ class Vote(commands.Cog):
             err_msg = str(error)
         else: raise error
         msg = await ctx.send("Error: " + err_msg)
-        await msg.delete(delay=10)
+        # await msg.delete(delay=10)
+        raise error
 
 
 
