@@ -71,7 +71,7 @@ class DiscordVoteMessage(Base):
 
     vote = relationship(Vote, overlaps="vote")
 
-
+# TODO Add unique constraints
 @auto_str
 class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
