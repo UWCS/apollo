@@ -26,6 +26,7 @@ EXTENSIONS = [
     "cogs.commands.quotes",
     "cogs.commands.reminders",
     "cogs.commands.roll",
+    "cogs.commands.roomsearch",
     "cogs.commands.say",
     "cogs.commands.tex",
     "cogs.commands.widen",
