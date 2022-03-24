@@ -10,12 +10,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import Reminder, db_session
-from utils import (
-    DateTimeConverter,
-    get_database_user,
-    get_name_string,
-    user_is_irc_bot,
-)
+from utils import DateTimeConverter, get_database_user, get_name_string, user_is_irc_bot
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.
