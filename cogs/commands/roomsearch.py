@@ -24,10 +24,12 @@ class RoomSearch(commands.Cog):
         self.bot = bot
         self.full_emojis = ("1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟")
 
-    @commands.command(
-        help="Finds a room on the various Warwick systems", brief="Warwick Room Search"
-    )
+    @commands.command()
     async def room(self, ctx: Context, name: str):
+        """Warwick Room Search
+
+        Finds a room on the various Warwick systems.
+        """
         rooms = self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
@@ -41,13 +43,13 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
-        desc = "\n".join(
-            f"Building: **{room['building']}** {room['floor']}"
-            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room['id']})**"
-            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room['name'].replace('.', '')})**"
-            f"`Timetable coming soon?`"
+        desc = "\n".join([
+            f"Building: **{room['building']}** {room['floor']}",
+            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room['id']})**",
+            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room['name'].replace('.', '')})**",
+            f"`Timetable coming soon?`",
             f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room['roomCapacity']}"
-        )
+        ])
 
         embed = discord.Embed(title=f"Room Search: {room['name']}", description=desc)
 
@@ -61,7 +63,7 @@ class RoomSearch(commands.Cog):
 
     async def choose_room(self, ctx, rooms):
         emojis = self.full_emojis[: len(rooms)]
-        header = "Multiple rooms exist with that name, which do you want:"
+        header = "Multiple rooms exist with that name. Which do you want?:"
         rooms_text = "".join(
             f"\n\t{e} {r['name']} in **{r['building']}** {r['floor']}"
             for r, e in zip(rooms, emojis)
