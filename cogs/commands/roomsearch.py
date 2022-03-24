@@ -5,18 +5,28 @@ import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
-LONG_HELP_TEXT = """
-Finds a room on the various Warwick systems
-"""
 
-SHORT_HELP_TEXT = """Warwick Room Search"""
+def req_or_none(url):
+    r = requests.get(url)
+    if not r.ok:
+        return None
+    return r.json()
+
+
+def req_img(url):
+    r = requests.get(url)
+    bytes = BytesIO(r.content)
+    return bytes
 
 
 class RoomSearch(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.full_emojis = ("1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟")
 
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.command(
+        help="Finds a room on the various Warwick systems", brief="Warwick Room Search"
+    )
     async def room(self, ctx: Context, name: str):
         rooms = self.get_room_infos(name)
         if not rooms:
@@ -31,18 +41,18 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
-        desc = f"Building: **{room['building']}** {room['floor']}\n"
-        desc += f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room['id']})**\n"
-        desc += f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room['name'].replace('.', '')})**\n"
-        desc += f"`Timetable coming soon?`\n"
-        desc += f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room['roomCapacity']}\n"
+        desc = "\n".join(
+            f"Building: **{room['building']}** {room['floor']}"
+            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room['id']})**"
+            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room['name'].replace('.', '')})**"
+            f"`Timetable coming soon?`"
+            f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room['roomCapacity']}"
+        )
 
         embed = discord.Embed(title=f"Room Search: {room['name']}", description=desc)
 
         img = discord.File(
-            self.req_img(
-                "https://search.warwick.ac.uk/api/map-thumbnail/" + str(room["w2gid"])
-            ),
+            req_img(f"https://search.warwick.ac.uk/api/map-thumbnail/{room['w2gid']}"),
             filename="map.png",
         )
         embed.set_image(url="attachment://map.png")
@@ -50,8 +60,7 @@ class RoomSearch(commands.Cog):
         await ctx.reply(embed=embed, file=img)
 
     async def choose_room(self, ctx, rooms):
-        full_emojis = ["1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟"]
-        emojis = full_emojis[: len(rooms)]
+        emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name, which do you want:"
         rooms_text = "".join(
             f"\n\t{e} {r['name']} in **{r['building']}** {r['floor']}"
@@ -78,21 +87,10 @@ class RoomSearch(commands.Cog):
 
     def get_room_infos(self, room):
         # Swap with campus map autocomplete for more reliability? but that need auth
-        map_req = self.req_or_none("https://search.warwick.ac.uk/api/maps?q=" + room)
+        map_req = req_or_none(f"https://search.warwick.ac.uk/api/maps?q={room}")
         if map_req is None or map_req["total"] == 0:
             return []
         return map_req["results"]
-
-    def req_or_none(self, url):
-        r = requests.get(url)
-        if not r.ok:
-            return None
-        return r.json()
-
-    def req_img(self, url):
-        r = requests.get(url)
-        bytes = BytesIO(r.content)
-        return bytes
 
 
 def setup(bot: Bot):
