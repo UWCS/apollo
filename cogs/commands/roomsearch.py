@@ -43,18 +43,24 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
-        desc = "\n".join([
-            f"Building: **{room.get('building')} {room.get('floor')}**",
-            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
-            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room.get('name').replace('.', '')})**",
-            f"`Timetable coming soon?`",
-            f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room.get('roomCapacity', '-')}"
-        ])
+        desc = "\n".join(
+            [
+                f"Building: **{room.get('building')} {room.get('floor')}**",
+                f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
+                f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room.get('name').replace('.', '')})**",
+                f"`Timetable coming soon?`",
+                f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room.get('roomCapacity', '-')}",
+            ]
+        )
 
-        embed = discord.Embed(title=f"Room Search: {room.get('name')}", description=desc)
+        embed = discord.Embed(
+            title=f"Room Search: {room.get('name')}", description=desc
+        )
 
         img = discord.File(
-            req_img(f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"),
+            req_img(
+                f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"
+            ),
             filename="map.png",
         )
         embed.set_image(url="attachment://map.png")
@@ -96,8 +102,13 @@ class RoomSearch(commands.Cog):
         return self.remove_duplicate_rooms(map_req.get("results"))
 
     def remove_duplicate_rooms(self, rooms):
-        ms_room = next((r for r in rooms if r.get("building") == "Mathematical Sciences"), None)
-        msb_room = next((r for r in rooms if r.get("building") == "Mathematical Sciences Building"), None)
+        ms_room = next(
+            (r for r in rooms if r.get("building") == "Mathematical Sciences"), None
+        )
+        msb_room = next(
+            (r for r in rooms if r.get("building") == "Mathematical Sciences Building"),
+            None,
+        )
         if ms_room and msb_room:
             rooms.remove(msb_room)
         return rooms
