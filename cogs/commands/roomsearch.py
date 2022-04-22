@@ -92,7 +92,15 @@ class RoomSearch(commands.Cog):
         map_req = req_or_none(f"https://search.warwick.ac.uk/api/maps?q={room}")
         if map_req is None or not map_req.get("total"):
             return []
-        return map_req["results"]
+
+        return self.remove_duplicate_rooms(map_req.get("results"))
+
+    def remove_duplicate_rooms(self, rooms):
+        ms_room = next((r for r in rooms if r.get("building") == "Mathematical Sciences"), None)
+        msb_room = next((r for r in rooms if r.get("building") == "Mathematical Sciences Building"), None)
+        if ms_room and msb_room:
+            rooms.remove(msb_room)
+        return rooms
 
 
 def setup(bot: Bot):
