@@ -44,17 +44,17 @@ class RoomSearch(commands.Cog):
             room = rooms[0]  # Only one in rooms
 
         desc = "\n".join([
-            f"Building: **{room['building']}** {room['floor']}",
-            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room['id']})**",
-            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room['name'].replace('.', '')})**",
+            f"Building: **{room.get('building')} {room.get('floor')}**",
+            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
+            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room.get('name').replace('.', '')})**",
             f"`Timetable coming soon?`",
-            f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room['roomCapacity']}"
+            f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room.get('roomCapacity', '-')}"
         ])
 
-        embed = discord.Embed(title=f"Room Search: {room['name']}", description=desc)
+        embed = discord.Embed(title=f"Room Search: {room.get('name')}", description=desc)
 
         img = discord.File(
-            req_img(f"https://search.warwick.ac.uk/api/map-thumbnail/{room['w2gid']}"),
+            req_img(f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"),
             filename="map.png",
         )
         embed.set_image(url="attachment://map.png")
@@ -65,7 +65,7 @@ class RoomSearch(commands.Cog):
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
         rooms_text = "".join(
-            f"\n\t{e} {r['name']} in **{r['building']}** {r['floor']}"
+            f"\n\t{e} {r.get('name')} in **{r.get('building')}** {r.get('floor')}"
             for r, e in zip(rooms, emojis)
         )
         conf_message = await ctx.send(header + rooms_text)
@@ -85,14 +85,22 @@ class RoomSearch(commands.Cog):
             return None
 
         ind = emojis.index(str(react_emoji))
-        return rooms[ind]
+        return rooms.get(ind)
 
     def get_room_infos(self, room):
         # Swap with campus map autocomplete for more reliability? but that need auth
         map_req = req_or_none(f"https://search.warwick.ac.uk/api/maps?q={room}")
-        if map_req is None or map_req["total"] == 0:
+        if map_req is None or not map_req.get("total"):
             return []
-        return map_req["results"]
+
+        return self.remove_duplicate_rooms(map_req.get("results"))
+
+    def remove_duplicate_rooms(self, rooms):
+        ms_room = next((r for r in rooms if r.get("building") == "Mathematical Sciences"), None)
+        msb_room = next((r for r in rooms if r.get("building") == "Mathematical Sciences Building"), None)
+        if ms_room and msb_room:
+            rooms.remove(msb_room)
+        return rooms
 
 
 def setup(bot: Bot):
