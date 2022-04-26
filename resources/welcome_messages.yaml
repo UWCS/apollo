@@ -1,7 +1,8 @@
 welcome_messages:
   message: |-
     {greetings} {name}!
-    Welcome to the server! If you want, feel free to introduce yourself here with your pronouns, interests, and favourite {thing}.
+    Welcome to the server! If you want, feel free to introduce yourself here, with your interests, and favourite {thing}.
+    Get access and pronoun badges in {roles_channel}.
   greetings:
     - Hi
     - Hiya
@@ -110,6 +111,7 @@ welcome_messages:
         - bird
         - lizard
         - gastropod
+        - lemur
     - name: PLANT_TYPE
       weight: 1
       template: "kind of {}"
@@ -120,6 +122,7 @@ welcome_messages:
         - deciduous tree
         - evergreen tree
         - forest
+        - house plant
     - name: MYTHOLOGY
       weight: 1
       template: "{} god"
@@ -128,6 +131,7 @@ welcome_messages:
         - Egyptian
         - Roman
         - Aztec
+        - Norse
     - name: FRANCHISE
       weight: 1
       values:
