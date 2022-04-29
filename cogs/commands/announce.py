@@ -38,9 +38,10 @@ async def announcement_check(bot):
                 display_name = f"<@{author_uid}>"
             channel = bot.get_channel(r.playback_channel_id)
             message = r.announcement_content
-            await channel.send(message)
             r.triggered = True
             db_session.commit()
+
+            await generate_announcement(channel, message)
 
         await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
 
@@ -98,8 +99,10 @@ class Announcements(commands.Cog):
             try:
                 db_session.commit()
                 await ctx.send(
-                    f"Announcement prepared, but note granularity is set at {precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit='seconds')})."
+                    f"Announcement prepared, but note granularity is set at {precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit='seconds')}). \n**Message preview:**"
                 )
+
+                await generate_announcement(ctx.channel, announcement_content)
 
             except (ScalarListException, SQLAlchemyError) as e:
                 db_session.rollback()
