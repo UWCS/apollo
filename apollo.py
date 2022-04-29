@@ -30,6 +30,7 @@ EXTENSIONS = [
     "cogs.commands.misc",
     "cogs.commands.quotes",
     "cogs.commands.reminders",
+    "cogs.commands.announce",
     "cogs.commands.roll",
     "cogs.commands.roomsearch",
     "cogs.commands.say",
