@@ -29,6 +29,7 @@ __all__ = [
     "partition_list",
     "pluralise",
     "user_is_irc_bot",
+    "replace_external_emoji"
 ]
 
 
@@ -205,3 +206,16 @@ def pluralise(el, /, word, single="", plural="s"):
 
 def user_is_irc_bot(ctx):
     return ctx.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
+
+
+def replace_external_emoji(channel, string):
+    def emotes(match: re.Match):
+        if match.group(2):
+            e: discord.Emoji = discord.utils.get(channel.guild.emojis, name=match.group(2))
+            if e is None:
+                from apollo import bot
+                e = discord.utils.get(bot.emojis, name=match.group(2))
+            if e is not None: return match.group(1) + str(e)
+        return match.group(0)
+
+    return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
