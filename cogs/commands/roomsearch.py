@@ -40,16 +40,13 @@ class RoomSearch(commands.Cog):
 
         raw = (room_resource_root / "central-room-data.json").read_text()
         self.central_rooms = json.loads(raw)
-        self.custom_room_names = read_mapping(
-            room_resource_root / "room-mapname.txt"
-        )
+        self.custom_room_names = read_mapping(room_resource_root / "room-mapname.txt")
         self.timetable_room_mapping = read_mapping(
             room_resource_root / "room_to_surl.txt"
         )
         self.last_week_check = None
         self.year = None
         self.week = None
-
 
     @commands.command()
     async def room(self, ctx: Context, name: str):
@@ -94,7 +91,7 @@ class RoomSearch(commands.Cog):
             embed.add_field(
                 name="Timetable:",
                 value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)})**\n"
-                      f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week+1})\n",
+                f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week+1})\n",
                 inline=True,
             )
 
@@ -177,7 +174,9 @@ class RoomSearch(commands.Cog):
         # Definitely don't need to check each request
         # Only check if last request was before today
         if self.last_week_check is None or self.last_week_check.date < current.date:
-            weeks_json = req_or_none("https://tabula.warwick.ac.uk/api/v1/termdates/weeks").get("weeks")
+            weeks_json = req_or_none(
+                "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
+            ).get("weeks")
 
             for week in weeks_json:
                 start = datetime.strptime(week.get("start"), "%Y-%m-%d")
@@ -188,7 +187,6 @@ class RoomSearch(commands.Cog):
                     return self.year, self.week
             return None, None
         return self.year, self.week
-
 
     def is_central(self, room_name):
         # Checks if room is centrally timetabled from central-room-data.json (from Tabula)

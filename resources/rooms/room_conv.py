@@ -19,9 +19,7 @@ def read_mapping(filename):
 tabtonames = read_mapping("tabula-sciencianame.txt")
 nametourl = read_mapping("scientianame-url.txt")
 
-custom_names = {
-    "Computer Science Teaching Room": "CS_MB0.01"
-}
+custom_names = {"Computer Science Teaching Room": "CS_MB0.01"}
 
 # Custom mappings
 custom_tabtoname = {
