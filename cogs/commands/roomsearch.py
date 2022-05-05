@@ -8,10 +8,13 @@ from discord.ext.commands import Bot, Context
 from pathlib import Path
 import json
 from urllib.parse import quote
+import time
+
+room_resource_root = Path() / "resources" / "rooms"
 
 
-def req_or_none(url):
-    r = requests.get(url)
+def req_or_none(url, **kwargs):
+    r = requests.get(url, **kwargs)
     if not r.ok:
         return None
     return r.json()
@@ -24,12 +27,10 @@ def req_img(url):
 
 
 def read_mapping(filename):
+    # Read room name to timetable url mapping
     with open(str(filename)) as f:
         l = [l.split(" | ") for l in f.readlines()]
         return {x[0].strip(): x[1].strip() for x in l if len(x) > 1}
-
-
-room_resource_root = Path() / "resources" / "rooms"
 
 
 class RoomSearch(commands.Cog):
@@ -64,24 +65,25 @@ class RoomSearch(commands.Cog):
 
         # Room info
         embed = discord.Embed(
-            title=f"Room Search: {room.get('name')}",
+            title=f"Room Search: {room.get('value')}",
             description=f"Building: **{room.get('building')} {room.get('floor')}**",
         )
         # Campus Map
         embed.add_field(
             name="Campus Map:",
-            value=f"**[{room.get('name')}](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
+            value=f"**[{room.get('value')}](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
             inline=True,
         )
         # Room info (for centrally timetabled rooms)
-        if url := self.is_central(room.get("name")):
+        if url := self.is_central(room.get("value")):
             embed.add_field(
                 name="Room Info:",
-                value=f"**[{room.get('name')}](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url})**",
+                value=f"**[{room.get('value')}](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url})**",
                 inline=True,
             )
         # Timetable
-        if tt_room_id := self.timetable_room_mapping.get(room.get("name")):
+        if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
+            year = time.strftime("%y")
             embed.add_field(
                 name="Timetable:",
                 value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS2122/roomtimetable.asp?id={quote(tt_room_id)})**",
@@ -99,16 +101,19 @@ class RoomSearch(commands.Cog):
         await ctx.reply(embed=embed, file=img)
 
     async def choose_room(self, ctx, rooms):
+        # Confirms room choice, esp. important with autocomplete api
+        # Create and send message
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
         rooms_text = "".join(
-            f"\n\t{e} {r.get('name')} in **{r.get('building')}** {r.get('floor')}"
+            f"\n\t{e} {r.get('value')} in **{r.get('building')}** {r.get('floor')}"
             for r, e in zip(rooms, emojis)
         )
         conf_message = await ctx.send(header + rooms_text)
         for e in emojis:
             await conf_message.add_reaction(e)
 
+        # Wait for reaction
         try:
             check = (
                 lambda r, u: r.message.id == conf_message.id
@@ -120,31 +125,44 @@ class RoomSearch(commands.Cog):
             )
         except TimeoutError:
             return None
+        finally:
+            await conf_message.delete()
 
+        # Get choice
         ind = emojis.index(str(react_emoji))
-        return rooms.get(ind)
+        return rooms[ind]
 
     def get_room_infos(self, room):
-        # Swap with campus map autocomplete for more reliability? but that need auth
-        map_req = req_or_none(f"https://search.warwick.ac.uk/api/maps?q={room}")
-        if map_req is None or not map_req.get("total"):
+        # Check Map Autocomplete API
+        map_req = req_or_none(
+            f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
+            headers={"Authorization": "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"},
+        )
+        if map_req is None:
             return []
-
-        return self.remove_duplicate_rooms(map_req.get("results"))
+        return self.remove_duplicate_rooms(map_req)
 
     def remove_duplicate_rooms(self, rooms):
-        ms_room = next(
-            (r for r in rooms if r.get("building") == "Mathematical Sciences"), None
+        # Map has duplicate entries for MSB for some reason
+        rooms = self.remove_duplicate_building(
+            rooms, "Mathematical Sciences", "Mathematical Sciences Building"
         )
-        msb_room = next(
-            (r for r in rooms if r.get("building") == "Mathematical Sciences Building"),
-            None,
-        )
-        if ms_room and msb_room:
-            rooms.remove(msb_room)
+        return rooms
+
+    def remove_duplicate_building(self, rooms, orig, copy):
+        orig_rooms = [r for r in rooms if r.get("building") == orig]
+        fake_rooms = [r for r in rooms if r.get("building") == copy]
+        for orig_room in orig_rooms:
+            fake_room = next(
+                (r for r in fake_rooms if orig_room.get("value") == r.get("value")),
+                None,
+            )
+            if fake_room:
+                rooms.remove(fake_room)
         return rooms
 
     def is_central(self, room_name):
+        # Checks if room is centrally timetabled from central-room-data.json (from Tabula)
         for building in self.central_rooms:
             for r in building.get("rooms"):
                 if r.get("name") == room_name:
