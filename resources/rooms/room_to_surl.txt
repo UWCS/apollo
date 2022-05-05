@@ -320,6 +320,7 @@ A0.42 | a042
 A1.50 | a150
 BSR3 | bsr3
 BSR5 | bsr5
+Computer Science Teaching Room | #SPLUS87B2A0
 A0.05 (Soc Sci) | a005
 A0.23 (Soc Sci) | a023
 A0.26 (Millburn) | a026

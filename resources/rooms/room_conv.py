@@ -19,6 +19,9 @@ def read_mapping(filename):
 tabtonames = read_mapping("tabula-sciencianame.txt")
 nametourl = read_mapping("scientianame-url.txt")
 
+custom_names = {
+    "Computer Science Teaching Room": "CS_MB0.01"
+}
 
 # Custom mappings
 custom_tabtoname = {
@@ -39,11 +42,11 @@ custom_tabtoname = {
 
 print("Missing Conversions")
 mapping = {}
-for tab in tabtonames:
+for tab, n in (tabtonames | custom_names).items():
     if tab in custom_tabtoname:
         name = custom_tabtoname[tab]
     else:
-        name = tabtonames.get(tab)
+        name = n
     url = nametourl.get(name)
     if url is None:
         url = nametourl.get(tab)

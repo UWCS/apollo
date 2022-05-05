@@ -40,9 +40,13 @@ class RoomSearch(commands.Cog):
 
         raw = (room_resource_root / "central-room-data.json").read_text()
         self.central_rooms = json.loads(raw)
+        self.custom_room_names = read_mapping(
+            room_resource_root / "room-mapname.txt"
+        )
         self.timetable_room_mapping = read_mapping(
             room_resource_root / "room_to_surl.txt"
         )
+
 
     @commands.command()
     async def room(self, ctx: Context, name: str):
@@ -83,7 +87,6 @@ class RoomSearch(commands.Cog):
             )
         # Timetable
         if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
-            year = time.strftime("%y")
             embed.add_field(
                 name="Timetable:",
                 value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS2122/roomtimetable.asp?id={quote(tt_room_id)})**",
@@ -133,6 +136,9 @@ class RoomSearch(commands.Cog):
         return rooms[ind]
 
     def get_room_infos(self, room):
+        stripped = room.replace(".", "").replace(" ", "").lower()
+        if new := self.custom_room_names.get(stripped):
+            room = new
         # Check Map Autocomplete API
         map_req = req_or_none(
             f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
