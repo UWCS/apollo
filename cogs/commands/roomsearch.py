@@ -67,6 +67,7 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
+            
         # Room info
         embed = discord.Embed(
             title=f"Room Search: {room.get('value')}",
