@@ -8,7 +8,7 @@ from discord.ext.commands import Bot, Context
 from pathlib import Path
 import json
 from urllib.parse import quote
-from datetime import datetime
+from datetime import datetime, date, time
 
 room_resource_root = Path() / "resources" / "rooms"
 
@@ -170,10 +170,14 @@ class RoomSearch(commands.Cog):
         return rooms
 
     def get_week(self):
-        current = datetime.now()
         # Definitely don't need to check each request
         # Only check if last request was before today
-        if self.last_week_check is None or self.last_week_check.date < current.date:
+        today = datetime.combine(date.today(), time.min)
+
+        if self.last_week_check is None or self.last_week_check < today:
+            current = datetime.now()
+            self.last_week_check = current
+            print("Checking week")
             weeks_json = req_or_none(
                 "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
             ).get("weeks")
