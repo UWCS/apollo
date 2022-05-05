@@ -4,7 +4,8 @@ import discord
 import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
-
+from pathlib import Path
+import json
 
 def req_or_none(url):
     r = requests.get(url)
@@ -23,6 +24,9 @@ class RoomSearch(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.full_emojis = ("1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟")
+
+        raw = (Path() / "resources" / "rooms" / "central-room-data.json").read_text()
+        self.central_rooms = json.loads(raw)
 
     @commands.command()
     async def room(self, ctx: Context, name: str):
@@ -43,15 +47,21 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
-        desc = "\n".join([
-            f"Building: **{room.get('building')} {room.get('floor')}**",
-            f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
-            f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room.get('name').replace('.', '')})**",
-            f"`Timetable coming soon?`",
-            f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room.get('roomCapacity', '-')}"
-        ])
+        # desc = "\n".join([
+        #     f"Building: **{room.get('building')} {room.get('floor')}**",
+        #     f"**[Campus Map](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
+        #     f"**[Room Info (if centrally timetabled)](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{room.get('name').replace('.', '')})**",
+        #     f"`Timetable coming soon?`",
+        #     f"[Warwick Search](https://search.warwick.ac.uk/?q={name}) Room Capacity: {room.get('roomCapacity', '-')}"
+        # ])
 
-        embed = discord.Embed(title=f"Room Search: {room.get('name')}", description=desc)
+        # Room info
+        embed = discord.Embed(title=f"Room Search: {room.get('name')}", description=f"Building: **{room.get('building')} {room.get('floor')}**")
+        # Campus Map
+        embed.add_field(name="Campus Map:", value=f"**[{room.get('name')}](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**", inline=True)
+        # Room info (for centrally timetabled rooms)
+        if url := self.is_central(room.get('name')):
+            embed.add_field(name="Room Info:", value=f"**[{room.get('name')}](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url})**", inline=True)
 
         img = discord.File(
             req_img(f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"),
@@ -102,6 +112,12 @@ class RoomSearch(commands.Cog):
             rooms.remove(msb_room)
         return rooms
 
+    def is_central(self, room_name):
+        for building in self.central_rooms:
+            for r in building.get("rooms"):
+                print(room_name, r.get("name"), r.get("url"))
+                if r.get("name") == room_name: return r.get("url")
+        return None
 
 def setup(bot: Bot):
     bot.add_cog(RoomSearch(bot))
