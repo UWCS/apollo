@@ -484,7 +484,11 @@ class TokenOperator(IToken):
         except ZeroDivisionError:
             raise rollerr.ZeroDivisionError(env.trace)
 
-        value = 1 if value else 0
+        # Convert True and False to 1 and 0, respectively. Leave other values alone.
+        if value is True:
+            value = 1
+        if value is False:
+            value = 0
         return TokenNumber(value)
 
     def substitute(self, old_to_new):
