@@ -1,4 +1,5 @@
 import ast
+import asyncio
 from io import BytesIO
 
 import discord
@@ -115,23 +116,35 @@ class RoomSearch(commands.Cog):
             for r, e in zip(rooms, emojis)
         )
         conf_message = await ctx.send(header + rooms_text)
-        for e in emojis:
-            await conf_message.add_reaction(e)
 
-        # Wait for reaction
-        try:
-            check = (
-                lambda r, u: r.message.id == conf_message.id
-                and u == ctx.message.author
-                and str(r.emoji) in emojis
-            )
-            react_emoji, _ = await ctx.bot.wait_for(
-                "reaction_add", check=check, timeout=60
-            )
-        except TimeoutError:
-            return None
-        finally:
-            await conf_message.delete()
+        # Add reacts to choice msg
+        async def add_reacts():
+            try:
+                for e in emojis:
+                    await conf_message.add_reaction(e)
+            except discord.NotFound: pass
+
+        # Check for user react on msg
+        async def check_reacts():
+            try:
+                check = (
+                    lambda r, u: r.message.id == conf_message.id
+                                 and u == ctx.message.author
+                                 and str(r.emoji) in emojis
+                )
+                react_emoji, _ = await ctx.bot.wait_for(
+                    "reaction_add", check=check, timeout=30
+                )
+                return react_emoji
+            except TimeoutError:
+                return None
+            finally:
+                await conf_message.delete()
+
+        # Add and check in parallel, so don't miss quick react
+        _, react_emoji = await asyncio.gather(
+            add_reacts(), check_reacts()
+        )
 
         # Get choice
         ind = emojis.index(str(react_emoji))
@@ -177,7 +190,6 @@ class RoomSearch(commands.Cog):
         if self.last_week_check is None or self.last_week_check < today:
             current = datetime.now()
             self.last_week_check = current
-            print("Checking week")
             weeks_json = req_or_none(
                 "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
             ).get("weeks")
