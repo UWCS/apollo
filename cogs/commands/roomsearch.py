@@ -50,6 +50,12 @@ class RoomSearch(commands.Cog):
         self.week = None
 
     @commands.command()
+    async def roompr(self, ctx: Context):
+        await ctx.reply("This bot uses the Campus Map's API (<https://campus.warwick.ac.uk/>)."
+                        "If a name is wrong/missing on there, either ask exec to add it, "
+                        "or create a PR to add an alias in `resources/rooms/room-mapname.txt`")
+
+    @commands.command()
     async def room(self, ctx: Context, name: str):
         """Warwick Room Search
 
@@ -58,7 +64,7 @@ class RoomSearch(commands.Cog):
         rooms = self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
-                "Room does not exist. Ensure you are giving the full name"
+                "Room does not exist. Try a more general search, or suggest a room alias (more info with `!roompr`)"
             )
 
         if len(rooms) > 1:
@@ -68,43 +74,50 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
-        # Room info
-        embed = discord.Embed(
-            title=f"Room Search: {room.get('value')}",
-            description=f"Building: **{room.get('building')} {room.get('floor')}**",
-        )
-        # Campus Map
-        embed.add_field(
-            name="Campus Map:",
-            value=f"**[{room.get('value')}](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
-            inline=True,
-        )
-        # Room info (for centrally timetabled rooms)
-        if url := self.is_central(room.get("value")):
-            embed.add_field(
-                name="Room Info:",
-                value=f"**[{room.get('value')}](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url})**",
-                inline=True,
+        with ctx.typing():
+            # Room info
+            embed = discord.Embed(
+                title=f"Room Search: {room.get('value')}",
+                description=f"Building: **{room.get('building')} {room.get('floor')}**",
             )
-        # Timetable
-        if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
-            self.get_week()
+
+            # Campus Map
             embed.add_field(
-                name="Timetable:",
-                value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)})**\n"
-                f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week+1})\n",
+                name="Campus Map:",
+                value=f"**[{room.get('value')}](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
                 inline=True,
             )
 
-        img = discord.File(
-            req_img(
-                f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"
-            ),
-            filename="map.png",
-        )
-        embed.set_image(url="attachment://map.png")
+            # Room info (for centrally timetabled rooms)
+            if url := self.is_central(room.get("value")):
+                embed.add_field(
+                    name="Room Info:",
+                    value=f"**[{room.get('value')}](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url})**",
+                    inline=True,
+                )
 
-        await ctx.reply(embed=embed, file=img)
+            # Timetable
+            if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
+                self.get_week()
+                embed.add_field(
+                    name="Timetable:",
+                    value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)})**\n"
+                    f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week+1})\n",
+                    inline=True,
+                )
+
+            # embed.set_image(url=f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}")
+            # Slows command down quite a lot, but Discord can't take images without extensions
+            img = discord.File(
+                req_img(
+                    f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"
+                ),
+                filename="map.png",
+            )
+            embed.set_image(url="attachment://map.png")
+            embed.set_footer(text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more")
+
+            await ctx.reply(embed=embed, file=img)
 
     async def choose_room(self, ctx, rooms):
         # Confirms room choice, esp. important with autocomplete api
