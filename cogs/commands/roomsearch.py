@@ -56,7 +56,7 @@ class RoomSearch(commands.Cog):
                         "or create a PR to add an alias in `resources/rooms/room-mapname.txt`")
 
     @commands.command()
-    async def room(self, ctx: Context, name: str):
+    async def room(self, ctx: Context, *, name: str):
         """Warwick Room Search
 
         Finds a room on the various Warwick systems.
