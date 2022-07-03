@@ -18,6 +18,8 @@ class Config:
         self.BOT_SECRET_KEY: str = parsed.get("bot_secret_key")
         self.KARMA_TIMEOUT: int = parsed.get("karma_timeout")
         self.REMINDER_SEARCH_INTERVAL: int = parsed.get("reminder_search_interval")
+        self.ANNOUNCEMENT_SEARCH_INTERVAL: int = parsed.get("announcement_search_interval")
+        self.ANNOUNCEMENT_IMPERSONATE: int = parsed.get("announcement_impersonate")
         self.UNICODE_NORMALISATION_FORM: str = "NFKD"
 
         self.UWCS_DISCORD_ID: int = parsed.get("UWCS_discord_id")
