@@ -4,7 +4,7 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, MissingPermissions
 from humanize import precisedelta
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
@@ -27,21 +27,37 @@ async def announcement_check(bot):
         now = datetime.now()
         announcements = (
             db_session.query(Announcement)
-            .filter(Announcement.trigger_at <= now, Announcement.triggered == False)  # noqa 712
+            .filter(Announcement.trigger_at <= now, Announcement.triggered == False)
             .all()
         )
+        print(announcements)
         for r in announcements:
+            print(r)
+            name, avatar = None, None
             if r.irc_name:
                 display_name = r.irc_name
             else:
                 author_uid = r.user.user_uid
-                display_name = f"<@{author_uid}>"
+                author = bot.get_user(author_uid)
+                name = author.name
+                avatar = author.avatar
+
             channel = bot.get_channel(r.playback_channel_id)
+            try:
+                webhooks = await channel.webhooks()
+                print(webhooks)
+                webhook = next((w for w in webhooks if w.name == "Apollo Announcements"), None)
+                if webhook is None:
+                    webhook = await channel.create_webhook(name="Apollo Announcements")
+            except MissingPermissions:
+                webhook = None
             message = r.announcement_content
             r.triggered = True
             db_session.commit()
+            print(channel, webhook, webhook.channel, webhook.guild, webhook.id, webhook.name, webhook.url)
+            webhook = None
 
-            await generate_announcement(channel, message)
+            await generate_announcement(channel, message, webhook, name, avatar)
 
         await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
 
@@ -109,6 +125,13 @@ class Announcements(commands.Cog):
                 logging.exception(e)
                 await ctx.send(f"Something went wrong")
 
+    # @announcement.command(
+    #     help='Add a announcement, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your announcement (rest of discord message).'
+    # )
+    # async def add(
+    #         self, ctx: Context, channel: discord.TextChannel, trigger_time: DateTimeConverter, *,
+    #         announcement_content: str
+    # ):
 
 def setup(bot: Bot):
     bot.add_cog(Announcements(bot))

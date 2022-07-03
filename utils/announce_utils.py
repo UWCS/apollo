@@ -8,18 +8,22 @@ font: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-SemiBold.tt
 subfont: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-Medium.ttf", 45)
 
 
-async def generate_announcement(channel, text):
+async def generate_announcement(channel, text, webhook=None, username=None, avatar=None):
     lines = text.split("\n")
     accumulated_lines = []
     messages = []
 
     # Wrappers for adding message to messages after sending
     async def send(**kwargs):
-        messages.append(await channel.send(**kwargs))
+        if webhook is not None:
+            kwargs = {"username": username, "avatar_url": avatar} | kwargs  # Default name and avatar to func args, but allow overwrite in send args
+            messages.append(await webhook.send(**kwargs))
+        else:
+            messages.append(await channel.send(**kwargs))
 
     async def send_lines():
         concat = "\n".join(accumulated_lines)
-        try: await send(content=utils.replace_external_emoji(channel, concat))
+        try: await send(content=utils.replace_external_emoji(channel.guild, concat))
         except discord.HTTPException: pass
         accumulated_lines.clear()
 
