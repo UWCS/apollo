@@ -17,6 +17,8 @@ async def generate_announcement(channel, text, webhook=None, username=None, avat
     accumulated_lines = []
     messages = []
 
+    if webhook is None: print("No webhook exists")
+
     # Wrappers for adding message to messages after sending
     async def send(**kwargs):
         if webhook is not None:
