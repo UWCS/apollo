@@ -1,4 +1,8 @@
+import inspect
 import re
+
+from discord.ext.commands import Context
+
 import utils
 import discord
 from PIL import Image, ImageFont, ImageDraw
@@ -16,7 +20,7 @@ async def generate_announcement(channel, text, webhook=None, username=None, avat
     # Wrappers for adding message to messages after sending
     async def send(**kwargs):
         if webhook is not None:
-            kwargs = {"username": username, "avatar_url": avatar} | kwargs  # Default name and avatar to func args, but allow overwrite in send args
+            kwargs = {"username": username, "avatar_url": avatar, "wait": True} | kwargs  # Default name and avatar to func args, but allow overwrite in send args
             messages.append(await webhook.send(**kwargs))
         else:
             messages.append(await channel.send(**kwargs))
@@ -86,3 +90,49 @@ def to_file(img):
         img.save(img_bin, 'PNG')
         img_bin.seek(0)
         return discord.File(fp=img_bin, filename='title.png')
+
+
+# Confirm messages
+async def confirmation(ctx: Context, title: str, body: str, reactions, interact_func, timeout_func, timeout=60, content="", fields=None):
+    """
+    Posts an embed with the prompt.
+    If the author reacts with one of given reactions before timeout, interact_func will be called.
+    Otherwise, timeout_func will be called
+    """
+    kwargs = {}
+    if title or body:
+        embed = discord.Embed(title=title, description=body)
+        if fields:
+            for f in fields:
+                if isinstance(f, dict): embed.add_field(**f)
+                if isinstance(f, list) or isinstance(f, tuple): embed.add_field(name=f[0], value=f[1], inline=False)
+        kwargs["embed"] = embed
+    if content: kwargs["content"] = content
+
+    msg: discord.Message = await ctx.send(**kwargs)
+    for em in reactions:
+        await msg.add_reaction(em)
+
+    try:
+        r, _ = await ctx.bot.wait_for("reaction_add",
+                      check=lambda r, u: r.message.id == msg.id and u == ctx.message.author and str(r.emoji) in reactions,
+                      timeout=timeout)
+        return await pack_and_call(interact_func, m=msg, msg=msg, message=msg, r=r, react=r, reaction=r, emoji=r)
+    except TimeoutError:
+        return await pack_and_call(timeout_func, m=msg, msg=msg, message=msg)
+
+
+async def pack_and_call(f, **kwargs):
+    """Matches args of the interact/timeout function to the ones given"""
+    fkwargs = {}
+    for fa in inspect.signature(f).parameters:
+            fkwargs[fa] = kwargs[fa]
+    return await discord.utils.maybe_coroutine(f, **fkwargs)
+
+
+async def nothing(*args):
+    pass
+
+
+async def delete_msg(msg: discord.Message):
+    await msg.delete()
