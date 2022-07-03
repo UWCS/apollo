@@ -29,7 +29,7 @@ def get_user_name(irc_name, user_uid, bot):
         author_uid = user_uid
         author = bot.get_user(author_uid)
         name = author.name
-        avatar = author.avatar
+        avatar = author.avatar_url
     return name, avatar
 
 async def get_webhook(channel):
@@ -82,7 +82,7 @@ class Announcements(commands.Cog):
     async def preview_announcement(self, ctx, announcement_content: str, preview: bool = True):
         channel = ctx.channel
         webhook = await get_webhook(channel)
-        messages = await generate_announcement(channel, announcement_content, webhook, ctx.author.name, ctx.author.avatar)
+        messages = await generate_announcement(channel, announcement_content, webhook, ctx.author.name, ctx.author.avatar_url)
 
         # Function for reaction to interact with message
         async def interact(msg, reaction):
@@ -169,8 +169,6 @@ async def announcement_check(bot):
             message = a.announcement_content
             a.triggered = True
             db_session.commit()
-
-            print(channel, webhook, webhook.channel, webhook.guild, webhook.id, webhook.name, webhook.url)
 
             await generate_announcement(channel, message, webhook, name, avatar)
 

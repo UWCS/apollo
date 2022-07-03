@@ -17,13 +17,11 @@ async def generate_announcement(channel, text, webhook=None, username=None, avat
     accumulated_lines = []
     messages = []
 
-    if webhook is None: print("No webhook exists")
-
     # Wrappers for adding message to messages after sending
     async def send(**kwargs):
         if webhook is not None:
-            kwargs = {"username": username, "avatar_url": avatar, "wait": True} | kwargs  # Default name and avatar to func args, but allow overwrite in send args
-            messages.append(await webhook.send(**kwargs))
+            kwargs = {"username": username, "avatar_url": avatar} | kwargs  # Default name and avatar to func args, but allow overwrite in send args
+            messages.append(await webhook.send(wait=True, **kwargs))
         else:
             messages.append(await channel.send(**kwargs))
 
