@@ -13,7 +13,7 @@ from config import CONFIG
 from models import Announcement, db_session
 from utils import DateTimeConverter, get_database_user, get_name_string, user_is_irc_bot, is_compsoc_exec_in_guild
 
-from utils.announce_utils import generate_announcement
+from utils.announce_utils import generate_announcement, confirmation
 
 LONG_HELP_TEXT = """
 Add announcements for yourself or remove the last one you added.
@@ -33,33 +33,43 @@ async def announcement_check(bot):
         print(announcements)
         for r in announcements:
             print(r)
-            name, avatar = None, None
-            if r.irc_name:
-                display_name = r.irc_name
-            else:
-                author_uid = r.user.user_uid
-                author = bot.get_user(author_uid)
-                name = author.name
-                avatar = author.avatar
 
             channel = bot.get_channel(r.playback_channel_id)
-            try:
-                webhooks = await channel.webhooks()
-                print(webhooks)
-                webhook = next((w for w in webhooks if w.name == "Apollo Announcements"), None)
-                if webhook is None:
-                    webhook = await channel.create_webhook(name="Apollo Announcements")
-            except MissingPermissions:
-                webhook = None
+            webhook = await get_webhook(channel)
+
+            name, avatar = get_user_name(r.irc_name, r.user_uid, bot)
             message = r.announcement_content
             r.triggered = True
             db_session.commit()
+
             print(channel, webhook, webhook.channel, webhook.guild, webhook.id, webhook.name, webhook.url)
             webhook = None
 
             await generate_announcement(channel, message, webhook, name, avatar)
 
         await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
+
+async def get_user_name(irc_name, user_uid, bot):
+    name, avatar = None, None
+    if irc_name:
+        name = irc_name
+    else:
+        author_uid = user_uid
+        author = bot.get_user(author_uid)
+        name = author.name
+        avatar = author.avatar
+    return name, avatar
+
+async def get_webhook(channel):
+    try:
+        webhooks = await channel.webhooks()
+        print(webhooks)
+        webhook = next((w for w in webhooks if w.name == "Apollo Announcements"), None)
+        if webhook is None:
+            webhook = await channel.create_webhook(name="Apollo Announcements")
+        return webhook
+    except MissingPermissions:
+        return None
 
 
 class Announcements(commands.Cog):
@@ -88,6 +98,8 @@ class Announcements(commands.Cog):
         elif trigger_time < now:
             await ctx.send("That time is in the past.")
         else:
+            self.preview_announcement()
+
             # HURRAY the time is valid and not in the past, add the announcement
             display_name = get_name_string(ctx.message)
 
@@ -125,13 +137,37 @@ class Announcements(commands.Cog):
                 logging.exception(e)
                 await ctx.send(f"Something went wrong")
 
-    # @announcement.command(
-    #     help='Add a announcement, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your announcement (rest of discord message).'
-    # )
-    # async def add(
-    #         self, ctx: Context, channel: discord.TextChannel, trigger_time: DateTimeConverter, *,
-    #         announcement_content: str
-    # ):
+    @announcement.command(help='Preview the rendering of a announcement')
+    async def preview(self, ctx: Context, *, announcement_content: str):
+        channel = ctx.channel
+        webhook = await get_webhook(channel)
+
+        messages = await generate_announcement(channel, announcement_content, webhook)
+
+        # Function for reaction to interact with message
+        async def interact(msg, reaction):
+            await msg.delete()
+            # If edit or delete, remove old messages
+            if str(reaction) in {"❌", "✏️"}:
+                for ann_msg in messages:
+                    await ann_msg.delete()
+
+                if str(reaction) == "✏️":
+                    edit_msg: discord.Message = await ctx.fetch_message(ctx.message.id)
+                    await ctx.bot.process_commands(edit_msg)
+                return
+
+            await ctx.send(f"Preview Complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
+
+        async def timeout(msg):
+            await ctx.send(f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`")
+            for ann_msg in messages:
+                await ann_msg.delete()
+
+        await confirmation(ctx, f"Edit Preview", "  ✅ to finalize\n  ✏️ to edit (make changes in source first)\n  ❌ to cancel", ["✅", "✏️", "❌"], interact, timeout, 300)
+
+
+
 
 def setup(bot: Bot):
     bot.add_cog(Announcements(bot))
