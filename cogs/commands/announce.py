@@ -26,7 +26,7 @@ def get_user_name(irc_name, user_uid, bot):
     if irc_name:
         name = irc_name
     else:
-        author_uid = user_uid
+        author_uid = user_uid if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot.user.id
         author = bot.get_user(author_uid)
         name = author.name
         avatar = author.avatar_url
@@ -82,7 +82,9 @@ class Announcements(commands.Cog):
     async def preview_announcement(self, ctx, announcement_content: str, preview: bool = True):
         channel = ctx.channel
         webhook = await get_webhook(channel)
+        prev_msg = await channel.send("**Announcement Preview:**")
         messages = await generate_announcement(channel, announcement_content, webhook, ctx.author.name, ctx.author.avatar_url)
+        messages = [prev_msg] + messages
 
         # Function for reaction to interact with message
         async def interact(msg, reaction):
@@ -99,9 +101,7 @@ class Announcements(commands.Cog):
                     await ctx.bot.process_commands(edit_msg)
                 return
 
-            if preview:
-                await ctx.send(f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
-
+            if preview: await ctx.send(f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
             return True
 
         async def timeout(msg):
@@ -141,9 +141,9 @@ class Announcements(commands.Cog):
         db_session.add(new_announcement)
         try:
             db_session.commit()
-            await ctx.send(
-                f"Announcement prepared, but note granularity is set at {precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit='seconds')})."
-            )
+            time_to = precisedelta(trigger_time, minimum_unit='seconds')
+            gran = precisedelta(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL, minimum_unit='seconds')
+            await ctx.send(f"Announcement prepared for in {time_to} (granularity is {gran}.")
 
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
@@ -172,7 +172,7 @@ async def announcement_check(bot):
 
             await generate_announcement(channel, message, webhook, name, avatar)
 
-        await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
+        await asyncio.sleep(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL)
 
 
 def setup(bot: Bot):

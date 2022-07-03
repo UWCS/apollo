@@ -17,5 +17,7 @@ config:
   debug: True     # Unused
   reminder_search_interval: 30
   channel_check_interval: 60
+  announcement_search_interval: 60
+  announcement_impersonate: True
   slicer_path: /path/to/prusa-slicer
   printer_file_root: /path/to/print/files
