@@ -26,8 +26,7 @@ def get_user_name(irc_name, user_uid, bot):
     if irc_name:
         name = irc_name
     else:
-        author_uid = user_uid if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot.user.id
-        author = bot.get_user(author_uid)
+        author = bot.get_user(user_uid) if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot.user
         name = author.name
         avatar = author.avatar_url
     return name, avatar
@@ -82,8 +81,10 @@ class Announcements(commands.Cog):
     async def preview_announcement(self, ctx, announcement_content: str, preview: bool = True):
         channel = ctx.channel
         webhook = await get_webhook(channel)
+
         prev_msg = await channel.send("**Announcement Preview:**")
-        messages = await generate_announcement(channel, announcement_content, webhook, ctx.author.name, ctx.author.avatar_url)
+        author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else ctx.bot.user
+        messages = await generate_announcement(channel, announcement_content, webhook, author.name, author.avatar_url)
         messages = [prev_msg] + messages
 
         # Function for reaction to interact with message
