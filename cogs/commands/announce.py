@@ -21,17 +21,8 @@ Add announcements for yourself or remove the last one you added.
 SHORT_HELP_TEXT = """Add or remove announcements."""
 
 
-def get_user_name(irc_name, user_uid, bot):
-    name, avatar = None, None
-    if irc_name:
-        name = irc_name
-    else:
-        author = bot.get_user(user_uid) if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot.user
-        name = author.name
-        avatar = author.avatar_url
-    return name, avatar
-
 async def get_webhook(channel):
+    """Finds announcement webhook, or creates it necessary"""
     try:
         webhooks = await channel.webhooks()
         webhook = next((w for w in webhooks if w.name == "Apollo Announcements"), None)
@@ -52,9 +43,7 @@ class Announcements(commands.Cog):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found.")
 
-    @announcement.command(
-        help='Add a announcement, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your announcement (rest of discord message).'
-    )
+    @announcement.command(help='Add a announcement, ensure time is in quotation marks if multiple words, the announcement is the rest of discord message.')
     async def add(self, ctx: Context, channel: discord.TextChannel, trigger_time: DateTimeConverter, *, announcement_content: str):
         # Function very similar to reminders
         if not await is_compsoc_exec_in_guild(ctx):
@@ -70,7 +59,7 @@ class Announcements(commands.Cog):
         if not result: return
 
         # The time is valid and not in the past, add the announcement
-        await self.add_announcement(ctx, channel, trigger_time, announcement_content)
+        await add_announcement(ctx, channel, trigger_time, announcement_content)
 
 
     @announcement.command(help='Preview the rendering of a announcement')
@@ -79,80 +68,19 @@ class Announcements(commands.Cog):
 
 
     async def preview_announcement(self, ctx, announcement_content: str, preview: bool = True):
+        """Posts preview to command channel"""
         channel = ctx.channel
         webhook = await get_webhook(channel)
 
         prev_msg = await channel.send("**Announcement Preview:**")
-        author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else ctx.bot.user
+        author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else self.bot.user
         messages = await generate_announcement(channel, announcement_content, webhook, author.name, author.avatar_url)
         messages = [prev_msg] + messages
-
-        # Function for reaction to interact with message
-        async def interact(msg, reaction):
-            await msg.delete()
-            # If edit or delete, remove old messages
-            if str(reaction) in {"❌", "✏️"}:
-                for ann_msg in messages:
-                    await ann_msg.delete()
-
-                if str(reaction) == "❌":
-                    await ctx.send("Announcement cancelled")
-                if str(reaction) == "✏️":
-                    edit_msg: discord.Message = await ctx.fetch_message(ctx.message.id)
-                    await ctx.bot.process_commands(edit_msg)
-                return
-
-            if preview: await ctx.send(f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
-            return True
-
-        async def timeout(msg):
-            await msg.delete()
-            await ctx.send(f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`")
-            for ann_msg in messages:
-                await ann_msg.delete()
-            return False
-
-        return await confirmation(ctx, f"Edit Preview",
-                           f"  ✅ to {'finalize' if preview else 'schedule announcement'}\n  ✏️ to edit (make changes in source first)\n  ❌ to cancel",
-                           ["✅", "✏️", "❌"], interact, timeout, 300)
-
-
-    async def add_announcement(self, ctx, channel, trigger_time, announcement_content):
-        display_name = get_name_string(ctx.message)
-        # Set the id to a random value if the author was the bridge bot, since we won't be using it anyway
-        # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
-        if user_is_irc_bot(ctx):
-            author_id = 1
-            irc_n = display_name
-        else:
-            author_id = get_database_user(ctx.author).id
-            irc_n = None
-
-        trig_at = trigger_time
-        trig = False
-        playback_ch_id = channel.id
-        new_announcement = Announcement(
-            user_id=author_id,
-            announcement_content=announcement_content,
-            trigger_at=trig_at,
-            triggered=trig,
-            playback_channel_id=playback_ch_id,
-            irc_name=irc_n,
-        )
-        db_session.add(new_announcement)
-        try:
-            db_session.commit()
-            time_to = precisedelta(trigger_time, minimum_unit='seconds')
-            gran = precisedelta(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL, minimum_unit='seconds')
-            await ctx.send(f"Announcement prepared for in {time_to} (granularity is {gran}.")
-
-        except (ScalarListException, SQLAlchemyError) as e:
-            db_session.rollback()
-            logging.exception(e)
-            await ctx.send(f"Something went wrong")
+        return await preview_edit_menu(ctx, messages, announcement_content, preview)
 
 
 async def announcement_check(bot):
+    """Checks for any announcements that need to be posted and haven't"""
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now()
@@ -166,7 +94,14 @@ async def announcement_check(bot):
             channel = bot.get_channel(a.playback_channel_id)
             webhook = await get_webhook(channel)
 
-            name, avatar = get_user_name(a.irc_name, a.user.user_uid, bot)
+            name, avatar = None, None
+            if a.irc_name:
+                name = a.irc_name
+            else:
+                author = bot.get_user(a.user.user_uid) if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot.user
+                name = author.name
+                avatar = author.avatar_url
+
             message = a.announcement_content
             a.triggered = True
             db_session.commit()
@@ -174,6 +109,72 @@ async def announcement_check(bot):
             await generate_announcement(channel, message, webhook, name, avatar)
 
         await asyncio.sleep(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL)
+
+
+async def preview_edit_menu(ctx, messages, announcement_content, preview):
+    """Menu to post, edit or cancel preview"""
+    async def interact(msg, reaction):
+        """Function called on user react to menu"""
+        await msg.delete()
+        # If edit or delete, remove old messages
+        if str(reaction) in {"❌", "✏️"}:
+            for ann_msg in messages:
+                await ann_msg.delete()
+
+            if str(reaction) == "❌":
+                await ctx.send("Announcement cancelled")
+            if str(reaction) == "✏️":
+                edit_msg: discord.Message = await ctx.fetch_message(ctx.message.id)
+                await ctx.bot.process_commands(edit_msg)
+            return False
+
+        if preview: await ctx.send(f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
+        for ann_msg in messages:
+            await ann_msg.delete()
+        return True
+
+    async def timeout(msg):
+        """Function called if timeout (currently 5 mins) if reached"""
+        await msg.delete()
+        await ctx.send(f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`")
+        for ann_msg in messages:
+            await ann_msg.delete()
+        return False
+
+    return await confirmation(ctx, f"Edit Preview",
+                       f"  ✅ to {'finalize' if preview else 'schedule announcement'}\n  ✏️ to edit (make changes in source first)\n  ❌ to cancel",
+                       ["✅", "✏️", "❌"], interact, timeout, 300)
+
+
+async def add_announcement(ctx, channel, trigger_time, announcement_content):
+    display_name = get_name_string(ctx.message)
+    # Set the id to a random value if the author was the bridge bot, since we won't be using it anyway
+    # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
+    if user_is_irc_bot(ctx):
+        author_id = 1
+        irc_n = display_name
+    else:
+        author_id = get_database_user(ctx.author).id
+        irc_n = None
+
+    new_announcement = Announcement(
+        user_id=author_id,
+        announcement_content=announcement_content,
+        trigger_at=trigger_time,
+        triggered=False,
+        playback_channel_id=channel.id,
+        irc_name=irc_n,
+    )
+    db_session.add(new_announcement)
+    try:
+        db_session.commit()
+        gran = precisedelta(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL, minimum_unit='seconds')
+        await ctx.send(f"Announcement prepared for <t:{int(trigger_time.timestamp())}:R> (granularity is {gran}).")
+
+    except (ScalarListException, SQLAlchemyError) as e:
+        db_session.rollback()
+        logging.exception(e)
+        await ctx.send(f"Something went wrong")
 
 
 def setup(bot: Bot):
