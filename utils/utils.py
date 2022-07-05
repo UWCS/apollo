@@ -8,7 +8,6 @@ import discord
 from discord.ext.commands import CommandError, Context
 from more_itertools import partition
 
-import apollo
 import models
 from config import CONFIG
 from models import db_session
@@ -214,8 +213,9 @@ def replace_external_emoji(guild, string):
         if match.group(2):
             e: discord.Emoji = discord.utils.get(guild.emojis, name=match.group(2))
             if e is None:
+                from apollo import bot
 
-                e = discord.utils.get(apollo.bot.emojis, name=match.group(2))
+                e = discord.utils.get(bot.emojis, name=match.group(2))
             if e is not None:
                 return match.group(1) + str(e)
         return match.group(0)
