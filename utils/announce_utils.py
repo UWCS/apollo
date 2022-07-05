@@ -13,12 +13,13 @@ subfont: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-Medium.t
 
 
 async def generate_announcement(channel, text, webhook=None, username=None, avatar=None):
+    """Interprets actual announcement text into titles, images, etc."""
     lines = text.split("\n")
     accumulated_lines = []
     messages = []
 
-    # Wrappers for adding message to messages after sending
     async def send(**kwargs):
+        """Send wrapper. Adds sent message to messages, and posts to webhook if possible"""
         if webhook is not None:
             kwargs = {"username": username, "avatar_url": avatar} | kwargs  # Default name and avatar to func args, but allow overwrite in send args
             messages.append(await webhook.send(wait=True, **kwargs))
@@ -26,6 +27,7 @@ async def generate_announcement(channel, text, webhook=None, username=None, avat
             messages.append(await channel.send(**kwargs))
 
     async def send_lines():
+        """Posts all of accumulated wrapper"""
         concat = "\n".join(accumulated_lines)
         try: await send(content=utils.replace_external_emoji(channel.guild, concat))
         except discord.HTTPException: pass
@@ -38,8 +40,9 @@ async def generate_announcement(channel, text, webhook=None, username=None, avat
         title_group = re.search(r"^# ?(.+)$", line)
         img_group = re.search(r"^IMG (.+)$", line)
         break_group = re.search(r"^BREAK$", line)
-        # Empty out any lines
+        # Carry out any action
         if sub_group or title_group or img_group or break_group:
+            # Send pending lines before special line
             if accumulated_lines: await send_lines()
 
             if sub_group:  # Subtitle
@@ -85,6 +88,7 @@ def create_subtitle(title):
 
     return to_file(img)
 
+
 def to_file(img):
     with io.BytesIO() as img_bin:
         img.save(img_bin, 'PNG')
@@ -97,7 +101,7 @@ async def confirmation(ctx: Context, title: str, body: str, reactions, interact_
     """
     Posts an embed with the prompt.
     If the author reacts with one of given reactions before timeout, interact_func will be called.
-    Otherwise, timeout_func will be called
+    Otherwise on timeout, timeout_func will be called
     """
     kwargs = {}
     if title or body:
@@ -124,6 +128,7 @@ async def confirmation(ctx: Context, title: str, body: str, reactions, interact_
 
 async def pack_and_call(f, **kwargs):
     """Matches args of the interact/timeout function to the ones given"""
+    # Probably could replace with set params for interact function, but a little flexibility and overcomplication never hurt anyone, right?
     fkwargs = {}
     for fa in inspect.signature(f).parameters:
             fkwargs[fa] = kwargs[fa]
