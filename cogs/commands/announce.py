@@ -11,7 +11,13 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import Announcement, db_session
-from utils import DateTimeConverter, get_database_user, get_name_string, user_is_irc_bot, is_compsoc_exec_in_guild
+from utils import (
+    DateTimeConverter,
+    get_database_user,
+    get_name_string,
+    user_is_irc_bot,
+    is_compsoc_exec_in_guild,
+)
 
 from utils.announce_utils import generate_announcement, confirmation
 
@@ -43,8 +49,17 @@ class Announcements(commands.Cog):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found.")
 
-    @announcement.command(help='Add a announcement, ensure time is in quotation marks if multiple words, the announcement is the rest of discord message.')
-    async def add(self, ctx: Context, channel: discord.TextChannel, trigger_time: DateTimeConverter, *, announcement_content: str):
+    @announcement.command(
+        help="Add a announcement, ensure time is in quotation marks if multiple words, the announcement is the rest of discord message."
+    )
+    async def add(
+        self,
+        ctx: Context,
+        channel: discord.TextChannel,
+        trigger_time: DateTimeConverter,
+        *,
+        announcement_content: str,
+    ):
         # Function very similar to reminders
         if not await is_compsoc_exec_in_guild(ctx):
             return await ctx.send("Must be exec to use this command.")
@@ -56,25 +71,28 @@ class Announcements(commands.Cog):
             return await ctx.send("That time is in the past.")
 
         result = await self.preview_announcement(ctx, announcement_content, False)
-        if not result: return
+        if not result:
+            return
 
         # The time is valid and not in the past, add the announcement
         await add_announcement(ctx, channel, trigger_time, announcement_content)
 
-
-    @announcement.command(help='Preview the rendering of a announcement')
+    @announcement.command(help="Preview the rendering of a announcement")
     async def preview(self, ctx: Context, *, announcement_content: str):
         await self.preview_announcement(ctx, announcement_content, True)
 
-
-    async def preview_announcement(self, ctx, announcement_content: str, preview: bool = True):
+    async def preview_announcement(
+        self, ctx, announcement_content: str, preview: bool = True
+    ):
         """Posts preview to command channel"""
         channel = ctx.channel
         webhook = await get_webhook(channel)
 
         prev_msg = await channel.send("**Announcement Preview:**")
         author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else self.bot.user
-        messages = await generate_announcement(channel, announcement_content, webhook, author.name, author.avatar_url)
+        messages = await generate_announcement(
+            channel, announcement_content, webhook, author.name, author.avatar_url
+        )
         messages = [prev_msg] + messages
         return await preview_edit_menu(ctx, messages, announcement_content, preview)
 
@@ -98,7 +116,11 @@ async def announcement_check(bot):
             if a.irc_name:
                 name = a.irc_name
             else:
-                author = bot.get_user(a.user.user_uid) if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot.user
+                author = (
+                    bot.get_user(a.user.user_uid)
+                    if CONFIG.ANNOUNCEMENT_IMPERSONATE
+                    else bot.user
+                )
                 name = author.name
                 avatar = author.avatar_url
 
@@ -113,6 +135,7 @@ async def announcement_check(bot):
 
 async def preview_edit_menu(ctx, messages, announcement_content, preview):
     """Menu to post, edit or cancel preview"""
+
     async def interact(msg, reaction):
         """Function called on user react to menu"""
         await msg.delete()
@@ -128,7 +151,10 @@ async def preview_edit_menu(ctx, messages, announcement_content, preview):
                 await ctx.bot.process_commands(edit_msg)
             return False
 
-        if preview: await ctx.send(f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
+        if preview:
+            await ctx.send(
+                f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`"
+            )
         for ann_msg in messages:
             await ann_msg.delete()
         return True
@@ -136,14 +162,22 @@ async def preview_edit_menu(ctx, messages, announcement_content, preview):
     async def timeout(msg):
         """Function called if timeout (currently 5 mins) if reached"""
         await msg.delete()
-        await ctx.send(f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`")
+        await ctx.send(
+            f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`"
+        )
         for ann_msg in messages:
             await ann_msg.delete()
         return False
 
-    return await confirmation(ctx, f"Edit Preview",
-                       f"  ✅ to {'finalize' if preview else 'schedule announcement'}\n  ✏️ to edit (make changes in source first)\n  ❌ to cancel",
-                       ["✅", "✏️", "❌"], interact, timeout, 300)
+    return await confirmation(
+        ctx,
+        f"Edit Preview",
+        f"  ✅ to {'finalize' if preview else 'schedule announcement'}\n  ✏️ to edit (make changes in source first)\n  ❌ to cancel",
+        ["✅", "✏️", "❌"],
+        interact,
+        timeout,
+        300,
+    )
 
 
 async def add_announcement(ctx, channel, trigger_time, announcement_content):
@@ -168,8 +202,10 @@ async def add_announcement(ctx, channel, trigger_time, announcement_content):
     db_session.add(new_announcement)
     try:
         db_session.commit()
-        gran = precisedelta(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL, minimum_unit='seconds')
-        await ctx.send(f"Announcement prepared for <t:{int(trigger_time.timestamp())}:R> (granularity is {gran}).")
+        gran = precisedelta(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL, minimum_unit="seconds")
+        await ctx.send(
+            f"Announcement prepared for <t:{int(trigger_time.timestamp())}:R> (granularity is {gran})."
+        )
 
     except (ScalarListException, SQLAlchemyError) as e:
         db_session.rollback()

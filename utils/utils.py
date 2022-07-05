@@ -13,6 +13,8 @@ from config import CONFIG
 from models import db_session
 from utils.typing import Identifiable
 
+import apollo
+
 __all__ = [
     "AdminError",
     "EnumGet",
@@ -29,7 +31,7 @@ __all__ = [
     "partition_list",
     "pluralise",
     "user_is_irc_bot",
-    "replace_external_emoji"
+    "replace_external_emoji",
 ]
 
 
@@ -213,9 +215,10 @@ def replace_external_emoji(guild, string):
         if match.group(2):
             e: discord.Emoji = discord.utils.get(guild.emojis, name=match.group(2))
             if e is None:
-                from apollo import bot
-                e = discord.utils.get(bot.emojis, name=match.group(2))
-            if e is not None: return match.group(1) + str(e)
+
+                e = discord.utils.get(apollo.bot.emojis, name=match.group(2))
+            if e is not None:
+                return match.group(1) + str(e)
         return match.group(0)
 
     return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
