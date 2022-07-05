@@ -8,12 +8,11 @@ import discord
 from discord.ext.commands import CommandError, Context
 from more_itertools import partition
 
+import apollo
 import models
 from config import CONFIG
 from models import db_session
 from utils.typing import Identifiable
-
-import apollo
 
 __all__ = [
     "AdminError",

@@ -1,12 +1,12 @@
 import inspect
+import io
 import re
 
+import discord
 from discord.ext.commands import Context
+from PIL import Image, ImageDraw, ImageFont
 
 import utils
-import discord
-from PIL import Image, ImageFont, ImageDraw
-import io
 
 font: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-SemiBold.ttf", 90)
 subfont: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-Medium.ttf", 45)
