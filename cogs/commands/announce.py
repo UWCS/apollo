@@ -15,11 +15,10 @@ from utils import (
     DateTimeConverter,
     get_database_user,
     get_name_string,
-    user_is_irc_bot,
     is_compsoc_exec_in_guild,
+    user_is_irc_bot,
 )
-
-from utils.announce_utils import generate_announcement, confirmation
+from utils.announce_utils import confirmation, generate_announcement
 
 LONG_HELP_TEXT = """
 Add announcements for yourself or remove the last one you added.
