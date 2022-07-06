@@ -46,6 +46,7 @@ class Announcements(commands.Cog):
         self.bot.loop.create_task(announcement_check(self.bot))
 
     @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.check(is_compsoc_exec_in_guild)
     async def announcement(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found.")
@@ -62,8 +63,6 @@ class Announcements(commands.Cog):
         announcement_content: str,
     ):
         # Function very similar to reminders
-        if not await is_compsoc_exec_in_guild(ctx):
-            return await ctx.send("Must be exec to use this command.")
 
         now = datetime.now()
         if not trigger_time:
@@ -83,20 +82,12 @@ class Announcements(commands.Cog):
         await self.preview_announcement(ctx, announcement_content, True)
 
     @announcement.command(help="List upcoming announcements")
-    async def list(self, ctx: Context, user: discord.User = None):
-        now = datetime.now()
-        if user is None:
-            announcements = (
-                db_session.query(Announcement)
-                .filter(Announcement.trigger_at > now, Announcement.triggered == False)
-                .all()
-            )
-        else:
-            announcements = (
-                db_session.query(Announcement)
-                .filter(Announcement.trigger_at > now, Announcement.triggered == False, Announcement.user.user_uid == user.id)
-                .all()
-            )
+    async def list(self, ctx: Context):
+        announcements = (
+            db_session.query(Announcement)
+            .filter(Announcement.trigger_at >= datetime.now(), Announcement.triggered == False)
+            .all()
+        )
 
         msg_text = ["**Pending Announcements:**"]
         for a in announcements:
@@ -113,6 +104,14 @@ class Announcements(commands.Cog):
 
         for text in utils.utils.split_into_messages(msg_text):
             await ctx.send(text, allowed_mentions=AllowedMentions.none())
+
+    @announcement.command(help="Cancel upcoming announcements, id can be found through `!announcement list`.")
+    async def cancel(self, ctx: Context, announcement_id: int):
+        print(
+            db_session.delete(Announcement)
+            .where(Announcement.id == announcement_id)
+        )
+        db_session.commit()
 
 
     async def preview_announcement(
