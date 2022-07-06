@@ -3,6 +3,7 @@ import logging
 from datetime import datetime
 
 import discord
+from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, MissingPermissions
 from humanize import precisedelta
@@ -79,6 +80,39 @@ class Announcements(commands.Cog):
     @announcement.command(help="Preview the rendering of a announcement")
     async def preview(self, ctx: Context, *, announcement_content: str):
         await self.preview_announcement(ctx, announcement_content, True)
+
+    @announcement.command(help="List upcoming announcements")
+    async def list(self, ctx: Context, user: discord.User = None):
+        now = datetime.now()
+        if user is None:
+            announcements = (
+                db_session.query(Announcement)
+                .filter(Announcement.trigger_at > now, Announcement.triggered == False)
+                .all()
+            )
+        else:
+            announcements = (
+                db_session.query(Announcement)
+                .filter(Announcement.trigger_at > now, Announcement.triggered == False, Announcement.user.user_uid == user.id)
+                .all()
+            )
+
+        msg_text = "**Pending Announcements:**"
+        for a in announcements:
+            id = a.id
+            if a.irc_name:
+                author_name = a.irc_name
+            else:
+                author_name = self.bot.get_user(a.user.user_uid).mention
+            time = a.trigger_at
+            loc = a.playback_channel_id
+            preview = a.announcement_content.split("\n")[0]
+
+            msg_text += f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n"
+
+        # for text in utils.utils.split_into_messages(msg_text):
+        await ctx.send(msg_text, allowed_mentions=AllowedMentions.none())
+
 
     async def preview_announcement(
         self, ctx, announcement_content: str, preview: bool = True
