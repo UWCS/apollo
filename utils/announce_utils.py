@@ -3,6 +3,7 @@ import io
 import re
 
 import discord
+from discord import AllowedMentions
 from discord.ext.commands import Context
 from PIL import Image, ImageDraw, ImageFont
 
@@ -13,7 +14,12 @@ subfont: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-Medium.t
 
 
 async def generate_announcement(
-    channel, text, webhook=None, username=None, avatar=None
+    channel,
+    text,
+    webhook=None,
+    username=None,
+    avatar=None,
+    allowed_mentions=AllowedMentions.none(),
 ):
     """Interprets actual announcement text into titles, images, etc."""
     lines = text.split("\n")
@@ -27,9 +33,15 @@ async def generate_announcement(
                 "username": username,
                 "avatar_url": avatar,
             } | kwargs  # Default name and avatar to func args, but allow overwrite in send args
-            messages.append(await webhook.send(wait=True, **kwargs))
+            messages.append(
+                await webhook.send(
+                    wait=True, allowed_mentions=allowed_mentions, **kwargs
+                )
+            )
         else:
-            messages.append(await channel.send(**kwargs))
+            messages.append(
+                await channel.send(allowed_mentions=allowed_mentions, **kwargs)
+            )
 
     async def send_lines():
         """Posts all of accumulated wrapper"""
