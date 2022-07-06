@@ -10,6 +10,7 @@ from humanize import precisedelta
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
+import utils.utils
 from config import CONFIG
 from models import Announcement, db_session
 from utils import (
@@ -97,7 +98,7 @@ class Announcements(commands.Cog):
                 .all()
             )
 
-        msg_text = "**Pending Announcements:**"
+        msg_text = ["**Pending Announcements:**"]
         for a in announcements:
             id = a.id
             if a.irc_name:
@@ -108,10 +109,10 @@ class Announcements(commands.Cog):
             loc = a.playback_channel_id
             preview = a.announcement_content.split("\n")[0]
 
-            msg_text += f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n"
+            msg_text.append(f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n")
 
-        # for text in utils.utils.split_into_messages(msg_text):
-        await ctx.send(msg_text, allowed_mentions=AllowedMentions.none())
+        for text in utils.utils.split_into_messages(msg_text):
+            await ctx.send(text, allowed_mentions=AllowedMentions.none())
 
 
     async def preview_announcement(
