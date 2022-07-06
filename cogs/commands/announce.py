@@ -107,11 +107,13 @@ class Announcements(commands.Cog):
 
     @announcement.command(help="Cancel upcoming announcements, id can be found through `!announcement list`.")
     async def cancel(self, ctx: Context, announcement_id: int):
-        print(
-            db_session.delete(Announcement)
-            .where(Announcement.id == announcement_id)
-        )
-        db_session.commit()
+        result = db_session.query(Announcement).where(Announcement.id == announcement_id).first()
+        if result:
+            db_session.delete(result)
+            db_session.commit()
+            await ctx.send("Announcement Deleted")
+        else:
+            await ctx.send("Announcement does not exist")
 
 
     async def preview_announcement(
