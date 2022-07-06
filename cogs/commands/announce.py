@@ -85,7 +85,10 @@ class Announcements(commands.Cog):
     async def list(self, ctx: Context):
         announcements = (
             db_session.query(Announcement)
-            .filter(Announcement.trigger_at >= datetime.now(), Announcement.triggered == False)
+            .filter(
+                Announcement.trigger_at >= datetime.now(),
+                Announcement.triggered == False,
+            )
             .all()
         )
 
@@ -100,21 +103,28 @@ class Announcements(commands.Cog):
             loc = a.playback_channel_id
             preview = a.announcement_content.split("\n")[0]
 
-            msg_text.append(f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n")
+            msg_text.append(
+                f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n"
+            )
 
         for text in utils.utils.split_into_messages(msg_text):
             await ctx.send(text, allowed_mentions=AllowedMentions.none())
 
-    @announcement.command(help="Cancel upcoming announcements, id can be found through `!announcement list`.")
+    @announcement.command(
+        help="Cancel upcoming announcements, id can be found through `!announcement list`."
+    )
     async def cancel(self, ctx: Context, announcement_id: int):
-        result = db_session.query(Announcement).where(Announcement.id == announcement_id).first()
+        result = (
+            db_session.query(Announcement)
+            .where(Announcement.id == announcement_id)
+            .first()
+        )
         if result:
             db_session.delete(result)
             db_session.commit()
             await ctx.send("Announcement Deleted")
         else:
             await ctx.send("Announcement does not exist")
-
 
     async def preview_announcement(
         self, ctx, announcement_content: str, preview: bool = True
