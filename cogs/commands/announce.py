@@ -126,20 +126,33 @@ class Announcements(commands.Cog):
         else:
             await ctx.send("Announcement does not exist")
 
+    @announcement.command(
+        help="Check the raw source and preview of an announcement, id can be found through `!announcement list`."
+    )
+    async def check(self, ctx: Context, announcement_id: int):
+        result = (
+            db_session.query(Announcement)
+            .where(Announcement.id == announcement_id)
+            .first()
+        )
+        await ctx.send(f"**Message Source:**\n```{result.announcement_content}```")
+        await self.preview_announcement(ctx, result.announcement_content, True, False)
+
     async def preview_announcement(
-        self, ctx, announcement_content: str, preview: bool = True
+        self, ctx, announcement_content: str, preview: bool = True, menu: bool = True
     ):
         """Posts preview to command channel"""
         channel = ctx.channel
         webhook = await get_webhook(channel)
 
-        prev_msg = await channel.send("**Announcement Preview:**")
+        messages = [await channel.send("**Announcement Preview:**")]
         author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else self.bot.user
-        messages = await generate_announcement(
+        messages += await generate_announcement(
             channel, announcement_content, webhook, author.name, author.avatar_url
         )
-        messages = [prev_msg] + messages
-        return await preview_edit_menu(ctx, messages, announcement_content, preview)
+        messages.append(await channel.send("**End of Announcement Preview**"))
+        if menu:
+            return await preview_edit_menu(ctx, messages, announcement_content, preview)
 
 
 async def announcement_check(bot):
