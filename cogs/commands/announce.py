@@ -135,8 +135,25 @@ class Announcements(commands.Cog):
             .where(Announcement.id == announcement_id)
             .first()
         )
-        await ctx.send(f"**Message Source:**\n```{result.announcement_content}```")
+        await ctx.send(f"**Message Source:**```\n{result.announcement_content}```")
         await self.preview_announcement(ctx, result.announcement_content, True, False)
+
+    @announcement.command(
+        help="Add ping to command. Can give role name or id instead of ping"
+    )
+    async def add_ping(self, ctx: Context, announcement_id: int, *roles: discord.Role):
+        announcement = (
+            db_session.query(Announcement)
+            .where(Announcement.id == announcement_id)
+            .first()
+        )
+        announcement.announcement_content += "\n" + " ".join([r.mention for r in roles])
+        db_session.commit()
+
+        role_names = ", ".join(r.name for r in roles)
+        await ctx.send(
+            f"Pings added for {role_names} to announcement {announcement_id}."
+        )
 
     async def preview_announcement(
         self, ctx, announcement_content: str, preview: bool = True, menu: bool = True
@@ -186,7 +203,9 @@ async def announcement_check(bot):
             a.triggered = True
             db_session.commit()
 
-            await generate_announcement(channel, message, webhook, name, avatar)
+            await generate_announcement(
+                channel, message, webhook, name, avatar, AllowedMentions.all()
+            )
 
         await asyncio.sleep(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL)
 
