@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Iterable
+from typing import Iterable, List, Union
 
 import dateparser
 import discord
@@ -12,6 +12,7 @@ import models
 from config import CONFIG
 from models import db_session
 from utils.typing import Identifiable
+import textwrap
 
 __all__ = [
     "AdminError",
@@ -209,15 +210,57 @@ def user_is_irc_bot(ctx):
 
 
 def replace_external_emoji(guild, string):
-    def emotes(match: re.Match):
-        if match.group(2):
-            e: discord.Emoji = discord.utils.get(guild.emojis, name=match.group(2))
-            if e is None:
-                from apollo import bot
+    """References to external emojis aren't updated by default. Can be used so bot only emojis don't pollute server pool"""
+    from apollo import bot
 
+    def emotes(match: re.Match):
+        # If emoji body
+        if match.group(2):
+            # Prioritize local emoji
+            e: discord.Emoji = discord.utils.get(guild.emojis, name=match.group(2))
+            if e is None:   # If no local, check all servers the bot is in
                 e = discord.utils.get(bot.emojis, name=match.group(2))
             if e is not None:
                 return match.group(1) + str(e)
         return match.group(0)
 
     return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
+
+
+def split_into_messages(sections: Union[str, List[str]], limit=4096):
+    """Split a string (or list of sections) into small enough chunks to send (4096 chars)"""
+    if isinstance(sections, str): sections = [sections]
+
+    sections = "§".join(sections)
+    result = split_by([
+            lambda x: x.split("§"),
+            lambda x: x.split("\n"),        # Then split by lines
+            lambda x: textwrap.wrap(x, width=limit),      # Then split within lines, using textwrap
+        ], sections, limit)
+    result = [x.replace("§", "\n") for x in result]
+    return result
+
+
+def split_by(split_funcs, section, limit=4000):
+    """Split section by each of split_funcs in descending order until each chunk is smaller than limit"""
+    print(len(split_funcs), repr(section))
+    section = section.replace("\n\n", "\n_ _\n")
+    if len(section) <= limit: return [section.strip("\n")]   # Base case
+    else:
+        parts = split_funcs[0](section)
+        accum = ""
+        result = []
+        print("\t", parts)
+        for part in parts:
+            # For each part (as split by first of split_funcs), attempt to accumulate
+            new_accum = accum + "\n" + part
+            print("\t\t", repr(new_accum), len(new_accum) <= limit)
+            if len(new_accum) <= limit:     # If short enough, combine with previous parts in accumulator
+                accum = new_accum
+            else:       # If too long, clear accumulator, and attempt next level of split
+                if accum: result.append(accum.strip("\n"))
+                result += split_by(split_funcs[1:], part, limit)
+                accum = ""
+        # Add any tail to result
+        if accum: result.append(accum.strip("\n"))
+        return result
