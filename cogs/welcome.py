@@ -38,12 +38,16 @@ class Welcome(Cog):
         self.categories = [Category(c) for c in parsed.get("categories")]
         self.category_weights = [c.weight for c in self.categories]
         self.welcome_template = parsed.get("message")
+        self.roles_id = parsed.get("roles-channel-id")
 
     def generate_welcome_message(self, name):
         greeting = choice(self.greetings)
         category = choices(self.categories, self.category_weights)[0]
+        roles_channel = self.bot.get_channel(CONFIG.UWCS_ROLES_CHANNEL_ID).mention
         thing = category.generate()
-        return self.welcome_template.format(greetings=greeting, name=name, thing=thing)
+        return self.welcome_template.format(
+            greetings=greeting, name=name, roles_channel=roles_channel, thing=thing
+        )
 
     @Cog.listener()
     async def on_member_join(self, member: Member):
@@ -59,6 +63,11 @@ class Welcome(Cog):
         except (ScalarListException, SQLAlchemyError) as e:
             logging.exception(e)
             db_session.rollback()
+
+        # Send welcome on join, if membership verification is not enabled
+        if "MEMBER_VERIFICATION_GATE_ENABLED" not in member.guild.features:
+            channel = self.bot.get_channel(CONFIG.UWCS_WELCOME_CHANNEL_ID)
+            await channel.send(self.generate_welcome_message(member.display_name))
 
     @Cog.listener()
     async def on_member_update(self, before: Member, after: Member):
