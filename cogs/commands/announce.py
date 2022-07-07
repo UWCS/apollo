@@ -26,9 +26,10 @@ from utils.announce_utils import confirmation, generate_announcement
 async def get_webhook(channel):
     """Finds announcement webhook, or creates it necessary"""
     try:
+        # Find webhook
         webhooks = await channel.webhooks()
         webhook = next((w for w in webhooks if w.name == "Apollo Announcements"), None)
-        if webhook is None:
+        if webhook is None:     # Create if not existing
             webhook = await channel.create_webhook(name="Apollo Announcements")
         return webhook
     except MissingPermissions:
@@ -70,6 +71,7 @@ class Announcements(commands.Cog):
         if trigger_time < now:
             return await ctx.send("That time is in the past.")
 
+        # Preview render of announcement. If menu's input confirms, continue
         result = await self.preview_announcement(ctx, announcement_content, False)
         if not result:
             return
@@ -89,6 +91,7 @@ class Announcements(commands.Cog):
         """
         List all upcoming announcements
         """
+        # Find all upcoming announcements
         announcements = (
             db_session.query(Announcement)
             .filter(
@@ -101,6 +104,7 @@ class Announcements(commands.Cog):
         msg_text = ["**Pending Announcements:**"]
         for a in announcements:
             id = a.id
+            # Get author mention
             if a.irc_name:
                 author_name = a.irc_name
             else:
@@ -109,10 +113,12 @@ class Announcements(commands.Cog):
             loc = a.playback_channel_id
             preview = a.announcement_content.split("\n")[0]
 
+            # Construct message
             msg_text.append(
                 f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n"
             )
 
+        # Send messages
         for text in utils.utils.split_into_messages(msg_text):
             await ctx.send(text, allowed_mentions=AllowedMentions.none())
 
@@ -122,11 +128,13 @@ class Announcements(commands.Cog):
         Cancel an upcoming announcement.
         The announcement id can be found through `!announcement list`.
         """
+        # Find result
         result = (
             db_session.query(Announcement)
             .where(Announcement.id == announcement_id)
             .first()
         )
+        # Attempt to delete
         if result:
             db_session.delete(result)
             db_session.commit()
@@ -140,11 +148,13 @@ class Announcements(commands.Cog):
         Check the raw source and preview of an upcoming announcement.
         The announcement id can be found through `!announcement list`.
         """
+        # Find result
         result = (
             db_session.query(Announcement)
             .where(Announcement.id == announcement_id)
             .first()
         )
+        # Post source and Render preview
         await ctx.send(f"**Message Source:**```\n{result.announcement_content}```")
         await self.preview_announcement(ctx, result.announcement_content, True, False)
 
@@ -154,11 +164,13 @@ class Announcements(commands.Cog):
         Add a role mention to the end of the messsage.
         Use this command to avoid pinging roles when writing the message. Roles can be specified by name or id.
         """
+        # Find result
         announcement = (
             db_session.query(Announcement)
             .where(Announcement.id == announcement_id)
             .first()
         )
+        # Add pings to message
         announcement.announcement_content += "\n" + " ".join([r.mention for r in roles])
         db_session.commit()
 
@@ -188,6 +200,7 @@ async def announcement_check(bot):
     """Checks for any announcements that need to be posted and haven't"""
     await bot.wait_until_ready()
     while not bot.is_closed():
+        # Find announcements that need posting
         now = datetime.now()
         announcements = (
             db_session.query(Announcement)
@@ -199,6 +212,7 @@ async def announcement_check(bot):
             channel = bot.get_channel(a.playback_channel_id)
             webhook = await get_webhook(channel)
 
+            # Find author info
             name, avatar = None, None
             if a.irc_name:
                 name = a.irc_name
@@ -215,6 +229,7 @@ async def announcement_check(bot):
             a.triggered = True
             db_session.commit()
 
+            # Post message
             await generate_announcement(
                 channel, message, webhook, name, avatar, AllowedMentions.all()
             )
