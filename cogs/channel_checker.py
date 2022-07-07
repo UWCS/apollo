@@ -39,7 +39,7 @@ async def channel_check(bot):
 
     previous = channel_sort(guild.channels)
     while not bot.is_closed():
-        await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
+        await asyncio.sleep(CONFIG.CHANNEL_CHECK_INTERVAL)
 
         # Get channel ids for diff
         current = channel_sort(guild.channels)

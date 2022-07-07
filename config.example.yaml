@@ -16,5 +16,6 @@ config:
   bot_logging: on
   debug: True
   reminder_search_interval: 30
+  channel_check_interval: 60
   slicer_path: /path/to/prusa-slicer
   printer_file_root: /path/to/print/files
