@@ -1,6 +1,5 @@
 import asyncio
 import difflib
-from typing import List
 
 import discord
 from discord.ext.commands import Bot, Cog
@@ -34,7 +33,7 @@ def discord_channel_key(channel):
         channel.category.position,
         1 if isinstance(channel, discord.VoiceChannel) else 0,  # Text before voice
         channel.position,
-        channel.id
+        channel.id,
     )
 
 
