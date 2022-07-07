@@ -27,6 +27,8 @@ class Config:
         self.UWCS_WELCOME_CHANNEL_ID: int = parsed.get("UWCS_welcome_channel_id")
         self.UWCS_ROLES_CHANNEL_ID: int = parsed.get("UWCS_roles_channel_id")
         self.UWCS_INTROS_CHANNEL_ID: int = parsed.get("UWCS_intros_channel_id")
+        self.UWCS_INTROS_CHANNEL_ID: int = parsed.get("UWCS_intros_channel_id")
+        self.UWCS_EXEC_SPAM_CHANNEL_ID: int = parsed.get("UWCS_exec_spam_channel_id")
         self.UWCS_API_TOKEN: str = parsed.get("UWCS_api_token")
 
         self.FIG_SAVE_PATH: Path = Path(parsed.get("fig_save_path"))

@@ -30,6 +30,7 @@ EXTENSIONS = [
     "cogs.commands.say",
     "cogs.commands.tex",
     "cogs.commands.widen",
+    "cogs.channel_checker",
     "cogs.database",
     "cogs.irc",
     "cogs.parallelism",
