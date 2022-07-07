@@ -3,6 +3,7 @@ import difflib
 
 import discord
 from discord.ext.commands import Bot, Cog
+
 from config import CONFIG
 
 
@@ -10,9 +11,16 @@ def locate(channel_name, channel_list):
     """Find the channel from id, and create location string ("between #abc and #def")"""
     for i, c in enumerate(channel_list):
         if c.name == channel_name:
-            if i == 0: return c, f"before {channel_list[1].mention}"
-            if i == len(channel_list)-1: return c, f"after {channel_list[len(channel_list)-2].mention}"
-            else: return c, f"between {channel_list[i-1].mention} and {channel_list[i+1].mention}"
+            if i == 0:
+                msg = f"before {channel_list[1].mention}"
+            if i == len(channel_list) - 1:
+                msg = f"after {channel_list[len(channel_list)-2].mention}"
+            else:
+                msg = (
+                    f"between {channel_list[i-1].mention} "
+                    f"and {channel_list[i+1].mention}"
+                )
+            return c, msg
     return None, "somewhere"
 
 
@@ -23,7 +31,7 @@ def channel_sort(channels):
 
 
 async def channel_check(bot):
-    """"""
+    """Periodically checks for channels that have been reordered"""
     await bot.wait_until_ready()
 
     guild = bot.get_guild(CONFIG.UWCS_DISCORD_ID)
@@ -38,7 +46,8 @@ async def channel_check(bot):
         curr_channels = [c.name for c in current]
         prev_channels = [c.name for c in previous]
 
-        if curr_channels == prev_channels: continue
+        if curr_channels == prev_channels:
+            continue
 
         # Find and filter changes
         changes = list(difflib.Differ().compare(prev_channels, curr_channels))
@@ -50,7 +59,7 @@ async def channel_check(bot):
 
         # Construct message
         if moved:
-            msg = "**Channel Moved:**"
+            msg = "**⚠️ Channel Moved:**"
 
             if moved:
                 for channel_name in moved:
