@@ -1,5 +1,6 @@
 import asyncio
 import difflib
+from typing import List
 
 import discord
 from discord.ext.commands import Bot, Cog
@@ -24,10 +25,17 @@ def locate(channel_name, channel_list):
     return None, "somewhere"
 
 
-def channel_sort(channels):
-    """Sort text channels into actual order"""
-    channels = [c for c in channels if isinstance(c, discord.TextChannel)]
-    return sorted(channels, key=lambda c: c.position)
+def discord_channel_key(channel: discord.abc.GuildChannel):
+    """Sorts channels into the same order as the Discord client does"""
+    # Based on https://github.com/Rapptz/discord.py/issues/2392#issuecomment-707455919
+    if isinstance(channel, discord.CategoryChannel):
+        return channel.position, -1
+    return (
+        channel.category.position,
+        1 if isinstance(channel, discord.VoiceChannel) else 0,  # Text before voice
+        channel.position,
+        channel.id
+    )
 
 
 async def channel_check(bot):
@@ -37,12 +45,12 @@ async def channel_check(bot):
     guild = bot.get_guild(CONFIG.UWCS_DISCORD_ID)
     channel = bot.get_channel(CONFIG.UWCS_EXEC_SPAM_CHANNEL_ID)
 
-    previous = channel_sort(guild.channels)
+    previous = sorted(guild.channels, key=discord_channel_key)
     while not bot.is_closed():
         await asyncio.sleep(CONFIG.CHANNEL_CHECK_INTERVAL)
 
         # Get channel ids for diff
-        current = channel_sort(guild.channels)
+        current = sorted(guild.channels, key=discord_channel_key)
         curr_channels = [c.name for c in current]
         prev_channels = [c.name for c in previous]
 
