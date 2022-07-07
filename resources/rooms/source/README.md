@@ -7,11 +7,12 @@ To get the url for a room's timetable, a few separate room name maps need to be 
 ## Files used
 - Warwick provides maps: tabula (~campus map) to scientia (timetable management), and scientia to room booking url key.
 - These are in `tabula-sciencianame.txt"` and `scientianame-url.txt` respectively.
-- Custom room names on the tabula to sciencia step are in `custom-tabstoname.txt`
-- Aliases for rooms which don't appear in the map autocomplete are in `customsearch.txt` (e.g. CS teaching room <-> MB0.01)
+- Custom mapping for Campus Map to Tabula are in `custom-maptotab.txt`
+- Custom room names on the Tabula to Sciencia step are in `custom-tabstoname.txt`
 - `room_to_surl.json` is the final resulting mapping
 
 - `central-room-data.json` holds data for the list of centrally timetabled rooms (rooms that are bookable through uni timetabling, and a ITS AV page exists for)
+- Some people may want to search for a room under a different name, these are listed in `room-mapname.txt`. This has to be separate as a pre-processing step to the Campus Map API, whereas all others are after the request. 
 
 
 ## Updating the room mapping

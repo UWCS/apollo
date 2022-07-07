@@ -14,7 +14,7 @@ def read_mapping(filename):
 tabtonames = read_mapping("tabula-sciencianame.txt")
 nametourl = read_mapping("scientianame-url.txt")
 
-custom_names = read_mapping("customsearch.txt")
+custom_names = read_mapping("custom-maptotab.txt")
 custom_tabtoname = read_mapping("custom-tabtosname.txt")
 
 

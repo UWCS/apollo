@@ -41,7 +41,7 @@ class RoomSearch(commands.Cog):
 
         raw = (room_resource_root / "central-room-data.json").read_text()
         self.central_rooms = json.loads(raw)
-        self.custom_room_names = read_mapping(room_resource_root / "room-mapname.txt")
+        self.custom_room_names = read_mapping(room_resource_root / "room-mapname.json")
         self.timetable_room_mapping = read_mapping(
             room_resource_root / "room_to_surl.txt"
         )
@@ -54,7 +54,7 @@ class RoomSearch(commands.Cog):
         await ctx.reply(
             "This bot uses the Campus Map's API (<https://campus.warwick.ac.uk/>)."
             "If a name is wrong/missing on there, either ask exec to add it, "
-            "or create a PR to add an alias in `resources/rooms/room-mapname.txt`"
+            "or create a PR to add an alias in `resources/rooms/room-mapname.json`"
         )
 
     @commands.command()
