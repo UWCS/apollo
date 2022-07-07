@@ -1,12 +1,23 @@
 """
-Combines Tabula's mapping and Timetable reports to form single room mapping
+Manually run. Combines Tabula's mapping and Timetable reports to form single room mapping
+These data sources need manually fetching, so combining them is a one time thing.
 
-Update central room info periodically from https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/room-data.js
-  Convert from js to json, e.g. with https://www.convertsimple.com/convert-javascript-to-json/
-Update tabula mapping `tabula-sciencianame.txt"` from Tabula src code: common/src/main/scala/uk/ac/warwick/tabula/services/timetables/ScientiaCentrallyManagedRooms.scala
-  Chop off ends and comments, then can regex convert `"(.+)" -> MapLocation\("(.+)", "(\d+)", Some\("(.+)"\)\),` to `$2 | $1`
-Update scientia mapping `scientianame-url.txt` from http://go.warwick.ac.uk/timetablereports > Locations > Inspect "Select Room(s)" menu, and copy out
-  Again also regex convert
+Data update instructions:
+    Update central room info `central-room-data.json` periodically from https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/room-data.js
+      Convert from js to json, e.g. with https://www.convertsimple.com/convert-javascript-to-json/
+    Update tabula mapping `tabula-sciencianame.txt` from Tabula src code: common/src/main/scala/uk/ac/warwick/tabula/services/timetables/ScientiaCentrallyManagedRooms.scala
+      Chop off ends and comments, then can regex convert `"(.+)" -> MapLocation\("(.+)", "(\d+)", Some\("(.+)"\)\),` to `$2 | $1`
+    Update scientia mapping `scientianame-url.txt` from http://go.warwick.ac.uk/timetablereports > Locations > Inspect "Select Room(s)" menu, and copy out
+      Again also regex convert
+
+Files:
+    Warwick provides maps: tabula (~campus map) to scientia (timetable management), and scientia to room booking url key.
+    These are in `tabula-sciencianame.txt"` and `scientianame-url.txt`.
+    Custom room names on the tabula to sciencia step are in `custom-tabstoname.txt`
+    Aliases for rooms which don't appear in the map autocomplete are in `customsearch.txt` (e.g. CS teaching room <-> MB0.01)
+    `room_to_surl.txt` is the final resulting mapping
+
+    `central-room-data.json` holds data for the list of centrally timetabled rooms (rooms that are bookable through uni timetabling, and a ITS AV page exists for)
 """
 
 
@@ -19,24 +30,9 @@ def read_mapping(filename):
 tabtonames = read_mapping("tabula-sciencianame.txt")
 nametourl = read_mapping("scientianame-url.txt")
 
-custom_names = {"Computer Science Teaching Room": "CS_MB0.01"}
+custom_names = read_mapping("customsearch.txt")
+custom_tabtoname = read_mapping("custom-tabtosname.txt")
 
-# Custom mappings
-custom_tabtoname = {
-    "MS_A1.01": "A1.01 (Zeeman)",
-    "FAC.SS_S2.77": "FD_S2.77",
-    "H1.48": "PS_H1.48",
-    "C1.11 / C1.13 / C1.1": "c1.11/15",
-    "MS.B3.03": "B3.03 (Zeeman)",
-    "Language Centre Training Room": "LN_H0.83",
-    "A0.39": "A0.39 (Gibbet Hill)",
-    # A whole bunch of Hxxx are under LL not LN
-    "H0.78": "LN_H0.78",
-    "H0.67": "LN_H0.67",
-    "H0.82": "LN_H0.82",
-    "H0.79": "LN_H0.79",
-    "H0.72": "LN_H0.72",
-}
 
 print("Missing Conversions")
 mapping = {}
