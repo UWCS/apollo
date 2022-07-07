@@ -8,13 +8,13 @@ from discord.ext.commands import Bot, Cog
 from config import CONFIG
 
 
-def locate(channel_name, channel_list):
+def locate(channel_id, channel_list):
     """Find the channel from id, and create location string ("between #abc and #def")"""
     for i, c in enumerate(channel_list):
-        if c.name == channel_name:
+        if c.id == channel_id:
             if i == 0:
                 msg = f"before {channel_list[1].mention}"
-            if i == len(channel_list) - 1:
+            elif i == len(channel_list) - 1:
                 msg = f"after {channel_list[len(channel_list)-2].mention}"
             else:
                 msg = (
@@ -25,8 +25,8 @@ def locate(channel_name, channel_list):
     return None, "somewhere"
 
 
-def discord_channel_key(channel: discord.abc.GuildChannel):
-    """Sorts channels into the same order as the Discord client does"""
+def discord_channel_key(channel):
+    """Sort key for channels following the same order the Discord client does (in a guild)"""
     # Based on https://github.com/Rapptz/discord.py/issues/2392#issuecomment-707455919
     if isinstance(channel, discord.CategoryChannel):
         return channel.position, -1
@@ -51,8 +51,8 @@ async def channel_check(bot):
 
         # Get channel ids for diff
         current = sorted(guild.channels, key=discord_channel_key)
-        curr_channels = [c.name for c in current]
-        prev_channels = [c.name for c in previous]
+        curr_channels = [c.id for c in current]
+        prev_channels = [c.id for c in previous]
 
         if curr_channels == prev_channels:
             continue
@@ -60,19 +60,20 @@ async def channel_check(bot):
         # Find and filter changes
         changes = list(difflib.Differ().compare(prev_channels, curr_channels))
 
-        added = [c.strip("+ ") for c in changes if c[0] == "+"]
-        removed = [c.strip("- ") for c in changes if c[0] == "-"]
+        # Each line after Differ will start with 2 char code
+        added = [c[2:] for c in changes if c.startswith("+ ")]
+        removed = [c[2:] for c in changes if c.startswith("- ")]
 
-        moved = [c for c in added if c in removed]  # Moved if added and removed
+        moved = [int(c) for c in added if c in removed]  # Moved if added and removed
 
         # Construct message
         if moved:
             msg = "**⚠️ Channel Moved:**"
 
             if moved:
-                for channel_name in moved:
-                    c, prev_pos_str = locate(channel_name, previous)
-                    c, curr_pos_str = locate(channel_name, current)
+                for channel_id in moved:
+                    c, prev_pos_str = locate(channel_id, previous)
+                    c, curr_pos_str = locate(channel_id, current)
                     msg += f"\n\t{c.mention} has been moved from {prev_pos_str} to {curr_pos_str}"
 
             await channel.send(msg)
