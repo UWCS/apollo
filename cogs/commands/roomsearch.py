@@ -1,15 +1,15 @@
 import ast
 import asyncio
+import json
+from datetime import date, datetime, time
 from io import BytesIO
+from pathlib import Path
+from urllib.parse import quote
 
 import discord
 import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
-from pathlib import Path
-import json
-from urllib.parse import quote
-from datetime import datetime, date, time
 
 room_resource_root = Path() / "resources" / "rooms"
 
@@ -51,9 +51,11 @@ class RoomSearch(commands.Cog):
 
     @commands.command()
     async def roompr(self, ctx: Context):
-        await ctx.reply("This bot uses the Campus Map's API (<https://campus.warwick.ac.uk/>)."
-                        "If a name is wrong/missing on there, either ask exec to add it, "
-                        "or create a PR to add an alias in `resources/rooms/room-mapname.txt`")
+        await ctx.reply(
+            "This bot uses the Campus Map's API (<https://campus.warwick.ac.uk/>)."
+            "If a name is wrong/missing on there, either ask exec to add it, "
+            "or create a PR to add an alias in `resources/rooms/room-mapname.txt`"
+        )
 
     @commands.command()
     async def room(self, ctx: Context, *, name: str):
@@ -115,7 +117,9 @@ class RoomSearch(commands.Cog):
                 filename="map.png",
             )
             embed.set_image(url="attachment://map.png")
-            embed.set_footer(text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more")
+            embed.set_footer(
+                text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more"
+            )
 
             await ctx.reply(embed=embed, file=img)
 
@@ -135,15 +139,16 @@ class RoomSearch(commands.Cog):
             try:
                 for e in emojis:
                     await conf_message.add_reaction(e)
-            except discord.NotFound: pass
+            except discord.NotFound:
+                pass
 
         # Check for user react on msg
         async def check_reacts():
             try:
                 check = (
                     lambda r, u: r.message.id == conf_message.id
-                                 and u == ctx.message.author
-                                 and str(r.emoji) in emojis
+                    and u == ctx.message.author
+                    and str(r.emoji) in emojis
                 )
                 react_emoji, _ = await ctx.bot.wait_for(
                     "reaction_add", check=check, timeout=30
@@ -155,9 +160,7 @@ class RoomSearch(commands.Cog):
                 await conf_message.delete()
 
         # Add and check in parallel, so don't miss quick react
-        _, react_emoji = await asyncio.gather(
-            add_reacts(), check_reacts()
-        )
+        _, react_emoji = await asyncio.gather(add_reacts(), check_reacts())
 
         # Get choice
         ind = emojis.index(str(react_emoji))
