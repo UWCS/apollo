@@ -47,31 +47,16 @@ async def channel_check(bot):
         removed = [c.strip("- ") for c in changes if c[0] == "-"]
 
         moved = [c for c in added if c in removed]  # Moved if added and removed
-        added = [c for c in added if c not in moved]    # Added if added by not (re)moved
-        removed = [c for c in removed if c not in moved]    # Opposite
 
         # Construct message
-        if moved or added or removed:
-            msg = "**Channel Changes:**"
+        if moved:
+            msg = "**Channel Moved:**"
 
             if moved:
-                msg += "\n**Moved:**"
                 for channel_name in moved:
                     c, prev_pos_str = locate(channel_name, previous)
                     c, curr_pos_str = locate(channel_name, current)
-                    msg += f"\n\t{c.mention} has moved from {prev_pos_str} to {curr_pos_str}"
-
-            # if added:
-            #     msg += "\n**Added:**"
-            #     for channel_name in added:
-            #         c, curr_pos_str = locate(channel_name, current)
-            #         msg += f"\n\t{c.mention} has been created {curr_pos_str}"
-            #
-            # if removed:
-            #     msg += "\n**Removed:**"
-            #     for channel_name in removed:
-            #         c, prev_pos_str = locate(channel_name, previous)
-            #         msg += f"\n\t#{c.name} has been removed {prev_pos_str}"
+                    msg += f"\n\t{c.mention} has been moved from {prev_pos_str} to {curr_pos_str}"
 
             await channel.send(msg)
 
