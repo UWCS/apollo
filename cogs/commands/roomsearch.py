@@ -28,11 +28,10 @@ def req_img(url):
     return bytes
 
 
-def read_mapping(filename):
+def read_json_file(filename):
     # Read room name to timetable url mapping
     with open(str(filename)) as f:
-        l = [l.split(" | ") for l in f.readlines()]
-        return {x[0].strip(): x[1].strip() for x in l if len(x) > 1}
+        return json.load(f)
 
 
 class RoomSearch(commands.Cog):
@@ -40,12 +39,9 @@ class RoomSearch(commands.Cog):
         self.bot = bot
         self.full_emojis = ("1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟")
 
-        raw = (room_resource_root / "central-room-data.json").read_text()
-        self.central_rooms = json.loads(raw)
-        self.custom_room_names = read_mapping(room_resource_root / "room-mapname.json")
-        self.timetable_room_mapping = read_mapping(
-            room_resource_root / "room_to_surl.txt"
-        )
+        self.central_rooms = read_json_file(room_resource_root / "central-room-data.json")
+        self.custom_room_names = read_json_file(room_resource_root / "room-mapname.json")
+        self.timetable_room_mapping = read_json_file(room_resource_root / "room_to_surl.json")
         self.last_week_check = None
         self.year = None
         self.week = None
