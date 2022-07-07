@@ -22,11 +22,6 @@ from utils import (
 )
 from utils.announce_utils import confirmation, generate_announcement
 
-LONG_HELP_TEXT = """
-Add announcements for yourself or remove the last one you added.
-"""
-SHORT_HELP_TEXT = """Add or remove announcements."""
-
 
 async def get_webhook(channel):
     """Finds announcement webhook, or creates it necessary"""
@@ -45,15 +40,16 @@ class Announcements(commands.Cog):
         self.bot = bot
         self.bot.loop.create_task(announcement_check(self.bot))
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.group()
     @commands.check(is_compsoc_exec_in_guild)
     async def announcement(self, ctx: Context):
+        """
+        Manage scheduled announcements
+        """
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found.")
 
-    @announcement.command(
-        help="Add a announcement, ensure time is in quotation marks if multiple words, the announcement is the rest of discord message."
-    )
+    @announcement.command()
     async def add(
         self,
         ctx: Context,
@@ -62,6 +58,10 @@ class Announcements(commands.Cog):
         *,
         announcement_content: str,
     ):
+        """
+        Add an announcement for a scheduled time
+        Ensure time is in quotation marks if multiple words, the announcement will the rest of discord message.
+        """
         # Function very similar to reminders
 
         now = datetime.now()
@@ -77,12 +77,18 @@ class Announcements(commands.Cog):
         # The time is valid and not in the past, add the announcement
         await add_announcement(ctx, channel, trigger_time, announcement_content)
 
-    @announcement.command(help="Preview the rendering of a announcement")
+    @announcement.command()
     async def preview(self, ctx: Context, *, announcement_content: str):
+        """
+        Preview the formatting of an announcement body
+        """
         await self.preview_announcement(ctx, announcement_content, True)
 
-    @announcement.command(help="List upcoming announcements")
+    @announcement.command()
     async def list(self, ctx: Context):
+        """
+        List all upcoming announcements
+        """
         announcements = (
             db_session.query(Announcement)
             .filter(
@@ -110,10 +116,12 @@ class Announcements(commands.Cog):
         for text in utils.utils.split_into_messages(msg_text):
             await ctx.send(text, allowed_mentions=AllowedMentions.none())
 
-    @announcement.command(
-        help="Cancel upcoming announcements, id can be found through `!announcement list`."
-    )
+    @announcement.command()
     async def cancel(self, ctx: Context, announcement_id: int):
+        """
+        Cancel an upcoming announcement.
+        The announcement id can be found through `!announcement list`.
+        """
         result = (
             db_session.query(Announcement)
             .where(Announcement.id == announcement_id)
@@ -126,10 +134,12 @@ class Announcements(commands.Cog):
         else:
             await ctx.send("Announcement does not exist")
 
-    @announcement.command(
-        help="Check the raw source and preview of an announcement, id can be found through `!announcement list`."
-    )
+    @announcement.command()
     async def check(self, ctx: Context, announcement_id: int):
+        """
+        Check the raw source and preview of an upcoming announcement.
+        The announcement id can be found through `!announcement list`.
+        """
         result = (
             db_session.query(Announcement)
             .where(Announcement.id == announcement_id)
@@ -138,10 +148,12 @@ class Announcements(commands.Cog):
         await ctx.send(f"**Message Source:**```\n{result.announcement_content}```")
         await self.preview_announcement(ctx, result.announcement_content, True, False)
 
-    @announcement.command(
-        help="Add ping to command. Can give role name or id instead of ping"
-    )
-    async def add_ping(self, ctx: Context, announcement_id: int, *roles: discord.Role):
+    @announcement.command()
+    async def mention(self, ctx: Context, announcement_id: int, *roles: discord.Role):
+        """
+        Add a role mention to the end of the messsage.
+        Use this command to avoid pinging roles when writing the message. Roles can be specified by name or id.
+        """
         announcement = (
             db_session.query(Announcement)
             .where(Announcement.id == announcement_id)
