@@ -2,6 +2,7 @@
 Manually run. Combines Tabula's mapping and Timetable reports to form single room mapping
 These data sources need manually fetching, so combining them is a one time thing.
 """
+import json
 
 
 def read_mapping(filename):
@@ -38,6 +39,5 @@ for name in nametourl:
         mapping[name] = mapping[name] = v
 
 
-with open("room_to_surl.txt", "w") as room_to_surl:
-    for k, v in mapping.items():
-        room_to_surl.write(f"{k} | {v}\n")
+with open("../room_to_surl.json", "w") as room_to_surl:
+    json.dump(mapping, room_to_surl, indent=4)
