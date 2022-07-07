@@ -41,7 +41,6 @@ def main():
             v = nametourl[name]
             mapping[name] = mapping[name] = v
 
-
     with open("../room_to_surl.json", "w") as room_to_surl:
         json.dump(mapping, room_to_surl, indent=4)
 

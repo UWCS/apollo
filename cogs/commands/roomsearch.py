@@ -1,4 +1,3 @@
-import ast
 import asyncio
 import json
 from datetime import date, datetime, time
@@ -14,6 +13,7 @@ from discord.ext.commands import Bot, Context
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
 map_api_token = "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"
+
 
 def req_or_none(url, **kwargs):
     r = requests.get(url, **kwargs)
@@ -39,9 +39,10 @@ class RoomSearch(commands.Cog):
         self.bot = bot
         self.full_emojis = ("1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟")
 
-        self.central_rooms = read_json_file(room_resource_root / "central-room-data.json")
-        self.custom_room_names = read_json_file(room_resource_root / "room-mapname.json")
-        self.timetable_room_mapping = read_json_file(room_resource_root / "room_to_surl.json")
+        root = room_resource_root
+        self.central_rooms = read_json_file(root / "central-room-data.json")
+        self.custom_room_names = read_json_file(root / "room-mapname.json")
+        self.timetable_room_mapping = read_json_file(root / "room_to_surl.json")
         self.last_week_check = None
         self.year = None
         self.week = None
@@ -63,7 +64,8 @@ class RoomSearch(commands.Cog):
         rooms = self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
-                "Room does not exist. Try a more general search, or suggest a room alias (more info with `!roompr`)"
+                "Room does not exist. Try a more general search, "
+                "or suggest a room alias (more info with `!roompr`)"
             )
 
         if len(rooms) > 1:
