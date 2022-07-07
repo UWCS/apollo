@@ -12,7 +12,8 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
 room_resource_root = Path() / "resources" / "rooms"
-
+# Same for all requests from campus map, so hardcode here as well
+map_api_token = "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"
 
 def req_or_none(url, **kwargs):
     r = requests.get(url, **kwargs)
@@ -173,7 +174,7 @@ class RoomSearch(commands.Cog):
         # Check Map Autocomplete API
         map_req = req_or_none(
             f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
-            headers={"Authorization": "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"},
+            headers={"Authorization": map_api_token},
         )
         if map_req is None:
             return []
