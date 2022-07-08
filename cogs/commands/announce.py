@@ -29,7 +29,7 @@ async def get_webhook(channel):
         # Find webhook
         webhooks = await channel.webhooks()
         webhook = next((w for w in webhooks if w.name == "Apollo Announcements"), None)
-        if webhook is None:     # Create if not existing
+        if webhook is None:  # Create if not existing
             webhook = await channel.create_webhook(name="Apollo Announcements")
         return webhook
     except MissingPermissions:
