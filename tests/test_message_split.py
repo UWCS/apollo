@@ -7,9 +7,28 @@ SIMPLE_TEST_CASES = [
     ("Line 1\n", 20, ["Line 1"]),
     ("Line 1\nLine 2", 20, ["Line 1\nLine 2"]),
     ("Line 1\n\nLine 2", 20, ["Line 1\n_ _\nLine 2"]),
-    ("Longer line that would need to be split", 20, ["Longer line that", "would need to be", "split"]),
-    ("followed by another line that would", 20, ["followed by another", "line that would"]),
-    ("Longer line that would need to be split\nfollowed by another line that would need to be split", 20, ["Longer line that", "would need to be", "split", "followed by another", "line that would need", "to be split"]),
+    (
+        "Longer line that would need to be split",
+        20,
+        ["Longer line that", "would need to be", "split"],
+    ),
+    (
+        "followed by another line that would",
+        20,
+        ["followed by another", "line that would"],
+    ),
+    (
+        "Longer line that would need to be split\nfollowed by another line that would need to be split",
+        20,
+        [
+            "Longer line that",
+            "would need to be",
+            "split",
+            "followed by another",
+            "line that would need",
+            "to be split",
+        ],
+    ),
 ]
 
 
