@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from enum import Enum, auto, unique
 from functools import singledispatch
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 import discord
 from discord import AllowedMentions
@@ -34,7 +34,6 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 MYSTERY_ERROR = "Magical mystery error! go yell at the tech officer."
 
 MC = MentionConverter()
-
 
 
 @unique
@@ -526,7 +525,7 @@ class Quotes(commands.Cog):
 
     @quote.command()
     async def list(self, ctx: Context, *, query_arg: QueryInputConverter = None):
-        """List all quotes. Filter """
+        """List all quotes. Filter"""
         if query_arg is not None:
             query = quotes_query(query_arg)
         else:
@@ -542,7 +541,8 @@ class Quotes(commands.Cog):
             message = "\n".join(quote_str(q) for q in quotes)
 
         # Limit to a single message long
-        if len(message) > 4000: message = message[:4000] + "..."
+        if len(message) > 4000:
+            message = message[:4000] + "..."
         # send message with no pings
         await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
