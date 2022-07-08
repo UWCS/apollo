@@ -5,20 +5,22 @@ from enum import Enum, auto, unique
 from functools import singledispatch
 from typing import Optional, Union
 
+import discord
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, Converter
+from discord.ext.commands import Bot, Context, Converter, Cog
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
+from config import CONFIG
 from models import db_session
 from models.quote import Quote, QuoteOptouts
 from utils import (
     get_database_user,
     get_name_string,
     is_compsoc_exec_in_guild,
-    user_is_irc_bot,
+    user_is_irc_bot, utils,
 )
 from utils.mentions import Mention, MentionConverter, MentionType
 
@@ -30,6 +32,8 @@ SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 MYSTERY_ERROR = "Magical mystery error! go yell at the tech officer."
 
 MC = MentionConverter()
+
+QUOTE_EMOJI = "💬"
 
 
 @unique
@@ -351,6 +355,42 @@ class Quotes(commands.Cog):
                 result = MYSTERY_ERROR
 
         await ctx.send(result)
+
+    @Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        if payload.emoji.name != QUOTE_EMOJI: return
+        requester = payload.member.mention
+
+        # Fetch message
+        channel = self.bot.get_channel(payload.channel_id)
+        quoted_message: discord.Message = await channel.fetch_message(payload.message_id)
+
+        # Get mention for DB. Modified from MentionConverter
+        db_user = utils.get_database_user_from_id(quoted_message.author.id)
+        if db_user is not None:
+            author = Mention.id_mention(db_user.id)
+        else:
+            author = Mention.string_mention(quoted_message.author.display_name)
+        now = datetime.now()
+
+        # Add quote and feedback. Modified from above quote add function
+        try:
+            quote_id = add_quote(author, quoted_message.clean_content, now)
+
+            result = f"Thank you {requester}, recorded quote with ID #{quote_id}."
+        except QuoteException as e:
+            result = f"{requester} attempted to quote this message: "
+            if e.err == QuoteError.BAD_FORMAT:
+                result += "Invalid format: no quote to record."
+            elif e.err == QuoteError.OPTED_OUT:
+                result += "Invalid Author: User has opted out of being quoted."
+            elif e.err == QuoteError.DB_ERROR:
+                result += "Database error."
+            else:
+                result += MYSTERY_ERROR
+
+        await quoted_message.reply(result, mention_author=False)
+
 
     @quote.command()
     async def delete(self, ctx: Context, query: QuoteIDConverter):
