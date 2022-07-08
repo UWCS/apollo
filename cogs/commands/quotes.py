@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from enum import Enum, auto, unique
 from functools import singledispatch
-from typing import Optional, Union
+from typing import Optional, Union, List
 
 import discord
 from discord import AllowedMentions
@@ -523,6 +523,28 @@ class Quotes(commands.Cog):
                 result = MYSTERY_ERROR
 
         await ctx.send(result)
+
+    @quote.command()
+    async def list(self, ctx: Context, *, query_arg: QueryInputConverter = None):
+        """List all quotes. Filter """
+        if query_arg is not None:
+            query = quotes_query(query_arg)
+        else:
+            query = db_session.query(Quote)
+
+        # select a random quote if one exists
+        quotes: List[Quote] = query.all()
+
+        if not quotes:
+            message = "No quote matched the criteria"
+        else:
+            # create message
+            message = "\n".join(quote_str(q) for q in quotes)
+
+        # Limit to a single message long
+        if len(message) > 4000: message = message[:4000] + "..."
+        # send message with no pings
+        await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
 
 async def setup(bot: Bot):
