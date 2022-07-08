@@ -24,10 +24,10 @@ from utils import (
 )
 from utils.mentions import Mention, MentionConverter, MentionType
 
-# TODO Convert to DPY 2.0, waiting for PR #106 to be completed
+QUOTE_EMOJI = "💬"
 
-LONG_HELP_TEXT = """
-Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
+LONG_HELP_TEXT = f"""
+Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text. Quotes can be added by reacting with {QUOTE_EMOJI} or replying with `!quote add`
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
@@ -35,7 +35,6 @@ MYSTERY_ERROR = "Magical mystery error! go yell at the tech officer."
 
 MC = MentionConverter()
 
-QUOTE_EMOJI = "💬"
 
 
 @unique
@@ -338,7 +337,7 @@ class Quotes(commands.Cog):
 
     @quote.command()
     async def add(self, ctx: Context, author: MentionConverter, *, quote):
-        """Add a quote, format !quote add <author> <quote text>"""
+        """Add a quote, format `!quote add [<author> <quote text>]`. Can also react with 💬 or reply with `!quote add`."""
         requester = get_name_string(ctx)
         now = datetime.now()
 
