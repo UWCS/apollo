@@ -8,19 +8,19 @@ from typing import Optional, Union
 import discord
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, Converter, Cog
+from discord.ext.commands import Bot, Cog, Context, Converter
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
 
-from config import CONFIG
 from models import db_session
 from models.quote import Quote, QuoteOptouts
 from utils import (
     get_database_user,
     get_name_string,
     is_compsoc_exec_in_guild,
-    user_is_irc_bot, utils,
+    user_is_irc_bot,
+    utils,
 )
 from utils.mentions import Mention, MentionConverter, MentionType
 
@@ -358,33 +358,49 @@ class Quotes(commands.Cog):
 
     @add.error
     async def add_on_reply(self, ctx: Context, error):
+        """Allows `!quote add` with reply to count as a quote"""
         if isinstance(error, commands.MissingRequiredArgument):
             # If only "!quote add" and has reply
-            if ctx.message.content.strip() == f"{ctx.prefix}{ctx.command}" and ctx.message.reference:
-                replied_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+            content = ctx.message.content.strip()
+            target = f"{ctx.prefix}{ctx.command}"
+            reference = ctx.message.reference
+            if content == target and reference:
 
-                await self.quote_discord_user(ctx.author.mention, replied_message, ctx.message)
+                replied_message = await ctx.channel.fetch_message(reference.message_id)
+
+                await self.quote_discord_user(
+                    ctx.author.mention, replied_message, ctx.message
+                )
                 return
         raise error
 
     @Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
-        if payload.emoji.name != QUOTE_EMOJI: return
+        """Quote on reaction"""
+        if payload.emoji.name != QUOTE_EMOJI:
+            return
 
         # Fetch message
         channel = self.bot.get_channel(payload.channel_id)
-        quoted_message: discord.Message = await channel.fetch_message(payload.message_id)
+        quoted_message = await channel.fetch_message(payload.message_id)
 
-        await self.quote_discord_user(payload.member.mention, quoted_message, quoted_message)
+        await self.quote_discord_user(
+            payload.member.mention, quoted_message, quoted_message
+        )
 
-
-    async def quote_discord_user(self, requester: discord.Member, quoted_message: discord.Message, reply_to: discord.Message):
+    async def quote_discord_user(
+        self,
+        requester: discord.Member,
+        quoted_message: discord.Message,
+        reply_to: discord.Message,
+    ):
+        """Modified version of original quote add, has more context and creates mention"""
         # Get mention for DB. Modified from MentionConverter
         db_user = utils.get_database_user_from_id(quoted_message.author.id)
         if db_user is not None:
             author = Mention.id_mention(db_user.id)
         else:
-            author = Mention.string_mention(quoted_message.author.display_name)
+            author = Mention.string_mention(get_name_string(quoted_message))
         now = datetime.now()
 
         # Add quote and feedback. Modified from above quote add function
