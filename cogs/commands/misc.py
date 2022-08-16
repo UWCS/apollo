@@ -99,6 +99,11 @@ We have a Terraria 1.4.1.2 server running at:
     async def ping(self, ctx: Context):
         """Pong!"""
         await ctx.send(":ping_pong:")
+    
+    @commands.command()
+    async def pong(self, ctx: Context):
+        """Ping!"""
+        await ctx.send(":pong_ping:")
 
     @commands.command(brief="Apollo's current version")
     async def version(self, ctx: Context):
