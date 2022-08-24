@@ -22,3 +22,4 @@ pretend~=1.0.9
 dateparser~=1.0.0
 humanize~=3.5.0
 more_itertools~=8.8.0
+frozendict~=2.3.2
