@@ -100,6 +100,11 @@ We have a Terraria 1.4.1.2 server running at:
         """Pong!"""
         await ctx.send(":ping_pong:")
 
+    @commands.command()
+    async def pong(self, ctx: Context):
+        """Ping!"""
+        await ctx.send(":pong_ping:")
+
     @commands.command(brief="Apollo's current version")
     async def version(self, ctx: Context):
         """Print the SHA1 hash of HEAD in the deployed Apollo repository."""
