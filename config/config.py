@@ -18,6 +18,7 @@ class Config:
         self.BOT_SECRET_KEY: str = parsed.get("bot_secret_key")
         self.KARMA_TIMEOUT: int = parsed.get("karma_timeout")
         self.REMINDER_SEARCH_INTERVAL: int = parsed.get("reminder_search_interval")
+        self.CHANNEL_CHECK_INTERVAL: int = parsed.get("channel_check_interval")
         self.UNICODE_NORMALISATION_FORM: str = "NFKD"
 
         self.UWCS_DISCORD_ID: int = parsed.get("UWCS_discord_id")
@@ -27,6 +28,8 @@ class Config:
         self.UWCS_WELCOME_CHANNEL_ID: int = parsed.get("UWCS_welcome_channel_id")
         self.UWCS_ROLES_CHANNEL_ID: int = parsed.get("UWCS_roles_channel_id")
         self.UWCS_INTROS_CHANNEL_ID: int = parsed.get("UWCS_intros_channel_id")
+        self.UWCS_INTROS_CHANNEL_ID: int = parsed.get("UWCS_intros_channel_id")
+        self.UWCS_EXEC_SPAM_CHANNEL_ID: int = parsed.get("UWCS_exec_spam_channel_id")
         self.UWCS_API_TOKEN: str = parsed.get("UWCS_api_token")
 
         self.FIG_SAVE_PATH: Path = Path(parsed.get("fig_save_path"))

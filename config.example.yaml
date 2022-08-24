@@ -3,6 +3,7 @@ config:
   UWCS_member_role_id: 2674
   UWCS_exec_role_ids: [ 9874698723 ]
   UWCS_welcome_channel_id: 420
+  UWCS_exec_spam_channel_id: 1234
   database_connection: "postgresql://apollo:apollo@localhost/apollo"
   UWCS_discord_id: 1337
   UWCS_api_token: api_token
@@ -15,5 +16,6 @@ config:
   bot_logging: on
   debug: True
   reminder_search_interval: 30
+  channel_check_interval: 60
   slicer_path: /path/to/prusa-slicer
   printer_file_root: /path/to/print/files
