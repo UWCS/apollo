@@ -238,5 +238,5 @@ class PrintTools(commands.Cog, name="Print tools"):
         pass
 
 
-def setup(bot: Bot):
-    bot.add_cog(PrintTools(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(PrintTools(bot))

@@ -552,5 +552,5 @@ class Karma(commands.Cog):
             await ctx.send(result)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Karma(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Karma(bot))

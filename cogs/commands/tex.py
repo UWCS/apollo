@@ -105,5 +105,5 @@ class Tex(commands.Cog):
             await ctx.send(f"Here you go, {display_name}! :abacus:", file=img_file)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Tex(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Tex(bot))

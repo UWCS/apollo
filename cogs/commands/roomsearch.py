@@ -114,5 +114,5 @@ class RoomSearch(commands.Cog):
         return rooms
 
 
-def setup(bot: Bot):
-    bot.add_cog(RoomSearch(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(RoomSearch(bot))

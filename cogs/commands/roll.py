@@ -119,5 +119,5 @@ def run(message, display_name):
     return out
 
 
-def setup(bot: Bot):
-    bot.add_cog(Roll(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Roll(bot))

@@ -78,5 +78,5 @@ class Welcome(Cog):
         await channel.send(self.generate_welcome_message(after.display_name))
 
 
-def setup(bot: Bot):
-    bot.add_cog(Welcome(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Welcome(bot))

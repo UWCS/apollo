@@ -219,5 +219,5 @@ class LambdaNodeApplication:
         return LambdaNodeApplication(self.left.copy(), self.right.copy())
 
 
-def setup(bot: Bot):
-    bot.add_cog(LCalc(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(LCalc(bot))

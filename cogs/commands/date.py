@@ -31,5 +31,5 @@ class Date(commands.Cog):
         await ctx.send(output.strftime("%A"))
 
 
-def setup(bot: Bot):
-    bot.add_cog(Date(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Date(bot))

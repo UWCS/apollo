@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import asyncio
 import logging
 
 from discord import Intents
@@ -39,6 +40,7 @@ EXTENSIONS = [
 
 intents = Intents.default()
 intents.members = True
+intents.message_content = True
 
 bot = Bot(
     command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents
@@ -49,7 +51,7 @@ bot = Bot(
 @check(is_compsoc_exec_in_guild)
 async def reload_cogs(ctx: Context):
     for extension in EXTENSIONS:
-        bot.reload_extension(extension)
+        await bot.reload_extension(extension)
     await ctx.message.add_reaction("✅")
 
 
@@ -61,17 +63,19 @@ async def on_ready():
         logging.info("------")
 
 
-def main():
+async def main():
     if CONFIG.BOT_LOGGING:
         logging.basicConfig(level=logging.WARNING)
-    for extension in EXTENSIONS:
-        try:
-            logging.info(f"Attempting to load extension {extension}")
-            bot.load_extension(extension)
-        except Exception as e:
-            logging.exception("Failed to load extension {extension}", exc_info=e)
-    bot.run(CONFIG.DISCORD_TOKEN)
+
+    async with bot:
+        for extension in EXTENSIONS:
+            try:
+                logging.info(f"Attempting to load extension {extension}")
+                await bot.load_extension(extension)
+            except Exception as e:
+                logging.exception("Failed to load extension {extension}", exc_info=e)
+        await bot.start(CONFIG.DISCORD_TOKEN)
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -455,5 +455,5 @@ class Quotes(commands.Cog):
         await ctx.send(result)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Quotes(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Quotes(bot))

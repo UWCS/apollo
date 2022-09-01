@@ -132,5 +132,5 @@ class Blacklist(commands.Cog):
         await ctx.send(error.message)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Blacklist(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Blacklist(bot))

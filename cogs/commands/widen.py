@@ -68,5 +68,5 @@ class Widen(commands.Cog):
                 await ctx.send(apply_widen("The output is too wide") + "　:frowning:")
 
 
-def setup(bot: Bot):
-    bot.add_cog(Widen(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Widen(bot))
