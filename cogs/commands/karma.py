@@ -6,7 +6,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from io import BytesIO
 from time import time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -62,7 +62,7 @@ def current_milli_time():
 # Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
 async def plot_karma(
     karma_dict: Dict[str, List[KarmaChange]]
-) -> tuple[Optional[BytesIO], str]:
+) -> Tuple[Optional[BytesIO], str]:
     # Error if there's no input data
     if len(karma_dict) == 0:
         return None, ""
