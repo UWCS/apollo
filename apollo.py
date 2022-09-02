@@ -6,6 +6,7 @@ from discord import Intents
 from discord.ext.commands import Bot, Context, check, when_mentioned_or
 
 from config import CONFIG
+from discord_simple_pretty_help import SimplePrettyHelp
 from utils.utils import is_compsoc_exec_in_guild
 
 DESCRIPTION = """
@@ -43,7 +44,8 @@ intents.members = True
 intents.message_content = True
 
 bot = Bot(
-    command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents
+    command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents,
+    help_command=SimplePrettyHelp(),
 )
 
 
