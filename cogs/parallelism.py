@@ -55,6 +55,9 @@ class Parallelism(Cog):
     def send_to_ctx_after_threaded(self, func, ctx, loop, /, *args, **kwargs):
         return self.run_coro_after_threaded(func, ctx.send, loop, *args, **kwargs)
 
+    def send_to_int_after_threaded(self, func, int, loop, /, *args, **kwargs):
+        return self.run_coro_after_threaded(func, int.response.send_message, loop, *args, **kwargs)
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Parallelism(bot))
