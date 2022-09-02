@@ -10,7 +10,7 @@ from discord.ext.commands import Bot, Context, check, when_mentioned_or, Greedy
 
 from config import CONFIG
 from discord_simple_pretty_help import SimplePrettyHelp
-from utils.utils import is_compsoc_exec_in_guild
+from utils.utils import is_compsoc_exec_in_guild, wait_react, done_react
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
@@ -85,6 +85,9 @@ async def main():
 
 @bot.command()
 @commands.guild_only()
+@check(is_compsoc_exec_in_guild)
+@done_react
+@wait_react
 async def sync(
         ctx: Context, guilds: Greedy[discord.Object], spec: Optional[Literal["global", "guild", "copy", "clear"]] = None) -> None:
     """
@@ -95,7 +98,6 @@ async def sync(
     `!sync clear` -> clears all commands from the current guild target and syncs (removes guild commands)
     `!sync id_1 id_2` -> syncs guilds with id 1 and 2
     """
-
     if not guilds:
         if spec == "guild":
             synced = await ctx.bot.tree.sync(guild=ctx.guild)
@@ -106,13 +108,11 @@ async def sync(
             ctx.bot.tree.clear_commands(guild=ctx.guild)
             await ctx.bot.tree.sync(guild=ctx.guild)
             synced = []
-        else:
+        else:   # global
             synced = await ctx.bot.tree.sync()
 
-        await ctx.send(
-            f"Synced {len(synced)} commands {'globally' if spec not in ['guild', 'copy', 'clear'] else 'to the current guild.'}"
-        )
-        await ctx.message.add_reaction("👍")
+        scope = 'globally' if spec not in ['guild', 'copy', 'clear'] else 'to the current guild.'
+        await ctx.send(f"Synced {len(synced)} commands {scope}")
         return
 
     ret = 0
@@ -125,7 +125,6 @@ async def sync(
             ret += 1
 
     await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
-    await ctx.message.add_reaction("👍")
 
 if __name__ == "__main__":
     asyncio.run(main())
