@@ -26,7 +26,7 @@ class Blacklist(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def blacklist(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
