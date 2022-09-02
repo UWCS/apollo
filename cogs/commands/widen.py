@@ -1,7 +1,9 @@
 import html
 import re
 
+import discord
 from bs4 import BeautifulSoup
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from markdown import markdown
@@ -24,6 +26,11 @@ class Widen(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
+    @app_commands.command(name="widen")
+    async def widen_slash(self, int: discord.Interaction, text: str):
+        widened = await self.widen_base(text)
+        await int.response.send_message(widened)
+
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, rest_is_raw=True)
     async def widen(self, ctx: Context, *, message):
         if message:
@@ -36,10 +43,21 @@ class Widen(commands.Cog):
             if target_raw is None:
                 return
         else:
-            messages = await ctx.history(limit=2).flatten()
+            messages = [m async for m in ctx.history(limit=2)]
             target_raw = messages[-1].clean_content
 
-        target_raw = re.sub(r"<:.+:\d+>", "", target_raw)  # Remove custom emoji
+        widened = await self.widen_base(target_raw)
+
+        if widened:
+            # Make sure we send a message that's short enough
+            if len(widened) <= 2000:
+                await ctx.send(widened)
+            else:
+                await ctx.send(apply_widen("The output is too wide") + "　:frowning:")
+
+
+    async def widen_base(self, message):
+        target_raw = re.sub(r"<:.+:\d+>", "", message)  # Remove custom emoji
         target_raw = re.sub(r"^\*\*<\w+>\*\* ", "", target_raw)  # Remove IRC usernames
         target_raw = html.escape(
             target_raw.strip()
@@ -60,12 +78,7 @@ class Widen(commands.Cog):
         else:
             widened = apply_widen("".join([x.lstrip("@") for x in target]))
 
-        if widened:
-            # Make sure we send a message that's short enough
-            if len(widened) <= 2000:
-                await ctx.send(widened)
-            else:
-                await ctx.send(apply_widen("The output is too wide") + "　:frowning:")
+        return widened
 
 
 async def setup(bot: Bot):
