@@ -5,7 +5,7 @@ import discord
 from bs4 import BeautifulSoup
 from discord import app_commands
 from discord.ext import commands
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, clean_content
 from markdown import markdown
 
 LONG_HELP_TEXT = """
@@ -32,7 +32,8 @@ class Widen(commands.Cog):
         await int.response.send_message(widened)
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, rest_is_raw=True)
-    async def widen(self, ctx: Context, *, message):
+    async def widen(self, ctx: Context, *, message: str):
+        message = await clean_content().convert(ctx, message)
         if message:
             target_raw = message
         elif (reference := ctx.message.reference) is not None:
