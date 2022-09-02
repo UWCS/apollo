@@ -24,7 +24,7 @@ class RoomSearch(commands.Cog):
         self.bot = bot
         self.full_emojis = ("1️⃣", "2⃣", "3⃣", "4⃣", "5⃣", "6⃣", "7⃣", "8⃣", "9⃣", "🔟")
 
-    @commands.command()
+    @commands.hybrid_command()
     async def room(self, ctx: Context, name: str):
         """Warwick Room Search
 

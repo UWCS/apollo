@@ -1,7 +1,9 @@
 import logging
 from datetime import datetime
 from enum import Enum, unique
+from typing import Optional, Literal
 
+import discord
 from discord import Color, Embed, TextChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
