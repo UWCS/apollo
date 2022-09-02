@@ -4,6 +4,7 @@ import tempfile
 from collections import defaultdict
 from datetime import datetime, timedelta
 from io import BytesIO
+import shlex
 from time import time
 from typing import Dict, List, Optional, Tuple
 
@@ -193,7 +194,7 @@ class Karma(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def karma(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
@@ -268,11 +269,13 @@ class Karma(commands.Cog):
         help="Gives information about the specified karma topic", ignore_extra=True
     )
     @commands.cooldown(5, 60, BucketType.user)
-    async def info(self, ctx: Context, karma: clean_content):
+    async def info(self, ctx: Context, item: str):
+        item = await clean_content().convert(ctx, item)
         await ctx.typing()
+
         t_start = current_milli_time()
         # Strip any leading @s and get the item from the DB
-        karma_stripped = karma.lstrip("@")
+        karma_stripped = item.lstrip("@")
         karma_item = (
             db_session.query(KarmaModel)
             .filter(func.lower(KarmaModel.name) == func.lower(karma_stripped))
@@ -357,7 +360,11 @@ class Karma(commands.Cog):
 
     @karma.command(help="Plots the karma change over time of the given karma topic(s)")
     @commands.cooldown(5, 60, BucketType.user)
-    async def plot(self, ctx: Context, *args: clean_content):
+    async def plot(self, ctx: Context, *, args: str):
+        args = await clean_content().convert(ctx, args)
+        args = shlex.split(args)
+        name = get_name_string(ctx.message)
+
         await ctx.typing()
         t_start = current_milli_time()
 
@@ -394,6 +401,9 @@ class Karma(commands.Cog):
 
             # Add the karma changes to the dict
             karma_dict[karma_stripped] = karma_item.changes
+
+        if len(karma_dict) == 0:
+            return await ctx.send("No items to graph!")
 
         # Plot the graph and save it to a png
         img, filename = await plot_karma(karma_dict)
@@ -435,14 +445,13 @@ class Karma(commands.Cog):
             )
             embed.set_image(url=f"attachment://{filename}")
 
-        display_name = get_name_string(ctx.message)
         emoji = (
             ":chart_with_upwards_trend:"
             if sum(c.change for cs in karma_dict.values() for c in cs) >= 0
             else ":chart_with_downwards_trend:"
         )
         file = File(img, filename=filename)
-        await ctx.send(f"Here you go, {display_name}! {emoji}", embed=embed, file=file)
+        await ctx.send(f"Here you go, {name}! {emoji}", embed=embed, file=file)
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
@@ -452,7 +461,8 @@ class Karma(commands.Cog):
     @karma.command(
         help="Lists the reasons (if any) for the specific karma", ignore_extra=True
     )
-    async def reasons(self, ctx: Context, karma: clean_content):
+    async def reasons(self, ctx: Context, *, karma: str):
+        karma = await clean_content().convert(ctx, karma)
         karma_stripped = karma.lstrip("@")
 
         # Get the karma from the database
