@@ -49,17 +49,16 @@ class Reminders(commands.Cog):
         self.bot = bot
         self.bot.loop.create_task(reminder_check(self.bot))
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def reminder(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found.")
 
     @reminder.command(
-        help='Add a reminder, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your reminder (rest of discord message).'
+        help='Add a reminder, when can be absolute or relative, but place in quotes if multiple words.'
     )
-    async def add(
-        self, ctx: Context, trigger_time: DateTimeConverter, *, reminder_content: str
-    ):
+    async def add(self, ctx: Context, when: str, *, reminder_content: str):
+        trigger_time = parse_time(when)
         display_name = get_name_string(ctx.message)
         if user_is_irc_bot(ctx):
             author_id, irc_n = 1, display_name
@@ -77,23 +76,6 @@ class Reminders(commands.Cog):
 
         result = self.add_base(new_reminder)
         await ctx.send(**result)
-
-
-    @app_commands.command(
-        description='Add a reminder, when can be formatted fairly liberally.'
-    )
-    async def remadd(self, int: discord.Interaction, when: str, reminder: str):
-        trigger_time = parse_time(when)
-        db_uid = get_database_user(int.user).id
-        result = self.add_base(Reminder(
-            user_id=db_uid,
-            reminder_content=reminder,
-            trigger_at=trigger_time,
-            triggered=False,
-            playback_channel_id=int.channel.id,
-            irc_name=None,
-        ))
-        await int.response.send_message(**result)
 
 
     def add_base(self, reminder):
