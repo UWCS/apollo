@@ -86,5 +86,5 @@ class ChannelChecker(Cog):
         self.bot.loop.create_task(channel_check(self.bot))
 
 
-def setup(bot: Bot):
-    bot.add_cog(ChannelChecker(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(ChannelChecker(bot))
