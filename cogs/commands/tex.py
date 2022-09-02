@@ -2,9 +2,11 @@ import io
 import logging
 from datetime import datetime
 
+import discord
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
@@ -33,19 +35,27 @@ class Tex(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
+    @app_commands.command(name="tex", description=SHORT_HELP_TEXT)
+    async def tex_slash(self, interaction: discord.Interaction, text: str):
+        await interaction.response.defer()
+        result = await self.tex_base(text)
+        print(result)
+        await interaction.followup.send(**result)
+
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tex(self, ctx: Context, *message: clean_content):
-        await ctx.typing()
+        await ctx.send(**await self.tex_base(message))
+
+    async def tex_base(self, message):
         # Input filtering
         if not message:
-            await ctx.send("Your message contained nothing to render")
+            return {"content": "Your message contained nothing to render"}
 
         if message[0] == "```tex":
             message = ("```", *message[1:])
         combined = " ".join([x.lstrip("@") for x in message])
         if combined[0] != "`" or combined[-1] != "`":
-            await ctx.send("Please place your input in an inline code block")
-            return
+            return {"content": "Please place your input in an inline code block"}
 
         tex_code = combined.lstrip("`").rstrip("`")
         # May want to consider enforcing the $message$ requirement here
@@ -73,8 +83,7 @@ class Tex(commands.Cog):
         except RuntimeError as r:
             # Failed to render latex. Report error
             logging.error(r)
-            await ctx.send("Unable to render LaTeX. Please check that it's correct")
-            raise r
+            return {"content": "Unable to render LaTeX. Please check that it's correct"}
         else:
             # Generate a mask of the transparent regions in the image
             img_arr = img_as_float(skio.imread(img))
@@ -99,8 +108,7 @@ class Tex(commands.Cog):
 
             # Load the image as a file to be attached to an image
             img_file = File(img, filename=filename)
-            display_name = get_name_string(ctx.message)
-            await ctx.send(f"Here you go, {display_name}! :abacus:", file=img_file)
+            return {"content": f"Here you go! :abacus:", "file": img_file}
 
 
 async def setup(bot: Bot):

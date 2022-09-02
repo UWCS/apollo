@@ -26,7 +26,7 @@ class Widen(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @app_commands.command(name="widen")
+    @app_commands.command(name="widen", description=SHORT_HELP_TEXT)
     async def widen_slash(self, int: discord.Interaction, text: str):
         widened = await self.widen_base(text)
         await int.response.send_message(widened)
