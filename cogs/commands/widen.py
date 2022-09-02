@@ -56,7 +56,6 @@ class Widen(commands.Cog):
             else:
                 await ctx.send(apply_widen("The output is too wide") + "　:frowning:")
 
-
     async def widen_base(self, message):
         target_raw = re.sub(r"<:.+:\d+>", "", message)  # Remove custom emoji
         target_raw = re.sub(r"^\*\*<\w+>\*\* ", "", target_raw)  # Remove IRC usernames

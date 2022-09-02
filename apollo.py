@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-from typing import Optional, Literal
+from typing import Literal, Optional
 
 import discord
 from discord import Intents
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, check, when_mentioned_or, Greedy
+from discord.ext.commands import Bot, Context, Greedy, check, when_mentioned_or
+from discord_simple_pretty_help import SimplePrettyHelp
 
 from config import CONFIG
-from discord_simple_pretty_help import SimplePrettyHelp
-from utils.utils import is_compsoc_exec_in_guild, wait_react, done_react
+from utils.utils import done_react, is_compsoc_exec_in_guild, wait_react
 
 DESCRIPTION = """
 Apollo is the Discord bot for the University of Warwick Computing Society, designed to augment the server with a number of utilities and website services.
@@ -48,7 +48,9 @@ intents.members = True
 intents.message_content = True
 
 bot = Bot(
-    command_prefix=when_mentioned_or("!"), description=DESCRIPTION, intents=intents,
+    command_prefix=when_mentioned_or("!"),
+    description=DESCRIPTION,
+    intents=intents,
     help_command=SimplePrettyHelp(),
 )
 
@@ -89,7 +91,10 @@ async def main():
 @done_react
 @wait_react
 async def sync(
-        ctx: Context, guilds: Greedy[discord.Object], spec: Optional[Literal["global", "guild", "copy", "clear"]] = None) -> None:
+    ctx: Context,
+    guilds: Greedy[discord.Object],
+    spec: Optional[Literal["global", "guild", "copy", "clear"]] = None,
+) -> None:
     """
     Syncs slash commands to server
     `!sync` or `!sync global` -> global sync
@@ -108,10 +113,14 @@ async def sync(
             ctx.bot.tree.clear_commands(guild=ctx.guild)
             await ctx.bot.tree.sync(guild=ctx.guild)
             synced = []
-        else:   # global
+        else:  # global
             synced = await ctx.bot.tree.sync()
 
-        scope = 'globally' if spec not in ['guild', 'copy', 'clear'] else 'to the current guild.'
+        scope = (
+            "globally"
+            if spec not in ["guild", "copy", "clear"]
+            else "to the current guild."
+        )
         await ctx.send(f"Synced {len(synced)} commands {scope}")
         return
 
@@ -125,6 +134,7 @@ async def sync(
             ret += 1
 
     await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

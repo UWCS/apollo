@@ -2,8 +2,6 @@ import asyncio
 import logging
 from datetime import datetime
 
-import discord
-from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from humanize import precisedelta
@@ -12,7 +10,12 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import Reminder, db_session
-from utils import DateTimeConverter, get_database_user, get_name_string, user_is_irc_bot, parse_time
+from utils import (
+    get_database_user,
+    get_name_string,
+    parse_time,
+    user_is_irc_bot,
+)
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.
@@ -55,7 +58,7 @@ class Reminders(commands.Cog):
             await ctx.send("Subcommand not found.")
 
     @reminder.command(
-        help='Add a reminder, when can be absolute or relative, but place in quotes if multiple words.'
+        help="Add a reminder, when can be absolute or relative, but place in quotes if multiple words."
     )
     async def add(self, ctx: Context, when: str, *, reminder_content: str):
         trigger_time = parse_time(when)
@@ -77,7 +80,6 @@ class Reminders(commands.Cog):
         result = self.add_base(new_reminder)
         await ctx.send(**result)
 
-
     def add_base(self, reminder):
         now = datetime.now()
         if not reminder.trigger_at:
@@ -89,7 +91,9 @@ class Reminders(commands.Cog):
         try:
             db_session.commit()
             gran = precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit="seconds")
-            return {"content": f"Reminder prepared for <t:{int(reminder.trigger_at.timestamp())}:R> (granularity is {gran})."}
+            return {
+                "content": f"Reminder prepared for <t:{int(reminder.trigger_at.timestamp())}:R> (granularity is {gran})."
+            }
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)

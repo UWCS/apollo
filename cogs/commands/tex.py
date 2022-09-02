@@ -10,9 +10,8 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
-from skimage import color, img_as_float, io as skio
-
-from utils import get_name_string
+from skimage import color, img_as_float
+from skimage import io as skio
 
 matplotlib.use("Agg")
 
@@ -79,7 +78,9 @@ class Tex(commands.Cog):
         try:
             # Plot the latex and save it.
             plt.text(0, 1, tex_code, color="white")
-            plt.savefig(img, dpi=300, bbox_inches="tight", transparent=True, format="png")
+            plt.savefig(
+                img, dpi=300, bbox_inches="tight", transparent=True, format="png"
+            )
         except RuntimeError as r:
             # Failed to render latex. Report error
             logging.error(r)
@@ -103,7 +104,7 @@ class Tex(commands.Cog):
 
             # Update img to match crop
             img = io.BytesIO()
-            skio.imsave(img, img_cropped, format='png')
+            skio.imsave(img, img_cropped, format="png")
             img.seek(0)
 
             # Load the image as a file to be attached to an image

@@ -213,12 +213,15 @@ def wait_react(func):
     Reacts to the command message with a clock while message processing is ongoing
     Most useful on commands with longer processing times
     """
+
     @functools.wraps(func)
     async def decorator(*args, **kwargs):
         ctx: Context = next(a for a in args if isinstance(a, Context))
         await ctx.message.add_reaction("🕐")
         await func(*args, **kwargs)
-        if ctx: await ctx.message.remove_reaction("🕐", ctx.me)
+        if ctx:
+            await ctx.message.remove_reaction("🕐", ctx.me)
+
     return decorator
 
 
@@ -227,9 +230,12 @@ def done_react(func):
     Reacts to the command message with a thumbs up once command processing is complete
     Most useful on commands with no direct result message
     """
+
     @functools.wraps(func)
     async def decorator(*args, **kwargs):
         ctx: Context = next(a for a in args if isinstance(a, Context))
         await func(*args, **kwargs)
-        if ctx: await ctx.message.add_reaction("👍")
+        if ctx:
+            await ctx.message.add_reaction("👍")
+
     return decorator

@@ -34,13 +34,11 @@ class Date(commands.Cog):
         output = date.today()
         await ctx.send(output.strftime("%A"))
 
-
     @commands.hybrid_command(help=TIME_HELP_TEXT, brief=TIME_HELP_TEXT)
     async def time(self, ctx: Context):
         """Return the current time"""
         output = datetime.now()
         await ctx.send(f"<t:{int(output.timestamp())}:t>")
-
 
     @commands.hybrid_command(help=TIME_HELP_TEXT, brief=TIME_HELP_TEXT)
     async def timestamp(self, ctx: Context, when: str):
@@ -55,7 +53,8 @@ class Date(commands.Cog):
         time = parse_time(when)
         timestamp = int(time.timestamp())
 
-        await ctx.send(f"""**All formats:**
+        await ctx.send(
+            f"""**All formats:**
 `<t:{timestamp}:d>` -> <t:{timestamp}:d>
 `<t:{timestamp}:D>` -> <t:{timestamp}:D>
 `<t:{timestamp}:t>` -> <t:{timestamp}:t>
@@ -63,7 +62,9 @@ class Date(commands.Cog):
 `<t:{timestamp}:f>` -> <t:{timestamp}:f>
 `<t:{timestamp}:F>` -> <t:{timestamp}:F>
 `<t:{timestamp}:R>` -> <t:{timestamp}:R>
-""")
+"""
+        )
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Date(bot))

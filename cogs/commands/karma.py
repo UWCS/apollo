@@ -1,12 +1,12 @@
 import io
 import os
+import shlex
 import tempfile
 from collections import defaultdict
 from datetime import datetime, timedelta
 from io import BytesIO
-import shlex
 from time import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -33,7 +33,6 @@ from matplotlib.dates import (
 from pytz import timezone, utc
 from sqlalchemy import func
 
-from config import CONFIG
 from models import Karma as KarmaModel
 from models import KarmaChange, db_session
 from utils import get_name_string, pluralise
@@ -61,7 +60,9 @@ def current_milli_time():
 
 
 # Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
-async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> tuple[Optional[BytesIO], str]:
+async def plot_karma(
+    karma_dict: Dict[str, List[KarmaChange]]
+) -> tuple[Optional[BytesIO], str]:
     # Error if there's no input data
     if len(karma_dict) == 0:
         return None, ""
@@ -346,7 +347,9 @@ class Karma(commands.Cog):
 
         display_name = get_name_string(ctx.message)
         file = File(img, filename=filename)
-        await ctx.send(f"Here you go, {display_name}! :page_facing_up:", embed=embed, file=file)
+        await ctx.send(
+            f"Here you go, {display_name}! :page_facing_up:", embed=embed, file=file
+        )
 
     @info.error
     async def info_error(self, ctx: Context, error: CommandError):
@@ -356,7 +359,8 @@ class Karma(commands.Cog):
             )
         elif isinstance(error, KarmaError):
             await ctx.send(error.message)
-        else: raise error
+        else:
+            raise error
 
     @karma.command(help="Plots the karma change over time of the given karma topic(s)")
     @commands.cooldown(5, 60, BucketType.user)
@@ -455,8 +459,10 @@ class Karma(commands.Cog):
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
-        if hasattr(error, "message"): await ctx.send(error.message)
-        else: raise error
+        if hasattr(error, "message"):
+            await ctx.send(error.message)
+        else:
+            raise error
 
     @karma.command(
         help="Lists the reasons (if any) for the specific karma", ignore_extra=True
