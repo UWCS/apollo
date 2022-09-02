@@ -27,5 +27,5 @@ class Flip(commands.Cog):
             await ctx.send(f'{display_name}: {random.choice(options).lstrip("@")}')
 
 
-def setup(bot: Bot):
-    bot.add_cog(Flip(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Flip(bot))

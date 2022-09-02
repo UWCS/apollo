@@ -24,5 +24,5 @@ class Irc(Cog):
             await self.bot.invoke(ctx)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Irc(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Irc(bot))

@@ -99,5 +99,5 @@ class Reminders(commands.Cog):
                 await ctx.send(f"Something went wrong")
 
 
-def setup(bot: Bot):
-    bot.add_cog(Reminders(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Reminders(bot))

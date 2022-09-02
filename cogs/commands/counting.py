@@ -205,5 +205,5 @@ class Counting(Cog):
         await ctx.send(err)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Counting(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Counting(bot))

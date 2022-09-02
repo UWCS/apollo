@@ -17,5 +17,5 @@ class Say(commands.Cog):
         await ctx.send(" ".join([x.lstrip("@") for x in message]))
 
 
-def setup(bot: Bot):
-    bot.add_cog(Say(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Say(bot))

@@ -127,5 +127,5 @@ class Database(Cog):
                 logging.exception(e)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Database(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Database(bot))

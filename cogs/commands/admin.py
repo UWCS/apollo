@@ -1,7 +1,9 @@
 import logging
 from datetime import datetime
 from enum import Enum, unique
+from typing import Optional, Literal
 
+import discord
 from discord import Color, Embed, TextChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
@@ -213,7 +215,7 @@ class Admin(commands.Cog):
     )
     @check(is_compsoc_exec_in_guild)
     async def user_info(self, ctx: Context, user_str: str):
-        await ctx.trigger_typing()
+        await ctx.typing()
 
         t_start = current_milli_time()
         # Find the user in the database
@@ -283,5 +285,5 @@ class Admin(commands.Cog):
         await ctx.send(error.message)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Admin(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Admin(bot))

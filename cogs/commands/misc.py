@@ -144,5 +144,5 @@ We have a Terraria 1.4.1.2 server running at:
         )
 
 
-def setup(bot: Bot):
-    bot.add_cog(Misc(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Misc(bot))
