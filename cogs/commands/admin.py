@@ -213,7 +213,7 @@ class Admin(commands.Cog):
     )
     @check(is_compsoc_exec_in_guild)
     async def user_info(self, ctx: Context, user_str: str):
-        await ctx.trigger_typing()
+        await ctx.typing()
 
         t_start = current_milli_time()
         # Find the user in the database
