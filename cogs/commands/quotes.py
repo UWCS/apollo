@@ -22,6 +22,8 @@ from utils import (
 )
 from utils.mentions import Mention, MentionConverter, MentionType
 
+# TODO Convert to DPY 2.0, waiting for PR #106 to be completed
+
 LONG_HELP_TEXT = """
 Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
 """
