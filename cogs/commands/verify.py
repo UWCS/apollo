@@ -13,6 +13,8 @@ from config import CONFIG
 from models import db_session
 from utils import get_database_user, get_name_string
 
+# TODO Convert to DPY 2.0, (this is unused)
+
 LONG_HELP_TEXT = """
 Allows you to verify your account with your university number to gain the 'CompSoc Member' role. Should be sent in a private message.
 """
@@ -149,5 +151,5 @@ class Verify(commands.Cog):
         await ctx.send(error.message)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Verify(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Verify(bot))

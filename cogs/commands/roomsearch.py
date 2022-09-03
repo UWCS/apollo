@@ -47,7 +47,7 @@ class RoomSearch(commands.Cog):
         self.year = None
         self.week = None
 
-    @commands.command()
+    @commands.hybrid_command()
     async def roompr(self, ctx: Context):
         await ctx.reply(
             "This bot uses the Campus Map's API (<https://campus.warwick.ac.uk/>)."
@@ -55,7 +55,7 @@ class RoomSearch(commands.Cog):
             "or create a PR to add an alias in `resources/rooms/room-mapname.json`"
         )
 
-    @commands.command()
+    @commands.hybrid_command()
     async def room(self, ctx: Context, *, name: str):
         """Warwick Room Search
 
@@ -228,5 +228,5 @@ class RoomSearch(commands.Cog):
         return None
 
 
-def setup(bot: Bot):
-    bot.add_cog(RoomSearch(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(RoomSearch(bot))

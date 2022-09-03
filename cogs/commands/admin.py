@@ -44,7 +44,7 @@ class Admin(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @check(is_compsoc_exec_in_guild)
     async def admin(self, ctx: Context):
         if not ctx.invoked_subcommand:
@@ -62,7 +62,7 @@ class Admin(commands.Cog):
         brief="Ignore or respond to commands in the given channel",
     )
     async def channel_ignore(
-        self, ctx: Context, channel: TextChannel, mode: ChannelIgnoreMode.get = None
+        self, ctx: Context, channel: TextChannel, mode: ChannelIgnoreMode = None
     ):
         ignored_channel = (
             db_session.query(IgnoredChannel)
@@ -125,7 +125,7 @@ class Admin(commands.Cog):
         brief="Send a shorter karma message in the given channel",
     )
     async def channel_karma(
-        self, ctx: Context, channel: TextChannel, mode: MiniKarmaMode.get = None
+        self, ctx: Context, channel: TextChannel, mode: MiniKarmaMode = None
     ):
         # TODO: avoid writing duplicate code with above if possible?
         karma_channel = (
@@ -213,7 +213,7 @@ class Admin(commands.Cog):
     )
     @check(is_compsoc_exec_in_guild)
     async def user_info(self, ctx: Context, user_str: str):
-        await ctx.trigger_typing()
+        await ctx.typing()
 
         t_start = current_milli_time()
         # Find the user in the database
@@ -283,5 +283,5 @@ class Admin(commands.Cog):
         await ctx.send(error.message)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Admin(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Admin(bot))

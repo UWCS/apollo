@@ -1,17 +1,17 @@
+import io
 import logging
-import os
 from datetime import datetime
 
+import discord
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
-from skimage import color, img_as_float, io
-
-from config import CONFIG
-from utils import get_name_string
+from skimage import color, img_as_float
+from skimage import io as skio
 
 matplotlib.use("Agg")
 
@@ -34,20 +34,27 @@ class Tex(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
+    @app_commands.command(name="tex", description=SHORT_HELP_TEXT)
+    async def tex_slash(self, interaction: discord.Interaction, text: str):
+        await interaction.response.defer()
+        result = await self.tex_base(text)
+        print(result)
+        await interaction.followup.send(**result)
+
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tex(self, ctx: Context, *message: clean_content):
-        await ctx.trigger_typing()
-        print(message)
+        await ctx.send(**await self.tex_base(message))
+
+    async def tex_base(self, message):
         # Input filtering
         if not message:
-            await ctx.send("Your message contained nothing to render")
+            return {"content": "Your message contained nothing to render"}
 
         if message[0] == "```tex":
             message = ("```", *message[1:])
         combined = " ".join([x.lstrip("@") for x in message])
         if combined[0] != "`" or combined[-1] != "`":
-            await ctx.send("Please place your input in an inline code block")
-            return
+            return {"content": "Please place your input in an inline code block"}
 
         tex_code = combined.lstrip("`").rstrip("`")
         # May want to consider enforcing the $message$ requirement here
@@ -67,19 +74,20 @@ class Tex(commands.Cog):
             + str(hex(int(datetime.utcnow().timestamp()))).lstrip("0x")
             + ".png"
         ).replace(" ", "")
-        path_png = CONFIG.FIG_SAVE_PATH / filename
-        path_jpg = path_png.with_suffix(".jpg")
+        img = io.BytesIO()
         try:
             # Plot the latex and save it.
             plt.text(0, 1, tex_code, color="white")
-            plt.savefig(path_png, dpi=300, bbox_inches="tight", transparent=True)
+            plt.savefig(
+                img, dpi=300, bbox_inches="tight", transparent=True, format="png"
+            )
         except RuntimeError as r:
             # Failed to render latex. Report error
             logging.error(r)
-            await ctx.send("Unable to render LaTeX. Please check that it's correct")
+            return {"content": "Unable to render LaTeX. Please check that it's correct"}
         else:
             # Generate a mask of the transparent regions in the image
-            img_arr = img_as_float(io.imread(path_png))
+            img_arr = img_as_float(skio.imread(img))
             transparent_mask = np.array([1, 1, 1, 0])
             img_mask = np.abs(img_arr - transparent_mask).sum(axis=2) < 1
 
@@ -94,16 +102,15 @@ class Tex(commands.Cog):
             ]
             img_cropped = color.rgba2rgb(img_cropped, background=IMAGE_BACKGROUND)
 
-            # Save the image, delete the PNG and set the permissions for the JPEG
-            io.imsave(path_jpg, img_cropped, quality=100)
-            os.chmod(path_jpg, 0o644)
-            os.remove(path_png)
+            # Update img to match crop
+            img = io.BytesIO()
+            skio.imsave(img, img_cropped, format="png")
+            img.seek(0)
 
             # Load the image as a file to be attached to an image
-            img_file = File(path_jpg, filename="tex_output.jpg")
-            display_name = get_name_string(ctx.message)
-            await ctx.send(f"Here you go, {display_name}! :abacus:", file=img_file)
+            img_file = File(img, filename=filename)
+            return {"content": f"Here you go! :abacus:", "file": img_file}
 
 
-def setup(bot: Bot):
-    bot.add_cog(Tex(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Tex(bot))

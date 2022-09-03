@@ -1,9 +1,12 @@
+import io
 import os
+import shlex
 import tempfile
 from collections import defaultdict
 from datetime import datetime, timedelta
+from io import BytesIO
 from time import time
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -30,7 +33,6 @@ from matplotlib.dates import (
 from pytz import timezone, utc
 from sqlalchemy import func
 
-from config import CONFIG
 from models import Karma as KarmaModel
 from models import KarmaChange, db_session
 from utils import get_name_string, pluralise
@@ -58,10 +60,12 @@ def current_milli_time():
 
 
 # Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
-async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
+async def plot_karma(
+    karma_dict: Dict[str, List[KarmaChange]]
+) -> Tuple[Optional[BytesIO], str]:
     # Error if there's no input data
     if len(karma_dict) == 0:
-        return "", ""
+        return None, ""
 
     # Matplotlib preamble
     plt.clf()
@@ -149,12 +153,12 @@ async def plot_karma(karma_dict: Dict[str, List[KarmaChange]]) -> (str, str):
         + str(hex(int(datetime.utcnow().timestamp()))).lstrip("0x")
         + ".png"
     ).replace(" ", "")
-    path = CONFIG.FIG_SAVE_PATH / filename
+    # path = CONFIG.FIG_SAVE_PATH / filename
 
-    fig.savefig(path, dpi=240, transparent=False)
-    os.chmod(path, 0o644)
-
-    return filename, path
+    img = io.BytesIO()
+    fig.savefig(img, dpi=240, transparent=False, format="png")
+    img.seek(0)
+    return img, filename
 
 
 # Util function to construct comma-separated strings in the form of:
@@ -191,7 +195,7 @@ class Karma(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def karma(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
@@ -266,11 +270,13 @@ class Karma(commands.Cog):
         help="Gives information about the specified karma topic", ignore_extra=True
     )
     @commands.cooldown(5, 60, BucketType.user)
-    async def info(self, ctx: Context, karma: clean_content):
-        await ctx.trigger_typing()
+    async def info(self, ctx: Context, item: str):
+        item = await clean_content().convert(ctx, item)
+        await ctx.typing()
+
         t_start = current_milli_time()
         # Strip any leading @s and get the item from the DB
-        karma_stripped = karma.lstrip("@")
+        karma_stripped = item.lstrip("@")
         karma_item = (
             db_session.query(KarmaModel)
             .filter(func.lower(KarmaModel.name) == func.lower(karma_stripped))
@@ -284,7 +290,7 @@ class Karma(commands.Cog):
             )
 
         # Get the changes and plot the graph
-        filename, path = await plot_karma({karma_stripped: karma_item.changes})
+        img, filename = await plot_karma({karma_stripped: karma_item.changes})
 
         # Get the user with the most karma
         # I'd use a group_by sql statement here, but it seems to not terminate
@@ -310,52 +316,40 @@ class Karma(commands.Cog):
         ).total_seconds() / (60 * len(all_changes))
         time_taken = (current_milli_time() - t_start) / 1000
 
-        # Attach the file as an image for dev purposes
-        if CONFIG.DEBUG:
-            # Attach the file as an image for dev purposes
-            plot_image = open(path, mode="rb")
-            plot = File(plot_image)
-            await ctx.send(
-                f'Here\'s the karma trend for "{karma_stripped}" over time', file=plot
-            )
-        else:
-            # Construct the embed
-            generated_at = datetime.strftime(
-                utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
-                "%H:%M %d %b %Y",
-            )
-            embed_colour = Color.from_rgb(61, 83, 255)
-            embed_title = f'Statistics for "{karma_stripped}"'
-            embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} {pluralise(all_changes, "time")} by {len(user_changes.keys())} {pluralise(user_changes.keys(), "user")}.'
+        # Construct the embed
+        generated_at = datetime.strftime(
+            utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
+            "%H:%M %d %b %Y",
+        )
+        embed_colour = Color.from_rgb(61, 83, 255)
+        embed_title = f'Statistics for "{karma_stripped}"'
+        embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} {pluralise(all_changes, "time")} by {len(user_changes.keys())} {pluralise(user_changes.keys(), "user")}.'
 
-            embed = Embed(
-                title=embed_title, description=embed_description, color=embed_colour
-            )
-            embed.add_field(
-                name="Most karma'd",
-                value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} {pluralise(most_karma[1], "change")}.',
-            )
-            embed.add_field(
-                name="Approval rating",
-                value=f'The approval rating of "{karma_stripped}" is {approval:.1f}% ({karma_item.pluses} positive to {karma_item.minuses} negative karma and {karma_item.neutrals} neutral karma).',
-            )
-            embed.add_field(
-                name="Karma timeline",
-                value=f'"{karma_stripped}" was first karma\'d on {datetime.strftime(all_changes[0].local_time, "%d %b %Y at %H:%M")} and has been karma\'d approximately every {mins_per_karma:.1f} minutes.',
-            )
-            embed.set_footer(
-                text=f"Statistics generated at {generated_at} in {time_taken:.3f} seconds."
-            )
-            embed.set_image(
-                url="{host}/{filename}".format(
-                    host=CONFIG.FIG_HOST_URL, filename=filename
-                )
-            )
+        embed = Embed(
+            title=embed_title, description=embed_description, color=embed_colour
+        )
+        embed.add_field(
+            name="Most karma'd",
+            value=f'"{karma_stripped}" has been karma\'d the most by <@{most_karma[0].user_uid}> with a total of {len(most_karma[1])} {pluralise(most_karma[1], "change")}.',
+        )
+        embed.add_field(
+            name="Approval rating",
+            value=f'The approval rating of "{karma_stripped}" is {approval:.1f}% ({karma_item.pluses} positive to {karma_item.minuses} negative karma and {karma_item.neutrals} neutral karma).',
+        )
+        embed.add_field(
+            name="Karma timeline",
+            value=f'"{karma_stripped}" was first karma\'d on {datetime.strftime(all_changes[0].local_time, "%d %b %Y at %H:%M")} and has been karma\'d approximately every {mins_per_karma:.1f} minutes.',
+        )
+        embed.set_footer(
+            text=f"Statistics generated at {generated_at} in {time_taken:.3f} seconds."
+        )
+        embed.set_image(url=f"attachment://{filename}")
 
-            display_name = get_name_string(ctx.message)
-            await ctx.send(
-                f"Here you go, {display_name}! :page_facing_up:", embed=embed
-            )
+        display_name = get_name_string(ctx.message)
+        file = File(img, filename=filename)
+        await ctx.send(
+            f"Here you go, {display_name}! :page_facing_up:", embed=embed, file=file
+        )
 
     @info.error
     async def info_error(self, ctx: Context, error: CommandError):
@@ -365,11 +359,17 @@ class Karma(commands.Cog):
             )
         elif isinstance(error, KarmaError):
             await ctx.send(error.message)
+        else:
+            raise error
 
     @karma.command(help="Plots the karma change over time of the given karma topic(s)")
     @commands.cooldown(5, 60, BucketType.user)
-    async def plot(self, ctx: Context, *args: clean_content):
-        await ctx.trigger_typing()
+    async def plot(self, ctx: Context, *, args: str):
+        args = await clean_content().convert(ctx, args)
+        args = shlex.split(args)
+        name = get_name_string(ctx.message)
+
+        await ctx.typing()
         t_start = current_milli_time()
 
         # If there are no arguments
@@ -406,74 +406,69 @@ class Karma(commands.Cog):
             # Add the karma changes to the dict
             karma_dict[karma_stripped] = karma_item.changes
 
+        if len(karma_dict) == 0:
+            return await ctx.send("No items to graph!")
+
         # Plot the graph and save it to a png
-        filename, path = await plot_karma(karma_dict)
+        img, filename = await plot_karma(karma_dict)
         t_end = current_milli_time()
 
-        if CONFIG.DEBUG:
-            # Attach the file as an image for dev purposes
-            plot_image = open(path, mode="rb")
-            plot = File(plot_image)
-            await ctx.send(
-                f'Here\'s the karma trend for "{karma}" over time', file=plot
+        # Construct the embed
+        generated_at = datetime.strftime(
+            utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
+            "%H:%M %d %b %Y",
+        )
+        time_taken = (t_end - t_start) / 1000
+        total_changes = sum(len(v) for v in karma_dict.values())
+        # Construct the embed strings
+        if keys := karma_dict.keys():
+            embed_colour = Color.from_rgb(61, 83, 255)
+            embed_description = f'Tracked {len(keys)} {pluralise(keys, "topic")} with a total of {total_changes} changes'
+            embed_title = (
+                f"Karma trend over time for {comma_separate(list(keys))}"
+                if len(keys) == 1
+                else f"Karma trends over time for {comma_separate(list(keys))}"
             )
         else:
-            # Construct the embed
-            generated_at = datetime.strftime(
-                utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
-                "%H:%M %d %b %Y",
+            embed_colour = Color.from_rgb(255, 23, 68)
+            embed_description = f'The following {pluralise(failed, "problem")} occurred whilst plotting:'
+            embed_title = (
+                f"Could not plot karma for {comma_separate([i[0] for i in failed])}"
             )
-            time_taken = (t_end - t_start) / 1000
-            total_changes = sum(len(v) for v in karma_dict.values())
-            # Construct the embed strings
-            if keys := karma_dict.keys():
-                embed_colour = Color.from_rgb(61, 83, 255)
-                embed_description = f'Tracked {len(keys)} {pluralise(keys, "topic")} with a total of {total_changes} changes'
-                embed_title = (
-                    f"Karma trend over time for {comma_separate(list(keys))}"
-                    if len(keys) == 1
-                    else f"Karma trends over time for {comma_separate(list(keys))}"
-                )
-            else:
-                embed_colour = Color.from_rgb(255, 23, 68)
-                embed_description = f'The following {pluralise(failed, "problem")} occurred whilst plotting:'
-                embed_title = (
-                    f"Could not plot karma for {comma_separate([i[0] for i in failed])}"
-                )
-            embed = Embed(
-                color=embed_colour, title=embed_title, description=embed_description
-            )
-            # If there were any errors then add them
-            for karma, reason in failed:
-                embed.add_field(name=f'Failed to plot "{karma}"', value=f" • {reason}")
+        embed = Embed(
+            color=embed_colour, title=embed_title, description=embed_description
+        )
+        # If there were any errors then add them
+        for karma, reason in failed:
+            embed.add_field(name=f'Failed to plot "{karma}"', value=f" • {reason}")
 
-            # There was something plotted so attach the graph
-            if karma_dict.keys():
-                embed.set_footer(
-                    text=f"Graph generated at {generated_at} in {time_taken:.3f} seconds"
-                )
-                embed.set_image(
-                    url="{host}/{filename}".format(
-                        host=CONFIG.FIG_HOST_URL, filename=filename
-                    )
-                )
-
-            display_name = get_name_string(ctx.message)
-            emoji = (
-                ":chart_with_upwards_trend:"
-                if sum(c.change for cs in karma_dict.values() for c in cs) >= 0
-                else ":chart_with_downwards_trend:"
+        # There was something plotted so attach the graph
+        if karma_dict.keys():
+            embed.set_footer(
+                text=f"Graph generated at {generated_at} in {time_taken:.3f} seconds"
             )
-            await ctx.send(f"Here you go, {display_name}! {emoji}", embed=embed)
+            embed.set_image(url=f"attachment://{filename}")
+
+        emoji = (
+            ":chart_with_upwards_trend:"
+            if sum(c.change for cs in karma_dict.values() for c in cs) >= 0
+            else ":chart_with_downwards_trend:"
+        )
+        file = File(img, filename=filename)
+        await ctx.send(f"Here you go, {name}! {emoji}", embed=embed, file=file)
 
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
-        await ctx.send(error.message)
+        if hasattr(error, "message"):
+            await ctx.send(error.message)
+        else:
+            raise error
 
     @karma.command(
         help="Lists the reasons (if any) for the specific karma", ignore_extra=True
     )
-    async def reasons(self, ctx: Context, karma: clean_content):
+    async def reasons(self, ctx: Context, *, karma: str):
+        karma = await clean_content().convert(ctx, karma)
         karma_stripped = karma.lstrip("@")
 
         # Get the karma from the database
@@ -552,5 +547,5 @@ class Karma(commands.Cog):
             await ctx.send(result)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Karma(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Karma(bot))

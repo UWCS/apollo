@@ -3,6 +3,8 @@ from discord.ext.commands import Bot, Context, clean_content
 
 from utils import get_name_string
 
+# TODO Convert to DPY 2.0, waiting until i can be bothered
+
 ERROR_LIMIT = 3
 DEPTH_LIMIT = 50
 
@@ -219,5 +221,5 @@ class LambdaNodeApplication:
         return LambdaNodeApplication(self.left.copy(), self.right.copy())
 
 
-def setup(bot: Bot):
-    bot.add_cog(LCalc(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(LCalc(bot))

@@ -55,5 +55,5 @@ class Fact(commands.Cog):
             await ctx.send(f"{display_name}: {random.choice(self.options)}")
 
 
-def setup(bot: Bot):
-    bot.add_cog(Fact(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Fact(bot))

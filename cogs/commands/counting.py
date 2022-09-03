@@ -3,7 +3,8 @@ from datetime import datetime
 from decimal import Decimal
 
 from discord import User
-from discord.ext.commands import Bot, BucketType, Cog, Context, cooldown, group
+from discord.ext import commands
+from discord.ext.commands import Bot, BucketType, Cog, Context, cooldown
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import CountingRun, CountingUser
@@ -24,7 +25,7 @@ class Counting(Cog):
         self.currently_playing = False
         self.channel = None
 
-    @group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def counting(self, ctx: Context):
         # If user does not use a subcommand assume they want to play the game
         if not ctx.invoked_subcommand:
@@ -205,5 +206,5 @@ class Counting(Cog):
         await ctx.send(err)
 
 
-def setup(bot: Bot):
-    bot.add_cog(Counting(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Counting(bot))

@@ -1,4 +1,5 @@
 import random
+import shlex
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
@@ -16,9 +17,12 @@ class Flip(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def flip(self, ctx: Context, *args: clean_content):
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    async def flip(self, ctx: Context, *, args: str = ""):
+        args = await clean_content().convert(ctx, args)
+        args = shlex.split(args)
         display_name = get_name_string(ctx.message)
+
         if len(args) == 1:
             await ctx.send(f"I can't flip just one item {display_name}! :confused:")
         else:
@@ -27,5 +31,5 @@ class Flip(commands.Cog):
             await ctx.send(f'{display_name}: {random.choice(options).lstrip("@")}')
 
 
-def setup(bot: Bot):
-    bot.add_cog(Flip(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Flip(bot))

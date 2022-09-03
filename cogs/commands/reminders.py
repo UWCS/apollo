@@ -10,7 +10,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from models import Reminder, db_session
-from utils import DateTimeConverter, get_database_user, get_name_string, user_is_irc_bot
+from utils import get_database_user, get_name_string, parse_time, user_is_irc_bot
 
 LONG_HELP_TEXT = """
 Add reminders for yourself or remove the last one you added.
@@ -47,57 +47,53 @@ class Reminders(commands.Cog):
         self.bot = bot
         self.bot.loop.create_task(reminder_check(self.bot))
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def reminder(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found.")
 
     @reminder.command(
-        help='Add a reminder, format "yyyy-mm-dd hh:mm" or "mm-dd hh:mm" or hh:mm:ss or hh:mm or xdxhxmxs or any ordered combination of the last format, then finally your reminder (rest of discord message).'
+        help="Add a reminder, when can be absolute or relative, but place in quotes if multiple words."
     )
-    async def add(
-        self, ctx: Context, trigger_time: DateTimeConverter, *, reminder_content: str
-    ):
-        now = datetime.now()
-        if not trigger_time:
-            await ctx.send("Incorrect time format, please see help text.")
-        elif trigger_time < now:
-            await ctx.send("That time is in the past.")
+    async def add(self, ctx: Context, when: str, *, reminder_content: str):
+        trigger_time = parse_time(when)
+        display_name = get_name_string(ctx.message)
+        if user_is_irc_bot(ctx):
+            author_id, irc_n = 1, display_name
         else:
-            # HURRAY the time is valid and not in the past, add the reminder
-            display_name = get_name_string(ctx.message)
+            author_id, irc_n = get_database_user(ctx.author).id, None
 
-            # Set the id to a random value if the author was the bridge bot, since we won't be using it anyway
-            # if ctx.message.clean_content.startswith("**<"): <---- FOR TESTING
-            if user_is_irc_bot(ctx):
-                author_id = 1
-                irc_n = display_name
-            else:
-                author_id = get_database_user(ctx.author).id
-                irc_n = None
+        new_reminder = Reminder(
+            user_id=author_id,
+            reminder_content=reminder_content,
+            trigger_at=trigger_time,
+            triggered=False,
+            playback_channel_id=ctx.message.channel.id,
+            irc_name=irc_n,
+        )
 
-            trig_at = trigger_time
-            trig = False
-            playback_ch_id = ctx.message.channel.id
-            new_reminder = Reminder(
-                user_id=author_id,
-                reminder_content=reminder_content,
-                trigger_at=trig_at,
-                triggered=trig,
-                playback_channel_id=playback_ch_id,
-                irc_name=irc_n,
-            )
-            db_session.add(new_reminder)
-            try:
-                db_session.commit()
-                await ctx.send(
-                    f"Thanks {display_name}, I have saved your reminder (but please note that my granularity is set at {precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit='seconds')})."
-                )
-            except (ScalarListException, SQLAlchemyError) as e:
-                db_session.rollback()
-                logging.exception(e)
-                await ctx.send(f"Something went wrong")
+        result = self.add_base(new_reminder)
+        await ctx.send(**result)
+
+    def add_base(self, reminder):
+        now = datetime.now()
+        if not reminder.trigger_at:
+            return {"content": "Incorrect time format, please see help text."}
+        elif reminder.trigger_at < now:
+            return {"content": "That time is in the past."}
+
+        db_session.add(reminder)
+        try:
+            db_session.commit()
+            gran = precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit="seconds")
+            return {
+                "content": f"Reminder prepared for <t:{int(reminder.trigger_at.timestamp())}:R> (granularity is {gran})."
+            }
+        except (ScalarListException, SQLAlchemyError) as e:
+            db_session.rollback()
+            logging.exception(e)
+            return {"content": f"Something went wrong with the database"}
 
 
-def setup(bot: Bot):
-    bot.add_cog(Reminders(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Reminders(bot))

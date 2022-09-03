@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from parsita import ParseError
@@ -72,6 +74,16 @@ class Roll(commands.Cog):
         p = await Parallelism.get(self.bot)
         p.send_to_ctx_after_threaded(work, ctx, loop)
 
+    @app_commands.command(name="roll", description=SHORT_HELP_TEXT)
+    async def roll_slash(self, int: discord.Interaction, dice: str):
+        loop = asyncio.get_event_loop()
+
+        def work():
+            return run(dice, "")
+
+        p = await Parallelism.get(self.bot)
+        p.send_to_int_after_threaded(work, int, loop)
+
 
 def run(message, display_name):
     try:
@@ -119,5 +131,5 @@ def run(message, display_name):
     return out
 
 
-def setup(bot: Bot):
-    bot.add_cog(Roll(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Roll(bot))

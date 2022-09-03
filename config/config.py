@@ -9,6 +9,7 @@ class Config:
             parsed = yaml.full_load(f).get("config")
 
         self.DISCORD_TOKEN: str = parsed.get("discord_token")
+        self.PREFIX: str = parsed.get("prefix")
 
         self.DEBUG: bool = parsed.get("debug")
         self.BOT_LOGGING: bool = parsed.get("bot_logging")
@@ -31,9 +32,6 @@ class Config:
         self.UWCS_INTROS_CHANNEL_ID: int = parsed.get("UWCS_intros_channel_id")
         self.UWCS_EXEC_SPAM_CHANNEL_ID: int = parsed.get("UWCS_exec_spam_channel_id")
         self.UWCS_API_TOKEN: str = parsed.get("UWCS_api_token")
-
-        self.FIG_SAVE_PATH: Path = Path(parsed.get("fig_save_path"))
-        self.FIG_HOST_URL: str = parsed.get("fig_host_url")
 
         self.SLICER_PATH: Path = Path(parsed.get("slicer_path"))
         self.PRINTER_FILE_ROOT: Path = Path(parsed.get("printer_file_root"))

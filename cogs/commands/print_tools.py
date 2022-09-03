@@ -16,6 +16,8 @@ from config import CONFIG
 from models import FilamentType, db_session
 from utils import get_name_string, is_compsoc_exec_in_guild
 
+# TODO Convert to DPY 2.0, waiting until i can be bothered
+
 LONG_HELP_TEXT = """
 Commands to help cost and request something is 3D printed on the UWCS 3D printer.
 """
@@ -238,5 +240,5 @@ class PrintTools(commands.Cog, name="Print tools"):
         pass
 
 
-def setup(bot: Bot):
-    bot.add_cog(PrintTools(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(PrintTools(bot))
