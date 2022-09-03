@@ -1,8 +1,10 @@
 config:
+  prefix: !
   UWCS_discord_bridge_bot_id: 1337
   UWCS_member_role_id: 2674
   UWCS_exec_role_ids: [ 9874698723 ]
   UWCS_welcome_channel_id: 420
+  UWCS_roles_channel_id: 952926102333042688
   UWCS_exec_spam_channel_id: 1234
   database_connection: "postgresql://apollo:apollo@localhost/apollo"
   UWCS_discord_id: 1337
@@ -10,11 +12,9 @@ config:
   bot_secret_key: secret_key
   karma_timeout: 900
   discord_token: discord_token
-  fig_save_path: /path/to/graph/dir/
-  fig_host_url: https://your.url/to/host/images
   sql_logging: on
   bot_logging: on
-  debug: True
+  debug: True     # Unused
   reminder_search_interval: 30
   channel_check_interval: 60
   slicer_path: /path/to/prusa-slicer

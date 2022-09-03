@@ -48,7 +48,7 @@ intents.members = True
 intents.message_content = True
 
 bot = Bot(
-    command_prefix=when_mentioned_or("!"),
+    command_prefix=when_mentioned_or(CONFIG.PREFIX),
     description=DESCRIPTION,
     intents=intents,
     help_command=SimplePrettyHelp(),
