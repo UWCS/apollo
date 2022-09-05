@@ -1,13 +1,9 @@
 import io
 
-import discord
 import requests
-from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
-
-from utils.clean import CleanContent
 
 LONG_HELP_TEXT = """
 Render a LaTeX maths expression to an image and show it in-line.
