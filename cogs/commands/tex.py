@@ -21,32 +21,30 @@ class Tex(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    # @app_commands.command(name="tex", description=SHORT_HELP_TEXT)
-    # async def tex_slash(self, interaction: discord.Interaction, text: str):
-    #     await interaction.response.defer()
-    #     result = await self.tex_base(text)
-    #     print(result)
-    #     await interaction.followup.send(**result)
-
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def tex(self, ctx: Context, *, message: str):
-        message = await clean_content().convert(ctx, message)
+    async def tex(self, ctx: Context, *, tex: str):
+        tex_raw = await clean_content().convert(ctx, tex)
 
         # Input filtering
-        if not message:
+        if not tex_raw:
             await ctx.send("Your message contained nothing to render")
 
-        if message[0] == "```tex":
-            message = ("```", *message[1:])
+        if tex_raw[0] == "```tex":
+            tex_raw = ("```", *tex_raw[1:])
 
-        tex_code = message.strip('`$')
+        tex_code = tex_raw.strip('`$')
         url = API_URL + requests.utils.quote(tex_code)
         r = requests.get(url)
         c = io.BytesIO(r.content)
 
         # Load the image as a file to be attached to an image
         img_file = File(c, filename="tex.png")
-        await ctx.send(f"Here you go! :abacus:", file=img_file)
+        if r.status_code == 200:
+            await ctx.send(f"Here you go! :abacus:", file=img_file)
+        else:
+            await ctx.message.add_reaction("❓")
+            if ctx.interaction:
+                await ctx.send("Invalid Equation")
 
 
 async def setup(bot: Bot):
