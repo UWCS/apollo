@@ -32,7 +32,6 @@ class VoteChoice(Base):
     choice_index = Column(Integer, primary_key=True, nullable=False)
     choice = Column(String, nullable=False)
 
-
 @auto_str
 class UserVote(Base):
     __tablename__ = "user_vote"
@@ -40,7 +39,7 @@ class UserVote(Base):
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
     choice = Column(Integer, primary_key=True, nullable=False)
     preference = Column(Integer, nullable=False, server_default="0")
-    ForeignKeyConstraint(("vote_id", "choice"), ("vote_choice.vote_id", "vote_choice.choice_index"), ondelete="CASCADE")
+    ForeignKeyConstraint((vote_id, choice), (VoteChoice.vote_id, VoteChoice.choice), ondelete="CASCADE")
 
 
 @auto_str

@@ -31,17 +31,11 @@ class BaseVote:
             return f"Added Vote for {option.choice}, {option.choice_index}"
 
     def _get_existing_vote(self, vote, user, option):
-        print(db_session.query(UserVote).filter(
-            UserVote.vote_id == vote.id and
-            UserVote.user_id == user.id and
-            UserVote.choice == option.choice_index
-        ).one_or_none())
-        # TODO False positives
-        return db_session.query(UserVote).filter(
-            UserVote.vote_id == vote.id and
-            UserVote.user_id == user.id and
-            UserVote.choice == option.choice_index
-        ).one_or_none()
+        return db_session.query(UserVote)\
+            .filter(UserVote.vote_id == vote.id)\
+            .filter(UserVote.user_id == user.id)\
+            .filter(UserVote.choice == option.choice_index)\
+            .one_or_none()
 
     def _register_vote(self, vote, user, option):
         user_vote = UserVote(vote_id=vote.id, user_id=user.id, choice=option.choice_index)
