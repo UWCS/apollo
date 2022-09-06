@@ -1,5 +1,7 @@
 from typing import List, Tuple
 
+from sqlalchemy import func
+
 from models import db_session, User
 from models.votes import VoteType, Vote, VoteChoice, UserVote
 
@@ -31,12 +33,13 @@ class BaseVote:
     def _get_existing_vote(self, vote, user, option):
         print(db_session.query(UserVote).filter(
             UserVote.vote_id == vote.id and
-            UserVote.user_uid == user.id and
+            UserVote.user_id == user.id and
             UserVote.choice == option.choice_index
-        ).all())
+        ).one_or_none())
+        # TODO False positives
         return db_session.query(UserVote).filter(
             UserVote.vote_id == vote.id and
-            UserVote.user_uid == user.id and
+            UserVote.user_id == user.id and
             UserVote.choice == option.choice_index
         ).one_or_none()
 
@@ -48,6 +51,14 @@ class BaseVote:
     def _deregister_vote(self, existing_vote):
         db_session.delete(existing_vote)
         db_session.commit()
+
+    def get_votes_for(self, vote_id):
+        return db_session.query(UserVote.choice, func.count()).filter(
+            UserVote.vote_id == vote_id
+        ).group_by(UserVote.choice).all()
+
+    def end(self, vote_id):
+        pass
 
     def make_results(self, vote):
         raise NotImplemented()
