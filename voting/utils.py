@@ -4,8 +4,6 @@ from models import db_session
 from models.votes import DiscordVoteMessage, VoteType
 from voting.discord_interfaces.discord_base import DiscordBase, discord_base
 
-
-
 vote_interfaces: Dict[VoteType, DiscordBase] = {
     VoteType.basic: discord_base,
 }

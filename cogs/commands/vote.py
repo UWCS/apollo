@@ -1,21 +1,13 @@
 import sqlite3
-from typing import Tuple, List
 
-import asyncio
-import discord
-import sqlalchemy
-from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content, CommandInvokeError
-from discord.ext.commands.errors import DiscordException, CommandError
+from discord.ext.commands.errors import CommandError
 from sqlalchemy.exc import SQLAlchemyError
 
-from models import DiscordVote, db_session
-from utils import get_name_string
-from voting.discord_interfaces.discord_base import discord_base, Choice
-from voting.emoji_list import default_emojis
+from voting.discord_interfaces.discord_base import discord_base
 from voting.splitutils import split_args
-from voting.utils import get_interface, vote_interfaces
+from voting.utils import vote_interfaces
 
 LONG_HELP_TEXT = """
 Allows running of various types of votes: FPTP, STV, etc. (WIP)
@@ -45,32 +37,6 @@ class Vote(commands.Cog):
         if len(choices) == len(args): choices = [args]
         print(choices)
         await discord_base.create_vote(ctx, choices)
-
-
-
-    @commands.Cog.listener()
-    @commands.guild_only()
-    async def on_raw_reaction_add(self, reaction: discord.RawReactionActionEvent):
-        if reaction.user_id == self.bot.user.id: return
-
-        interface, vote_msg_obj = get_interface(reaction.message_id)
-        if interface is None: return
-        await interface.react_add(
-            vote_msg_obj,
-            reaction.user_id,
-            str(reaction.emoji))
-
-    @commands.Cog.listener()
-    @commands.guild_only()
-    async def on_raw_reaction_remove(self, reaction: discord.RawReactionActionEvent):
-        if reaction.user_id == self.bot.user.id: return
-
-        interface, vote_msg_obj = get_interface(reaction.message_id)
-        if interface is None: return
-        await interface.react_remove(
-            vote_msg_obj,
-            reaction.user_id,
-            str(reaction.emoji))
 
 
     async def cog_command_error(self, ctx: Context, error):

@@ -1,25 +1,87 @@
 import discord
-from typing import List, Tuple, NamedTuple, Iterable
+from typing import List, Tuple, NamedTuple, Iterable, Dict
 
 from discord.ui import View, Button
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session, User
 from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType, UserVote
-from utils import get_database_user, get_database_user_from_id
+from utils import get_database_user_from_id
 from voting.emoji_list import default_emojis
+
 from voting.vote_types.base_vote import base_vote
-from discord import AllowedMentions
-from discord.ext.commands import Bot, Context, clean_content
+from discord import AllowedMentions, InteractionMessage
+from discord.ext.commands import Context
 
 DENSE_ARRANGE = True
 Choice = NamedTuple("Choice", [('emoji', str), ('prompt', str)])
 DCMessage = NamedTuple("DCMessage", [('msg', discord.Message), ('choices', List[Choice])])
 
+# Records last ephemeral message to each user, so can edit for future votes
+users_last_vote_update_message: Dict[Tuple[int, int], InteractionMessage] = {}
+class VoteButton(Button):
+    def __init__(self, dvc: DiscordVoteChoice, msg_title):
+        super().__init__(label=dvc.choice.choice, emoji=dvc.emoji)
+        self.dvc = dvc
+        self.vote = dvc.msg.vote
+        self.msg_title = msg_title
+
+
+    async def callback(self, interaction: discord.Interaction):
+        db_user = db_session.query(User).filter(User.user_uid == interaction.user.id).one_or_none()
+
+        if existing_vote := await self.get_existing_vote(interaction, db_user):
+            msg = await self.remove_action(interaction, db_user, existing_vote)
+        else:
+            msg = await self.add_action(interaction, db_user)
+        await self.send_feedback(interaction, db_user, msg)
+
+
+    async def get_existing_vote(self, interaction: discord.Interaction, db_user):
+        print(db_session.query(UserVote).filter(
+            UserVote.vote_id == self.vote.id and
+            UserVote.user_uid == db_user.id and
+            UserVote.choice == self.dvc.choice.choice_index
+        ).all())
+        return db_session.query(UserVote).filter(
+            UserVote.vote_id == self.vote.id and
+            UserVote.user_uid == db_user.id and
+            UserVote.choice == self.dvc.choice.choice_index
+        ).one_or_none()
+
+    async def add_action(self, interaction: discord.Interaction, db_user):
+        user_vote = UserVote(vote_id=self.vote.id, user_id=db_user.id, choice=self.dvc.choice.choice_index)
+        db_session.add(user_vote)
+        db_session.commit()
+        return f"Added Vote for {self.dvc.choice.choice}, {self.dvc.choice_index}"
+
+    async def remove_action(self, interaction: discord.Interaction, db_user, existing_vote):
+        db_session.delete(existing_vote)
+        db_session.commit()
+        return f"Removed Vote for {self.dvc.choice.choice}, {self.dvc.choice_index}"
+
+    async def send_feedback(self, interaction: discord.Interaction, db_user, msg):
+        # Check if existing feedback message and attempt to send to it
+        key = (db_user.id, self.vote.id)
+        if old_msg := users_last_vote_update_message.get(key):
+            try:
+                await old_msg.edit(content=msg)
+                # Hack to give interaction a response without changing anything
+                await interaction.response.edit_message(content=f"**{self.interface.get_title(self.vote.title)}**")
+                return
+            except (discord.errors.NotFound, discord.errors.HTTPException):
+                pass
+        # If no existing message, send it and update record for user
+        await interaction.response.send_message(msg, ephemeral=True)
+        new_msg = await interaction.original_response()
+        users_last_vote_update_message[key] = new_msg
+
+
 class DiscordBase:
-    def __init__(self):
+    def __init__(self, btn_class=VoteButton):
         self.vote_type = base_vote
         self.bot = None
+        self.BtnClass = btn_class
 
     async def create_vote(self, ctx: Context, args: List[str], vote_limit=None, seats=None):
         title, emoji_choices = self.parse_choices(args)
@@ -37,31 +99,30 @@ class DiscordBase:
             messages: List[DCMessage] = []
             msg_index = 0
             for chunk in self.chunk_choices(emoji_choices):
+                msg_title = self.get_title(title, msg_index)
                 # Send msg
                 embed = self.create_embed(title, chunk)
-                msg = await ctx.send(embed=embed, allowed_mentions=AllowedMentions.none())
+                msg = await ctx.send(content=msg_title, embed=embed, allowed_mentions=AllowedMentions.none())
                 messages.append(DCMessage(msg, [c for i, c in chunk]))
 
                 # Add msg to DB
                 start_ind, _ = chunk[0]
                 end_ind, _ = chunk[-1]
                 end_ind += 1
-                new_dc_msg = DiscordVoteMessage(message_id=msg.id, channel_id=msg.channel.id, vote=vote_obj, discord_vote=new_dc_vote,
-                                                choices_start_index=start_ind, numb_choices=end_ind-start_ind, part=msg_index)
+                new_dc_msg = DiscordVoteMessage(message_id=msg.id, channel_id=msg.channel.id, vote=vote_obj,
+                                                choices_start_index=start_ind, numb_choices=end_ind - start_ind, part=msg_index)
                 db_session.add(new_dc_msg)
                 msg_index += 1
 
                 # Add choices to DB and add buttons
-                print(len(choices_obj), start_ind, end_ind, len(chunk))
-                print(list(zip(choices_obj[start_ind:end_ind], chunk)))
-                view = View()
+                view = View(timeout=None)
                 for db_ch, (i, ch) in zip(choices_obj[start_ind:end_ind], chunk):
                     print("\t", db_ch, (i, ch))
                     if db_ch.choice_index != i: raise Exception(f"DB and bot disagree on choice index")
                     new_dc_choice = DiscordVoteChoice(choice=db_ch, emoji=ch.emoji, msg=new_dc_msg)
                     db_session.add(new_dc_choice)
 
-                    view.add_item(Button(label=new_dc_choice.choice.choice, emoji=new_dc_choice.emoji))
+                    view.add_item(self.BtnClass(new_dc_choice, msg_title))
                 await msg.edit(view=view)
 
             db_session.commit()
@@ -74,20 +135,24 @@ class DiscordBase:
         await ctx.message.add_reaction("✅")
 
 
-    def get_title(self, title): return f"Basic Vote: {title}"
+    def get_title(self, title, msg_index):
+        if msg_index == 0: return f"**Basic Vote: {title}**"
+        else: return f"**Basic Vote: {title} pt. {msg_index+1}**"
+
     def get_description(self): return "Votes: Visible"
 
-    def parse_choices(self, choices: List[str]) -> Tuple[str, List[Choice]]:
-        if len(choices) > 256: raise Exception(f"More than 256 choices given")
-        if len(choices) == 0: raise Exception(f"No choices given")
+    def parse_choices(self, args: List[str]) -> Tuple[str, List[Choice]]:
+        """Parse title and choices out of args"""
+        if len(args) > 256: raise Exception(f"More than 256 choices given")
+        if len(args) == 0: raise Exception(f"No choices given")
 
         # Truncate each choice to 256 chars
-        for i, c in enumerate(choices):
-            if len(c) > 250: choices[i] = c[:250] + "..."
+        for i, c in enumerate(args):
+            if len(c) > 250: args[i] = c[:250] + "..."
 
         # Title is first argument
-        title = choices[0]
-        choices = choices[1:]
+        title = args[0]
+        choices = args[1:]
 
         # Pair choices with emojis -- thumbs up/down if single option given
         if len(choices) <= 1:
@@ -110,7 +175,8 @@ class DiscordBase:
         if chunk: yield chunk
 
     def create_embed(self, title: str, chunk: List[Tuple[int, Choice]]):
-        embed = discord.Embed(title=self.get_title(title), description=self.get_description())
+        """Construct embed from list of choices"""
+        embed = discord.Embed(title=self.get_description())
         for i, ch in chunk:
             if len(ch.prompt) > 250: ch.prompt = ch.prompt[:250]
             embed.add_field(name=ch.emoji + " " + ch.prompt, value="_ _",
@@ -118,81 +184,11 @@ class DiscordBase:
         return embed
 
 
-    def create_msg(self, msg, choices):
-        dc_choices = []
-        for i, choice in enumerate(choices):
-            new_dc_choice = DiscordVoteChoice(choice=choice.prompt, emoji=choice.emoji)
-            db_session.add(new_dc_choice)
-            dc_choices.append(new_dc_choice)
-
-    async def react_add(self, msg: DiscordVoteMessage, dc_user_id: int, emoji: str):
-        # TODO Check not duplicate
-
-        dc_vote = msg.discord_vote
-        # TODO Check role
-
-        vote = msg.vote
-
-        print(vote.id, emoji)
-        choice = db_session.query(DiscordVoteChoice)\
-                        .filter(DiscordVoteChoice.vote_id == vote.id)\
-                        .filter(DiscordVoteChoice.emoji == emoji).one_or_none()
-
-        dc_user = self.bot.get_user(dc_user_id)
-        if choice is None:  # Remove reaction if emoji is not valid choice
-            message = self.bot.get_channel(msg.channel_id).get_partial_message(msg.message_id)
-            await message.remove_reaction(emoji, dc_user)
-
-        # TODO Get DB user from DC user properly
-        db_user = db_session.query(User).filter(User.user_uid == dc_user_id).one_or_none()
-        user_vote = UserVote(vote_id=vote.id, user_id=db_user.id, choice=choice.choice.choice_index)
-        db_session.add(user_vote)
-        db_session.commit()
-
-        # TODO User toggle vote DMs
-        await dc_user.create_dm()
-        await dc_user.dm_channel.send(f"Poll {vote.id} {vote.title}: **Counted** your vote for {emoji} {choice.choice.choice}")
-
-        # TODO Option to remove reaction once counted
-
-
-    async def react_remove(self, msg: DiscordVoteMessage, dc_user_id: int, emoji: str):
-        # if self.hide_votes: return react_add(msg, user_id, emoji)
-        # TODO If vote exists
-        vote = msg.vote
-
-        choice = db_session.query(DiscordVoteChoice)\
-                        .filter(DiscordVoteChoice.vote_id == vote.id)\
-                        .filter(DiscordVoteChoice.emoji == emoji).one_or_none()
-        if choice is None: return
-
-        db_user = db_session.query(User).filter(User.user_uid == dc_user_id).one_or_none()
-
-        user_vote = db_session.query(UserVote)\
-                        .filter(UserVote.vote_id == vote.id)\
-                        .filter(UserVote.user_id == db_user.id)\
-                        .filter(UserVote.choice == choice.choice.choice_index).one_or_none()
-        if user_vote is None: return
-        db_session.delete(user_vote)
-
-        dc_user = self.bot.get_user(dc_user_id)
-        await dc_user.create_dm()
-        await dc_user.dm_channel.send(f"Poll {vote.id} {vote.title}: **Removed** your vote for {emoji} {choice.choice.choice}")
-
-
-
     async def record_vote(self, vote, user, option):
         raise NotImplemented()
 
     async def make_results(self, vote):
         raise NotImplemented()
-
-    async def remove(self, vote):
-        raise NotImplemented()
-
-
-
-
 
 
 discord_base = DiscordBase()
