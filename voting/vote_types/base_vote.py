@@ -47,9 +47,12 @@ class BaseVote:
         db_session.commit()
 
     def get_votes_for(self, vote_id):
-        return db_session.query(UserVote.choice, func.count()).filter(
-            UserVote.vote_id == vote_id
-        ).group_by(UserVote.choice).all()
+        counts = db_session.query(VoteChoice, func.count())\
+            .join(UserVote)\
+            .filter(
+            VoteChoice.vote_id == vote_id
+        ).group_by(VoteChoice.choice_index).all()
+        return counts
 
     def end(self, vote_id):
         pass

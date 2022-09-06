@@ -166,7 +166,8 @@ class DiscordBase:
 
 
     async def end_vote(self, interaction: discord.Interaction, vote_id):
-        await interaction.response.send_message(self.vote_type.get_votes_for(vote_id))
+        votes = self.vote_type.get_votes_for(vote_id)
+        await interaction.response.send_message(votes)
         self.vote_type.end(vote_id)
 
     async def make_results(self, vote):

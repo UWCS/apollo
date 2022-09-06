@@ -13,6 +13,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
+from models import User
 from models.models import Base, auto_str
 
 
@@ -39,8 +40,10 @@ class UserVote(Base):
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
     choice = Column(Integer, primary_key=True, nullable=False)
     preference = Column(Integer, nullable=False, server_default="0")
-    ForeignKeyConstraint((vote_id, choice), (VoteChoice.vote_id, VoteChoice.choice), ondelete="CASCADE")
+    ForeignKeyConstraint((vote_id, choice), (VoteChoice.vote_id, VoteChoice.choice_index), ondelete="CASCADE")
 
+    vote_choice = relationship(VoteChoice, backref="uservotes")
+    user = relationship(User)
 
 @auto_str
 class Vote(Base):
