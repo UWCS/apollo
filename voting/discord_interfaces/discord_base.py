@@ -1,6 +1,7 @@
 import discord
 from typing import List, Tuple, NamedTuple, Iterable
 
+from discord.ui import View, Button
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session, User
@@ -50,14 +51,18 @@ class DiscordBase:
                 db_session.add(new_dc_msg)
                 msg_index += 1
 
-                # Add choices to DB
+                # Add choices to DB and add buttons
                 print(len(choices_obj), start_ind, end_ind, len(chunk))
                 print(list(zip(choices_obj[start_ind:end_ind], chunk)))
+                view = View()
                 for db_ch, (i, ch) in zip(choices_obj[start_ind:end_ind], chunk):
                     print("\t", db_ch, (i, ch))
                     if db_ch.choice_index != i: raise Exception(f"DB and bot disagree on choice index")
                     new_dc_choice = DiscordVoteChoice(choice=db_ch, emoji=ch.emoji, msg=new_dc_msg)
                     db_session.add(new_dc_choice)
+
+                    view.add_item(Button(label=new_dc_choice.choice.choice, emoji=new_dc_choice.emoji))
+                await msg.edit(view=view)
 
             db_session.commit()
         except SQLAlchemyError:
@@ -65,10 +70,6 @@ class DiscordBase:
             await ctx.send("Error creating vote")
             raise
 
-        # Add reactions to message, takes a while, so do last
-        for msg, choices in messages:
-            for c in choices:
-                await msg.add_reaction(c.emoji)
 
         await ctx.message.add_reaction("✅")
 

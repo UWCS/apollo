@@ -28,7 +28,7 @@ class Vote(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def vote(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
@@ -37,9 +37,12 @@ class Vote(commands.Cog):
                   brief="Runs basic poll with visible votes. Can use `\\n`, `;`, `,` or ` ` separators. Escape with `\\`",
                   aliases=["quick", "visible"],
                   usage="<title>; [<option 1>; <option 2>; [...]]")
-    async def basic(self, ctx: Context, *args: clean_content):
+    async def basic(self, ctx: Context, *, args: str):
+        print(args)
+        args = await clean_content().convert(ctx, args)
         # noinspection PyTypeChecker
-        choices = split_args(" ".join(args))
+        choices = split_args(args)
+        if len(choices) == len(args): choices = [args]
         print(choices)
         await discord_base.create_vote(ctx, choices)
 
@@ -84,7 +87,7 @@ class Vote(commands.Cog):
 
 
 
-def setup(bot: Bot):
-    bot.add_cog(Vote(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Vote(bot))
     for dci in vote_interfaces.values():
         dci.bot = bot

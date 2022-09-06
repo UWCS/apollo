@@ -21,6 +21,8 @@ DEFAULT_CASES = [
     (r"a, b; c d", ["a, b", "c d"]),            # Mixed delimiters
     (r"a, b\; c, d", ["a", "b; c", "d"]),       # Mixed and escaped delimiters
     (r"a, 'b; c, d'", ["a", "b; c, d"]),        # Mixed and quoted delimiters
+    (r"abc d e", ["abc", "d", "e"]),             # Spaces
+    (r"abc", ["abc"]),             # Spaces
 ]
 
 
