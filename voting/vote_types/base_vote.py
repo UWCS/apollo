@@ -1,7 +1,7 @@
 from typing import List, Tuple
 
-from models import db_session
-from models.votes import VoteType, Vote, VoteChoice
+from models import db_session, User
+from models.votes import VoteType, Vote, VoteChoice, UserVote
 
 
 class BaseVote:
@@ -20,12 +20,34 @@ class BaseVote:
 
         return new_vote, choice_objs
 
+    def vote_for(self, vote, user, option):
+        if existing_vote := self._get_existing_vote(vote, user, option):
+            self._deregister_vote(existing_vote)
+            return f"Removed Vote for {option.choice}, {option.choice_index}"
+        else:
+            self._register_vote(vote, user, option)
+            return f"Added Vote for {option.choice}, {option.choice_index}"
 
-    def register_vote(self, vote, user, option):
-        raise NotImplemented()
+    def _get_existing_vote(self, vote, user, option):
+        print(db_session.query(UserVote).filter(
+            UserVote.vote_id == vote.id and
+            UserVote.user_uid == user.id and
+            UserVote.choice == option.choice_index
+        ).all())
+        return db_session.query(UserVote).filter(
+            UserVote.vote_id == vote.id and
+            UserVote.user_uid == user.id and
+            UserVote.choice == option.choice_index
+        ).one_or_none()
 
-    def deregister_vote(self, vote, user, option):
-        raise NotImplemented()
+    def _register_vote(self, vote, user, option):
+        user_vote = UserVote(vote_id=vote.id, user_id=user.id, choice=option.choice_index)
+        db_session.add(user_vote)
+        db_session.commit()
+
+    def _deregister_vote(self, existing_vote):
+        db_session.delete(existing_vote)
+        db_session.commit()
 
     def make_results(self, vote):
         raise NotImplemented()

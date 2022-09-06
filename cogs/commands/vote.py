@@ -5,9 +5,8 @@ from discord.ext.commands import Bot, Context, clean_content, CommandInvokeError
 from discord.ext.commands.errors import CommandError
 from sqlalchemy.exc import SQLAlchemyError
 
-from voting.discord_interfaces.discord_base import discord_base
+from voting.discord_interfaces.discord_base import DiscordBase
 from voting.splitutils import split_args
-from voting.utils import vote_interfaces
 
 LONG_HELP_TEXT = """
 Allows running of various types of votes: FPTP, STV, etc. (WIP)
@@ -34,9 +33,10 @@ class Vote(commands.Cog):
         args = await clean_content().convert(ctx, args)
         # noinspection PyTypeChecker
         choices = split_args(args)
+        # If just one choice, split might just give as a per letter list
         if len(choices) == len(args): choices = [args]
         print(choices)
-        await discord_base.create_vote(ctx, choices)
+        await DiscordBase().create_vote(ctx, choices)
 
 
     async def cog_command_error(self, ctx: Context, error):
@@ -55,5 +55,3 @@ class Vote(commands.Cog):
 
 async def setup(bot: Bot):
     await bot.add_cog(Vote(bot))
-    for dci in vote_interfaces.values():
-        dci.bot = bot

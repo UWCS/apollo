@@ -20,45 +20,19 @@ DCMessage = NamedTuple("DCMessage", [('msg', discord.Message), ('choices', List[
 # Records last ephemeral message to each user, so can edit for future votes
 users_last_vote_update_message: Dict[Tuple[int, int], InteractionMessage] = {}
 class VoteButton(Button):
-    def __init__(self, dvc: DiscordVoteChoice, msg_title):
+    def __init__(self, vote_type, dvc: DiscordVoteChoice, msg_title):
         super().__init__(label=dvc.choice.choice, emoji=dvc.emoji)
         self.dvc = dvc
         self.vote = dvc.msg.vote
         self.msg_title = msg_title
+        self.vote_type = vote_type
 
 
     async def callback(self, interaction: discord.Interaction):
         db_user = db_session.query(User).filter(User.user_uid == interaction.user.id).one_or_none()
-
-        if existing_vote := await self.get_existing_vote(interaction, db_user):
-            msg = await self.remove_action(interaction, db_user, existing_vote)
-        else:
-            msg = await self.add_action(interaction, db_user)
+        msg = self.vote_type.vote_for(self.vote, db_user, self.dvc.choice)
         await self.send_feedback(interaction, db_user, msg)
 
-
-    async def get_existing_vote(self, interaction: discord.Interaction, db_user):
-        print(db_session.query(UserVote).filter(
-            UserVote.vote_id == self.vote.id and
-            UserVote.user_uid == db_user.id and
-            UserVote.choice == self.dvc.choice.choice_index
-        ).all())
-        return db_session.query(UserVote).filter(
-            UserVote.vote_id == self.vote.id and
-            UserVote.user_uid == db_user.id and
-            UserVote.choice == self.dvc.choice.choice_index
-        ).one_or_none()
-
-    async def add_action(self, interaction: discord.Interaction, db_user):
-        user_vote = UserVote(vote_id=self.vote.id, user_id=db_user.id, choice=self.dvc.choice.choice_index)
-        db_session.add(user_vote)
-        db_session.commit()
-        return f"Added Vote for {self.dvc.choice.choice}, {self.dvc.choice_index}"
-
-    async def remove_action(self, interaction: discord.Interaction, db_user, existing_vote):
-        db_session.delete(existing_vote)
-        db_session.commit()
-        return f"Removed Vote for {self.dvc.choice.choice}, {self.dvc.choice_index}"
 
     async def send_feedback(self, interaction: discord.Interaction, db_user, msg):
         # Check if existing feedback message and attempt to send to it
@@ -67,7 +41,7 @@ class VoteButton(Button):
             try:
                 await old_msg.edit(content=msg)
                 # Hack to give interaction a response without changing anything
-                await interaction.response.edit_message(content=f"**{self.interface.get_title(self.vote.title)}**")
+                await interaction.response.edit_message(content=f"**{self.msg_title}**")
                 return
             except (discord.errors.NotFound, discord.errors.HTTPException):
                 pass
@@ -78,9 +52,8 @@ class VoteButton(Button):
 
 
 class DiscordBase:
-    def __init__(self, btn_class=VoteButton):
-        self.vote_type = base_vote
-        self.bot = None
+    def __init__(self, vote_type=base_vote, btn_class=VoteButton):
+        self.vote_type = vote_type
         self.BtnClass = btn_class
 
     async def create_vote(self, ctx: Context, args: List[str], vote_limit=None, seats=None):
@@ -122,7 +95,7 @@ class DiscordBase:
                     new_dc_choice = DiscordVoteChoice(choice=db_ch, emoji=ch.emoji, msg=new_dc_msg)
                     db_session.add(new_dc_choice)
 
-                    view.add_item(self.BtnClass(new_dc_choice, msg_title))
+                    view.add_item(self.BtnClass(self.vote_type, new_dc_choice, msg_title))
                 await msg.edit(view=view)
 
             db_session.commit()
@@ -130,9 +103,6 @@ class DiscordBase:
             db_session.rollback()
             await ctx.send("Error creating vote")
             raise
-
-
-        await ctx.message.add_reaction("✅")
 
 
     def get_title(self, title, msg_index):
@@ -190,5 +160,3 @@ class DiscordBase:
     async def make_results(self, vote):
         raise NotImplemented()
 
-
-discord_base = DiscordBase()
