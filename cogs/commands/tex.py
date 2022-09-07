@@ -1,10 +1,10 @@
 import io
 
 import requests
-from PIL import Image
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
+from PIL import Image
 
 LONG_HELP_TEXT = """
 Render a LaTeX maths expression to an image and show it in-line.
@@ -13,6 +13,7 @@ Render a LaTeX maths expression to an image and show it in-line.
 SHORT_HELP_TEXT = """Display LaTeX formatted maths."""
 
 API_URL = r"https://latex.codecogs.com/png.image?\dpi{300}\bg{black}"
+
 
 class Tex(commands.Cog):
     def __init__(self, bot: Bot):
@@ -29,7 +30,7 @@ class Tex(commands.Cog):
         if tex_raw[0] == "```tex":
             tex_raw = ("```", *tex_raw[1:])
 
-        tex_code = tex_raw.strip('`')
+        tex_code = tex_raw.strip("`")
         # If $ are included, wrap in \text to format normal text
         if tex_code.count("$") >= 2:
             tex_code = f"\\text{{{tex_code}}}"
