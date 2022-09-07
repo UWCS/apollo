@@ -41,7 +41,7 @@ class Announcements(commands.Cog):
         self.bot = bot
         self.bot.loop.create_task(announcement_check(self.bot))
 
-    @commands.group()
+    @commands.hybrid_group()
     @commands.check(is_compsoc_exec_in_guild)
     async def announcement(self, ctx: Context):
         """
@@ -159,7 +159,7 @@ class Announcements(commands.Cog):
         await self.preview_announcement(ctx, result.announcement_content, True, False)
 
     @announcement.command()
-    async def mention(self, ctx: Context, announcement_id: int, *roles: discord.Role):
+    async def mention(self, ctx: Context, announcement_id: int, roles: discord.Role):
         """
         Add a role mention to the end of the messsage.
         Use this command to avoid pinging roles when writing the message. Roles can be specified by name or id.
@@ -189,7 +189,7 @@ class Announcements(commands.Cog):
         messages = [await channel.send("**Announcement Preview:**")]
         author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else self.bot.user
         messages += await generate_announcement(
-            channel, announcement_content, webhook, author.name, author.avatar_url
+            channel, announcement_content, webhook, author.name, author.avatar.url
         )
         messages.append(await channel.send("**End of Announcement Preview**"))
         if menu:
@@ -223,7 +223,7 @@ async def announcement_check(bot):
                     else bot.user
                 )
                 name = author.name
-                avatar = author.avatar_url
+                avatar = author.avatar.url
 
             message = a.announcement_content
             a.triggered = True
@@ -317,5 +317,5 @@ async def add_announcement(ctx, channel, trigger_time, announcement_content):
         await ctx.send(f"Something went wrong")
 
 
-def setup(bot: Bot):
-    bot.add_cog(Announcements(bot))
+async def setup(bot: Bot):
+    await bot.add_cog(Announcements(bot))

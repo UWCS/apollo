@@ -1,3 +1,4 @@
+import functools
 import re
 import textwrap
 from datetime import datetime, timedelta
