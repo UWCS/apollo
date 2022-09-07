@@ -5,7 +5,7 @@ from discord.ui import View, Button
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session, User
-from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType, UserVote
+from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType, UserVote, VoteChoice
 from utils import get_database_user_from_id
 from voting.emoji_list import default_emojis
 
@@ -29,7 +29,8 @@ class VoteButton(Button):
     async def callback(self, interaction: discord.Interaction):
         db_user = db_session.query(User).filter(User.user_uid == interaction.user.id).one_or_none()
         msg = self.interface.vote_type.vote_for(self.vote, db_user, self.dvc.choice)
-        await self.interface.send_choice_feedback(interaction, (db_user, self.vote.id), msg, self.msg_title)
+        user_votes = self.interface.vote_type.get_votes_for_user(self.vote.id, db_user.id)
+        await self.interface.send_choice_feedback(interaction, (db_user.id, self.vote.id), msg, self.msg_title, user_votes)
 
 class CloseButton(Button):
     def __init__(self, interface, vote_id):
@@ -41,6 +42,19 @@ class CloseButton(Button):
         self.interface.vote_type.end(self.vote_id)
         await interaction.message.edit(view=None)
         await self.interface.end_vote(interaction, self.vote_id)
+
+class MyVotesButton(Button):
+    def __init__(self, interface, vote, msg_title):
+        super().__init__(label="My Votes", emoji="🗳️", style=ButtonStyle.green)
+        self.vote = vote
+        self.msg_title = msg_title
+        self.interface = interface
+
+    async def callback(self, interaction: discord.Interaction):
+        db_user = db_session.query(User).filter(User.user_uid == interaction.user.id).one_or_none()
+        votes = self.interface.vote_type.get_votes_for_user(self.vote.id, db_user.id)
+        await self.interface.send_choice_feedback(interaction, (db_user.id, self.vote.id), "_ _", self.msg_title, votes, create_new_msg=True)
+
 
 class DiscordBase:
     def __init__(self, vote_type=base_vote, btn_class=VoteButton):
@@ -66,7 +80,7 @@ class DiscordBase:
             for chunk in self.chunk_choices(emoji_choices):
                 msg_title = self.get_title(title, msg_index)
                 # Send msg
-                embed = self.create_embed(title, chunk)
+                embed = self.create_embed(title, [c for _, c in chunk])
                 msg = await ctx.send(content=msg_title, embed=embed, allowed_mentions=AllowedMentions.none())
                 messages.append(DCMessage(msg, [c for i, c in chunk]))
 
@@ -91,6 +105,7 @@ class DiscordBase:
 
                 if start_ind == 0:
                     view.add_item(CloseButton(self, vote_obj.id))
+                    view.add_item(MyVotesButton(self, vote_obj, msg_title))
                 await msg.edit(view=view)
 
             db_session.commit()
@@ -139,35 +154,39 @@ class DiscordBase:
             msg_len += line_len
         if chunk: yield chunk
 
-    def create_embed(self, title: str, chunk: List[Tuple[int, Choice]]):
+    def create_embed(self, title: str, chunk: List[Choice]):
         """Construct embed from list of choices"""
         embed = discord.Embed(title=self.get_description())
-        for i, ch in chunk:
+        for ch in chunk:
             if len(ch.prompt) > 250: ch.prompt = ch.prompt[:250]
             embed.add_field(name=ch.emoji + " " + ch.prompt, value="_ _",
                             inline=(DENSE_ARRANGE and len(ch.prompt) < 25))
         return embed
 
 
-    async def send_choice_feedback(self, interaction: discord.Interaction, key, msg, msg_title):
+    async def send_choice_feedback(self, interaction: discord.Interaction, key, msg, msg_title, user_votes, create_new_msg=False):
+        ch = [Choice(str(i), vc.choice) for i, vc in enumerate(user_votes)]
+        embed = self.create_embed("", ch)
+        embed.title = "Your Votes"
+
         # Check if existing feedback message and attempt to send to it
-        if old_msg := self.users_last_vote_update_message.get(key):
+        if not create_new_msg and (old_msg := self.users_last_vote_update_message.get(key)):
             try:
-                await old_msg.edit(content=msg)
+                await old_msg.edit(content=msg, embed=embed)
                 # Hack to give interaction a response without changing anything
                 await interaction.response.edit_message(content=f"**{msg_title}**")
                 return
             except (discord.errors.NotFound, discord.errors.HTTPException):
                 pass
         # If no existing message, send it and update record for user
-        await interaction.response.send_message(msg, ephemeral=True)
+        await interaction.response.send_message(msg, embed=embed, ephemeral=True)
         new_msg = await interaction.original_response()
         self.users_last_vote_update_message[key] = new_msg
 
 
     async def end_vote(self, interaction: discord.Interaction, vote_id):
         votes = self.vote_type.get_votes_for(vote_id)
-        await interaction.response.send_message(votes)
+        await interaction.response.edit_message(content=votes)
         self.vote_type.end(vote_id)
 
     async def make_results(self, vote):

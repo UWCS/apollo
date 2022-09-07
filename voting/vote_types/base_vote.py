@@ -54,6 +54,14 @@ class BaseVote:
         ).group_by(VoteChoice.choice_index).all()
         return counts
 
+    def get_votes_for_user(self, vote_id, user_id):
+        counts = db_session.query(VoteChoice)\
+            .join(UserVote)\
+            .filter(VoteChoice.vote_id == vote_id)\
+            .filter(UserVote.user_id == user_id)\
+            .all()
+        return counts
+
     def end(self, vote_id):
         pass
 
