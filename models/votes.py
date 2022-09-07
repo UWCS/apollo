@@ -27,11 +27,29 @@ class VoteType(enum.Enum):
     ranked_pairs = 4
 
 @auto_str
+class Vote(Base):
+    __tablename__ = "vote"
+    id = Column(Integer, primary_key=True, nullable=False)
+    owner_id = Column(Integer, ForeignKey(User.id), nullable=False)
+    title = Column(String, nullable=False, server_default="Vote")
+    vote_limit = Column(Integer, nullable=False, server_default="0")
+    ranked_choice = Column(Boolean, nullable=False)
+    type = Column(Enum(VoteType), nullable=False)
+    seats = Column(Integer, nullable=False, server_default="1")
+    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+
+    choices = relationship("VoteChoice", back_populates="vote")
+    discord_vote = relationship("DiscordVote", back_populates="vote")
+
+@auto_str
 class VoteChoice(Base):
     __tablename__ = "vote_choice"
     vote_id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     choice_index = Column(Integer, primary_key=True, nullable=False)
     choice = Column(String, nullable=False)
+
+    vote = relationship(Vote, back_populates="choices")
+    user_votes = relationship("UserVote", back_populates="vote_choice")
 
 @auto_str
 class UserVote(Base):
@@ -42,23 +60,8 @@ class UserVote(Base):
     preference = Column(Integer, nullable=False, server_default="0")
     ForeignKeyConstraint((vote_id, choice), (VoteChoice.vote_id, VoteChoice.choice_index), ondelete="CASCADE")
 
-    vote_choice = relationship(VoteChoice, backref="uservotes")
+    vote_choice = relationship(VoteChoice, back_populates="user_votes")
     user = relationship(User)
-
-@auto_str
-class Vote(Base):
-    __tablename__ = "vote"
-    id = Column(Integer, primary_key=True, nullable=False)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    title = Column(String, nullable=False, server_default="Vote")
-    vote_limit = Column(Integer, nullable=False, server_default="0")
-    ranked_choice = Column(Boolean, nullable=False)
-    type = Column(Enum(VoteType), nullable=False)
-    seats = Column(Integer, nullable=False, server_default="1")
-    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
-
-    choices = relationship(VoteChoice, backref="vote")
-    votes = relationship(UserVote, backref="vote")
 
 
 @auto_str
@@ -71,7 +74,7 @@ class DiscordVoteMessage(Base):
     numb_choices = Column(Integer, nullable=False, server_default="20")
     part = Column(Integer, nullable=False)
 
-    vote = relationship(Vote, overlaps="vote")
+    discord_vote = relationship("DiscordVote", back_populates="messages")
 
 # TODO Add unique constraints
 @auto_str
@@ -94,8 +97,8 @@ class DiscordVote(Base):
     id = Column(Integer, ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True, nullable=False)
     allowed_role_id = Column(Integer)
 
-    messages = relationship(DiscordVoteMessage, backref="discord_vote", overlaps="vote")
-    vote = relationship(Vote, overlaps="vote")
+    messages = relationship(DiscordVoteMessage, back_populates="discord_vote")
+    vote = relationship(Vote, back_populates="discord_vote")
 
 
 

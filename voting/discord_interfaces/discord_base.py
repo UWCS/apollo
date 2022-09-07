@@ -21,7 +21,7 @@ class VoteButton(Button):
     def __init__(self, interface, dvc: DiscordVoteChoice, msg_title):
         super().__init__(label=dvc.choice.choice)  # , emoji=dvc.emoji)
         self.dvc = dvc
-        self.vote = dvc.msg.vote
+        self.vote = dvc.choice.vote
         self.msg_title = msg_title
         self.interface = interface
 
@@ -38,9 +38,9 @@ class CloseButton(Button):
         self.vote = vote
 
     async def callback(self, interaction: discord.Interaction):
-        self.interface.vote_type.end(self.vote)
         await interaction.message.edit(view=None)
         await self.interface.end_vote(interaction, self.vote)
+        self.interface.vote_type.end(self.vote)
 
 class MyVotesButton(Button):
     def __init__(self, interface, vote, msg_title):
@@ -77,12 +77,12 @@ class DiscordBase:
             for chunk in self.chunk_choices(choices):
                 msg_title = self.get_title(title, msg_index)
                 # Send msg
-                embed = self.create_embed(chunk.choices, title)
-                msg = await ctx.send(content=msg_title, embed=embed, allowed_mentions=AllowedMentions.none())
+                # embed = self.create_embed(chunk.choices, title)
+                msg = await ctx.send(content=msg_title, allowed_mentions=AllowedMentions.none())
 
                 # Add msg to DB
                 start_ind, end_ind = chunk.start, chunk.end
-                new_dc_msg = DiscordVoteMessage(message_id=msg.id, channel_id=msg.channel.id, vote=vote_obj,
+                new_dc_msg = DiscordVoteMessage(message_id=msg.id, channel_id=msg.channel.id, discord_vote=new_dc_vote,
                                                 choices_start_index=start_ind, numb_choices=end_ind - start_ind, part=msg_index)
                 db_session.add(new_dc_msg)
                 msg_index += 1
