@@ -54,7 +54,7 @@ class BaseVote:
             .join(UserVote)
             .filter(VoteChoice.vote_id == vote.id)
             .group_by(VoteChoice.choice_index)
-            .order_by(func.count())
+            .order_by(func.count().desc())
             .all()
         )
         return counts

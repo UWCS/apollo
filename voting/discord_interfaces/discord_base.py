@@ -129,7 +129,7 @@ class DiscordBase:
         # Pair choices with emojis -- thumbs up/down if single option given
         if len(choices) <= 1:
             c = choices[0] if choices else ""
-            return title, ["👍 " + c, "👎 " + c]
+            return title, [f"👍 {c}", f"👎 {c}"]
         else:
             return title, choices
 
@@ -183,11 +183,13 @@ class DiscordBase:
         last_pos, last_count = 1, -1
         for i, (v, c) in enumerate(votes):
             pos = i+1
-            if c == last_count: pos = f"={last_pos}"
+            if c == last_count:
+                pos = f"={last_pos}"
+                options[-1] = (pos, options[-1][1])
             else: last_pos, last_count = pos, c
-            options.append(f"**{pos}) {v.choice}**: {c} vote{'s' if c != 1 else ''}")
+            options.append((pos, f"{v.choice}**: {c} vote{'s' if c != 1 else ''}"))
 
         embed = discord.Embed(title="Vote Results:")
-        embed.add_field(name="Results", value="\n".join(options), inline=False)
+        embed.add_field(name="Results", value="\n".join(f"**{o[0]}) {o[1]}" for o in options), inline=False)
 
         await interaction.response.edit_message(embed=embed)
