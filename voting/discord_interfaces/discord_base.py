@@ -1,5 +1,5 @@
 import discord
-from typing import List, Tuple, NamedTuple, Iterable, Dict
+from typing import List, Tuple, NamedTuple, Iterable, Dict, Union
 
 from discord.ui import View, Button
 from sqlalchemy.exc import SQLAlchemyError
@@ -14,13 +14,12 @@ from discord import AllowedMentions, InteractionMessage, ButtonStyle
 from discord.ext.commands import Context
 
 DENSE_ARRANGE = True
-Choice = NamedTuple("Choice", [('emoji', str), ('prompt', str)])
-DCMessage = NamedTuple("DCMessage", [('msg', discord.Message), ('choices', List[Choice])])
+Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str])])
 
 # Records last ephemeral message to each user, so can edit for future votes
 class VoteButton(Button):
     def __init__(self, interface, dvc: DiscordVoteChoice, msg_title):
-        super().__init__(label=dvc.choice.choice, emoji=dvc.emoji)
+        super().__init__(label=dvc.choice.choice)  # , emoji=dvc.emoji)
         self.dvc = dvc
         self.vote = dvc.msg.vote
         self.msg_title = msg_title
@@ -29,19 +28,19 @@ class VoteButton(Button):
     async def callback(self, interaction: discord.Interaction):
         db_user = db_session.query(User).filter(User.user_uid == interaction.user.id).one_or_none()
         msg = self.interface.vote_type.vote_for(self.vote, db_user, self.dvc.choice)
-        user_votes = self.interface.vote_type.get_votes_for_user(self.vote.id, db_user.id)
+        user_votes = self.interface.vote_type.get_votes_for_user(self.vote, db_user)
         await self.interface.send_choice_feedback(interaction, (db_user.id, self.vote.id), msg, self.msg_title, user_votes)
 
 class CloseButton(Button):
-    def __init__(self, interface, vote_id):
+    def __init__(self, interface, vote):
         super().__init__(label="End", emoji="✖️", style=ButtonStyle.danger)
         self.interface = interface
-        self.vote_id = vote_id
+        self.vote = vote
 
     async def callback(self, interaction: discord.Interaction):
-        self.interface.vote_type.end(self.vote_id)
+        self.interface.vote_type.end(self.vote)
         await interaction.message.edit(view=None)
-        await self.interface.end_vote(interaction, self.vote_id)
+        await self.interface.end_vote(interaction, self.vote)
 
 class MyVotesButton(Button):
     def __init__(self, interface, vote, msg_title):
@@ -52,7 +51,7 @@ class MyVotesButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         db_user = db_session.query(User).filter(User.user_uid == interaction.user.id).one_or_none()
-        votes = self.interface.vote_type.get_votes_for_user(self.vote.id, db_user.id)
+        votes = self.interface.vote_type.get_votes_for_user(self.vote, db_user)
         await self.interface.send_choice_feedback(interaction, (db_user.id, self.vote.id), "_ _", self.msg_title, votes, create_new_msg=True)
 
 
@@ -63,8 +62,7 @@ class DiscordBase:
         self.users_last_vote_update_message: Dict[Tuple[int, int], InteractionMessage] = {}
 
     async def create_vote(self, ctx: Context, args: List[str], vote_limit=None, seats=None):
-        title, emoji_choices = self.parse_choices(args)
-        choices = [c.prompt for c in emoji_choices]
+        title, choices = self.parse_choices(args)
 
         try:
             # Create DB entry for vote
@@ -75,19 +73,15 @@ class DiscordBase:
             db_session.add(new_dc_vote)
 
             # Post messages
-            messages: List[DCMessage] = []
             msg_index = 0
-            for chunk in self.chunk_choices(emoji_choices):
+            for chunk in self.chunk_choices(choices):
                 msg_title = self.get_title(title, msg_index)
                 # Send msg
-                embed = self.create_embed(title, [c for _, c in chunk])
+                embed = self.create_embed(chunk.choices, title)
                 msg = await ctx.send(content=msg_title, embed=embed, allowed_mentions=AllowedMentions.none())
-                messages.append(DCMessage(msg, [c for i, c in chunk]))
 
                 # Add msg to DB
-                start_ind, _ = chunk[0]
-                end_ind, _ = chunk[-1]
-                end_ind += 1
+                start_ind, end_ind = chunk.start, chunk.end
                 new_dc_msg = DiscordVoteMessage(message_id=msg.id, channel_id=msg.channel.id, vote=vote_obj,
                                                 choices_start_index=start_ind, numb_choices=end_ind - start_ind, part=msg_index)
                 db_session.add(new_dc_msg)
@@ -95,16 +89,14 @@ class DiscordBase:
 
                 # Add choices to DB and add buttons
                 view = View(timeout=None)
-                for db_ch, (i, ch) in zip(choices_obj[start_ind:end_ind], chunk):
-                    print("\t", db_ch, (i, ch))
-                    if db_ch.choice_index != i: raise Exception(f"DB and bot disagree on choice index")
-                    new_dc_choice = DiscordVoteChoice(choice=db_ch, emoji=ch.emoji, msg=new_dc_msg)
+                for db_ch in choices_obj[start_ind:end_ind]:
+                    new_dc_choice = DiscordVoteChoice(choice=db_ch, emoji="", msg=new_dc_msg)
                     db_session.add(new_dc_choice)
 
                     view.add_item(self.BtnClass(self, new_dc_choice, msg_title))
 
                 if start_ind == 0:
-                    view.add_item(CloseButton(self, vote_obj.id))
+                    view.add_item(CloseButton(self, vote_obj))
                     view.add_item(MyVotesButton(self, vote_obj, msg_title))
                 await msg.edit(view=view)
 
@@ -121,7 +113,7 @@ class DiscordBase:
 
     def get_description(self): return "Votes: Visible"
 
-    def parse_choices(self, args: List[str]) -> Tuple[str, List[Choice]]:
+    def parse_choices(self, args: List[str]) -> Tuple[str, List[str]]:
         """Parse title and choices out of args"""
         if len(args) > 256: raise Exception(f"More than 256 choices given")
         if len(args) == 0: raise Exception(f"No choices given")
@@ -137,37 +129,37 @@ class DiscordBase:
         # Pair choices with emojis -- thumbs up/down if single option given
         if len(choices) <= 1:
             c = choices[0] if choices else ""
-            return title, [Choice("👍", c), Choice("👎", c)]
+            return title, ["👍 " + c, "👎 " + c]
         else:
-            return title, [Choice(e, c) for e, c in zip(default_emojis, choices)]
+            return title, choices
 
 
-    def chunk_choices(self, choices: List[Choice], per_msg=20, len_per_msg=5900) -> Iterable[List[Tuple[int, Choice]]]:
+    def chunk_choices(self, choices: List[str], per_msg=20, len_per_msg=5900) -> Iterable[Chunk]:
         """Splits options such that they'll fit onto a message. Each msg can have 20 reacts and each embed can have max 6000 chars for the whole thing"""
         chunk, msg_len = [], 0
         for i, choice in enumerate(choices):
-            line_len = len(choice.emoji) + len(choice.prompt) + 4
+            line_len = len(choice) + 4
             if len(chunk)+1 > per_msg or msg_len + line_len > len_per_msg:
-                yield chunk
+                yield Chunk(i - len(chunk), i, chunk)
                 chunk, msg_len = [], 0
-            chunk.append((i, choice))
+            chunk.append(choice)
             msg_len += line_len
-        if chunk: yield chunk
+        if chunk: yield Chunk(len(choices) - len(chunk), len(choices), chunk)
 
-    def create_embed(self, title: str, chunk: List[Choice]):
+    def create_embed(self, lines: Union[List[str], List[Tuple[str, str]]], title: str = None):
         """Construct embed from list of choices"""
-        embed = discord.Embed(title=self.get_description())
-        for ch in chunk:
-            if len(ch.prompt) > 250: ch.prompt = ch.prompt[:250]
-            embed.add_field(name=ch.emoji + " " + ch.prompt, value="_ _",
-                            inline=(DENSE_ARRANGE and len(ch.prompt) < 25))
+        if not type(lines) is tuple: lines = [(l, "_ _") for l in lines]
+        embed = discord.Embed(title=self.get_description() if title is None else title)
+        for n, v in lines:
+            if len(n) > 250: n = n[:250]
+            embed.add_field(name=n, value=v,
+                            inline=(DENSE_ARRANGE and len(n) + len(v) < 25))
         return embed
 
 
     async def send_choice_feedback(self, interaction: discord.Interaction, key, msg, msg_title, user_votes, create_new_msg=False):
-        ch = [Choice(str(i), vc.choice) for i, vc in enumerate(user_votes)]
-        embed = self.create_embed("", ch)
-        embed.title = "Your Votes"
+        ch = [vc.choice for vc in user_votes]
+        embed = self.create_embed(ch, "Your Votes")
 
         # Check if existing feedback message and attempt to send to it
         if not create_new_msg and (old_msg := self.users_last_vote_update_message.get(key)):
@@ -186,8 +178,16 @@ class DiscordBase:
 
     async def end_vote(self, interaction: discord.Interaction, vote_id):
         votes = self.vote_type.get_votes_for(vote_id)
-        await interaction.response.edit_message(content=votes)
-        self.vote_type.end(vote_id)
 
-    async def make_results(self, vote):
-        raise NotImplemented()
+        options = []
+        last_pos, last_count = 1, -1
+        for i, (v, c) in enumerate(votes):
+            pos = i+1
+            if c == last_count: pos = f"={last_pos}"
+            else: last_pos, last_count = pos, c
+            options.append(f"**{pos}) {v.choice}**: {c} vote{'s' if c != 1 else ''}")
+
+        embed = discord.Embed(title="Vote Results:")
+        embed.add_field(name="Results", value="\n".join(options), inline=False)
+
+        await interaction.response.edit_message(embed=embed)

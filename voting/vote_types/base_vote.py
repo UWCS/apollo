@@ -31,11 +31,13 @@ class BaseVote:
             return f"Added Vote for {option.choice}, {option.choice_index}"
 
     def _get_existing_vote(self, vote, user, option):
-        return db_session.query(UserVote)\
-            .filter(UserVote.vote_id == vote.id)\
-            .filter(UserVote.user_id == user.id)\
-            .filter(UserVote.choice == option.choice_index)\
+        return (
+            db_session.query(UserVote)
+            .filter(UserVote.vote_id == vote.id)
+            .filter(UserVote.user_id == user.id)
+            .filter(UserVote.choice == option.choice_index)
             .one_or_none()
+        )
 
     def _register_vote(self, vote, user, option):
         user_vote = UserVote(vote_id=vote.id, user_id=user.id, choice=option.choice_index)
@@ -46,20 +48,25 @@ class BaseVote:
         db_session.delete(existing_vote)
         db_session.commit()
 
-    def get_votes_for(self, vote_id):
-        counts = db_session.query(VoteChoice, func.count())\
-            .join(UserVote)\
-            .filter(
-            VoteChoice.vote_id == vote_id
-        ).group_by(VoteChoice.choice_index).all()
+    def get_votes_for(self, vote):
+        counts = (
+            db_session.query(VoteChoice, func.count())
+            .join(UserVote)
+            .filter(VoteChoice.vote_id == vote.id)
+            .group_by(VoteChoice.choice_index)
+            .order_by(func.count())
+            .all()
+        )
         return counts
 
-    def get_votes_for_user(self, vote_id, user_id):
-        counts = db_session.query(VoteChoice)\
-            .join(UserVote)\
-            .filter(VoteChoice.vote_id == vote_id)\
-            .filter(UserVote.user_id == user_id)\
+    def get_votes_for_user(self, vote, user):
+        counts = (
+            db_session.query(VoteChoice)
+            .join(UserVote)
+            .filter(VoteChoice.vote_id == vote.id)
+            .filter(UserVote.user_id == user.id)
             .all()
+        )
         return counts
 
     def end(self, vote_id):
