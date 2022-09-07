@@ -89,9 +89,7 @@ def format_list_of_members(members, /, *, ping=True):
 
 
 def get_database_user_from_id(id_: int, /) -> User:
-    return (
-        db_session.query(User).filter(User.user_uid == id_).one_or_none()
-    )
+    return db_session.query(User).filter(User.user_uid == id_).one_or_none()
 
 
 def get_database_user(user: Identifiable, /) -> User:

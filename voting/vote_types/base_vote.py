@@ -2,15 +2,29 @@ from typing import List, Tuple
 
 from sqlalchemy import func
 
-from models import db_session, User
-from models.votes import VoteType, Vote, VoteChoice, UserVote
+from models import User, db_session
+from models.votes import UserVote, Vote, VoteChoice, VoteType
 
 
 class BaseVote:
+    def create_vote(
+        self,
+        title,
+        owner_id,
+        choices: List[str],
+        type=VoteType.basic,
+        vote_limit=None,
+        seats=None,
+    ) -> Tuple[Vote, List[VoteChoice]]:
 
-    def create_vote(self, title, owner_id, choices: List[str], type=VoteType.basic, vote_limit=None, seats=None) -> Tuple[Vote, List[VoteChoice]]:
-
-        new_vote = Vote(title=title, owner_id=owner_id, type=type, vote_limit=vote_limit, seats=seats, ranked_choice=False)
+        new_vote = Vote(
+            title=title,
+            owner_id=owner_id,
+            type=type,
+            vote_limit=vote_limit,
+            seats=seats,
+            ranked_choice=False,
+        )
         db_session.add(new_vote)
         db_session.flush()  # Ensure vote id is fetched
 
@@ -40,7 +54,9 @@ class BaseVote:
         )
 
     def _register_vote(self, vote, user, option):
-        user_vote = UserVote(vote_id=vote.id, user_id=user.id, choice=option.choice_index)
+        user_vote = UserVote(
+            vote_id=vote.id, user_id=user.id, choice=option.choice_index
+        )
         db_session.add(user_vote)
         db_session.commit()
 
