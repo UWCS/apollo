@@ -39,8 +39,20 @@ class Tex(commands.Cog):
         r = requests.get(url)
         c = io.BytesIO(r.content)
 
+        # Mask in colours (API only does a few colours)
+        mask = Image.open(c).convert("L")
+        white = Image.new("RGB", (mask.width, mask.height), (255, 255, 255))
+        bg = Image.new("RGB", (mask.width, mask.height), (54, 57, 63))
+        result = Image.composite(white, bg, mask)
+        result.save("res.png")
+
+        # Save masked image
+        img = io.BytesIO()
+        result.save(img, format="png")
+        img.seek(0)
+
         # Load the image as a file to be attached to an image
-        img_file = File(c, filename="tex.png")
+        img_file = File(img, filename="tex.png")
         if r.status_code == 200:
             await ctx.send(f"Here you go! :abacus:", file=img_file)
         else:
