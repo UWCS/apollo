@@ -1,9 +1,9 @@
 import asyncio
 import logging
-from datetime import datetime
+import datetime
 
 import discord
-from discord import AllowedMentions
+from discord import AllowedMentions, ui
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, MissingPermissions
 from humanize import precisedelta
@@ -57,34 +57,42 @@ class Announcements(commands.Cog):
         channel: discord.TextChannel,
         trigger_time: DateTimeConverter,
         *,
-        announcement_content: str,
+        content: str = None,
     ):
         """
-        Add an announcement for a scheduled time
+        Add an announcement for a scheduled time. **Reply to a message with the desired content**
         Ensure time is in quotation marks if multiple words, the announcement will the rest of discord message.
         """
         # Function very similar to reminders
+        now = datetime.datetime.now() - datetime.timedelta(minutes=5)
 
-        now = datetime.now()
+        ref = ctx.message.reference
+        if content is None:
+            if not ref:
+                return await ctx.send("Reply to the message with the desired content")
+            else:
+                rep_msg = await ctx.channel.fetch_message(ref.message_id)
+                content = rep_msg.content
+
         if not trigger_time:
             return await ctx.send("Incorrect time format, please see help text.")
         if trigger_time < now:
             return await ctx.send("That time is in the past.")
 
         # Preview render of announcement. If menu's input confirms, continue
-        result = await self.preview_announcement(ctx, announcement_content, False)
+        result = await preview_announcement(ctx, content, False, bot=self.bot)
         if not result:
             return
 
         # The time is valid and not in the past, add the announcement
-        await add_announcement(ctx, channel, trigger_time, announcement_content)
+        await add_announcement(ctx, channel, trigger_time, content)
 
     @announcement.command()
     async def preview(self, ctx: Context, *, announcement_content: str):
         """
         Preview the formatting of an announcement body
         """
-        await self.preview_announcement(ctx, announcement_content, True)
+        await preview_announcement(ctx, announcement_content, True, self.bot)
 
     @announcement.command()
     async def list(self, ctx: Context):
@@ -156,7 +164,7 @@ class Announcements(commands.Cog):
         )
         # Post source and Render preview
         await ctx.send(f"**Message Source:**```\n{result.announcement_content}```")
-        await self.preview_announcement(ctx, result.announcement_content, True, False)
+        await preview_announcement(ctx, result.announcement_content, True, False, self.bot)
 
     @announcement.command()
     async def mention(self, ctx: Context, announcement_id: int, roles: discord.Role):
@@ -179,21 +187,19 @@ class Announcements(commands.Cog):
             f"Pings added for {role_names} to announcement {announcement_id}."
         )
 
-    async def preview_announcement(
-        self, ctx, announcement_content: str, preview: bool = True, menu: bool = True
-    ):
-        """Posts preview to command channel"""
-        channel = ctx.channel
-        webhook = await get_webhook(channel)
+async def preview_announcement(ctx, announcement_content: str, preview: bool = True, menu: bool = True, bot = None):
+    """Posts preview to command channel"""
+    channel = ctx.channel
+    webhook = await get_webhook(channel)
 
-        messages = [await channel.send("**Announcement Preview:**")]
-        author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else self.bot.user
-        messages += await generate_announcement(
-            channel, announcement_content, webhook, author.name, author.avatar.url
-        )
-        messages.append(await channel.send("**End of Announcement Preview**"))
-        if menu:
-            return await preview_edit_menu(ctx, messages, announcement_content, preview)
+    messages = [await channel.send("**Announcement Preview:**")]
+    author = ctx.author if CONFIG.ANNOUNCEMENT_IMPERSONATE else bot
+    messages += await generate_announcement(
+        channel, announcement_content, webhook, author.name, author.avatar.url
+    )
+    messages.append(await channel.send("**End of Announcement Preview**"))
+    if menu:
+        return await preview_edit_menu(ctx, messages, announcement_content, preview)
 
 
 async def announcement_check(bot):
@@ -201,7 +207,7 @@ async def announcement_check(bot):
     await bot.wait_until_ready()
     while not bot.is_closed():
         # Find announcements that need posting
-        now = datetime.now()
+        now = datetime.datetime.now()
         announcements = (
             db_session.query(Announcement)
             .filter(Announcement.trigger_at <= now, Announcement.triggered == False)
@@ -222,8 +228,7 @@ async def announcement_check(bot):
                     if CONFIG.ANNOUNCEMENT_IMPERSONATE
                     else bot.user
                 )
-                name = author.name
-                avatar = author.avatar.url
+                name, avatar = author.name, author.avatar.url
 
             message = a.announcement_content
             a.triggered = True
