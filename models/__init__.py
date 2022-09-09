@@ -1,3 +1,4 @@
+from models.announcement import *
 from models.channel_settings import *
 from models.counting import *
 from models.karma import *
