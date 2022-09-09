@@ -20,7 +20,9 @@ class Config:
         self.KARMA_TIMEOUT: int = parsed.get("karma_timeout")
         self.REMINDER_SEARCH_INTERVAL: int = parsed.get("reminder_search_interval")
         self.CHANNEL_CHECK_INTERVAL: int = parsed.get("channel_check_interval")
-        self.ANNOUNCEMENT_SEARCH_INTERVAL: int = parsed.get("announcement_search_interval")
+        self.ANNOUNCEMENT_SEARCH_INTERVAL: int = parsed.get(
+            "announcement_search_interval"
+        )
         self.ANNOUNCEMENT_IMPERSONATE: int = parsed.get("announcement_impersonate")
         self.UNICODE_NORMALISATION_FORM: str = "NFKD"
 

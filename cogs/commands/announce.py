@@ -1,9 +1,9 @@
 import asyncio
-import logging
 import datetime
+import logging
 
 import discord
-from discord import AllowedMentions, ui, Interaction
+from discord import AllowedMentions, Interaction, ui
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, MissingPermissions
 from humanize import precisedelta
@@ -20,7 +20,7 @@ from utils import (
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
 )
-from utils.announce_utils import confirmation, generate_announcement
+from utils.announce_utils import generate_announcement
 
 
 async def get_webhook(channel):
@@ -35,9 +35,12 @@ async def get_webhook(channel):
     except MissingPermissions:
         return None
 
+
 class ContentButton(ui.Button):
     def __init__(self, channel: discord.TextChannel, trigger_time: datetime.datetime):
-        super().__init__(label="Content Modal", emoji="📝", style=discord.ButtonStyle.grey)
+        super().__init__(
+            label="Content Modal", emoji="📝", style=discord.ButtonStyle.grey
+        )
         self.channel = channel
         self.trigger_time = trigger_time
 
@@ -57,8 +60,13 @@ class ContentModal(ui.Modal, title="Announcement Content"):
 
     async def on_submit(self, interaction: discord.Interaction):
         # await interaction.response.send_message(f'Thanks for your response, {self.name}!', ephemeral=True)
-        await self.cog.prev_and_add(self.ctx, self.channel, self.trigger_time, self.content.value)
-        await interaction.response.send_message(f"Raw content:\n```{self.content.value}```")
+        await self.cog.prev_and_add(
+            self.ctx, self.channel, self.trigger_time, self.content.value
+        )
+        await interaction.response.send_message(
+            f"Raw content:\n```{self.content.value}```"
+        )
+
 
 class Announcements(commands.Cog):
     def __init__(self, bot: Bot):
@@ -102,15 +110,21 @@ class Announcements(commands.Cog):
                 content = rep_msg.content
             else:
                 if ctx.interaction:
-                    await ctx.interaction.response.send_modal(ContentModal(self, ctx, channel, trigger_time))
+                    await ctx.interaction.response.send_modal(
+                        ContentModal(self, ctx, channel, trigger_time)
+                    )
                     return
         await self.prev_and_add(ctx, channel, trigger_time, content)
 
     async def prev_and_add(self, ctx, channel, trigger_time, content):
         # Preview render of announcement. If menu's input confirms, continue
-        await preview_announcement(ctx, content, False, bot=self.bot, add_args=[ctx, channel, trigger_time, content])
-
-
+        await preview_announcement(
+            ctx,
+            content,
+            False,
+            bot=self.bot,
+            add_args=[ctx, channel, trigger_time, content],
+        )
 
     @announcement.command()
     async def preview(self, ctx: Context, *, announcement_content: str):
@@ -189,7 +203,9 @@ class Announcements(commands.Cog):
         )
         # Post source and Render preview
         await ctx.send(f"**Message Source:**```\n{result.announcement_content}```")
-        await preview_announcement(ctx, result.announcement_content, True, False, self.bot)
+        await preview_announcement(
+            ctx, result.announcement_content, True, False, self.bot
+        )
 
     @announcement.command()
     async def mention(self, ctx: Context, announcement_id: int, role: discord.Role):
@@ -211,7 +227,15 @@ class Announcements(commands.Cog):
             f"Pings added for {role.name} to announcement {announcement_id}."
         )
 
-async def preview_announcement(ctx, announcement_content: str, preview: bool = True, menu: bool = True, bot = None, add_args = None):
+
+async def preview_announcement(
+    ctx,
+    announcement_content: str,
+    preview: bool = True,
+    menu: bool = True,
+    bot=None,
+    add_args=None,
+):
     """Posts preview to command channel"""
     channel = ctx.channel
     webhook = await get_webhook(channel)
@@ -223,7 +247,9 @@ async def preview_announcement(ctx, announcement_content: str, preview: bool = T
     )
     messages.append(await channel.send("**End of Announcement Preview**"))
     if menu:
-        return await preview_edit_menu(ctx, messages, announcement_content, preview, add_args)
+        return await preview_edit_menu(
+            ctx, messages, announcement_content, preview, add_args
+        )
 
 
 async def announcement_check(bot):
@@ -266,8 +292,9 @@ async def announcement_check(bot):
         await asyncio.sleep(CONFIG.ANNOUNCEMENT_SEARCH_INTERVAL)
 
 
-
-async def preview_edit_menu(ctx, messages, announcement_content, preview, add_args=None):
+async def preview_edit_menu(
+    ctx, messages, announcement_content, preview, add_args=None
+):
     """Menu to post, edit or cancel preview"""
     msg = None
 
@@ -280,10 +307,11 @@ async def preview_edit_menu(ctx, messages, announcement_content, preview, add_ar
             for ann_msg in messages:
                 await ann_msg.delete()
             if preview:
-                await interaction.response.send_message(f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`")
+                await interaction.response.send_message(
+                    f"Preview complete. Send this message with\n`!announcement add #announcements 10s \n{announcement_content}`"
+                )
             else:
                 await add_announcement(*add_args)
-
 
     class EditButton(ui.Button):
         def __init__(self):
@@ -298,7 +326,9 @@ async def preview_edit_menu(ctx, messages, announcement_content, preview, add_ar
                 edit_msg: discord.Message = await ctx.fetch_message(ctx.message.id)
                 await ctx.bot.process_commands(edit_msg)
             else:
-                await interaction.response.send_message("Slash command edit not supported")
+                await interaction.response.send_message(
+                    "Slash command edit not supported"
+                )
 
     class CancelButton(ui.Button):
         def __init__(self):
@@ -328,29 +358,9 @@ async def preview_edit_menu(ctx, messages, announcement_content, preview, add_ar
                 except discord.errors.NotFound:
                     pass
 
-
-    msg = await ctx.send("**Edit Preview**\nEdit source before edit", view=ConfirmView())
-
-
-    # async def timeout(msg):
-    #     """Function called if timeout (currently 5 mins) if reached"""
-    #     await msg.delete()
-    #     await ctx.send(
-    #         f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`"
-    #     )
-    #     for ann_msg in messages:
-    #         await ann_msg.delete()
-    #     return False
-    #
-    # return await confirmation(
-    #     ctx,
-    #     f"Edit Preview",
-    #     f"  ✅ to {'finalize' if preview else 'schedule announcement'}\n  ✏️ to edit (make changes in source first)\n  ❌ to cancel",
-    #     ["✅", "✏️", "❌"],
-    #     interact,
-    #     timeout,
-    #     300,
-    # )
+    msg = await ctx.send(
+        "**Edit Preview**\nEdit source before edit", view=ConfirmView()
+    )
 
 
 async def add_announcement(ctx, channel, trigger_time, announcement_content):
