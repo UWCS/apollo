@@ -69,8 +69,8 @@ def upgrade():
     )
     op.create_table(
         "discord_vote_message",
-        sa.Column("message_id", sa.Integer(), nullable=False),
-        sa.Column("channel_id", sa.Integer(), nullable=False),
+        sa.Column("message_id", sa.BigInteger(), nullable=False),
+        sa.Column("channel_id", sa.BigInteger(), nullable=False),
         sa.Column("vote_id", sa.Integer(), nullable=False),
         sa.Column("choices_start_index", sa.Integer(), nullable=False),
         sa.Column("numb_choices", sa.Integer(), server_default="20", nullable=False),
@@ -84,7 +84,7 @@ def upgrade():
         sa.Column("vote_id", sa.Integer(), nullable=False),
         sa.Column("choice_index", sa.Integer(), nullable=False),
         sa.Column("emoji", sa.String(), nullable=True),
-        sa.Column("msg_id", sa.Integer(), nullable=True),
+        sa.Column("msg_id", sa.BigInteger(), nullable=True),
         sa.ForeignKeyConstraint(
             ["msg_id"], ["discord_vote_message.message_id"], ondelete="CASCADE"
         ),

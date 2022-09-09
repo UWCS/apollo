@@ -43,9 +43,15 @@ class CloseButton(Button):
         self.vote = vote
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.message.edit(view=None)
-        await self.interface.end_vote(interaction, self.vote)
-        self.interface.vote_type.end(self.vote)
+        db_user = (
+            db_session.query(User)
+            .filter(User.user_uid == interaction.user.id)
+            .one_or_none()
+        )
+        if db_user.id == self.vote.owner_id:
+            await interaction.message.edit(view=None)
+            await self.interface.end_vote(interaction, self.vote)
+            self.interface.vote_type.end(self.vote)
 
 
 class MyVotesButton(Button):

@@ -69,7 +69,7 @@ class BaseVote:
             db_session.query(VoteChoice, func.count())
             .join(UserVote)
             .filter(VoteChoice.vote_id == vote.id)
-            .group_by(VoteChoice.choice_index)
+            .group_by(VoteChoice)
             .order_by(func.count().desc())
             .all()
         )
@@ -86,7 +86,8 @@ class BaseVote:
         return counts
 
     def end(self, vote):
-        db_session.delete(vote)
+        # db_session.delete(vote)
+        pass
 
     def remove(self, vote):
         raise NotImplemented()
