@@ -34,6 +34,7 @@ EXTENSIONS = [
     "cogs.commands.roomsearch",
     "cogs.commands.say",
     "cogs.commands.tex",
+    "cogs.commands.vote",
     "cogs.commands.widen",
     "cogs.channel_checker",
     "cogs.database",
