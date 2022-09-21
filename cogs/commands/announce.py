@@ -297,12 +297,15 @@ async def preview_edit_menu(
 ):
     """Menu to post, edit or cancel preview"""
     msg = None
+    success = False
 
     class AcceptButton(ui.Button):
         def __init__(self):
             super().__init__(label="Accept", emoji="✅", style=discord.ButtonStyle.green)
 
         async def callback(self, interaction: Interaction):
+            global success
+            success = True
             await msg.delete()
             for ann_msg in messages:
                 await ann_msg.delete()
@@ -348,7 +351,13 @@ async def preview_edit_menu(
             self.add_item(CancelButton())
 
         async def on_timeout(self):
-            await msg.delete()
+            if success:
+                return
+            try:
+                await msg.delete()
+            except discord.errors.NotFound:
+                pass
+
             await ctx.send(
                 f"**Timeout.** Restart posting with: `!announcement preview {announcement_content}`"
             )

@@ -80,7 +80,7 @@ async def generate_announcement(
                 pass
 
         else:  # Is just text
-            if line[0] == "#": 
+            if line and line[0] == "#": 
                 line = f"**{line.strip('# ')}**"
             if (len(accumulated_lines) + len(line)) > 1900:
                 await send_lines()

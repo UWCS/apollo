@@ -9,3 +9,4 @@ from models.quote import *
 from models.reminder import *
 from models.user import *
 from models.votes import *
+from models.role_menu import *
