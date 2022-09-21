@@ -1,6 +1,7 @@
 import inspect
 import io
 import re
+import logging
 
 import discord
 from discord import AllowedMentions
@@ -9,8 +10,12 @@ from PIL import Image, ImageDraw, ImageFont
 
 import utils
 
-font: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-SemiBold.ttf", 90)
-subfont: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-Medium.ttf", 45)
+try:
+    font: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-SemiBold.ttf", 90)
+    subfont: ImageFont.ImageFont = ImageFont.truetype("resources/Montserrat-Medium.ttf", 45)
+except OSError as e:
+    logging.warn("Error loading announcement title fonts")
+    font, subfont = None, None
 
 
 async def generate_announcement(
@@ -55,8 +60,8 @@ async def generate_announcement(
     # Send each line
     for line in lines:
         # Find each type
-        sub_group = re.search(r"^## ?(.+)$", line)
-        title_group = re.search(r"^# ?(.+)$", line)
+        sub_group = subfont is not None and re.search(r"^## ?(.+)$", line)
+        title_group = font is not None and re.search(r"^# ?(.+)$", line)
         img_group = re.search(r"^IMG (.+)$", line)
         break_group = re.search(r"^BREAK$", line)
         # Carry out any action
@@ -75,6 +80,8 @@ async def generate_announcement(
                 pass
 
         else:  # Is just text
+            if line[0] == "#": 
+                line = f"**{line.strip('# ')}**"
             if (len(accumulated_lines) + len(line)) > 1900:
                 await send_lines()
             accumulated_lines.append(line)
