@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 
 from models import User, db_session
 from models.role_menu import RoleMenu, RoleEntry
+from utils.announce_utils import get_long_msg
 
 DENSE_ARRANGE = True
 Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str])])
@@ -22,13 +23,23 @@ class RoleButton(Button):
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user
-        if self.role not in user.roles: await user.add_roles(self.role, reason="Button Role")
-        else: await user.remove_roles(self.role, reason="Button Role")
+        if self.role not in user.roles: 
+            await user.add_roles(self.role, reason="Button Role")
+            await interaction.response.send_message(f"Added role {self.role.mention}", allowed_mentions=AllowedMentions.none(), ephemeral=True)
+        else: 
+            await user.remove_roles(self.role, reason="Button Role")
+            await interaction.response.send_message(f"Removed role {self.role.mention}", allowed_mentions=AllowedMentions.none(), ephemeral=True)
 
 
 class RoleMenuCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.bot.wait_until_ready()
+
+        role_menus = db_session.query(RoleMenu).all()
 
     @commands.hybrid_group()
     async def roles(self, ctx: Context):
@@ -58,15 +69,8 @@ class RoleMenuCog(commands.Cog):
             raise
     
     @roles.command()
-    async def add(self, ctx, msg_reference, emoji: str, role: discord.Role, *, description=None):
-        # Fetch data
-        guild: discord.Guild = ctx.guild
-        menu = self.get_menu(guild.id, msg_reference)
-        if not menu: raise Exception(f"No message exists with reference `{msg_reference}`.")
-
-        # Edit embed to include new option
-        channel = guild.get_channel(menu.channel_id)
-        message: discord.Message = await channel.fetch_message(menu.message_id)
+    async def add(self, ctx, msg_ref, emoji: str, role: discord.Role, *, description=None):
+        message, menu = await self.get_message(ctx, msg_ref)
 
         new_content = f"{message.content}\n_ _\n{emoji} for **{role.name}** {description}"
         view = View.from_message(message)
@@ -82,23 +86,26 @@ class RoleMenuCog(commands.Cog):
             raise
 
         await message.edit(content=new_content, view=view)
-        await ctx.send(f"Button for role {role.name} added to `{msg_reference}`", ephemeral=True)
+        await ctx.send(f"Button for role {role.name} added to `{msg_ref}`")
 
-    
     @roles.command()
-    async def add_text(self, ctx, msg_reference, *, text):
-        # Fetch data
-        guild: discord.Guild = ctx.guild
-        menu = self.get_menu(guild.id, msg_reference)
-        if not menu: raise Exception(f"No message exists with reference `{msg_reference}`.")
+    async def add_text(self, ctx, msg_ref, *, text):
+        message, menu = await self.get_message(ctx, msg_ref)
 
-        # Edit embed to include new option
-        channel = guild.get_channel(menu.channel_id)
-        message: discord.Message = await channel.fetch_message(menu.message_id)
-
+        text = text.replace("\\n", "\n")
         new_content = f"{message.content}{text}"
         await message.edit(content=new_content)
-        await ctx.send(f"Text added to `{msg_reference}`", ephemeral=True)
+        await ctx.send(f"Text added to `{msg_ref}`")
+
+    @roles.command()
+    async def set_msg(self, ctx, msg_ref, *, content=None):
+        message, menu = await self.get_message(ctx, msg_ref)
+
+        _, content = await get_long_msg(ctx, content, message.content)
+        
+        await message.edit(content=content)
+        await ctx.send(f"Set menu `{msg_ref}` text to:\n```{content}```")
+
 
     def get_menu(self, guild_id, ref):
         """Finds message data for RR from ref"""
@@ -106,6 +113,17 @@ class RoleMenuCog(commands.Cog):
             .filter(RoleMenu.msg_ref == ref)
             .filter(RoleMenu.guild_id == guild_id)
             .one_or_none())
+
+    async def get_message(self, ctx, msg_ref):
+        # Fetch data
+        guild: discord.Guild = ctx.guild
+        menu = self.get_menu(guild.id, msg_ref)
+        if not menu: raise Exception(f"No message exists with reference `{msg_ref}`.")
+
+        # Edit embed to include new option
+        channel = guild.get_channel(menu.channel_id)
+        msg = await channel.fetch_message(menu.message_id)
+        return msg, menu
 
 
 async def setup(bot: Bot):
