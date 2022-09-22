@@ -1,4 +1,7 @@
+from ast import Raise
 from typing import List, NamedTuple
+from unittest.mock import NonCallableMagicMock
+from urllib.parse import non_hierarchical
 
 import discord
 from discord.ext import commands
@@ -10,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from models import User, db_session
 from models.role_menu import RoleMenu, RoleEntry
 from utils.announce_utils import get_long_msg
+from utils import is_compsoc_exec_in_guild
 
 # Records last ephemeral message to each user, so can edit for future votes
 class RoleButton(Button):
@@ -46,15 +50,20 @@ class RoleMenuCog(commands.Cog):
             except discord.errors.NotFound:
                 continue
 
-            view = View()
-            for entry in db_session.query(RoleEntry).filter(RoleEntry.menu_id == menu.id).all():
-                print(entry)
-                print(em := discord.PartialEmoji.from_str(entry.emoji))
-                view.add_item(RoleButton(self, guild.get_role(entry.role), em))
-            self.view_records[msg.id] = view
-            await msg.edit(view=view)
+            await msg.edit(view=self.recreate_view(menu.id, guild, msg))
+
+    def recreate_view(self, mid, guild, msg):
+        view = View()
+        for entry in db_session.query(RoleEntry).filter(RoleEntry.menu_id == mid).all():
+            print(entry)
+            print(em := discord.PartialEmoji.from_str(entry.emoji))
+            view.add_item(RoleButton(self, guild.get_role(entry.role), em))
+        self.view_records[msg.id] = view
+        return view
+        
 
     @commands.hybrid_group()
+    @commands.check(is_compsoc_exec_in_guild)
     async def roles(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
@@ -76,7 +85,8 @@ class RoleMenuCog(commands.Cog):
             db_session.rollback()
             await ctx.send(f"A Role Menu with reference `{msg_ref}` already exists in this server.")
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            print(e)
             db_session.rollback()
             await ctx.send("Database error creating menu")
             raise
@@ -87,14 +97,15 @@ class RoleMenuCog(commands.Cog):
 
         prompt_start = f"{emoji} for " if emoji else ""
         new_content = f"{message.content}\n_ _\n{prompt_start}**{role.name}** {description or ''}"
-        view = self.view_records[message.id]
+        view = self.view_records.get(message.id, View())
         view.add_item(RoleButton(self, role, emoji))
 
         try:
             entry = RoleEntry(menu_id=menu.id, role=role.id, title=role.name, description=description, emoji=str(emoji))
             db_session.add(entry)
             db_session.commit()
-        except SQLAlchemyError:
+        except SQLAlchemyError as e:
+            print(e)
             db_session.rollback()
             await ctx.send("Database error creating menu")
             raise
@@ -115,11 +126,66 @@ class RoleMenuCog(commands.Cog):
     @roles.command()
     async def set_msg(self, ctx, msg_ref, *, content=None):
         message, menu = await self.get_message(ctx, msg_ref)
+        old_content = message.content
 
         _, content = await get_long_msg(ctx, content, message.content)
         
         await message.edit(content=content)
-        await ctx.send(f"Set menu `{msg_ref}` text to:\n```{content}```")
+        await ctx.send(f"Set menu `{msg_ref}` text to:\n```{content}```\n**Old Content:**\n```{old_content}```")
+
+    @roles.command()
+    async def remove(self, ctx, msg_ref, role: discord.Role):
+        msg, menu = await self.get_message(ctx, msg_ref)
+
+        entry = (db_session.query(RoleEntry)
+                .filter(RoleEntry.menu_id == menu.id)
+                .filter(RoleEntry.role == role.id)
+                .one_or_none())
+        if entry is None:
+            return await ctx.send(f"No role {role.mention} exists in menu {menu.msg_ref}")
+        try:
+            db_session.delete(entry)
+            db_session.commit()
+        except SQLAlchemyError as e:
+            print(e)
+            db_session.rollback()
+            return await ctx.send("Database error deleting role entry")
+
+        guild = self.bot.get_guild(menu.guild_id)
+        
+        view = self.recreate_view(menu.id, guild, msg)
+        await msg.edit(view=view)
+
+        await ctx.send(f"Deleted role {role} from menu `{msg_ref}`. Next, you should manually edit the message to remove the role, since this is dangerous to automate.")
+
+    @roles.command()
+    async def delete(self, ctx, msg_ref):
+        message, menu = await self.get_message(ctx, msg_ref)
+
+        try:
+            await message.delete()
+        except discord.errors.NotFound:
+            pass
+        try:
+            db_session.delete(menu)
+            db_session.commit()
+        except SQLAlchemyError as e:
+            print(e)
+            db_session.rollback()
+            await ctx.send("Database error deleting menu")
+        await ctx.send(f"Deleted menu `{msg_ref}`")
+
+    @roles.command()
+    async def list(self, ctx):
+        guild: discord.Guild = ctx.guild
+
+        menus: RoleMenu = (db_session.query(RoleMenu)
+            .filter(RoleMenu.guild_id == guild.id)
+            .all())
+        
+        msg = "**All Button Roles:**\n"
+        msg += "\n".join(f"`{m.msg_ref}` **{m.title}** in {guild.get_channel(m.channel_id).mention}" for m in menus)
+        await ctx.send(msg)
 
 
     def get_menu(self, guild_id, ref):
