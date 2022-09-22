@@ -11,13 +11,10 @@ from models import User, db_session
 from models.role_menu import RoleMenu, RoleEntry
 from utils.announce_utils import get_long_msg
 
-DENSE_ARRANGE = True
-Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str])])
-
 # Records last ephemeral message to each user, so can edit for future votes
 class RoleButton(Button):
     def __init__(self, interface, role: discord.Role, emoji: str):
-        super().__init__(label=role.name, emoji=emoji)
+        super().__init__(label=role.name)
         self.role = role
         self.interface = interface
 
@@ -34,12 +31,28 @@ class RoleButton(Button):
 class RoleMenuCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.view_records = {}
 
     @commands.Cog.listener()
     async def on_ready(self):
         await self.bot.wait_until_ready()
 
         role_menus = db_session.query(RoleMenu).all()
+        for menu in role_menus:
+            guild = self.bot.get_guild(menu.guild_id)
+            
+            try:
+                msg = await self.get_message_from_ids(menu.guild_id, menu.channel_id, menu.message_id)
+            except discord.errors.NotFound:
+                continue
+
+            view = View()
+            for entry in db_session.query(RoleEntry).filter(RoleEntry.menu_id == menu.id).all():
+                print(entry)
+                print(em := discord.PartialEmoji.from_str(entry.emoji))
+                view.add_item(RoleButton(self, guild.get_role(entry.role), em))
+            self.view_records[msg.id] = view
+            await msg.edit(view=view)
 
     @commands.hybrid_group()
     async def roles(self, ctx: Context):
@@ -69,15 +82,16 @@ class RoleMenuCog(commands.Cog):
             raise
     
     @roles.command()
-    async def add(self, ctx, msg_ref, emoji: str, role: discord.Role, *, description=None):
+    async def add(self, ctx, msg_ref, role: discord.Role, *, description=None, emoji: str=None):
         message, menu = await self.get_message(ctx, msg_ref)
 
-        new_content = f"{message.content}\n_ _\n{emoji} for **{role.name}** {description}"
-        view = View.from_message(message)
+        prompt_start = f"{emoji} for " if emoji else ""
+        new_content = f"{message.content}\n_ _\n{prompt_start}**{role.name}** {description or ''}"
+        view = self.view_records[message.id]
         view.add_item(RoleButton(self, role, emoji))
 
         try:
-            entry = RoleEntry(menu_id=menu.id, role=role.id, title=role.name, description=description, emoji=str(role))
+            entry = RoleEntry(menu_id=menu.id, role=role.id, title=role.name, description=description, emoji=str(emoji))
             db_session.add(entry)
             db_session.commit()
         except SQLAlchemyError:
@@ -86,6 +100,7 @@ class RoleMenuCog(commands.Cog):
             raise
 
         await message.edit(content=new_content, view=view)
+        self.view_records[message.id] = view
         await ctx.send(f"Button for role {role.name} added to `{msg_ref}`")
 
     @roles.command()
@@ -124,6 +139,13 @@ class RoleMenuCog(commands.Cog):
         channel = guild.get_channel(menu.channel_id)
         msg = await channel.fetch_message(menu.message_id)
         return msg, menu
+
+    async def get_message_from_ids(self, gid, cid, mid):
+        # Edit embed to include new option
+        guild = self.bot.get_guild(gid)
+        channel = guild.get_channel(cid)
+        msg = await channel.fetch_message(mid)
+        return msg
 
 
 async def setup(bot: Bot):
