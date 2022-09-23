@@ -79,12 +79,28 @@ class MyVotesButton(Button):
 
 
 class DiscordBase:
-    def __init__(self, vote_type=base_vote, btn_class=VoteButton):
+    def __init__(self, bot, vote_type=base_vote, btn_class=VoteButton):
+        self.bot = bot
         self.vote_type = vote_type
         self.BtnClass = btn_class
         self.users_last_vote_update_message: Dict[
             Tuple[int, int], InteractionMessage
         ] = {}
+
+    def recreate_view(self, vid, msg, dvm):
+        view = View()
+        msg_title = self.get_title(dvm.discord_vote.vote.title, dvm.part)
+        s, e = dvm.choices_start_index, dvm.choices_start_index + dvm.numb_choices
+        msg_choices = (
+            db_session.query(DiscordVoteChoice)
+            .filter(DiscordVoteChoice.vote_id == vid)
+            .filter(s <= DiscordVoteChoice.choice_index)
+            .filter(DiscordVoteChoice.choice_index < e)
+            .all()
+        )
+        for dvc in msg_choices:
+            view.add_item(self.BtnClass(self, dvc, msg_title))
+        return view
 
     async def create_vote(
         self, ctx: Context, args: List[str], vote_limit=None, seats=None

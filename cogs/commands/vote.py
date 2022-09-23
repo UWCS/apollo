@@ -5,6 +5,8 @@ from discord.ext.commands import Bot, CommandInvokeError, Context, clean_content
 from discord.ext.commands.errors import CommandError
 from sqlalchemy.exc import SQLAlchemyError
 
+from models import db_session
+from models.votes import DiscordVoteMessage
 from voting.discord_interfaces.discord_base import DiscordBase
 from voting.splitutils import split_args
 
@@ -39,7 +41,22 @@ class Vote(commands.Cog):
         if len(choices) == len(args):
             choices = [args]
         print(choices)
-        await DiscordBase().create_vote(ctx, choices)
+        await DiscordBase(self.bot).create_vote(ctx, choices)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        await self.bot.wait_until_ready()
+
+        vote_msgs = db_session.query(DiscordVoteMessage).all()
+        for dvm in vote_msgs:
+            channel = self.bot.get_channel(dvm.channel_id)
+            msg = await channel.fetch_message(dvm.message_id)
+            if msg is None:
+                continue
+
+            await msg.edit(
+                view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
+            )
 
     async def cog_command_error(self, ctx: Context, error):
         if isinstance(error, CommandInvokeError):

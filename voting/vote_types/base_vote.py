@@ -39,10 +39,10 @@ class BaseVote:
     def vote_for(self, vote, user, option):
         if existing_vote := self._get_existing_vote(vote, user, option):
             self._deregister_vote(existing_vote)
-            return f"Removed Vote for {option.choice}, {option.choice_index}"
+            return f"Removed Vote for **{option.choice}**"
         else:
             self._register_vote(vote, user, option)
-            return f"Added Vote for {option.choice}, {option.choice_index}"
+            return f"Added Vote for **{option.choice}**"
 
     def _get_existing_vote(self, vote, user, option):
         return (
@@ -86,8 +86,8 @@ class BaseVote:
         return counts
 
     def end(self, vote):
-        # db_session.delete(vote)
-        pass
+        db_session.delete(vote)
+        db_session.commit()
 
     def remove(self, vote):
         raise NotImplemented()

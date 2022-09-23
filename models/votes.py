@@ -47,8 +47,12 @@ class Vote(Base):
     seats = Column(Integer, nullable=False, server_default="1")
     created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
 
-    choices = relationship("VoteChoice", back_populates="vote")
-    discord_vote = relationship("DiscordVote", back_populates="vote")
+    choices = relationship(
+        "VoteChoice", back_populates="vote", cascade="all, delete-orphan"
+    )
+    discord_vote = relationship(
+        "DiscordVote", back_populates="vote", cascade="all, delete-orphan"
+    )
 
 
 @auto_str
@@ -64,7 +68,9 @@ class VoteChoice(Base):
     choice = Column(String, nullable=False)
 
     vote = relationship(Vote, back_populates="choices")
-    user_votes = relationship("UserVote", back_populates="vote_choice")
+    user_votes = relationship(
+        "UserVote", back_populates="vote_choice", cascade="all, delete-orphan"
+    )
 
 
 @auto_str
@@ -137,5 +143,7 @@ class DiscordVote(Base):
     )
     allowed_role_id = Column(Integer)
 
-    messages = relationship(DiscordVoteMessage, back_populates="discord_vote")
+    messages = relationship(
+        DiscordVoteMessage, back_populates="discord_vote", cascade="all, delete-orphan"
+    )
     vote = relationship(Vote, back_populates="discord_vote")

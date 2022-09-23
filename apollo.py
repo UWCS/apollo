@@ -29,6 +29,7 @@ EXTENSIONS = [
     "cogs.commands.lcalc",
     "cogs.commands.misc",
     "cogs.commands.quotes",
+    "cogs.commands.rolemenu",
     "cogs.commands.reminders",
     "cogs.commands.announce",
     "cogs.commands.roll",

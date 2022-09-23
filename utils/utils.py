@@ -33,6 +33,7 @@ __all__ = [
     "pluralise",
     "user_is_irc_bot",
     "replace_external_emoji",
+    "rerun_to_confirm",
 ]
 
 
@@ -305,3 +306,31 @@ def done_react(func):
             await ctx.message.add_reaction("👍")
 
     return decorator
+
+
+def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
+    """
+    Records the first run of the command, only actuall runs command on confirmatory second run
+    """
+    first_run_times = {}
+
+    def decorator_actual(func):
+        @functools.wraps(func)
+        async def decorator(*args, **kwargs):
+            ctx: Context = next(a for a in args if isinstance(a, Context))
+            print(key_name, kwargs[key_name], first_run_times)
+            if kwargs[key_name] not in first_run_times:
+                first_run_times[kwargs[key_name]] = datetime.now()
+                return await ctx.send(confirm_msg, ephemeral=True)
+
+            timeout_threshold = datetime.now() - timedelta(minutes=5)
+            if timeout_threshold > first_run_times[kwargs[key_name]]:
+                # If previous run is more than 5 mins ago (timeout after 5)
+                first_run_times[kwargs[key_name]] = datetime.now()
+                return await ctx.send(confirm_msg, ephemeral=True)
+
+            await func(*args, **kwargs)
+
+        return decorator
+
+    return decorator_actual
