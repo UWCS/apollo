@@ -318,7 +318,6 @@ def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
         @functools.wraps(func)
         async def decorator(*args, **kwargs):
             ctx: Context = next(a for a in args if isinstance(a, Context))
-            print(key_name, kwargs[key_name], first_run_times)
             if kwargs[key_name] not in first_run_times:
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
