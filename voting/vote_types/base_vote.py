@@ -86,8 +86,8 @@ class BaseVote:
         return counts
 
     def end(self, vote):
-        # db_session.delete(vote)
-        pass
+        db_session.delete(vote)
+        db_session.commit()
 
     def remove(self, vote):
         raise NotImplemented()

@@ -25,7 +25,7 @@ class RoleMenu(Base):
     channel_id = Column(BigInteger, nullable=False)
     message_id = Column(BigInteger)
 
-    choices = relationship("RoleEntry", back_populates="menu")
+    choices = relationship("RoleEntry", back_populates="menu", cascade="all, delete-orphan")
     
 
 @auto_str
