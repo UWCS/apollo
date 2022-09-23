@@ -13,7 +13,8 @@ from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from models import User, db_session
 from models.role_menu import RoleMenu, RoleEntry
 from utils.announce_utils import get_long_msg
-from utils import is_compsoc_exec_in_guild
+from utils import is_compsoc_exec_in_guild, rerun_to_confirm
+import datetime
 
 # Records last ephemeral message to each user, so can edit for future votes
 class RoleButton(Button):
@@ -23,6 +24,7 @@ class RoleButton(Button):
         self.interface = interface
 
     async def callback(self, interaction: discord.Interaction):
+        """Toggles user's role"""
         user = interaction.user
         if self.role not in user.roles: 
             await user.add_roles(self.role, reason="Button Role")
@@ -36,9 +38,11 @@ class RoleMenuCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.view_records = {}
+        self.delete_confirm = {}
 
     @commands.Cog.listener()
     async def on_ready(self):
+        """When the bot starts, recreate all menus' buttons, so interactions will be picked up"""
         await self.bot.wait_until_ready()
 
         role_menus = db_session.query(RoleMenu).all()
@@ -51,25 +55,24 @@ class RoleMenuCog(commands.Cog):
             await msg.edit(view=self.recreate_view(menu.id, guild, msg))
 
     def recreate_view(self, mid, guild, msg):
+        """Create buttons from DB entries for menu"""
         view = View()
         for entry in db_session.query(RoleEntry).filter(RoleEntry.menu_id == mid).all():
-            print(entry)
-            print(em := discord.PartialEmoji.from_str(entry.emoji))
             view.add_item(RoleButton(self, guild.get_role(entry.role), em))
         self.view_records[msg.id] = view
         return view
         
 
-    @commands.hybrid_group()
+    @commands.hybrid_group(help="Manage role menus, exec only")
     @commands.check(is_compsoc_exec_in_guild)
     async def roles(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
 
-    @roles.command()
+    @roles.command(brief="Create an empty role menu", help="Create an empty role menu. msg_ref must be unique.")
     async def create(self, ctx: Context, msg_ref: str, title: str, channel: discord.TextChannel, description: str = None):
         msg = None
-        try:
+        try:    # Create fields and add to DB
             text = f"**{title}**"
             if description:
                 text += f"\n{description}\n"
@@ -82,14 +85,13 @@ class RoleMenuCog(commands.Cog):
         except IntegrityError:
             db_session.rollback()
             await ctx.send(f"A Role Menu with reference `{msg_ref}` already exists in this server.")
-
         except SQLAlchemyError as e:
             print(e)
             db_session.rollback()
             await ctx.send("Database error creating menu")
             raise
     
-    @roles.command()
+    @roles.command(brief="Add a role to a role menu", help="Add a role to a particular role menu")
     async def add(self, ctx, msg_ref, role: discord.Role, *, description=None, emoji: str=None):
         message, menu = await self.get_message(ctx, msg_ref)
         if message is None: return await ctx.send("Message no longer exists")
@@ -113,7 +115,7 @@ class RoleMenuCog(commands.Cog):
         self.view_records[message.id] = view
         await ctx.send(f"Button for role {role.name} added to `{msg_ref}`")
 
-    @roles.command()
+    @roles.command(brief="Add blank text to a menu", help="Add blank text to the end of a menu's body. Use !set_msg to customize message further.")
     async def add_text(self, ctx, msg_ref, *, text):
         message, menu = await self.get_message(ctx, msg_ref)
         if message is None: return await ctx.send("Message no longer exists")
@@ -123,7 +125,7 @@ class RoleMenuCog(commands.Cog):
         await message.edit(content=new_content)
         await ctx.send(f"Text added to `{msg_ref}`")
 
-    @roles.command()
+    @roles.command(brief="Rewrite the menu's message", help="Rewrite the menu's message. Use the slash command or reply for nice editor, or reply to a message with the content in already")
     async def set_msg(self, ctx, msg_ref, *, content=None):
         message, menu = await self.get_message(ctx, msg_ref)
         if message is None: return await ctx.send("Message no longer exists")
@@ -134,7 +136,7 @@ class RoleMenuCog(commands.Cog):
         await message.edit(content=content)
         await ctx.send(f"Set menu `{msg_ref}` text to:\n```{content}```\n**Old Content:**\n```{old_content}```")
 
-    @roles.command()
+    @roles.command(brief="Remove a single role from a menu", help="Remove a single role from a particular menu")
     async def remove(self, ctx, msg_ref, role: discord.Role):
         msg, menu = await self.get_message(ctx, msg_ref)
         if msg is None: return await ctx.send("Message no longer exists")
@@ -154,13 +156,14 @@ class RoleMenuCog(commands.Cog):
             return await ctx.send("Database error deleting role entry")
 
         guild = self.bot.get_guild(menu.guild_id)
-        
+        # Recreate view, as buttons change (and View.from_message doesn't keep hooks)
         view = self.recreate_view(menu.id, guild, msg)
         await msg.edit(view=view)
 
         await ctx.send(f"Deleted role {role} from menu `{msg_ref}`. Next, you should manually edit the message to remove the role, since this is dangerous to automate.")
 
-    @roles.command()
+    @roles.command(brief="Delets a full role menu", help="Deletes a full role menu. Will prompt you to re-run, just for a little security")
+    @rerun_to_confirm(key_name="msg_ref", confirm_msg="Warning, this will delete this role menu. Re-run to confirm.")
     async def delete(self, ctx, msg_ref):
         message, menu = await self.get_message(ctx, msg_ref)
         if message is not None:
