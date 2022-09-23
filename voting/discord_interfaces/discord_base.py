@@ -91,7 +91,13 @@ class DiscordBase:
         view = View()
         msg_title = self.get_title(dvm.discord_vote.vote.title, dvm.part)
         s, e = dvm.choices_start_index, dvm.choices_start_index + dvm.numb_choices
-        msg_choices = db_session.query(DiscordVoteChoice).filter(DiscordVoteChoice.vote_id == vid).filter(s <= DiscordVoteChoice.choice_index).filter(DiscordVoteChoice.choice_index < e).all()
+        msg_choices = (
+            db_session.query(DiscordVoteChoice)
+            .filter(DiscordVoteChoice.vote_id == vid)
+            .filter(s <= DiscordVoteChoice.choice_index)
+            .filter(DiscordVoteChoice.choice_index < e)
+            .all()
+        )
         for dvc in msg_choices:
             view.add_item(self.BtnClass(self, dvc, msg_title))
         return view

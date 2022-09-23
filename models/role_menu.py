@@ -1,19 +1,10 @@
-from sqlalchemy import (
-    BigInteger,
-    Column,
-    ForeignKey,
-    Integer,
-    String,
-    UniqueConstraint
-)
+from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
-__all__ = [
-    "RoleMenu",
-    "RoleEntry"
-]
+__all__ = ["RoleMenu", "RoleEntry"]
+
 
 @auto_str
 class RoleMenu(Base):
@@ -25,8 +16,10 @@ class RoleMenu(Base):
     channel_id = Column(BigInteger, nullable=False)
     message_id = Column(BigInteger)
 
-    choices = relationship("RoleEntry", back_populates="menu", cascade="all, delete-orphan")
-    
+    choices = relationship(
+        "RoleEntry", back_populates="menu", cascade="all, delete-orphan"
+    )
+
 
 @auto_str
 class RoleEntry(Base):

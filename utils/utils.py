@@ -313,8 +313,8 @@ def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
     Records the first run of the command, only actuall runs command on confirmatory second run
     """
     first_run_times = {}
-    def decorator_actual(func):
 
+    def decorator_actual(func):
         @functools.wraps(func)
         async def decorator(*args, **kwargs):
             ctx: Context = next(a for a in args if isinstance(a, Context))
@@ -328,7 +328,9 @@ def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
                 # If previous run is more than 5 mins ago (timeout after 5)
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
-            
+
             await func(*args, **kwargs)
+
         return decorator
+
     return decorator_actual

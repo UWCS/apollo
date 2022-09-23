@@ -5,10 +5,10 @@ from discord.ext.commands import Bot, CommandInvokeError, Context, clean_content
 from discord.ext.commands.errors import CommandError
 from sqlalchemy.exc import SQLAlchemyError
 
-from voting.discord_interfaces.discord_base import DiscordBase
-from voting.splitutils import split_args
 from models import db_session
 from models.votes import DiscordVoteMessage
+from voting.discord_interfaces.discord_base import DiscordBase
+from voting.splitutils import split_args
 
 LONG_HELP_TEXT = """
 Allows running of various types of votes: FPTP, STV, etc. (WIP)
@@ -51,9 +51,12 @@ class Vote(commands.Cog):
         for dvm in vote_msgs:
             channel = self.bot.get_channel(dvm.channel_id)
             msg = await channel.fetch_message(dvm.message_id)
-            if msg is None: continue
+            if msg is None:
+                continue
 
-            await msg.edit(view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm))
+            await msg.edit(
+                view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
+            )
 
     async def cog_command_error(self, ctx: Context, error):
         if isinstance(error, CommandInvokeError):
