@@ -45,10 +45,8 @@ class RoleMenuCog(commands.Cog):
         for menu in role_menus:
             guild = self.bot.get_guild(menu.guild_id)
             
-            try:
-                msg = await self.get_message_from_ids(menu.guild_id, menu.channel_id, menu.message_id)
-            except discord.errors.NotFound:
-                continue
+            msg = await self.get_message_from_ids(menu.guild_id, menu.channel_id, menu.message_id)
+            if msg is None: continue
 
             await msg.edit(view=self.recreate_view(menu.id, guild, msg))
 
@@ -94,6 +92,7 @@ class RoleMenuCog(commands.Cog):
     @roles.command()
     async def add(self, ctx, msg_ref, role: discord.Role, *, description=None, emoji: str=None):
         message, menu = await self.get_message(ctx, msg_ref)
+        if message is None: return await ctx.send("Message no longer exists")
 
         prompt_start = f"{emoji} for " if emoji else ""
         new_content = f"{message.content}\n_ _\n{prompt_start}**{role.name}** {description or ''}"
@@ -117,6 +116,7 @@ class RoleMenuCog(commands.Cog):
     @roles.command()
     async def add_text(self, ctx, msg_ref, *, text):
         message, menu = await self.get_message(ctx, msg_ref)
+        if message is None: return await ctx.send("Message no longer exists")
 
         text = text.replace("\\n", "\n")
         new_content = f"{message.content}{text}"
@@ -126,6 +126,7 @@ class RoleMenuCog(commands.Cog):
     @roles.command()
     async def set_msg(self, ctx, msg_ref, *, content=None):
         message, menu = await self.get_message(ctx, msg_ref)
+        if message is None: return await ctx.send("Message no longer exists")
         old_content = message.content
 
         _, content = await get_long_msg(ctx, content, message.content)
@@ -136,6 +137,7 @@ class RoleMenuCog(commands.Cog):
     @roles.command()
     async def remove(self, ctx, msg_ref, role: discord.Role):
         msg, menu = await self.get_message(ctx, msg_ref)
+        if msg is None: return await ctx.send("Message no longer exists")
 
         entry = (db_session.query(RoleEntry)
                 .filter(RoleEntry.menu_id == menu.id)
@@ -161,11 +163,11 @@ class RoleMenuCog(commands.Cog):
     @roles.command()
     async def delete(self, ctx, msg_ref):
         message, menu = await self.get_message(ctx, msg_ref)
-
-        try:
-            await message.delete()
-        except discord.errors.NotFound:
-            pass
+        if message is not None:
+            try:
+                await message.delete()
+            except discord.errors.NotFound:
+                pass
         try:
             db_session.delete(menu)
             db_session.commit()
@@ -195,6 +197,7 @@ class RoleMenuCog(commands.Cog):
             .filter(RoleMenu.guild_id == guild_id)
             .one_or_none())
 
+
     async def get_message(self, ctx, msg_ref):
         # Fetch data
         guild: discord.Guild = ctx.guild
@@ -202,15 +205,21 @@ class RoleMenuCog(commands.Cog):
         if not menu: raise Exception(f"No message exists with reference `{msg_ref}`.")
 
         # Edit embed to include new option
-        channel = guild.get_channel(menu.channel_id)
-        msg = await channel.fetch_message(menu.message_id)
+        try:
+            channel = guild.get_channel(menu.channel_id)
+            msg = await channel.fetch_message(menu.message_id)
+        except discord.errors.NotFound as e:
+            return None, menu
         return msg, menu
 
     async def get_message_from_ids(self, gid, cid, mid):
         # Edit embed to include new option
-        guild = self.bot.get_guild(gid)
-        channel = guild.get_channel(cid)
-        msg = await channel.fetch_message(mid)
+        try:
+            guild = self.bot.get_guild(gid)
+            channel = guild.get_channel(cid)
+            msg = await channel.fetch_message(mid)
+        except discord.errors.NotFound as e:
+            return None
         return msg
 
 
