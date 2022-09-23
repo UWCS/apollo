@@ -1,5 +1,6 @@
-from sqlalchemy import BigInteger, Column, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import BigInteger, Boolean, Integer, String
 
 from models.models import Base, auto_str
 
@@ -15,6 +16,7 @@ class RoleMenu(Base):
     title = Column(String, nullable=False, server_default="Vote")
     channel_id = Column(BigInteger, nullable=False)
     message_id = Column(BigInteger)
+    unique_roles = Column(Boolean, default=False)
 
     choices = relationship(
         "RoleEntry", back_populates="menu", cascade="all, delete-orphan"

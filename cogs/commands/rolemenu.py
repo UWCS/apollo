@@ -13,18 +13,21 @@ from utils.announce_utils import get_long_msg
 
 # Records last ephemeral message to each user, so can edit for future votes
 class RoleButton(Button):
-    def __init__(self, interface, role: discord.Role, emoji: str):
-        super().__init__(label=role.name)
+    def __init__(self, interface, role: discord.Role, emoji: str, exclusive_roles=None):
+        super().__init__(label=role.name, emoji=emoji)
         self.role = role
         self.interface = interface
+        self.exclusive_roles = exclusive_roles if exclusive_roles is not None else set()
 
     async def callback(self, interaction: discord.Interaction):
         """Toggles user's role"""
         user = interaction.user
         if self.role not in user.roles:
+            to_remove = [r for r in user.roles if r in self.exclusive_roles]
+            await user.remove_roles(*to_remove)
             await user.add_roles(self.role, reason="Button Role")
             await interaction.response.send_message(
-                f"Added role {self.role.mention}",
+                f"{'Switched to ' if to_remove else 'Added'} role {self.role.mention}",
                 allowed_mentions=AllowedMentions.none(),
                 ephemeral=True,
             )
@@ -40,7 +43,6 @@ class RoleButton(Button):
 class RoleMenuCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.view_records = {}
         self.delete_confirm = {}
 
     @commands.Cog.listener()
@@ -58,14 +60,16 @@ class RoleMenuCog(commands.Cog):
             if msg is None:
                 continue
 
-            await msg.edit(view=self.recreate_view(menu.id, guild, msg))
+            await msg.edit(view=self.recreate_view(menu, guild, msg))
 
-    def recreate_view(self, mid, guild, msg):
+    def recreate_view(self, menu, guild, msg):
         """Create buttons from DB entries for menu"""
         view = View()
-        for entry in db_session.query(RoleEntry).filter(RoleEntry.menu_id == mid).all():
-            view.add_item(RoleButton(self, guild.get_role(entry.role), em))
-        self.view_records[msg.id] = view
+        entries = db_session.query(RoleEntry).filter(RoleEntry.menu_id == menu.id).all()
+        roles = [guild.get_role(e.role) for e in entries] if menu.unique_roles else None
+
+        for entry in entries:
+            view.add_item(RoleButton(self, guild.get_role(entry.role), "💩", roles))
         return view
 
     @commands.hybrid_group(help="Manage role menus, exec only")
@@ -85,6 +89,7 @@ class RoleMenuCog(commands.Cog):
         title: str,
         channel: discord.TextChannel,
         description: str = None,
+        unique_roles: bool = False,
     ):
         msg = None
         try:  # Create fields and add to DB
@@ -98,6 +103,7 @@ class RoleMenuCog(commands.Cog):
                 title=title,
                 channel_id=channel.id,
                 message_id=msg.id,
+                unique_roles=unique_roles,
             )
             db_session.add(menu)
             db_session.commit()
@@ -128,9 +134,6 @@ class RoleMenuCog(commands.Cog):
         new_content = (
             f"{message.content}\n_ _\n{prompt_start}**{role.name}** {description or ''}"
         )
-        view = self.view_records.get(message.id, View())
-        view.add_item(RoleButton(self, role, emoji))
-
         try:
             entry = RoleEntry(
                 menu_id=menu.id,
@@ -141,14 +144,20 @@ class RoleMenuCog(commands.Cog):
             )
             db_session.add(entry)
             db_session.commit()
+        except IntegrityError:
+            db_session.rollback()
+            await ctx.send(
+                f"A role entry for {role.mention} already exists for menu `{msg_ref}`"
+            )
+            return
         except SQLAlchemyError as e:
             print(e)
             db_session.rollback()
             await ctx.send("Database error creating menu")
             raise
 
+        view = self.recreate_view(menu, ctx.guild, message)
         await message.edit(content=new_content, view=view)
-        self.view_records[message.id] = view
         await ctx.send(f"Button for role {role.name} added to `{msg_ref}`")
 
     @roles.command(
@@ -211,7 +220,7 @@ class RoleMenuCog(commands.Cog):
 
         guild = self.bot.get_guild(menu.guild_id)
         # Recreate view, as buttons change (and View.from_message doesn't keep hooks)
-        view = self.recreate_view(menu.id, guild, msg)
+        view = self.recreate_view(menu, guild, msg)
         await msg.edit(view=view)
 
         await ctx.send(
