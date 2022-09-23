@@ -103,7 +103,7 @@ class RoleMenuCog(commands.Cog):
                 title=title,
                 channel_id=channel.id,
                 message_id=msg.id,
-                unique_roles=unique_roles
+                unique_roles=unique_roles,
             )
             db_session.add(menu)
             db_session.commit()
@@ -146,18 +146,19 @@ class RoleMenuCog(commands.Cog):
             db_session.commit()
         except IntegrityError:
             db_session.rollback()
-            await ctx.send(f"A role entry for {role.mention} already exists for menu `{msg_ref}`")
+            await ctx.send(
+                f"A role entry for {role.mention} already exists for menu `{msg_ref}`"
+            )
             return
         except SQLAlchemyError as e:
             print(e)
             db_session.rollback()
             await ctx.send("Database error creating menu")
             raise
-        
+
         view = self.recreate_view(menu, ctx.guild, message)
         await message.edit(content=new_content, view=view)
         await ctx.send(f"Button for role {role.name} added to `{msg_ref}`")
-
 
     @roles.command(
         brief="Add blank text to a menu",

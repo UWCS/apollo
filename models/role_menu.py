@@ -1,6 +1,6 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.types import Boolean, Integer, BigInteger, String
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import BigInteger, Boolean, Integer, String
 
 from models.models import Base, auto_str
 
