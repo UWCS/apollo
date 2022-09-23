@@ -69,7 +69,11 @@ class RoleMenuCog(commands.Cog):
         roles = [guild.get_role(e.role) for e in entries] if menu.unique_roles else None
 
         for entry in entries:
-            view.add_item(RoleButton(self, guild.get_role(entry.role), "💩", roles))
+            if entry.emoji == "None":
+                entry.emoji = None
+            view.add_item(
+                RoleButton(self, guild.get_role(entry.role), entry.emoji, roles)
+            )
         return view
 
     @commands.hybrid_group(help="Manage role menus, exec only")
