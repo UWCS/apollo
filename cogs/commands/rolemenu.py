@@ -49,7 +49,9 @@ class RoleMenuCog(commands.Cog):
     async def on_ready(self):
         """When the bot starts, recreate all menus' buttons, so interactions will be picked up"""
         await self.bot.wait_until_ready()
+        await self.refresh_menus()
 
+    async def refresh_menus(self):
         role_menus = db_session.query(RoleMenu).all()
         for menu in role_menus:
             guild = self.bot.get_guild(menu.guild_id)
@@ -64,16 +66,16 @@ class RoleMenuCog(commands.Cog):
 
     def recreate_view(self, menu, guild, msg):
         """Create buttons from DB entries for menu"""
-        view = View()
+        view = View(timeout=None)
         entries = db_session.query(RoleEntry).filter(RoleEntry.menu_id == menu.id).all()
         roles = [guild.get_role(e.role) for e in entries] if menu.unique_roles else None
 
         for entry in entries:
             if entry.emoji == "None":
                 entry.emoji = None
-            view.add_item(
-                RoleButton(self, guild.get_role(entry.role), entry.emoji, roles)
-            )
+            if entry.emoji == "None":
+                entry.emoji = None
+            view.add_item(RoleButton(self, guild.get_role(entry.role), entry.emoji, roles))
         return view
 
     @commands.hybrid_group(help="Manage role menus, exec only")
@@ -81,6 +83,10 @@ class RoleMenuCog(commands.Cog):
     async def roles(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
+
+    @roles.command()
+    async def refresh(self, ctx):
+        await self.refresh_menus()
 
     @roles.command(
         brief="Create an empty role menu",

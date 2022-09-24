@@ -229,7 +229,7 @@ class ContentModal(ui.Modal, title="Content"):
 
     async def on_submit(self, interaction: discord.Interaction):
         self.result = self.content.value
-        self.new_ctx = Context.from_interaction(interaction)
+        self.new_ctx = await Context.from_interaction(interaction)
         self.done.set()
         await interaction.response.send_message("Message Edited", ephemeral=True)
 
