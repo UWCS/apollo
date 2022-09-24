@@ -1,15 +1,15 @@
-from datetime import datetime
+import datetime
 import io
+from datetime import datetime
 
-import requests
 import discord
+import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
-from icalendar import Calendar, Event
-from models.event_sync import EventLink
+from icalendar import Calendar
+
 from models import db_session
-import datetime
-from sqlalchemy.dialects.postgresql import insert
+from models.event_sync import EventLink
 from utils.utils import wait_react
 
 LONG_HELP_TEXT = """
@@ -18,6 +18,7 @@ Sync events to our website uwcs.co.uk/events."""
 SHORT_HELP_TEXT = """Sync events"""
 
 ICAL_URL = "https://uwcs.co.uk/signups/feed.ics"
+
 
 class Sync(commands.Cog):
     def __init__(self, bot: Bot):
@@ -38,15 +39,14 @@ class Sync(commands.Cog):
         # Add events
         for ev in cal.walk():
             if ev.name != "VEVENT":
-                    continue
+                continue
             await self.update_event(ctx, ev, links, dc_events)
-            
 
     async def update_event(self, ctx, ev, links, dc_events):
         """Check discord events for match, update if existing, otherwise create it"""
         event_args = self.ical_event_to_dc_args(ev)
 
-        # Check for existing 
+        # Check for existing
         uid = ev.get("uid")
         link = links.get(uid)
 
@@ -54,25 +54,28 @@ class Sync(commands.Cog):
         event = None
         if link:
             event = dc_events.get(link.discord_event)
-        
+
         # If doesn't exist create a new event
         if not event:
             # Create new event
             event = await ctx.guild.create_scheduled_event(**event_args)
-            await ctx.send(f"Created event **{ev.get('summary')}** at event {event.url}")
+            await ctx.send(
+                f"Created event **{ev.get('summary')}** at event {event.url}"
+            )
         else:
             # Don't edit if no change
             if self.check_event_equiv(event_args, event):
                 # Updat existing event
                 await event.edit(**event_args)
-                await ctx.send(f"Updated event **{ev.get('summary')}** at event {event.url}")
+                await ctx.send(
+                    f"Updated event **{ev.get('summary')}** at event {event.url}"
+                )
             else:
                 # Don't change event
                 await ctx.send(f"No change for event **{ev.get('summary')}**")
 
         self.update_db_link(uid, event.id, link)
 
-    
     @staticmethod
     def ical_event_to_dc_args(ev):
         """Construct args for discord event from the ical event"""
@@ -89,10 +92,17 @@ class Sync(commands.Cog):
     @staticmethod
     def check_event_equiv(event_args, event):
         """
-        Checks if there has been a change to the event. 
+        Checks if there has been a change to the event.
         Slight faff since we don't want to compare all fields of the discord event or the ical event
         """
-        old_args = {"name": event.name, "description": event.description, "start_time": event.start_time, "end_time": event.end_time, "entity_type": event.entity_type, "location": event.location}
+        old_args = {
+            "name": event.name,
+            "description": event.description,
+            "start_time": event.start_time,
+            "end_time": event.end_time,
+            "entity_type": event.entity_type,
+            "location": event.location,
+        }
         return event_args != old_args
 
     @staticmethod
@@ -105,8 +115,9 @@ class Sync(commands.Cog):
         else:
             link.discord_event = event_id
         link.last_modified = now
-            
+
         db_session.commit()
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Sync(bot))

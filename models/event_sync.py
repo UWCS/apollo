@@ -1,9 +1,4 @@
-from sqlalchemy import (
-    BigInteger,
-    DateTime,
-    Column,
-    String,
-)
+from sqlalchemy import BigInteger, Column, DateTime, String
 
 from models.models import Base, auto_str
 
