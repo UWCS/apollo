@@ -10,3 +10,5 @@ from models.reminder import *
 from models.role_menu import *
 from models.user import *
 from models.votes import *
+from models.event_sync import *
+
