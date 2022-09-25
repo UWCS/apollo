@@ -10,14 +10,12 @@ import discord
 from discord.ext.commands import CommandError, Context
 from more_itertools import partition
 
-import models
 from config import CONFIG
 from models import db_session
 from models.user import User
 from utils.typing import Identifiable
 
 __all__ = [
-    "AdminError",
     "EnumGet",
     "clean_brackets",
     "filter_out_none",
@@ -35,14 +33,6 @@ __all__ = [
     "replace_external_emoji",
     "rerun_to_confirm",
 ]
-
-
-class AdminError(CommandError):
-    message = None
-
-    def __init__(self, message=None, *args):
-        self.message = message
-        super().__init__(*args)
 
 
 class EnumGet:
