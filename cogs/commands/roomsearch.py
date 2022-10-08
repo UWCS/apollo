@@ -96,10 +96,10 @@ class RoomSearch(commands.Cog):
             )
 
         # Timetable
-        if (tt_room_id := self.timetable_room_mapping.get(room.get("value"))):
+        if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
             self.get_week()
             if self.year:
-                this_year = self.year.replace('/', '')
+                this_year = self.year.replace("/", "")
                 if self.week < 52:
                     next_week_year = this_year
                     next_week = self.week + 1
