@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
@@ -98,12 +98,21 @@ class RoomSearch(commands.Cog):
         # Timetable
         if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
             self.get_week()
-            embed.add_field(
-                name="Timetable:",
-                value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)})**\n"
-                f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{self.year.replace('/', '')}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week+1})\n",
-                inline=True,
-            )
+            if self.year:
+                this_year = self.year.replace("/", "")
+                if self.week < 52:
+                    next_week_year = this_year
+                    next_week = self.week + 1
+                else:
+                    year_int = int(this_year[:2])
+                    next_week_year = f"{year_int+1}{year_int+2}"
+                    next_week = 1
+                embed.add_field(
+                    name="Timetable:",
+                    value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS{this_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week})**\n"
+                    f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{next_week_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={next_week})\n",
+                    inline=True,
+                )
 
         # embed.set_image(url=f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}")
         # Slows command down quite a lot, but Discord can't take images without extensions
@@ -200,16 +209,16 @@ class RoomSearch(commands.Cog):
         today = datetime.combine(date.today(), time.min)
 
         if self.last_week_check is None or self.last_week_check < today:
-            current = datetime.now()
-            self.last_week_check = current
+            self.last_week_check = datetime.now()
             weeks_json = req_or_none(
                 "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
             ).get("weeks")
 
             for week in weeks_json:
-                start = datetime.strptime(week.get("start"), "%Y-%m-%d")
-                end = datetime.strptime(week.get("end"), "%Y-%m-%d")
-                if start < current < end:
+                start = datetime.strptime(week.get("start"), "%Y-%m-%d").date()
+                end = datetime.strptime(week.get("end"), "%Y-%m-%d").date()
+                current = (datetime.now() + timedelta(days=3)).date()
+                if start < current <= end:
                     self.year = week.get("academicYear")
                     self.week = week.get("weekNumber")
                     return self.year, self.week

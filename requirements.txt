@@ -24,3 +24,4 @@ humanize~=3.5.0
 more_itertools~=8.8.0
 Pillow~=9.0.1
 discord_simple_pretty_help==0.0.1
+icalendar~=4.1.0
