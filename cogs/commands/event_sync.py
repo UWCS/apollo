@@ -1,6 +1,5 @@
 import datetime
 import io
-from datetime import datetime
 
 import discord
 import requests
@@ -10,7 +9,7 @@ from icalendar import Calendar
 
 from models import db_session
 from models.event_sync import EventLink
-from utils.utils import wait_react
+from utils.utils import is_compsoc_exec_in_guild, parse_time, wait_react
 
 LONG_HELP_TEXT = """
 Sync events to our website uwcs.co.uk/events."""
@@ -25,8 +24,11 @@ class Sync(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.check(is_compsoc_exec_in_guild)
     @wait_react
-    async def event(self, ctx: Context):
+    async def event(self, ctx: Context, before: str = None, after: str = None):
+        before = None if before is None else parse_time(before)
+        after = None if after is None else parse_time(after)
         # Fetch and parse ical from website
         r = requests.get(ICAL_URL)
         c = io.BytesIO(r.content)
@@ -39,6 +41,12 @@ class Sync(commands.Cog):
         # Add events
         for ev in cal.walk():
             if ev.name != "VEVENT":
+                continue
+            t = ev.decoded("dtstart").replace(tzinfo=None)
+            print(ev.get("summary"), t, before, after)
+            if before is not None and t < before:
+                continue
+            if after is not None and t > after:
                 continue
             await self.update_event(ctx, ev, links, dc_events)
 
