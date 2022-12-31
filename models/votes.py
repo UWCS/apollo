@@ -16,16 +16,6 @@ from sqlalchemy.orm import relationship
 from models import User
 from models.models import Base, auto_str
 
-__all__ = [
-    "VoteType",
-    "Vote",
-    "UserVote",
-    "VoteChoice",
-    "DiscordVoteChoice",
-    "DiscordVoteMessage",
-    "DiscordVote",
-]
-
 
 class VoteType(enum.Enum):
     basic = 0

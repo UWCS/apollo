@@ -6,8 +6,6 @@ from discord.ext.commands.converter import MemberConverter
 
 import utils
 
-__all__ = ["MentionType", "Mention", "MentionConverter"]
-
 
 class MentionType(Enum):
     ID = 0

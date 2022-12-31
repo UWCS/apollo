@@ -2,8 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, String
 
 from models.models import Base, auto_str
 
-__all__ = ["EventLink"]
-
 
 @auto_str
 class EventLink(Base):

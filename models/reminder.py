@@ -12,8 +12,6 @@ from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
-__all__ = ["Reminder"]
-
 
 @auto_str
 class Reminder(Base):
