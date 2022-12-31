@@ -5,15 +5,6 @@ from typing import List
 import _csv
 
 
-def chunk(list: List, chunk_size=20) -> List[List]:
-    chunk_size = max(1, chunk_size)
-    return [list[i : i + chunk_size] for i in range(0, len(list), chunk_size)]
-
-
-def split_into_embeds(lines):
-    pass
-
-
 # Customized sniffer with custom delimiter order
 class ArgSniffer(Sniffer):
     def __init__(self, preferred):

@@ -103,7 +103,7 @@ class DiscordVoteMessage(Base):
     discord_vote = relationship("DiscordVote", back_populates="messages")
 
 
-# TODO Add unique constraints
+# TODO Add unique constraints, remove emoji
 @auto_str
 class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
@@ -122,6 +122,7 @@ class DiscordVoteChoice(Base):
 
 
 # Currently pretty useless
+# TODO Limit to role
 @auto_str
 class DiscordVote(Base):
     __tablename__ = "discord_vote"

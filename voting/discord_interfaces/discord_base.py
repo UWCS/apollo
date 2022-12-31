@@ -16,20 +16,26 @@ Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str]
 
 # Records last ephemeral message to each user, so can edit for future votes
 class VoteButton(Button):
+    """Interactive button to add vote for an option"""
     def __init__(self, interface, dvc: DiscordVoteChoice, msg_title):
-        super().__init__(label=dvc.choice.choice)  # , emoji=dvc.emoji)
+        super().__init__(label=dvc.choice.choice)
         self.dvc = dvc
         self.vote = dvc.choice.vote
+        # Discord interactions require an action to successfully complete them ...
+        # editing the message to read the exact same as before placates this (need title for this)
         self.msg_title = msg_title
         self.interface = interface
 
     async def callback(self, interaction: discord.Interaction):
+        # Get DB user TODO replace with utils
         db_user = (
             db_session.query(User)
             .filter(User.user_uid == interaction.user.id)
             .one_or_none()
         )
+        # Call record vote for the vote type
         msg = self.interface.vote_type.vote_for(self.vote, db_user, self.dvc.choice)
+        # Send feedback to user
         user_votes = self.interface.vote_type.get_votes_for_user(self.vote, db_user)
         await self.interface.send_choice_feedback(
             interaction, (db_user.id, self.vote.id), msg, self.msg_title, user_votes
@@ -37,6 +43,7 @@ class VoteButton(Button):
 
 
 class CloseButton(Button):
+    """Button to close poll if owner"""
     def __init__(self, interface, vote):
         super().__init__(label="End", emoji="✖️", style=ButtonStyle.danger)
         self.interface = interface
@@ -55,6 +62,7 @@ class CloseButton(Button):
 
 
 class MyVotesButton(Button):
+    """Button to create new ephemeral message to display user votes in"""
     def __init__(self, interface, vote, msg_title):
         super().__init__(label="My Votes", emoji="🗳️", style=ButtonStyle.green)
         self.vote = vote
@@ -83,11 +91,14 @@ class DiscordBase:
         self.bot = bot
         self.vote_type = vote_type
         self.BtnClass = btn_class
+        # Records the ephemeral message per user that shows their votes
+        # ... due to a discord limitation, cannot fetch 
         self.users_last_vote_update_message: Dict[
             Tuple[int, int], InteractionMessage
         ] = {}
 
     def recreate_view(self, vid, msg, dvm):
+        """Recreates the buttons on a poll on startup. Refreshes the interactions"""
         view = View()
         msg_title = self.get_title(dvm.discord_vote.vote.title, dvm.part)
         s, e = dvm.choices_start_index, dvm.choices_start_index + dvm.numb_choices
@@ -150,6 +161,7 @@ class DiscordBase:
 
                     view.add_item(self.BtnClass(self, new_dc_choice, msg_title))
 
+                # Add close and votes button to first message
                 if start_ind == 0:
                     view.add_item(CloseButton(self, vote_obj))
                     view.add_item(MyVotesButton(self, vote_obj, msg_title))
@@ -232,6 +244,7 @@ class DiscordBase:
         user_votes,
         create_new_msg=False,
     ):
+        """Edits (or creates) the ephemeral message used to give feedback in channel"""
         ch = [vc.choice for vc in user_votes]
         embed = self.create_embed(ch, "Your Votes")
 
