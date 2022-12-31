@@ -17,6 +17,7 @@ Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str]
 # Records last ephemeral message to each user, so can edit for future votes
 class VoteButton(Button):
     """Interactive button to add vote for an option"""
+
     def __init__(self, interface, dvc: DiscordVoteChoice, msg_title):
         super().__init__(label=dvc.choice.choice)
         self.dvc = dvc
@@ -44,6 +45,7 @@ class VoteButton(Button):
 
 class CloseButton(Button):
     """Button to close poll if owner"""
+
     def __init__(self, interface, vote):
         super().__init__(label="End", emoji="✖️", style=ButtonStyle.danger)
         self.interface = interface
@@ -63,6 +65,7 @@ class CloseButton(Button):
 
 class MyVotesButton(Button):
     """Button to create new ephemeral message to display user votes in"""
+
     def __init__(self, interface, vote, msg_title):
         super().__init__(label="My Votes", emoji="🗳️", style=ButtonStyle.green)
         self.vote = vote
@@ -92,7 +95,7 @@ class DiscordBase:
         self.vote_type = vote_type
         self.BtnClass = btn_class
         # Records the ephemeral message per user that shows their votes
-        # ... due to a discord limitation, cannot fetch 
+        # ... due to a discord limitation, cannot fetch
         self.users_last_vote_update_message: Dict[
             Tuple[int, int], InteractionMessage
         ] = {}

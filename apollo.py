@@ -75,12 +75,13 @@ async def on_ready():
 
 
 async def main():
-    logging.basicConfig(level=logging.getLevelName(CONFIG.LOG_LEVEL),
+    logging.basicConfig(
+        level=logging.getLevelName(CONFIG.LOG_LEVEL),
         format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
-        handlers = [
+        handlers=[
             logging.FileHandler("apollo.log"),
             logging.StreamHandler(),
-        ]
+        ],
     )
 
     async with bot:
@@ -104,6 +105,7 @@ async def sync(ctx: Context) -> None:
     """
     synced = await ctx.bot.tree.sync()
     await ctx.send(f"Synced {len(synced)} commands globally to the current guild.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

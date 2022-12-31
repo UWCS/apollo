@@ -8,11 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
 from models import IgnoredChannel, MiniKarmaChannel, db_session
-from utils import (
-    EnumGet,
-    get_database_user,
-    is_compsoc_exec_in_guild
-)
+from utils import EnumGet, get_database_user, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.

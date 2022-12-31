@@ -15,6 +15,7 @@ from models import db_session
 from models.user import User
 from utils.typing import Identifiable
 
+
 class EnumGet:
     """Only use this if you're an enum inheriting it!"""
 

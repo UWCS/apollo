@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from config import CONFIG
 
-
 Base = declarative_base()
 
 engine = create_engine(CONFIG.DATABASE_CONNECTION)
