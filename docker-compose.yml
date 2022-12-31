@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  postgres:
+  apollo-db:
     image: postgres:12
     environment:
       POSTGRES_USER: apollo
