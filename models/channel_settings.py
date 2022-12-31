@@ -2,8 +2,6 @@ from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, func
 
 from models.models import Base, auto_str
 
-__all__ = ["IgnoredChannel", "MiniKarmaChannel"]
-
 
 @auto_str
 class IgnoredChannel(Base):

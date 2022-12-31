@@ -165,3 +165,6 @@ alembic.ini
 tmp/
 # Directory for testing actions locally
 /act
+
+*.log
+*.sqlite3

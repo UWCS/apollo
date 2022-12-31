@@ -4,8 +4,6 @@ from sqlalchemy.orm import relationship
 from models.models import Base, auto_str
 from utils.mentions import MentionType
 
-__all__ = ["Quote", "QuoteOptouts"]
-
 
 @auto_str
 class Quote(Base):

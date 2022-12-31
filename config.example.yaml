@@ -1,23 +1,48 @@
 config:
+# Essential
+  # Text command prefix
   prefix: !
-  UWCS_discord_bridge_bot_id: 1337
-  UWCS_member_role_id: 2674
-  UWCS_exec_role_ids: [ 9874698723 ]
-  UWCS_welcome_channel_id: 420
-  UWCS_roles_channel_id: 952926102333042688
-  UWCS_exec_spam_channel_id: 1234
-  database_connection: "postgresql://apollo:apollo@localhost/apollo"
-  UWCS_discord_id: 1337
-  UWCS_api_token: api_token
-  bot_secret_key: secret_key
-  karma_timeout: 900
+  # Server ID for main UWCS server
+  UWCS_discord_id: 123
+  # Roles IDs that permit exec commands
+  UWCS_exec_role_ids: [ 1234 ]
+  # Token for Discord API from https://discord.com/developers/applications
   discord_token: discord_token
-  sql_logging: on
-  bot_logging: on
-  debug: True     # Unused
-  reminder_search_interval: 30
+  # Database URL, can use other providers such as Postgres
+  database_connection: "sqlite:///apollo.sqlite3"
+  # Secret key used to encrypt DB
+  db_secret_key: secret_key
+
+# Optional (only needed for a specific function)
+  # Channel for welcome messages
+  UWCS_welcome_channel_id: 123
+  # Role channel mentioned in the welcome message
+  UWCS_roles_channel_id: 123
+  # Channel for the channel movement checker
+  UWCS_exec_spam_channel_id: 1234
+  # IRC bridge bot ID
+  UWCS_discord_bridge_bot_id: 1337
+
+# Configuration
+  # Level of messages logged to file
+  log_level: WARNING
+  # Whether to log SQL as well
+  log_sql: False
+  # How long do users have to wait to set karma again
+  karma_cooldown: 900
+  # Time (sec) between polling for reminders
+  reminder_search_interval: 10
+  # Time (sec) between polling for channel reordering
   channel_check_interval: 60
+  # Time (sec) between polling for announcements
   announcement_search_interval: 60
+  # Whether announcements should post via a Webhook to appear like the user
   announcement_impersonate: True
+
+# Unused
+  # (not actively used) Role to give to authenticated UWCS members
+  UWCS_member_role_id: 2674
+  # (not actively used) Key for UWCS API to auth UWCS members
+  UWCS_api_token: api_token
   slicer_path: /path/to/prusa-slicer
   printer_file_root: /path/to/print/files

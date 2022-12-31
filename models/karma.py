@@ -5,8 +5,6 @@ from sqlalchemy.orm import relationship
 
 from models.models import Base, auto_str
 
-__all__ = ["KarmaChange", "Karma", "BlockedKarma"]
-
 
 @auto_str
 class KarmaChange(Base):
@@ -14,9 +12,7 @@ class KarmaChange(Base):
 
     karma_id = Column(Integer, ForeignKey("karma.id"), primary_key=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
-    message_id = Column(
-        Integer, ForeignKey("messages.id"), primary_key=True, nullable=False
-    )
+    message_id = Column(Integer, primary_key=True, nullable=False)
     created_at = Column(DateTime, nullable=False)
     reason = Column(String(), nullable=True)
     change = Column(Integer, nullable=False)
@@ -24,7 +20,6 @@ class KarmaChange(Base):
 
     karma = relationship("Karma", back_populates="changes")
     user = relationship("User", back_populates="karma_changes")
-    message = relationship("LoggedMessage", back_populates="karma")
 
     @hybrid_property
     def local_time(self):

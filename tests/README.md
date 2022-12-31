@@ -1,0 +1,2 @@
+# Tests
+Unit testing with Discord.py is not easy: you would have to fully mock the context object to test fully. In future, a refactor to separate the Discord interface with functionality may be in order to ease testing. 

@@ -4,8 +4,6 @@ from sqlalchemy.types import BigInteger, Boolean, Integer, String
 
 from models.models import Base, auto_str
 
-__all__ = ["RoleMenu", "RoleEntry"]
-
 
 @auto_str
 class RoleMenu(Base):
