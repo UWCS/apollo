@@ -9,58 +9,50 @@ Apollo is based loosely on the development of [artemis](https://github.com/rhian
 
 #### Dependencies
 
-Two type of dependency files are included with this project.
-The first, `requirements.txt`, only includes top-level dependencies.
+Apollo uses `pipenv` for dependency and venv management. Install it with `pip install pipenv`, and then run `pipenv install` to install all the required dependencies into a new virtual environment.
 
-The second, `requirements-platform.lock`, contains a pinned list of all dependencies specific to a platform.
+#### Development Setup
 
-If installing the top-level dependencies does not work, try installing the pinned dependencies.
-
-#### Environment Setup
-
-1. Create a new virtual environment `python -m venv .venv`.
-2. Activate the virtual environment
-   - On Linux and macOS: `source .venv/bin/activate`.
-   - On Windows: `.\.venv\Scripts\activate`
-3. Check that the virtual environment has been activated.
-   - On Linux and macOS: `which python`  
-     Expected output: `.../.venv/bin/python`.
-   - On Windows: `where python` (**NB** on PowerShell use `where.exe` or `Get-Command` instead of `where`)  
-     Expected output: `...\.venv\Scripts\python.exe`.
-4. Install dependencies.  
-   Now that we've activated the environment, `pip` will install packages locally.
-   - Installing top-level dependencies via `pip install -r requirements.txt` should work.
-   - If it doesn't, you may need to install the pinned requirements via `pip install -r requirements.lock`
-5. Copy `config.example.yaml` to `config.yaml` and configure the fields.
-6. Copy `alembic.example.ini` to `alembic.ini`.
-7. Set up the database by running migrations with `alembic upgrade head`.
+1. `pipenv install`, as above
+2. Copy `config.example.yaml` to `config.yaml` and configure the fields.
+3. Copy `alembic.example.ini` to `alembic.ini`.
+4. Set up the database by running migrations with `alembic upgrade head`.
    - The default database location is `postgresql://apollo:apollo@localhost/apollo` (in both `config.example.yaml` and `alembic.example.ini`).
      This requires PostgreSQL to be installed, with a database called `apollo` and a user with name and password `apollo` with access to it.
-     For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///local.sqlite3`.
-8. On the [Discord developer portal](https://discord.com/developers/), make sure that your bot has the required intents.
+     For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///local.sqlite3`. Alternatively, see the instructions below for using Docker.
+5. On the [Discord developer portal](https://discord.com/developers/), make sure that your bot has the required intents.
    - Currently, only the Members intent is necessary.
 
-#### Running Apollo
+Run Apollo using `pipenv run python apollo.py`
 
-Run `apollo.py` - either with `python apollo.py` or just by executing the file.
+#### Using Docker
+
+A Dockerfile and docker-compose are provided for easily running Apollo. Assuming you already have docker installed, run `docker compose up` to start both Apollo and a postgres database. If `config.yaml` or `alembic.ini` are not present, the dockerfile will use the example config files, with some changes applied to connect to the containerised database. If you wish to provide your own `config.yaml` and use the containerised database, the URL is `postgresql://apollo:apollo@apollo-db/apollo`
+
+When you first create the database container, you'll need to apply migrations:
+
+1. Run `docker compose up` to start both services. The python one won't work, but leave it running.
+2. Run `docker compose exec apollo alembic upgrade head` to apply the database migrations.
+3. Run `docker compose restart apollo` to restart the bot with migrations applied.
+
+Migrations will need to be re-applied every time the database schema changes.
 
 ### Contributor Notes
 
-* When writing anything that needs to reply to a specific username, please do `from utils import get_name_string` and get the display string using this function, with the discord `Message` object as the argument (e.g. `display_name = get_name_string(ctx.message)`).
+- When writing anything that needs to reply to a specific username, please do `from utils import get_name_string` and get the display string using this function, with the discord `Message` object as the argument (e.g. `display_name = get_name_string(ctx.message)`).
   This will return either a discord username, formatted correctly, or an irc nickname depending on the source of the message.
   Finally, this can be used as normal in a format string e.g. `await ctx.send(f'Sorry {display_name}, that won't work.')`.
 
-* When writing a new command, please read in the rest of the message using `*args: clean_content` (see `cogs/commands/flip.py` as an example), and if you need it as one large string, use `" ".join(args)`.
+- When writing a new command, please read in the rest of the message using `*args: clean_content` (see `cogs/commands/flip.py` as an example), and if you need it as one large string, use `" ".join(args)`.
   This is instead of reading the whole message content, which will likely break the irc bridging (unless you know what you're doing).
 
-* This project uses the Black Python formatter.
+- This project uses the Black Python formatter.
   Before submitting your code for a PR, run `black .` on the root directory of this project to bring all of your up to spec for the code style guide.
-  
-* For testing CI locally, use [act-cli](https://github.com/nektos/act).
+- For testing CI locally, use [act-cli](https://github.com/nektos/act).
 
-* The current production database engine is PostgreSQL.
+- The current production database engine is PostgreSQL.
   You may wish to use another database engine such as MySQL or SQLite for local testing.
-  
+
 #### Testing subsections
 
 You may want to work on a subsection of the bot without the surrounding functionality. This may be useful if you want to add a basic command but don't want the hassle of installing and working around the database requirements. You can disable parts of the bot from being loaded in at runtime by disabling their cogs.
@@ -103,8 +95,7 @@ Make sure not to commit these comments when you pull request.
 
 This project is distributed under the MIT license.
 
-The MIT License (MIT)
-=====================
+# The MIT License (MIT)
 
 Copyright © 2022 Apollo Contributors
 
