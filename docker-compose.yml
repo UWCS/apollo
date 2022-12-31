@@ -16,5 +16,13 @@ services:
     build: .
     depends_on:
       - apollo-db
+    configs:
+      - source: bot-config
+        target: /app/config.yaml
+
+configs:
+  bot-config:
+    file: config.yaml
+
 volumes:
   postgres_data:

@@ -22,14 +22,10 @@ COPY --from=builder /app/.venv/ /app/.venv/
 # add venv to path
 ENV PATH=".venv/bin:$PATH"
 
-# copy in source and config (entire directory)
+# copy in everything
 COPY . /app
-RUN ls -al
-# if config.yaml not exist, use example
-# change localhost to apollo-db for db host
-RUN /bin/bash -c 'if [[ ! -f config.yaml ]]; then mv config.example.yaml config.yaml && sed -i "s@localhost@apollo-db@g" config.yaml ; fi'
 
-# same for alembic.ini
+# build default alembic config into container, we rarely want to change this
 RUN /bin/bash -c 'if [[ ! -f alembic.ini ]]; then mv alembic.example.ini alembic.ini; fi'
 
 CMD [ "python", "apollo.py" ] 
