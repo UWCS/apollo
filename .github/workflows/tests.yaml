@@ -47,16 +47,16 @@ jobs:
           cp alembic.example.ini alembic.ini
       - name: Check formatting with isort and black
         run: |
-          isort --check-only --skip __tests__ .
-          black --check --exclude __tests__ .
+          pipenv run isort --check-only --skip __tests__ .
+          pipenv run black --check --exclude __tests__ .
       - name: Test with pytest
         if: ${{ success() || failure() }}
         run: |
-          pytest -v
+          pipenv run pytest -v
       - name: Check upgrade migrations
         if: ${{ success() || failure() }}
         run: |
-          alembic upgrade head
+          pipenv run alembic upgrade head
       - name: Check downgrade migrations
         run: |
-          alembic downgrade base
+          pipenv run alembic downgrade base
