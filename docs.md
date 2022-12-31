@@ -2,6 +2,14 @@
 
 ## General Structure
 
+- `cogs/commands`: Where the main code for commands reside.
+- `config`: Config parser.
+- `migrations`: Handles database upgrades.
+- `models`: Database ORM classes to map between Python and SQL.
+- `tests`: Unit tests for some commands, still very WIP.
+- `utils`: Some general shared utility functions.
+- `karma`, `roll`, `printer`, `voting`: commands that have enough code to warrant a separate directory.
+
 ### cogs
 Cogs are how Discord.py organizes commands, each file is a separate cog with separate functionality. If you don't know about cogs already, ask on Discord or go [some d.py docs](https://discordpy.readthedocs.io/en/stable/ext/commands/cogs.html). If you want to temporarily disable a Cog, comment out its line in `apollo.py` while developing.
 
@@ -50,3 +58,10 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
 
 * The current production database engine is PostgreSQL.
   You may wish to use another database engine such as MySQL or SQLite for local testing.
+
+* To create a DB migration:
+  1. Create model in `/models`
+  2. Import in `/models/__init__.py`
+  3. Run `alembic revision --autogenerate -m "<change description>"`
+  4. Check the newly created upgrade and downgrade is correct
+  5. Upgrade your database with `alembic upgrade head`
