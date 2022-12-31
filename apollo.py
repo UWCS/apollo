@@ -20,12 +20,12 @@ Apollo is open source and available at: https://github.com/UWCS/apollo. Pull req
 
 # The command extensions to be loaded by the bot
 EXTENSIONS = [
-    "cogs.commands.admin",
     "cogs.commands.blacklist",
     "cogs.commands.counting",
     "cogs.commands.date",
     "cogs.commands.event_sync",
     "cogs.commands.flip",
+    "cogs.commands.karma_admin",
     "cogs.commands.karma",
     "cogs.commands.lcalc",
     "cogs.commands.misc",
@@ -69,14 +69,19 @@ async def reload_cogs(ctx: Context):
 
 @bot.event
 async def on_ready():
-    if CONFIG.BOT_LOGGING:
-        logging.info("Logged in as")
-        logging.info(str(bot.user))
-        logging.info("------")
+    logging.info("Logged in as")
+    logging.info(str(bot.user))
+    logging.info("------")
 
 
 async def main():
-    logging.basicConfig(filename="apollo.log", filemode='a', level=logging.INFO)
+    logging.basicConfig(level=logging.getLevelName(CONFIG.LOG_LEVEL),
+        format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
+        handlers = [
+            logging.FileHandler("apollo.log"),
+            logging.StreamHandler(),
+        ]
+    )
 
     async with bot:
         for extension in EXTENSIONS:
