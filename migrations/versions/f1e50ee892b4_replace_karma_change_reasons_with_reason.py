@@ -13,6 +13,8 @@ from alembic import op
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 
+from config.config import CONFIG
+
 # revision identifiers, used by Alembic.
 
 revision = "f1e50ee892b4"
@@ -22,9 +24,9 @@ depends_on = None
 
 Base = declarative_base()
 
-if os.environ.get("SECRET_KEY") is None:
-    raise EnvironmentError("Please define env var SECRET_KEY")
-secret_key = os.environ.get("SECRET_KEY")
+secret_key = CONFIG.BOT_SECRET_KEY
+if secret_key is None:
+    raise Exception("Set a secret key in config.yaml")
 
 
 # Models for finding foreign keys
