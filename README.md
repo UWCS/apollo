@@ -30,6 +30,7 @@ A Dockerfile and docker-compose are provided for easily running Apollo. Assuming
 When you first create the database container, you'll need to apply migrations:
 
 1. Run `docker compose up` to start both services. The python one won't work, but leave it running.
+   - When changing any source files, the container will have to be rebuilt: `docker compose up --build`
 2. Run `docker compose exec apollo alembic upgrade head` to apply the database migrations.
 3. Run `docker compose restart apollo` to restart the bot with migrations applied.
 
