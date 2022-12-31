@@ -28,8 +28,8 @@ discord-simple-pretty-help = "==0.0.1"
 icalendar = "~=4.1.0"
 
 [dev-packages]
-black = "*"
-isort = "*"
+black = "~=22.12"
+isort = "~=5.11"
 pytest = "~=6.2"
 pretend = "~=1.0"
 
