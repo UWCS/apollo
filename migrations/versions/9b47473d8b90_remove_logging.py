@@ -55,7 +55,9 @@ def downgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    
+
     # ### end Alembic commands ###
     with op.batch_alter_table("karma_changes") as batch_op:
-        batch_op.create_foreign_key("fk_karma_changes_messages", "messages", ["message_id"], ["id"])
+        batch_op.create_foreign_key(
+            "fk_karma_changes_messages", "messages", ["message_id"], ["id"]
+        )
