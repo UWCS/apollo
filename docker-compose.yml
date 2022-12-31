@@ -15,6 +15,6 @@ services:
   apollo:
     build: .
     depends_on:
-      - postgres
+      - apollo-db
 volumes:
   postgres_data:
