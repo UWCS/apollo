@@ -4,7 +4,6 @@ from sqlalchemy_utils import EncryptedType
 
 from config import CONFIG
 from models.karma import KarmaChange
-from models.messages import LoggedMessage
 from models.models import Base, auto_str
 
 
@@ -26,9 +25,6 @@ class User(Base):
         EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY), nullable=True
     )
 
-    messages = relationship(
-        "LoggedMessage", back_populates="user", order_by=LoggedMessage.created_at
-    )
     karma_changes = relationship(
         "KarmaChange", back_populates="user", order_by=KarmaChange.created_at
     )

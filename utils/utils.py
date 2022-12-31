@@ -10,20 +10,10 @@ import discord
 from discord.ext.commands import CommandError, Context
 from more_itertools import partition
 
-import models
 from config import CONFIG
 from models import db_session
 from models.user import User
 from utils.typing import Identifiable
-
-
-class AdminError(CommandError):
-    message = None
-
-    def __init__(self, message=None, *args):
-        self.message = message
-        super().__init__(*args)
-
 
 class EnumGet:
     """Only use this if you're an enum inheriting it!"""
