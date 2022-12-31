@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from sqlalchemy_utils import ScalarListException
 
-from cogs.commands.admin import MiniKarmaMode
+from cogs.commands.karma_admin import MiniKarmaMode
 from config import CONFIG
 from karma.parser import parse_message_content
 from karma.transaction import (

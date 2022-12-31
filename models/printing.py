@@ -2,8 +2,6 @@ from sqlalchemy import Column, Integer, String, Text
 
 from models.models import Base, auto_str
 
-__all__ = ["FilamentType"]
-
 
 @auto_str
 class FilamentType(Base):

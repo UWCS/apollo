@@ -1,22 +1,14 @@
 import logging
-from datetime import datetime
 from enum import Enum, unique
 
-from discord import Color, Embed, TextChannel
+from discord import TextChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
-from pytz import timezone, utc
 from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
-from models import IgnoredChannel, LoggedMessage, MiniKarmaChannel, User, db_session
-from utils import (
-    AdminError,
-    EnumGet,
-    get_database_user,
-    is_compsoc_exec_in_guild,
-    pluralise,
-)
+from models import IgnoredChannel, MiniKarmaChannel, db_session
+from utils import EnumGet, get_database_user, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 A set of administrative utility commands to make life easier.
@@ -205,82 +197,6 @@ class Admin(commands.Cog):
             await ctx.send("\n".join(message))
         else:
             await ctx.send("No channels are ignored or on mini-karma mode.")
-
-    @admin.command(
-        name="userinfo",
-        help="Display information about the given user. Uses their Discord username.",
-        brief="Show info about a user using their Discord username.",
-    )
-    @check(is_compsoc_exec_in_guild)
-    async def user_info(self, ctx: Context, user_str: str):
-        await ctx.typing()
-
-        t_start = current_milli_time()
-        # Find the user in the database
-        users = [
-            user
-            for user in db_session.query(User).all()
-            if user_str.casefold() in user.username.casefold()
-        ]
-        if not users:
-            raise AdminError(f'Cannot find any user(s) matching "{user_str}".')
-
-        if len(users) > 1:
-            raise AdminError(
-                f'Found more than one with the search term "{user_str}", can you be more specific?'
-            )
-
-        user = users[0]
-
-        # Create the embed to send
-        embed_colour = Color.from_rgb(61, 83, 255)
-        embed_title = f"User info for {user.username}"
-        embed = Embed(title=embed_title, color=embed_colour)
-        embed.add_field(
-            name="First seen",
-            value=f'{user.username.split("#")[0]} was first seen on {datetime.strftime(user.first_seen, "%d %b %Y at %H:%M")}.',
-        )
-        embed.add_field(
-            name="Last seen",
-            value=f'{user.username.split("#")[0]} was last seen on {datetime.strftime(user.last_seen, "%d %b %Y at %H:%M")}.',
-        )
-        if user.verified_at:
-            embed.add_field(
-                name="Verification",
-                value=f'{user.username.split("#")[0]} is a verified member of CompSoc with a Uni ID of {user.uni_id} having verified on {datetime.strftime(user.verified_at, "%d %b %Y at %H:%M")}.',
-            )
-
-        posts = (
-            db_session.query(LoggedMessage)
-            .filter(LoggedMessage.author == user.id)
-            .all()
-        )
-        channels = (
-            db_session.query(LoggedMessage.channel_name)
-            .filter(LoggedMessage.author == user.id)
-            .group_by(LoggedMessage.channel_name)
-            .all()
-        )
-        embed.add_field(
-            name="Message count",
-            value=f'{user.username.split("#")[0]} has posted {len(posts)} {pluralise(posts, "time")} across {len(channels)} {pluralise(channels, "channel")}.',
-        )
-
-        # Generate stats information
-        time_taken = (current_milli_time() - t_start) / 1000
-        generated_at = datetime.strftime(
-            utc.localize(datetime.utcnow()).astimezone(timezone("Europe/London")),
-            "%H:%M %d %b %Y",
-        )
-        embed.set_footer(
-            text=f"Information generated at {generated_at} in {time_taken:.3f} seconds"
-        )
-
-        await ctx.send(embed=embed)
-
-    @admin.error
-    async def user_info_error(self, ctx: Context, error: AdminError):
-        await ctx.send(error.message)
 
 
 async def setup(bot: Bot):

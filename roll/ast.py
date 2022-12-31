@@ -5,25 +5,6 @@ from enum import Enum, auto
 
 import roll.exceptions as rollerr
 
-# import * imports all tokens, operators, the Assignment class, and the root Program class
-__all__ = [
-    "MAX_ROLLS",
-    "TokenNumber",
-    "TokenString",
-    "TokenRoll",
-    "TokenVariable",
-    "TokenLet",
-    "TokenFunction",
-    "TokenApplication",
-    "TokenOperator",
-    "TokenTernary",
-    "TokenCase",
-    "Program",
-    "Assignment",
-    "Operator",
-]
-
-
 MAX_ROLLS = 1000
 
 

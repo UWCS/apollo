@@ -20,12 +20,12 @@ Apollo is open source and available at: https://github.com/UWCS/apollo. Pull req
 
 # The command extensions to be loaded by the bot
 EXTENSIONS = [
-    "cogs.commands.admin",
-    "cogs.commands.blacklist",
     "cogs.commands.counting",
     "cogs.commands.date",
     "cogs.commands.event_sync",
     "cogs.commands.flip",
+    "cogs.commands.karma_admin",
+    "cogs.commands.karma_blacklist",
     "cogs.commands.karma",
     "cogs.commands.lcalc",
     "cogs.commands.misc",
@@ -69,15 +69,20 @@ async def reload_cogs(ctx: Context):
 
 @bot.event
 async def on_ready():
-    if CONFIG.BOT_LOGGING:
-        logging.info("Logged in as")
-        logging.info(str(bot.user))
-        logging.info("------")
+    logging.info("Logged in as")
+    logging.info(str(bot.user))
+    logging.info("------")
 
 
 async def main():
-    if CONFIG.BOT_LOGGING:
-        logging.basicConfig(level=logging.WARNING)
+    logging.basicConfig(
+        level=logging.getLevelName(CONFIG.LOG_LEVEL),
+        format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
+        handlers=[
+            logging.FileHandler("apollo.log"),
+            logging.StreamHandler(),
+        ],
+    )
 
     async with bot:
         for extension in EXTENSIONS:
@@ -94,50 +99,12 @@ async def main():
 @check(is_compsoc_exec_in_guild)
 @done_react
 @wait_react
-async def sync(
-    ctx: Context,
-    guilds: Greedy[discord.Object],
-    spec: Optional[Literal["global", "guild", "copy", "clear"]] = None,
-) -> None:
+async def sync(ctx: Context) -> None:
     """
     Syncs slash commands to server
-    `!sync` or `!sync global` -> global sync
-    `!sync guild` -> sync current guild
-    `!sync copy` -> copies all global app commands to current guild and syncs
-    `!sync clear` -> clears all commands from the current guild target and syncs (removes guild commands)
-    `!sync id_1 id_2` -> syncs guilds with id 1 and 2
     """
-    if not guilds:
-        if spec == "guild":
-            synced = await ctx.bot.tree.sync(guild=ctx.guild)
-        elif spec == "copy":
-            ctx.bot.tree.copy_global_to(guild=ctx.guild)
-            synced = await ctx.bot.tree.sync(guild=ctx.guild)
-        elif spec == "clear":
-            ctx.bot.tree.clear_commands(guild=ctx.guild)
-            await ctx.bot.tree.sync(guild=ctx.guild)
-            synced = []
-        else:  # global
-            synced = await ctx.bot.tree.sync()
-
-        scope = (
-            "globally"
-            if spec not in ["guild", "copy", "clear"]
-            else "to the current guild."
-        )
-        await ctx.send(f"Synced {len(synced)} commands {scope}")
-        return
-
-    ret = 0
-    for guild in guilds:
-        try:
-            await ctx.bot.tree.sync(guild=guild)
-        except discord.HTTPException:
-            pass
-        else:
-            ret += 1
-
-    await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+    synced = await ctx.bot.tree.sync()
+    await ctx.send(f"Synced {len(synced)} commands globally to the current guild.")
 
 
 if __name__ == "__main__":
