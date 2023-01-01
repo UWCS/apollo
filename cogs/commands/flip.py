@@ -31,7 +31,7 @@ class Flip(commands.Cog):
             if "weights" in [arg.lower() for arg in args]:
                 if len(args[:args.index("weights")]) == len(args[:args.index("weights")+1:])):
                     options = args[:args.index("weights")]
-                    option_weights = args[args.index("weights")+1:]
+                    option_weights = [int(weight) for weight in args[args.index("weights")+1:]]
                     weighted = True
                 else:
                     await ctx.send(f"The number of options and weights supplied must match {display_name}! :confused:")
