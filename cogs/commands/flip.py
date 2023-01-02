@@ -7,7 +7,7 @@ from discord.ext.commands import Bot, Context, clean_content
 from utils import get_name_string
 
 LONG_HELP_TEXT = """
-Picks randomly between two (potentially weighted) options (or heads and tails if left blank).
+Picks randomly between two (potentially weighted) options (or heads and tails if left blank). To use weights: `!flip A B C weights 1 2 3`.
 """
 
 SHORT_HELP_TEXT = """Picks randomly between two options"""
@@ -30,21 +30,18 @@ class Flip(commands.Cog):
         else:
             if "weights" in [arg.lower() for arg in args]:
                 weight_index = args.index("weights")
-                if len(args[:weight_index]) == len(args[: weight_index + 1 :]):
-                    options = args[:weight_index]
-                    option_weights = [
-                        int(weight) for weight in args[weight_index + 1 :]
-                    ]
-                    weighted = True
-                else:
-                    await ctx.send(
+                weighted = True
+                options = args[:weight_index]
+                option_weights = [int(weight) for weight in args[weight_index + 1 :]]
+                if len(options) != len(option_weights):
+                    return await ctx.send(
                         f"The number of options and weights supplied must match {display_name}! :confused:"
                     )
             else:
                 options = ["Heads", "Tails"] if not args else args
 
             await ctx.send(
-                f"{display_name}:({random.choices(options, weights=option_weights, k=1)[0] if weighted else {random.choice(options)}.lstrip('@')}"
+                f"{display_name}: {(random.choices(options, weights=option_weights, k=1)[0] if weighted else {random.choice(options)}).lstrip('@')}"
             )
 
 
