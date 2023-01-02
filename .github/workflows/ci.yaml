@@ -60,6 +60,7 @@ jobs:
         run: |
           pip install --user pipenv
           pipenv sync
+          cp config.example.yaml config.yaml
 
       - name: Test with pytest
         run: pipenv run pytest -v
@@ -100,9 +101,11 @@ jobs:
           cp config.example.yaml config.yaml
           cp alembic.example.ini alembic.ini
 
-      - name: Check no migrations need to be generated
-        run: pipenv run alembic check
       - name: Check upgrade migrations
         run: pipenv run alembic upgrade head
+
+      - name: Check no migrations need to be generated
+        run: pipenv run alembic check
+
       - name: Check downgrade migrations
         run: pipenv run alembic downgrade base
