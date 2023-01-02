@@ -1,7 +1,7 @@
 config:
 # Essential
   # Text command prefix
-  prefix: !
+  prefix: "!"
   # Server ID for main UWCS server
   UWCS_discord_id: 123
   # Roles IDs that permit exec commands
