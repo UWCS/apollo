@@ -26,19 +26,27 @@ class Flip(commands.Cog):
 
         if len(args) == 1:
             await ctx.send(f"I can't flip just one item {display_name}! :confused:")
-        
+
         else:
             if "weights" in [arg.lower() for arg in args]:
-                if len(args[:args.index("weights")]) == len(args[:args.index("weights")+1:])):
-                    options = args[:args.index("weights")]
-                    option_weights = [int(weight) for weight in args[args.index("weights")+1:]]
+                if len(args[: args.index("weights")]) == len(
+                    args[: args.index("weights") + 1 :]
+                ):
+                    options = args[: args.index("weights")]
+                    option_weights = [
+                        int(weight) for weight in args[args.index("weights") + 1 :]
+                    ]
                     weighted = True
                 else:
-                    await ctx.send(f"The number of options and weights supplied must match {display_name}! :confused:")
+                    await ctx.send(
+                        f"The number of options and weights supplied must match {display_name}! :confused:"
+                    )
             else:
                 options = ["Heads", "Tails"] if not args else args
-             
-            await ctx.send(f"{display_name}: ({random.choices(options, weights=option_weights, k=1)[0] if weighted else {random.choice(options)).lstrip("@")}")
+
+            await ctx.send(
+                f"{display_name}:({random.choices(options, weights=option_weights, k=1)[0] if weighted else {random.choice(options)}.lstrip('@')}"
+            )
 
 
 async def setup(bot: Bot):
