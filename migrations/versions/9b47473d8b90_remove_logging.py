@@ -40,7 +40,7 @@ def downgrade():
         sa.Column("channel_name", sau.EncryptedType, nullable=False),
         sa.Column("deleted_at", sa.DateTime(), nullable=True),
     )
-    
+
     op.create_table(
         "message_edits",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
