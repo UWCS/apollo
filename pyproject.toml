@@ -12,7 +12,6 @@ exclude = '''
     | \.mypy_cache
     | \.tox
     | env
-    | migrations
     | _build
     | buck-out
     | build
