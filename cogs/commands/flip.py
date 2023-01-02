@@ -29,12 +29,11 @@ class Flip(commands.Cog):
 
         else:
             if "weights" in [arg.lower() for arg in args]:
-                if len(args[: args.index("weights")]) == len(
-                    args[: args.index("weights") + 1 :]
-                ):
-                    options = args[: args.index("weights")]
+                weight_index = args.index("weights")
+                if len(args[:weight_index]) == len(args[: weight_index + 1 :]):
+                    options = args[:weight_index]
                     option_weights = [
-                        int(weight) for weight in args[args.index("weights") + 1 :]
+                        int(weight) for weight in args[weight_index + 1 :]
                     ]
                     weighted = True
                 else:
