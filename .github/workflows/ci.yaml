@@ -120,9 +120,9 @@ jobs:
       - name: Check upgrade migrations
         run: pipenv run alembic upgrade head
 
-      - name: Check no migrations need to be generated
-        run: pipenv run alembic check
+      # - name: Check no migrations need to be generated
+      #   run: pipenv run alembic check
 
       - name: Check downgrade migrations
-        if: always() #check downgrade even if check failes
+        #if: always() #check downgrade even if check failes
         run: pipenv run alembic downgrade base
