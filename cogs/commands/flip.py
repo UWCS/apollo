@@ -41,7 +41,7 @@ class Flip(commands.Cog):
                 options = ["Heads", "Tails"] if not args else args
 
             await ctx.send(
-                f"{display_name}: {(random.choices(options, weights=option_weights, k=1)[0] if weighted else {random.choice(options)}).lstrip('@')}"
+                f"{display_name}: {(random.choices(options, weights=option_weights, k=1)[0] if weighted else random.choice(options)).lstrip('@')}"
             )
 
 
