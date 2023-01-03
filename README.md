@@ -1,4 +1,4 @@
-# Apollo [![Build status](https://github.com/UWCS/apollo/actions/workflows/tests.yaml/badge.svg?branch=master)](https://github.com/UWCS/apollo/actions/workflows/tests.yaml)
+# Apollo [![Build status](https://github.com/UWCS/apollo/actions/workflows/ci.yaml/badge.svg?branch=master)](https://github.com/UWCS/apollo/actions/workflows/ci.yaml)
 
 Apollo is a [Discord](https://discordapp.com/) bot for the [University of Warwick Computing Society](https://uwcs.co.uk).
 It is designed to augment our Discord server with a few of the user services available on our website.
