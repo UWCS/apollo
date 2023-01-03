@@ -17,9 +17,10 @@ Apollo uses `pipenv` for dependency and venv management. Install it with `pip in
 4. Set up the database by running migrations with `alembic upgrade head`.
    - The default database location is `postgresql://apollo:apollo@localhost/apollo` (in `config.example.yaml`)
      This requires PostgreSQL to be installed, with a database called `apollo` and a user with name and password `apollo` with access to it.
-     For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///local.sqlite3`. Alternatively, see the instructions below for using Docker.
-5. On the [Discord developer portal](https://discord.com/developers/), make sure that your bot has the required intents.
-   - Currently, only the Members intent is necessary.
+   - For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///apollo.sqlite3`. 
+   - Alternatively, see the instructions below for using Docker.
+5. On the [Discord Developer Portal](https://discord.com/developers/), make sure that your bot has the required intents.
+   - Currently, the Messages and Members intents are necessary.
 
 Run Apollo using `pipenv run python apollo.py`
 
