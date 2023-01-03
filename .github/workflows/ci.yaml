@@ -124,4 +124,5 @@ jobs:
         run: pipenv run alembic check
 
       - name: Check downgrade migrations
+        if: always() #check downgrade even if check failes
         run: pipenv run alembic downgrade base
