@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  install:
+    name: Install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pipenv
+
+      - name: Install pipenv and dependencies
+        run: |
+          pip install --user pipenv
+          pipenv install --dev --deploy
+
+  check:
+    name: Check Formatting
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    if: success()
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pipenv
+      - name: Install pipenv and dependencies
+        run: |
+          pip install --user pipenv
+          pipenv sync
+
+      - name: Check formatting with isort and black
+        run: |
+          pipenv run isort --check-only --skip __tests__ .
+          pipenv run black --check --exclude __tests__ .
+
+  test:
+    name: Run Tests with Pytest
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    if: success()
+
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: apollo
+          POSTGRES_PASSWORD: apollo
+          POSTGRES_DB: apollo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pipenv
+      - name: Install pipenv and dependencies
+        run: |
+          pip install --user pipenv
+          pipenv sync
+          cp config.example.yaml config.yaml
+
+      - name: Test with pytest
+        run: pipenv run pytest -v
+
+  migrate:
+    name: Check Migrations
+    runs-on: ubuntu-latest
+    needs:
+      - install
+    if: success()
+
+    # postgres container to test migrations against
+    services:
+      postgres:
+        image: postgres:12
+        env:
+          POSTGRES_USER: apollo
+          POSTGRES_PASSWORD: apollo
+          POSTGRES_DB: apollo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: pipenv
+      - name: Install pipenv and dependencies
+        run: |
+          pip install --user pipenv
+          pipenv sync
+          cp config.example.yaml config.yaml
+          cp alembic.example.ini alembic.ini
+
+      - name: Check upgrade migrations
+        run: pipenv run alembic upgrade head
+
+      # - name: Check no migrations need to be generated
+      #   run: pipenv run alembic check
+
+      - name: Check downgrade migrations
+        #if: always() #check downgrade even if check failes
+        run: pipenv run alembic downgrade base

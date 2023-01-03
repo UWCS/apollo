@@ -1,10 +1,10 @@
 version: "3"
 
 services:
-  postgres:
-    image: postgres:12-bullseye
+  apollo-db:
+    image: postgres:12
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: apollo
       POSTGRES_DB: apollo
       POSTGRES_PASSWORD: apollo
       POSTGRES_PORT: "5432"
@@ -12,10 +12,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  bot:
-    container_name: "apollo"
+  apollo:
     build: .
     depends_on:
-      - postgres
+      - apollo-db
+    configs:
+      - source: bot-config
+        target: /app/config.yaml
+
+configs:
+  bot-config:
+    file: config.yaml
+
 volumes:
   postgres_data:

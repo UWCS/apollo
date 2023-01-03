@@ -1,0 +1,38 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"discord.py" = "~=2.0.0"
+sqlalchemy = "~=1.4.45"
+sqlalchemy-utils = "~=0.39.0"
+psycopg2-binary = "~=2.9.5"
+cryptography = "~=3.4.6"
+pytz = "~=2021.1"
+matplotlib = "~=3.3.4"
+numpy = "~=1.24.0"
+requests = "~=2.25.1"
+scikit-image = "~=0.19.3"
+beautifulsoup4 = "~=4.9.3"
+lxml = "~=4.9.2"
+markdown = "~=3.3.4"
+alembic = "~=1.9.1"
+pyyaml = "~=5.4.1"
+parsita = "~=1.7.1"
+dateparser = "~=1.1.1"
+humanize = "~=3.5.0"
+more-itertools = "~=8.8.0"
+pillow = "~=9.3.0"
+discord-simple-pretty-help = "==0.0.1"
+icalendar = "~=4.1.0"
+
+[dev-packages]
+black = "~=22.12"
+isort = "~=5.11"
+pytest = "~=6.2"
+pretend = "~=1.0"
+
+
+[requires]
+python_version = "3.10"
