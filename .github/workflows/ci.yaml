@@ -126,3 +126,22 @@ jobs:
       - name: Check downgrade migrations
         #if: always() #check downgrade even if check failes
         run: pipenv run alembic downgrade base
+        
+        
+  docker_publish:
+    name: Publish built docker container
+    runs-on: ubuntu-latest
+    needs:
+      - check
+      - migrate
+      - test
+    if: success() && github.ref_name == 'master'
+    steps:
+      - uses: actions/checkout@v3
+
+      # https://github.com/marketplace/actions/push-to-ghcr
+      - name: Build and publish a Docker image for progcomp server
+        uses: macbre/push-to-ghcr@v12
+        with:
+          image_name: uwcs/apollo
+          github_token: ${{ secrets.GITHUB_TOKEN }}
