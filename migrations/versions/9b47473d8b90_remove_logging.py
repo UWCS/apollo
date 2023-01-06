@@ -104,6 +104,7 @@ def upgrade():
 
 Base2 = declarative_base()
 
+
 @auto_str
 class KarmaChange2(Base2):
     __tablename__ = "karma_changes"
