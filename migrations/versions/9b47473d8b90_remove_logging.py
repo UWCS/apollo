@@ -37,6 +37,7 @@ class KarmaChange(Base):
     user_id = sa.Column(sa.Integer, primary_key=True, nullable=False)
     message_id = sa.Column(sa.Integer, primary_key=True, nullable=False)
     mid_new = sa.Column(sa.BigInteger, nullable=False)
+    mid_old = sa.Column(sa.Integer, nullable=False)
     created_at = sa.Column(sa.DateTime, nullable=False)
     reason = sa.Column(sa.String(), nullable=True)
     change = sa.Column(sa.Integer, nullable=False)
