@@ -38,7 +38,6 @@ class KarmaChange(Base):
     message_id = sa.Column(sa.Integer, primary_key=True, nullable=False)
     # Fake so stops complaining
     mid_new = sa.Column(sa.BigInteger, nullable=True)
-    mid_old = sa.Column(sa.Integer, nullable=True)
     created_at = sa.Column(sa.DateTime, nullable=False)
     reason = sa.Column(sa.String(), nullable=True)
     change = sa.Column(sa.Integer, nullable=False)
@@ -103,19 +102,36 @@ def upgrade():
     # op.drop_table("messages")
 
 
+Base2 = declarative_base()
+
+@auto_str
+class KarmaChange2(Base2):
+    __tablename__ = "karma_changes"
+
+    karma_id = sa.Column(sa.Integer, primary_key=True, nullable=False)
+    user_id = sa.Column(sa.Integer, primary_key=True, nullable=False)
+    message_id = sa.Column(sa.BigInteger, primary_key=True, nullable=False)
+    # Fake so stops complaining
+    mid_old = sa.Column(sa.Integer, nullable=True)
+    created_at = sa.Column(sa.DateTime, nullable=False)
+    reason = sa.Column(sa.String(), nullable=True)
+    change = sa.Column(sa.Integer, nullable=False)
+    score = sa.Column(sa.Integer, nullable=False)
+
+
 def downgrade():
     bind = op.get_bind()
     session = sa.orm.Session(bind=bind)
 
     # Update value of new column
-    for change in session.query(KarmaChange):
+    for change in session.query(KarmaChange2):
         change.message_id = change.mid_old
     session.commit()
 
-    with op.batch_alter_table("karma_changes") as batch_op:
+    with op.batch_alter_table("karma_changes", schema=None) as batch_op:
         batch_op.drop_column("mid_old")
 
-    with op.batch_alter_table("karma_changes") as batch_op:
+    with op.batch_alter_table("karma_changes", schema=None) as batch_op:
         batch_op.create_foreign_key(
             "fk_karma_changes_messages", "messages", ["message_id"], ["id"]
         )
