@@ -83,35 +83,22 @@ def upgrade():
 
     session.commit()
     
-    op.drop_table("message_edits")
-    op.drop_table("messages")
+    # op.drop_table("message_edits")
+    # op.drop_table("messages")
 
 
 def downgrade():
-    raise Exception("Downgrading past this is a terrible idea")
-    # with op.batch_alter_table("karma_changes") as batch_op:
-    #     batch_op.drop_column("mid_new")
+    bind = op.get_bind()
+    session = sa.orm.Session(bind=bind)
 
-    # op.create_table(
-    #     "messages",
-    #     sa.Column("id", sa.Integer, primary_key=True, nullable=False),
-    #     sa.Column("message_uid", sa.BigInteger, nullable=False),
-    #     sa.Column("message_content", sau.EncryptedType, nullable=False),
-    #     sa.Column("author", sa.Integer, sa.ForeignKey("users.id"), nullable=False),
-    #     sa.Column("created_at", sa.DateTime, nullable=False),
-    #     sa.Column("channel_name", sau.EncryptedType, nullable=False),
-    #     sa.Column("deleted_at", sa.DateTime(), nullable=True),
-    # )
+    # Update value of new column
+    for change in session.query(KarmaChange):
+        change.message_id = change.mid_old
+    session.commit()
 
-    # op.create_table(
-    #     "message_edits",
-    #     sa.Column("id", sa.Integer, primary_key=True, nullable=False),
-    #     sa.Column(
-    #         "original_message", sa.Integer, sa.ForeignKey("messages.id"), nullable=False
-    #     ),
-    #     sa.Column("new_content", sau.EncryptedType, nullable=False),
-    #     sa.Column("created_at", sa.DateTime, nullable=False),
-    # )
+    with op.batch_alter_table("karma_changes") as batch_op:
+        batch_op.drop_column("mid_old")
+
 
     with op.batch_alter_table("karma_changes") as batch_op:
         batch_op.create_foreign_key(
