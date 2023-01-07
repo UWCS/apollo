@@ -130,6 +130,8 @@ jobs:
   build-and-push-image:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     needs:
       - check
       - migrate
