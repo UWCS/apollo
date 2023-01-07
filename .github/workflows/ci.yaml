@@ -156,4 +156,4 @@ jobs:
           push: true
           tags: |
             "uwcs/apollo:latest"
-            "uwcs/apollo:${{ steps.hash.output.sha_short }}"
+            "uwcs/apollo:${{ steps.hash.outputs.sha_short }}"
