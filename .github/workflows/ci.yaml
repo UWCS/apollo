@@ -128,6 +128,7 @@ jobs:
         run: pipenv run alembic downgrade base
 
   build-and-push-image:
+    name: Build and Push Docker Image
     runs-on: ubuntu-latest
     needs:
       - check
@@ -146,7 +147,7 @@ jobs:
 
       - name: Get short commit hash
         id: hash
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        run: echo "{sha_short}-{$(git rev-parse --short HEAD)}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
@@ -154,5 +155,5 @@ jobs:
           context: .
           push: true
           tags: |
-            uwcs/apollo:latest
-            uwcs/apollo:${{ steps.hash.output.sha_short }}
+            "uwcs/apollo:latest"
+            "uwcs/apollo:${{ steps.hash.output.sha_short }}"
