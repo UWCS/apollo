@@ -35,7 +35,8 @@ async def reminder_check(bot):
                 display_name = f"<@{author_uid}>"
             channel = bot.get_channel(r.playback_channel_id)
             message = f"Reminding {display_name}: " + r.reminder_content
-            if not channel: logging.warning("No channel matches", r, channel)
+            if not channel:
+                logging.warning("No channel matches", r, channel)
             await channel.send(message)
             r.triggered = True
             db_session.commit()
