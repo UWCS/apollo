@@ -158,6 +158,7 @@ async def plot_karma(
     img = io.BytesIO()
     fig.savefig(img, dpi=240, transparent=False, format="png")
     img.seek(0)
+    plt.close(fig)
     return img, filename
 
 
