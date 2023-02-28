@@ -23,7 +23,7 @@ class Date(commands.Cog):
         randno = random.random()
         if randno <= 0.01:
             await ctx.send(
-                "https://solidstarts.com/wp-content/uploads/dates_edited-scaled.jpg"
+                "https://thumbs.dreamstime.com/b/closeup-date-fruit-against-white-background-46049397.jpg"
             )
         else:
             await ctx.send(f"<t:{output.timestamp()}:F>")
