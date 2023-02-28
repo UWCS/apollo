@@ -99,7 +99,7 @@ A Minecraft survival server running at `warwickminecraft.uk`
     @commands.hybrid_command()
     async def pong(self, ctx: Context):
         """Ping!"""
-        await ctx.send(":pong_ping:")
+        await ctx.send("<:pong_ping:1009151221338230875>")
 
     @commands.hybrid_command(brief="Apollo's current version")
     async def version(self, ctx: Context):
