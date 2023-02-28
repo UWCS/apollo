@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime
+import discord
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
@@ -18,7 +19,7 @@ Add reminders for yourself or remove the last one you added.
 SHORT_HELP_TEXT = """Add or remove reminders."""
 
 
-async def reminder_check(bot):
+async def reminder_check(bot: Bot):
     await bot.wait_until_ready()
     while not bot.is_closed():
         now = datetime.now()
@@ -36,9 +37,12 @@ async def reminder_check(bot):
             channel = bot.get_channel(r.playback_channel_id)
             message = f"Reminding {display_name}: " + r.reminder_content
             if not channel:
-                logging.warning("No channel matches", r, channel)
+                logging.warning("No channel matches", repr(r))
                 continue
-            await channel.send(message)
+            try:
+                await channel.send(message)
+            except discord.DiscordException:
+                logging.warning("No channel access", repr(r))
             r.triggered = True
         db_session.commit()
 
