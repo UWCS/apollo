@@ -35,11 +35,12 @@ async def reminder_check(bot):
                 display_name = f"<@{author_uid}>"
             channel = bot.get_channel(r.playback_channel_id)
             message = f"Reminding {display_name}: " + r.reminder_content
-            if not channel:
+            if not channel: 
                 logging.warning("No channel matches", r, channel)
+                continue
             await channel.send(message)
             r.triggered = True
-            db_session.commit()
+        db_session.commit()
 
         await asyncio.sleep(CONFIG.REMINDER_SEARCH_INTERVAL)
 
