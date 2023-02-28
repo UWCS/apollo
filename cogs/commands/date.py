@@ -26,7 +26,7 @@ class Date(commands.Cog):
                 "https://thumbs.dreamstime.com/b/closeup-date-fruit-against-white-background-46049397.jpg"
             )
         else:
-            await ctx.send(f"<t:{output.timestamp()}:F>")
+            await ctx.send(f"<t:{int(output.timestamp())}:F>")
 
     @commands.hybrid_command(help=DAY_HELP_TEXT, brief=DAY_HELP_TEXT)
     async def day(self, ctx: Context):
