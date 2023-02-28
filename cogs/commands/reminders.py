@@ -1,8 +1,8 @@
 import asyncio
 import logging
 from datetime import datetime
-import discord
 
+import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from humanize import precisedelta
