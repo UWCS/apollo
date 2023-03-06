@@ -37,12 +37,12 @@ async def reminder_check(bot: Bot):
             channel = bot.get_channel(r.playback_channel_id)
             message = f"Reminding {display_name}: " + r.reminder_content
             if not channel:
-                logging.warning("No channel matches", repr(r))
+                logging.warning(f"No channel matches: {r}")
                 continue
             try:
                 await channel.send(message)
             except discord.DiscordException:
-                logging.warning("No channel access", repr(r))
+                logging.warning(f"No channel access: {r}")
             r.triggered = True
         db_session.commit()
 
