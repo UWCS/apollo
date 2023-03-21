@@ -21,7 +21,7 @@ class ChatGPT(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *, message: str):
-        message = await clean_content().convert(ctx, args)
+        message = await clean_content().convert(ctx, message)
 
         messages = [
             {"role": "system", "content": self.system_prompt},
