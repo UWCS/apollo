@@ -30,7 +30,7 @@ class ChatGPT(commands.Cog):
         print(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
         print(f"OpenAI Response: {response}")
-        await ctx.reply(response.choices[0].message.content, discord.allowed_mentions=AllowedMentions.none())  # type: ignore
+        await ctx.reply(response.choices[0].message.content, allowed_mentions=discord.AllowedMentions.none())  # type: ignore
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
