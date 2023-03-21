@@ -19,8 +19,10 @@ class ChatGPT(commands.Cog):
         self.model = "gpt-3.5-turbo"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
 
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def chat(self, ctx: Context, *message: clean_content):
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    async def chat(self, ctx: Context, *, message: str):
+        message = await clean_content().convert(ctx, args)
+
         messages = [
             {"role": "system", "content": self.system_prompt},
             {"role": "user", "content": " ".join(message)},  # type: ignore
