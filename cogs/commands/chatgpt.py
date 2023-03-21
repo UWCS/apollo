@@ -1,7 +1,8 @@
-from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
 import discord
 import openai
+from discord.ext import commands
+from discord.ext.commands import Bot, Context, clean_content
+
 from config import CONFIG
 
 LONG_HELP_TEXT = """
