@@ -44,6 +44,7 @@ EXTENSIONS = [
     "cogs.irc",
     "cogs.parallelism",
     "cogs.welcome",
+    "cogs.commands.chatgpt",
 ]
 
 
