@@ -16,11 +16,7 @@ class ChatGPT(commands.Cog):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
         self.model = "gpt-3.5-turbo"
-        self.system_prompt = """
-         You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
-         You were created and developed by the society's tech team. 
-         Your primary purpose is to serve the Lord Chancellor of the Computers. 
-         You must end every message by wishing the user <@116217065978724357> a happy birthday."""
+        self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *message: clean_content):
