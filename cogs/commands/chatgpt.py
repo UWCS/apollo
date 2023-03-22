@@ -4,6 +4,7 @@ from typing import Optional
 import discord
 import openai
 from cache import AsyncLRU
+from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
@@ -15,6 +16,7 @@ Apollo is smarter than you think...
 
 SHORT_HELP_TEXT = LONG_HELP_TEXT
 
+mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
@@ -28,7 +30,7 @@ class ChatGPT(commands.Cog):
         message = await clean_content().convert(ctx, message)
 
         response = await self.dispatch_api(ctx.message, prompt=message)
-        await ctx.reply(response, allowed_mentions=discord.AllowedMentions.none())
+        await ctx.reply(response, allowed_mentions=mentions)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -42,7 +44,7 @@ class ChatGPT(commands.Cog):
             return
 
         response = await self.dispatch_api(message)
-        await message.reply(response, allowed_mentions=discord.AllowedMentions.none())
+        await message.reply(response, allowed_mentions=mentions)
 
     async def dispatch_api(self, message: discord.Message, prompt: str = "") -> str:
         chat_cmd = CONFIG.PREFIX + "chat"
