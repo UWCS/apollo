@@ -13,9 +13,13 @@ from config import CONFIG
 
 LONG_HELP_TEXT = """
 Apollo is smarter than you think...
+
+GPT will be given the full chain of replied messages, *it does not look at latest messages*.
+If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to that.
 """
 
-SHORT_HELP_TEXT = LONG_HELP_TEXT
+SHORT_HELP_TEXT = "Apollo is smarter than you think..."
+
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
@@ -71,6 +75,7 @@ class ChatGPT(commands.Cog):
         self, message: discord.Message, from_msg: bool = False
     ) -> Optional[str]:
         chat_cmd = CONFIG.PREFIX + "chat "
+        prompt_cmd = CONFIG.PREFIX + "prompt "
         message_chain = await self.get_message_chain(message)
 
         is_cmd = lambda m: m.content.startswith(chat_cmd) or (
@@ -79,7 +84,14 @@ class ChatGPT(commands.Cog):
         if from_msg and not any(map(is_cmd, message_chain)):
             return None
 
-        messages = [dict(role="system", content=self.system_prompt)]
+        # If first message starts with !prompt use that instead
+        initial_msg = message_chain[0].content
+        if initial_msg.startswith(prompt_cmd):
+            initial = initial_msg.removeprefix(prompt_cmd)
+            message_chain = message_chain[1:]
+        else:
+            initial = self.system_prompt
+        messages = [dict(role="system", content=initial)]
 
         for msg in message_chain:
             role = "assistant" if msg.author == self.bot.user else "user"
