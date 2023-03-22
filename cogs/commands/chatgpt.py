@@ -48,7 +48,7 @@ class ChatGPT(commands.Cog):
     async def dispatch_api(
         self, message: discord.Message, from_msg: bool = False
     ) -> Optional[str]:
-        chat_cmd = CONFIG.PREFIX + "chat"
+        chat_cmd = CONFIG.PREFIX + "chat "
         message_chain = await self.get_message_chain(message)
 
         is_cmd = lambda m: m.content.startswith(chat_cmd) or (
@@ -64,9 +64,9 @@ class ChatGPT(commands.Cog):
             content = msg.clean_content.removeprefix(chat_cmd)
             messages.append(dict(role=role, content=content))
 
-        logging.debug(f"Making OpenAI request: {messages}")
+        logging.info(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
-        logging.debug(f"OpenAI Response: {response}")
+        logging.info(f"OpenAI Response: {response}")
         return response.choices[0].message.content
 
     @AsyncLRU()
