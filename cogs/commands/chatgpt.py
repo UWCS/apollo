@@ -18,6 +18,7 @@ SHORT_HELP_TEXT = LONG_HELP_TEXT
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
+
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
