@@ -27,10 +27,9 @@ class ChatGPT(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *, message: str):
-        message = await clean_content().convert(ctx, message)
-
-        response = await self.dispatch_api(ctx.message, prompt=message)
-        await ctx.reply(response, allowed_mentions=mentions)
+        response = await self.dispatch_api(ctx.message, False)
+        if response:
+            await ctx.reply(response, allowed_mentions=mentions)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -46,12 +45,17 @@ class ChatGPT(commands.Cog):
         response = await self.dispatch_api(message)
         await message.reply(response, allowed_mentions=mentions)
 
-    async def dispatch_api(self, message: discord.Message, prompt: str = "") -> str:
+    async def dispatch_api(
+        self, message: discord.Message, from_msg: bool = False
+    ) -> Optional[str]:
         chat_cmd = CONFIG.PREFIX + "chat"
         message_chain = await self.get_message_chain(message)
 
-        if not any(m.content.startswith(chat_cmd) for m in message_chain):
-            return
+        is_cmd = lambda m: m.content.startswith(chat_cmd) or (
+            m.interaction and m.interaction.name == "chat"
+        )
+        if from_msg and not any(map(is_cmd, message_chain)):
+            return None
 
         messages = [dict(role="system", content=self.system_prompt)]
 
@@ -59,9 +63,6 @@ class ChatGPT(commands.Cog):
             role = "assistant" if msg.author == self.bot.user else "user"
             content = msg.clean_content.removeprefix(chat_cmd)
             messages.append(dict(role=role, content=content))
-
-        if prompt:
-            messages.append(dict(role="user", content=prompt))
 
         logging.debug(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
@@ -78,7 +79,7 @@ class ChatGPT(commands.Cog):
         if message is None:
             return []
         previous = await self.fetch_previous(message)
-        return [message] + await self.get_message_chain(previous)
+        return (await self.get_message_chain(previous)) + [message]
 
     async def fetch_previous(
         self, message: discord.Message
