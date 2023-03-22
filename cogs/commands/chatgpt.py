@@ -19,8 +19,10 @@ SHORT_HELP_TEXT = LONG_HELP_TEXT
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
+
 def cooldown_outside_chat_channels(ctx: Context) -> Optional[Cooldown]:
     return Cooldown(1, 60) if ctx.channel.id not in CONFIG.AI_CHAT_CHANNELS else None
+
 
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
