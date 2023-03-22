@@ -43,7 +43,7 @@ class ChatGPT(commands.Cog):
         previous = await self.fetch_previous(message)
         if not previous or not previous.author.id == self.bot.user.id:
             return
-        
+
         response = await self.dispatch_api(message)
         if response:
             await message.reply(response, allowed_mentions=mentions)
@@ -69,7 +69,9 @@ class ChatGPT(commands.Cog):
 
         logging.info(f"Making OpenAI request: {messages}")
 
-        request = lambda: openai.ChatCompletion.create(model=self.model, messages=messages)
+        request = lambda: openai.ChatCompletion.create(
+            model=self.model, messages=messages
+        )
         loop = asyncio.get_running_loop()
         response = await loop.run_in_executor(None, request)
         logging.info(f"OpenAI Response: {response}")
