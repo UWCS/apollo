@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Optional
 
@@ -42,9 +43,10 @@ class ChatGPT(commands.Cog):
         previous = await self.fetch_previous(message)
         if not previous or not previous.author.id == self.bot.user.id:
             return
-
+        
         response = await self.dispatch_api(message)
-        await message.reply(response, allowed_mentions=mentions)
+        if response:
+            await message.reply(response, allowed_mentions=mentions)
 
     async def dispatch_api(
         self, message: discord.Message, from_msg: bool = False
@@ -66,9 +68,12 @@ class ChatGPT(commands.Cog):
             messages.append(dict(role=role, content=content))
 
         logging.info(f"Making OpenAI request: {messages}")
-        response = openai.ChatCompletion.create(model=self.model, messages=messages)
+
+        request = lambda: openai.ChatCompletion.create(model=self.model, messages=messages)
+        loop = asyncio.get_running_loop()
+        response = await loop.run_in_executor(None, request)
         logging.info(f"OpenAI Response: {response}")
-        return response.choices[0].message.content[3900:]
+        return response.choices[0].message.content[:3900]
 
     @AsyncLRU()
     async def get_message_chain(
