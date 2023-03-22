@@ -20,6 +20,7 @@ If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to
 
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
 
+PROMPT_RESPONSE_MSG = "Reply to this message to continue with this initial prompt."
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
@@ -78,6 +79,7 @@ class ChatGPT(commands.Cog):
         prompt_cmd = CONFIG.PREFIX + "prompt "
         message_chain = await self.get_message_chain(message)
 
+        # If a message in the chain triggered a !chat or /chat
         is_cmd = lambda m: m.content.startswith(chat_cmd) or (
             m.interaction and m.interaction.name == "chat"
         )
@@ -93,6 +95,7 @@ class ChatGPT(commands.Cog):
             initial = self.system_prompt
         messages = [dict(role="system", content=initial)]
 
+        # Convert to dict form for request
         for msg in message_chain:
             role = "assistant" if msg.author == self.bot.user else "user"
             content = msg.clean_content.removeprefix(chat_cmd)
@@ -102,6 +105,7 @@ class ChatGPT(commands.Cog):
 
         logging.info(f"Making OpenAI request: {messages}")
 
+        # Make request as async
         request = lambda: openai.ChatCompletion.create(
             model=self.model, messages=messages
         )
@@ -109,12 +113,14 @@ class ChatGPT(commands.Cog):
         response = await loop.run_in_executor(None, request)
         logging.info(f"OpenAI Response: {response}")
 
+        # Remove prefix that chatgpt might add
         reply = response.choices[0].message.content
         if CONFIG.AI_INCLUDE_NAMES:
             reply = reply.removeprefix("Apollo: ")
             reply = reply.removeprefix("apollo: ")
             reply = reply.removeprefix(f"{self.bot.user.display_name}: ")
 
+        # Truncate if long
         if len(reply) > 3990:
             reply = reply[:3990] + "..."
         return reply
