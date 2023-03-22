@@ -36,26 +36,21 @@ class ChatGPT(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        chat_cmd = CONFIG.PREFIX + "chat"
         if message.content.startswith(CONFIG.PREFIX):
             return
 
-        message_chain = await self.get_message_chain([message])
+        message_chain = await self.get_message_chain(message)
 
-        if not message_chain[0].content.startswith("!chat"):
+        if not message_chain[0].content.startswith(chat_cmd):
             return
 
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-        ]
+        messages = [dict(role="system", content=self.system_prompt)]
 
         for msg in message_chain:
-            if msg.author == self.bot.user:
-                messages.append({"role": "assistant", "content": msg.content})
-            else:
-                if msg.content.startswith("!chat"):
-                    messages.append({"role": "user", "content": msg.clean_content[6:]})
-                else:
-                    messages.append({"role": "user", "content": msg.clean_content})
+            role = "assistant" if msg.author == self.bot.user else "user"
+            content = msg.clean_content.removeprefix(chat_cmd)
+            messages.append(dict(role=role, content=content))
 
         print(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
