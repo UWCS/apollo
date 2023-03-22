@@ -27,7 +27,7 @@ class ChatGPT(commands.Cog):
     async def chat(self, ctx: Context, *, message: str):
         message = await clean_content().convert(ctx, message)
 
-        response = self.dispatch_api(message)
+        response = await self.dispatch_api(ctx.message, prompt=message)
         await ctx.reply(response, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.Cog.listener()
@@ -38,10 +38,10 @@ class ChatGPT(commands.Cog):
 
         # Only engage if replying to Apollo, use !chat to trigger otherwise
         previous = await self.fetch_previous(message)
-        if not previous.author.id == self.bot.id:
+        if not previous or not previous.author.id == self.bot.user.id:
             return
 
-        response = self.dispatch_api(message)
+        response = await self.dispatch_api(message)
         await message.reply(response, allowed_mentions=discord.AllowedMentions.none())
 
     async def dispatch_api(self, message: discord.Message, prompt: str = "") -> str:
@@ -76,7 +76,7 @@ class ChatGPT(commands.Cog):
         if message is None:
             return []
         previous = await self.fetch_previous(message)
-        return [message] + self.get_message_chain(previous)
+        return [message] + await self.get_message_chain(previous)
 
     async def fetch_previous(
         self, message: discord.Message
