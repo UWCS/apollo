@@ -1,4 +1,6 @@
+import logging
 from functools import lru_cache
+from typing import Optional
 
 import discord
 import openai
@@ -37,12 +39,18 @@ class ChatGPT(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         chat_cmd = CONFIG.PREFIX + "chat"
-        if message.content.startswith(CONFIG.PREFIX):
+        # Avoid replying to bot or msg that triggers the command anyway
+        if message.author.bot or message.content.startswith(CONFIG.PREFIX):
+            return
+
+        # Only engage if replying to Apollo, use !chat to trigger otherwise
+        previous = await self.fetch_previous(message)
+        if not previous.author.id == self.bot.id:
             return
 
         message_chain = await self.get_message_chain(message)
 
-        if not message_chain[0].content.startswith(chat_cmd):
+        if not any(m.content.startswith(chat_cmd) for m in message_chain):
             return
 
         messages = [dict(role="system", content=self.system_prompt)]
@@ -52,10 +60,10 @@ class ChatGPT(commands.Cog):
             content = msg.clean_content.removeprefix(chat_cmd)
             messages.append(dict(role=role, content=content))
 
-        print(f"Making OpenAI request: {messages}")
+        logging.debug(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
-        print(f"OpenAI Response: {response}")
-        await message.reply(response.choices[0].message.content)  # type: ignore
+        logging.debug(f"OpenAI Response: {response}")
+        return response.choices[0].message.content
 
     @lru_cache()
     async def get_message_chain(
