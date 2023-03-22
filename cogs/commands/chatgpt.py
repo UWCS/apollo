@@ -7,7 +7,7 @@ import openai
 from cache import AsyncLRU
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, Cooldown, clean_content
+from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
 
 from config import CONFIG
 
@@ -34,7 +34,7 @@ class ChatGPT(commands.Cog):
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    @commands.dynamic_cooldown(cooldown_outside_chat_channels, commands.BucketType.user)
+    @commands.dynamic_cooldown(cooldown_outside_chat_channels, BucketType.channel)
     async def chat(self, ctx: Context, *, message: str):
         async with ctx.typing():
             response = await self.dispatch_api(ctx.message, False)
