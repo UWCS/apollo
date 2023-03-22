@@ -21,7 +21,11 @@ mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_use
 
 
 def cooldown_outside_chat_channels(ctx: Context) -> Optional[Cooldown]:
-    return Cooldown(1, 60) if ctx.channel.id not in CONFIG.AI_CHAT_CHANNELS else None
+    if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
+        return None
+    if isinstance(ctx.channel, discord.DMChannel):
+        return None
+    return Cooldown(1, 60)
 
 
 class ChatGPT(commands.Cog):
