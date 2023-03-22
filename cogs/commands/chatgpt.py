@@ -27,18 +27,11 @@ class ChatGPT(commands.Cog):
     async def chat(self, ctx: Context, *, message: str):
         message = await clean_content().convert(ctx, message)
 
-        messages = [
-            {"role": "system", "content": self.system_prompt},
-            {"role": "user", "content": " ".join(message)},  # type: ignore
-        ]
-        print(f"Making OpenAI request: {messages}")
-        response = openai.ChatCompletion.create(model=self.model, messages=messages)
-        print(f"OpenAI Response: {response}")
-        await ctx.reply(response.choices[0].message.content, allowed_mentions=discord.AllowedMentions.none())  # type: ignore
+        response = self.dispatch_api(message)
+        await ctx.reply(response, allowed_mentions=discord.AllowedMentions.none())
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        chat_cmd = CONFIG.PREFIX + "chat"
         # Avoid replying to bot or msg that triggers the command anyway
         if message.author.bot or message.content.startswith(CONFIG.PREFIX):
             return
@@ -48,6 +41,11 @@ class ChatGPT(commands.Cog):
         if not previous.author.id == self.bot.id:
             return
 
+        response = self.dispatch_api(message)
+        await message.reply(response, allowed_mentions=discord.AllowedMentions.none())
+
+    async def dispatch_api(self, message: discord.Message, prompt: str = "") -> str:
+        chat_cmd = CONFIG.PREFIX + "chat"
         message_chain = await self.get_message_chain(message)
 
         if not any(m.content.startswith(chat_cmd) for m in message_chain):
@@ -59,6 +57,9 @@ class ChatGPT(commands.Cog):
             role = "assistant" if msg.author == self.bot.user else "user"
             content = msg.clean_content.removeprefix(chat_cmd)
             messages.append(dict(role=role, content=content))
+
+        if prompt:
+            messages.append(dict(role="user", content=prompt))
 
         logging.debug(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
