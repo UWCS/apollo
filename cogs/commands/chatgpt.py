@@ -10,6 +10,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
 
 from config import CONFIG
+from utils.utils import get_name_and_content
 
 LONG_HELP_TEXT = """
 Apollo is smarter than you think...
@@ -19,8 +20,6 @@ If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to
 """
 
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
-
-PROMPT_RESPONSE_MSG = "Reply to this message to continue with this initial prompt."
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
@@ -106,7 +105,8 @@ class ChatGPT(commands.Cog):
             role = "assistant" if msg.author == self.bot.user else "user"
             content = msg.clean_content.removeprefix(chat_cmd)
             if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
-                content = f"{msg.author.display_name}: {content}"
+                name, content = get_name_and_content(msg)
+                content = f"{name}: {content}"
             messages.append(dict(role=role, content=content))
 
         logging.info(f"Making OpenAI request: {messages}")

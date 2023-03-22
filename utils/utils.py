@@ -78,6 +78,14 @@ def get_name_string(message):
         return f"{message.author.mention}"
 
 
+def get_name_and_content(message):
+    if user_is_irc_bot(message):
+        words = message.clean_content.split(" ")
+        return words[0][3:-3], " ".join(words[1:])
+    else:
+        return message.author.display_name, message.clean_content
+
+
 async def is_compsoc_exec_in_guild(ctx: Context, /):
     """Check whether a member is an exec in the UWCS Discord"""
     compsoc_guild = next(
