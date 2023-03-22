@@ -1,0 +1,132 @@
+import asyncio
+import logging
+from typing import Optional
+
+import discord
+import openai
+from cache import AsyncLRU
+from discord import AllowedMentions
+from discord.ext import commands
+from discord.ext.commands import Bot, Context, Cooldown, clean_content
+
+from config import CONFIG
+
+LONG_HELP_TEXT = """
+I AM SICK OF PEOPLE CONSTANTLY CHANGING THE FUCKING PROMPT REEEEEEE
+"""
+
+SHORT_HELP_TEXT = LONG_HELP_TEXT
+
+mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
+
+
+def cooldown_outside_chat_channels(ctx: Context) -> Optional[Cooldown]:
+    return Cooldown(1, 60) if ctx.channel.id not in CONFIG.AI_CHAT_CHANNELS else None
+
+
+class ChatGPT(commands.Cog):
+    def __init__(self, bot: Bot):
+        self.bot = bot
+        openai.api_key = CONFIG.OPENAI_API_KEY
+        self.model = "gpt-3.5-turbo"
+        self.system_prompt = ""
+        # if CONFIG.AI_INCLUDE_NAMES:
+        #     self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
+
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.dynamic_cooldown(cooldown_outside_chat_channels, commands.BucketType.user)
+    async def chat(self, ctx: Context, *, message: str):
+        async with ctx.typing():
+            response = await self.dispatch_api(ctx.message, False)
+            if response:
+                await ctx.reply(response, allowed_mentions=mentions)
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        # Avoid replying to bot or msg that triggers the command anyway
+        if message.author.bot or message.content.startswith(CONFIG.PREFIX):
+            return
+
+        # Only engage if replying to Apollo, use !chat_custom to trigger otherwise
+        previous = await self.fetch_previous(message)
+        if not previous or not previous.author.id == self.bot.user.id:
+            return
+
+        # Trigger command handler
+        message.content = f"{CONFIG.PREFIX}chat_custom {message.content}"
+        ctx = await self.bot.get_context(message)
+        await self.bot.invoke(ctx)
+
+    @chat.error
+    async def on_cooldown_error(self, ctx, error):
+        if isinstance(error, commands.errors.CommandOnCooldown):
+            # await ctx.reply(f"{error} or in a chat channel.")
+            await ctx.message.add_reaction("⏱️")
+
+    async def dispatch_api(
+        self, message: discord.Message, from_msg: bool = False
+    ) -> Optional[str]:
+        chat_cmd = CONFIG.PREFIX + "chat_custom "
+        message_chain = await self.get_message_chain(message)
+
+        is_cmd = lambda m: m.content.startswith(chat_cmd) or (
+            m.interaction and m.interaction.name == "chat"
+        )
+        if from_msg and not any(map(is_cmd, message_chain)):
+            return None
+
+        # messages = [dict(role="system", content=self.system_prompt)]
+        messages = []
+
+        for msg in message_chain:
+            role = "assistant" if msg.author == self.bot.user else "user"
+            content = msg.clean_content.removeprefix(chat_cmd)
+            if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
+                content = f"{msg.author.display_name}: {content}"
+            messages.append(dict(role=role, content=content))
+
+        # Make it so the 1st message is the prompt
+        messages.insert(1, dict(role="user", content="Please introduce yourself."))
+        messages[0]["role"] = "system"
+
+        logging.info(f"Making OpenAI request: {messages}")
+
+        request = lambda: openai.ChatCompletion.create(
+            model=self.model, messages=messages
+        )
+        loop = asyncio.get_running_loop()
+        response = await loop.run_in_executor(None, request)
+        logging.info(f"OpenAI Response: {response}")
+
+        reply = response.choices[0].message.content
+        if CONFIG.AI_INCLUDE_NAMES:
+            reply = reply.removeprefix("Apollo: ")
+            reply = reply.removeprefix("apollo: ")
+            reply = reply.removeprefix(f"{self.bot.user.display_name}: ")
+
+        if len(reply) > 3990:
+            reply = reply[:3990] + "..."
+        return reply
+
+    @AsyncLRU()
+    async def get_message_chain(
+        self, message: discord.Message
+    ) -> list[discord.Message]:
+        """
+        Traverses a chain of replies to get a thread of chat messages between a user and Apollo.
+        """
+        if message is None:
+            return []
+        previous = await self.fetch_previous(message)
+        return (await self.get_message_chain(previous)) + [message]
+
+    async def fetch_previous(
+        self, message: discord.Message
+    ) -> Optional[discord.Message]:
+        if message.reference is not None and message.reference.message_id is not None:
+            return await message.channel.fetch_message(message.reference.message_id)
+        return None
+
+
+async def setup(bot: Bot):
+    await bot.add_cog(ChatGPT(bot))
