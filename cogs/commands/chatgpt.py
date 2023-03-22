@@ -34,9 +34,10 @@ class ChatGPT(commands.Cog):
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @commands.dynamic_cooldown(cooldown_outside_chat_channels, commands.BucketType.user)
     async def chat(self, ctx: Context, *, message: str):
-        response = await self.dispatch_api(ctx.message, False)
-        if response:
-            await ctx.reply(response, allowed_mentions=mentions)
+        async with ctx.typing():
+            response = await self.dispatch_api(ctx.message, False)
+            if response:
+                await ctx.reply(response, allowed_mentions=mentions)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
