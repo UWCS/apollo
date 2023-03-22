@@ -1,3 +1,5 @@
+from functools import lru_cache
+
 import discord
 import openai
 from discord.ext import commands
@@ -60,33 +62,16 @@ class ChatGPT(commands.Cog):
         print(f"OpenAI Response: {response}")
         await message.reply(response.choices[0].message.content)  # type: ignore
 
-    async def get_message_chain(
-        self, messages: list[discord.Message]
-    ) -> list[discord.Message]:
+    @lru_cache()
+    async def get_message_chain(self, message) -> list[discord.Message]:
         """
         Traverses a chain of replies to get a thread of chat messages between a user and Apollo.
         """
-        reply = messages[0]  # the current head of the message chain
-        if reply.reference is not None and reply.reference.message_id is not None:
+        if message.reference is not None and message.reference.message_id is not None:
             # if the reply was a valid reply, fetch it
-            fetched_bot_message = await reply.channel.fetch_message(
-                reply.reference.message_id
-            )
-            if (
-                fetched_bot_message.author == self.bot.user
-                and fetched_bot_message.reference is not None
-                and fetched_bot_message.reference.message_id is not None
-            ):
-                # if the fetched message was a bot message, and then the fetched message is itself a reply
-                fetched_user_message = await reply.channel.fetch_message(
-                    fetched_bot_message.reference.message_id
-                )
-                if fetched_user_message.author != self.bot.user:
-                    # if the fetched user message was indeed a user message, add it to the chain and recurse
-                    return await self.get_message_chain(
-                        [fetched_user_message, fetched_bot_message] + messages
-                    )
-        return messages
+            previous = await message.channel.fetch_message(message.reference.message_id)
+            return await [message] + self.get_message_chain(previous)
+        return []
 
 
 async def setup(bot: Bot):
