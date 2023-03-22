@@ -7,7 +7,7 @@ import openai
 from cache import AsyncLRU
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content, Cooldown
+from discord.ext.commands import Bot, Context, Cooldown, clean_content
 
 from config import CONFIG
 
