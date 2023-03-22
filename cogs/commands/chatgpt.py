@@ -27,6 +27,9 @@ mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_use
 def cooldown_outside_chat_channels(ctx: Context) -> Optional[Cooldown]:
     if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
         return None
+    if isinstance(ctx.channel, discord.Thread):
+        if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
+            return None
     if isinstance(ctx.channel, discord.DMChannel):
         return None
     return Cooldown(1, 60)
