@@ -49,9 +49,10 @@ class ChatGPT(commands.Cog):
         if not previous or not previous.author.id == self.bot.user.id:
             return
 
-        response = await self.dispatch_api(message)
-        if response:
-            await message.reply(response, allowed_mentions=mentions)
+        # Trigger command handler
+        message.content = f"{CONFIG.PREFIX}chat {message.content}"
+        ctx = await self.bot.get_context(message)
+        await self.bot.invoke(ctx)
 
     @chat.error
     async def on_cooldown_error(self, ctx, error):
