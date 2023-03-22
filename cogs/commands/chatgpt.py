@@ -1,9 +1,9 @@
 import logging
-from functools import lru_cache
 from typing import Optional
 
 import discord
 import openai
+from cache import AsyncLRU
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
@@ -66,7 +66,7 @@ class ChatGPT(commands.Cog):
         logging.debug(f"OpenAI Response: {response}")
         return response.choices[0].message.content
 
-    @lru_cache()
+    @AsyncLRU()
     async def get_message_chain(
         self, message: discord.Message
     ) -> list[discord.Message]:
