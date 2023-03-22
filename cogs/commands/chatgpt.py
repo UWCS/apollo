@@ -7,7 +7,7 @@ import openai
 from cache import AsyncLRU
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context, clean_content, Cooldown
 
 from config import CONFIG
 
@@ -19,6 +19,8 @@ SHORT_HELP_TEXT = LONG_HELP_TEXT
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 
+def cooldown_outside_chat_channels(ctx: Context) -> Optional[Cooldown]:
+    return Cooldown(1, 60) if ctx.channel.id not in CONFIG.AI_CHAT_CHANNELS else None
 
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
@@ -30,6 +32,7 @@ class ChatGPT(commands.Cog):
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.dynamic_cooldown(cooldown_outside_chat_channels, commands.BucketType.user)
     async def chat(self, ctx: Context, *, message: str):
         response = await self.dispatch_api(ctx.message, False)
         if response:
@@ -49,6 +52,12 @@ class ChatGPT(commands.Cog):
         response = await self.dispatch_api(message)
         if response:
             await message.reply(response, allowed_mentions=mentions)
+
+    @chat.error
+    async def on_cooldown_error(self, ctx, error):
+        if isinstance(error, commands.errors.CommandOnCooldown):
+            # await ctx.reply(f"{error} or in a chat channel.")
+            await ctx.message.add_reaction("⏱️")
 
     async def dispatch_api(
         self, message: discord.Message, from_msg: bool = False

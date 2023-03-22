@@ -24,7 +24,10 @@ config:
   UWCS_discord_bridge_bot_id: 1337
   # API Key for chatgpt integration
   openai_api_key: openai
+  # Whether to include usernames as part of a prompt
   ai_include_names: True
+  # Channels that chat isn't chat rate limited on
+  ai_chat_channels: [123]
   # Initial priming prompt for chatgpt
   ai_system_prompt: |
     You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.

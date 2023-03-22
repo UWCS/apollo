@@ -23,6 +23,7 @@ class Config:
         self.UWCS_DISCORD_BRIDGE_BOT_ID: int = parsed.get("UWCS_discord_bridge_bot_id")
         self.OPENAI_API_KEY: str = parsed.get("openai_api_key")
         self.AI_INCLUDE_NAMES: bool = parsed.get("ai_include_names")
+        self.AI_CHAT_CHANNELS: list[int] = parsed.get("ai_chat_channels")
         self.AI_SYSTEM_PROMPT: str = parsed.get("ai_system_prompt")
 
         # Configuration
