@@ -27,7 +27,7 @@ class ChatGPT(commands.Cog):
         self.model = "gpt-3.5-turbo"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
-            self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon."
+            self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *, message: str):
@@ -67,7 +67,7 @@ class ChatGPT(commands.Cog):
         for msg in message_chain:
             role = "assistant" if msg.author == self.bot.user else "user"
             content = msg.clean_content.removeprefix(chat_cmd)
-            if CONFIG.AI_INCLUDE_NAMES:
+            if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
                 content = f"{msg.author.display_name}: {content}"
             messages.append(dict(role=role, content=content))
 
@@ -86,7 +86,7 @@ class ChatGPT(commands.Cog):
             reply = reply.removeprefix("apollo: ")
             reply = reply.removeprefix(f"{self.bot.user.display_name}: ")
 
-        if len(reply) > 3990: 
+        if len(reply) > 3990:
             reply = reply[:3990] + "..."
         return reply
 
