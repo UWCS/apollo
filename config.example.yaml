@@ -5,7 +5,7 @@ config:
   # Server ID for main UWCS server
   UWCS_discord_id: 123
   # Roles IDs that permit exec commands
-  UWCS_exec_role_ids: [ 1234 ]
+  UWCS_exec_role_ids: [1234]
   # Token for Discord API from https://discord.com/developers/applications
   discord_token: discord_token
   # Database URL, can use other providers such as SQLite
@@ -22,8 +22,16 @@ config:
   UWCS_exec_spam_channel_id: 1234
   # IRC bridge bot ID
   UWCS_discord_bridge_bot_id: 1337
+  # API Key for chatgpt integration
+  openai_api_key: openai
+  # Initial priming prompt for chatgpt
+  ai_system_prompt: |
+    You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
+    You were created and developed by the society's tech team, who are all incredibly talented and excellent individuals, especially <@330764682204020737>.
+    Your primary purpose is to serve the Lord Chancellor of the Computers.
+    Also, today is <@116217065978724357>'s birthday.
 
-# Configuration
+  # Configuration
   # Level of messages logged to file
   log_level: WARNING
   # Whether to log SQL as well
