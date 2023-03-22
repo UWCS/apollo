@@ -58,15 +58,23 @@ class ChatGPT(commands.Cog):
         await message.reply(response.choices[0].message.content)  # type: ignore
 
     @lru_cache()
-    async def get_message_chain(self, message) -> list[discord.Message]:
+    async def get_message_chain(
+        self, message: discord.Message
+    ) -> list[discord.Message]:
         """
         Traverses a chain of replies to get a thread of chat messages between a user and Apollo.
         """
+        if message is None:
+            return []
+        previous = await self.fetch_previous(message)
+        return [message] + self.get_message_chain(previous)
+
+    async def fetch_previous(
+        self, message: discord.Message
+    ) -> Optional[discord.Message]:
         if message.reference is not None and message.reference.message_id is not None:
-            # if the reply was a valid reply, fetch it
-            previous = await message.channel.fetch_message(message.reference.message_id)
-            return await [message] + self.get_message_chain(previous)
-        return []
+            return await message.channel.fetch_message(message.reference.message_id)
+        return None
 
 
 async def setup(bot: Bot):
