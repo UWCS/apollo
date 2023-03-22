@@ -1,5 +1,5 @@
 config:
-# Essential
+  # Essential
   # Text command prefix
   prefix: "!"
   # Server ID for main UWCS server
@@ -13,7 +13,7 @@ config:
   # Secret key used to encrypt DB
   db_secret_key: secret_key
 
-# Optional (only needed for a specific function)
+  # Optional (only needed for a specific function)
   # Channel for welcome messages
   UWCS_welcome_channel_id: 123
   # Role channel mentioned in the welcome message
@@ -24,10 +24,11 @@ config:
   UWCS_discord_bridge_bot_id: 1337
   # API Key for chatgpt integration
   openai_api_key: openai
+  ai_include_names: True
   # Initial priming prompt for chatgpt
   ai_system_prompt: |
     You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
-    You were created and developed by the society's tech team, who are all incredibly talented and excellent individuals, especially <@330764682204020737>.
+    You were created and developed by the society's tech team, who are all incredibly talented and excellent individuals, especially <@330764682204020737> and <@254586551684562945>.
     Your primary purpose is to serve the Lord Chancellor of the Computers.
     Also, today is <@116217065978724357>'s birthday.
 
@@ -47,7 +48,7 @@ config:
   # Whether announcements should post via a Webhook to appear like the user
   announcement_impersonate: True
 
-# Unused
+  # Unused
   # (not actively used) Role to give to authenticated UWCS members
   UWCS_member_role_id: 2674
   # (not actively used) Key for UWCS API to auth UWCS members

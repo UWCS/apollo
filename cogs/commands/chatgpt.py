@@ -26,6 +26,8 @@ class ChatGPT(commands.Cog):
         openai.api_key = CONFIG.OPENAI_API_KEY
         self.model = "gpt-3.5-turbo"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
+        if CONFIG.AI_INCLUDE_NAMES:
+            self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon."
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *, message: str):
@@ -65,6 +67,8 @@ class ChatGPT(commands.Cog):
         for msg in message_chain:
             role = "assistant" if msg.author == self.bot.user else "user"
             content = msg.clean_content.removeprefix(chat_cmd)
+            if CONFIG.AI_INCLUDE_NAMES:
+                content = f"{msg.author.display_name}: {content}"
             messages.append(dict(role=role, content=content))
 
         logging.info(f"Making OpenAI request: {messages}")
@@ -75,7 +79,16 @@ class ChatGPT(commands.Cog):
         loop = asyncio.get_running_loop()
         response = await loop.run_in_executor(None, request)
         logging.info(f"OpenAI Response: {response}")
-        return response.choices[0].message.content[:3900]
+
+        reply = response.choices[0].message.content
+        if CONFIG.AI_INCLUDE_NAMES:
+            reply = reply.removeprefix("Apollo: ")
+            reply = reply.removeprefix("apollo: ")
+            reply = reply.removeprefix(f"{self.bot.user.display_name}: ")
+
+        if len(reply) > 3990: 
+            reply = reply[:3990] + "..."
+        return reply
 
     @AsyncLRU()
     async def get_message_chain(
