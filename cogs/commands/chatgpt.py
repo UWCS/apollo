@@ -48,7 +48,7 @@ class ChatGPT(commands.Cog):
 
         for msg in message_chain:
             if msg.author == self.bot.user:
-                messages.append({"role": "system", "content": msg.content})
+                messages.append({"role": "assistant", "content": msg.content})
             else:
                 if msg.content.startswith("!chat"):
                     messages.append({"role": "user", "content": msg.clean_content[6:]})
