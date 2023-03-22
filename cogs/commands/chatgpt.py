@@ -68,7 +68,7 @@ class ChatGPT(commands.Cog):
         logging.info(f"Making OpenAI request: {messages}")
         response = openai.ChatCompletion.create(model=self.model, messages=messages)
         logging.info(f"OpenAI Response: {response}")
-        return response.choices[0].message.content
+        return response.choices[0].message.content[3900:]
 
     @AsyncLRU()
     async def get_message_chain(
