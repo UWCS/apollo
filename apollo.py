@@ -22,7 +22,6 @@ Apollo is open source and available at: https://github.com/UWCS/apollo. Pull req
 EXTENSIONS = [
     "cogs.commands.counting",
     "cogs.commands.chatgpt",
-    "cogs.commands.chatgpt_custom"
     "cogs.commands.date",
     "cogs.commands.event_sync",
     "cogs.commands.flip",
