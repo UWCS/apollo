@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import discord
@@ -45,15 +46,14 @@ class ChatGPT(commands.Cog):
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
+        self.cooldowns = {}
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    @commands.dynamic_cooldown(cooldown_outside_chat_channels, BucketType.channel)
     async def prompt(self, ctx: Context, *, message: str):
         # Effectively a dummy command, since just needs something to allow a prompt message
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    @commands.dynamic_cooldown(cooldown_outside_chat_channels, BucketType.channel)
     async def chat(self, ctx: Context, *, message: str):
         await self.cmd(ctx)
 
@@ -75,17 +75,12 @@ class ChatGPT(commands.Cog):
         ctx = await self.bot.get_context(message)
         await self.cmd(ctx)
 
-    @chat.error
-    async def on_cooldown_error(self, ctx, error):
-        if isinstance(error, commands.errors.CommandOnCooldown):
-            # await ctx.reply(f"{error} or in a chat channel.")
-            await ctx.message.add_reaction("⏱️")
-
     async def cmd(self, ctx: Context):
         # Create history chain
         messages = await self.create_history(ctx.message)
-        if not messages:
+        if not messages or await self.in_cooldown(ctx):
             return
+
         # If valid, dispatch to OpenAI and reply
         async with ctx.typing():
             response = await self.dispatch_api(messages)
@@ -119,9 +114,29 @@ class ChatGPT(commands.Cog):
             content = msg.clean_content.removeprefix(chat_cmd)
             if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
                 name, content = get_name_and_content(msg)
-                content = f"{name}: {content}"
+                content = f"{name}: {content.removeprefix(chat_cmd)}"
             messages.append(dict(role=role, content=content))
         return messages
+
+    async def in_cooldown(self, ctx):
+        # If is in allowed channel
+        if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
+            return False
+        if isinstance(ctx.channel, discord.Thread):
+            if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
+                return False
+        if isinstance(ctx.channel, discord.DMChannel):
+            return False
+
+        # Limit with 60s cooldown
+        now = datetime.now(timezone.utc)
+        if self.cooldowns.get(ctx.channel.id):
+            cutoff = now - timedelta(seconds=60)
+            if ctx.message.created_at > cutoff:
+                await ctx.message.add_reaction("⏱️")
+                return True
+        self.cooldowns[ctx.channel.id] = now
+        return False
 
     async def dispatch_api(self, messages) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
