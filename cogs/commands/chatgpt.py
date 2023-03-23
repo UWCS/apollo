@@ -126,12 +126,10 @@ class ChatGPT(commands.Cog):
     async def dispatch_api(self, messages) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
 
-        # Make request as async
-        request = lambda: openai.ChatCompletion.create(
+        # Make request
+        response = await openai.ChatCompletion.acreate(
             model=self.model, messages=messages
         )
-        loop = asyncio.get_running_loop()
-        response = await loop.run_in_executor(None, request)
         logging.info(f"OpenAI Response: {response}")
 
         # Remove prefix that chatgpt might add
