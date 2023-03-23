@@ -23,8 +23,14 @@ If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
-chat_cmd = CONFIG.PREFIX + "chat "
-prompt_cmd = CONFIG.PREFIX + "prompt "
+chat_cmd = CONFIG.PREFIX + "chat"
+prompt_cmd = CONFIG.PREFIX + "prompt"
+
+
+def clean(msg, *prefixes):
+    for pre in prefixes:
+        msg = msg.strip().removeprefix(pre)
+    return msg.strip()
 
 
 class ChatGPT(commands.Cog):
@@ -43,7 +49,7 @@ class ChatGPT(commands.Cog):
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def chat(self, ctx: Context, *, message: str):
+    async def chat(self, ctx: Context, *, message: Optional[str] = None):
         await self.cmd(ctx)
 
     @commands.Cog.listener()
@@ -91,7 +97,7 @@ class ChatGPT(commands.Cog):
         # If first message starts with !prompt use that for initial
         initial_msg = message_chain[0].content
         if initial_msg.startswith(prompt_cmd):
-            initial = initial_msg.removeprefix(prompt_cmd)
+            initial = clean(initial_msg, prompt_cmd)
             message_chain = message_chain[1:]
         else:
             initial = self.system_prompt
@@ -100,10 +106,14 @@ class ChatGPT(commands.Cog):
         # Convert to dict form for request
         for msg in message_chain:
             role = "assistant" if msg.author == self.bot.user else "user"
-            content = msg.clean_content.removeprefix(chat_cmd)
+            # Skip empty messages (if you want to invoke on a pre-existing chain)
+            if not (content := clean(msg.clean_content, chat_cmd)):
+                continue
+            # Add name to start of message for user msgs
             if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
                 name, content = get_name_and_content(msg)
-                content = f"{name}: {content.removeprefix(chat_cmd)}"
+                content = f"{name}: {clean(content, chat_cmd)}"
+
             messages.append(dict(role=role, content=content))
         return messages
 
@@ -139,9 +149,8 @@ class ChatGPT(commands.Cog):
         # Remove prefix that chatgpt might add
         reply = response.choices[0].message.content
         if CONFIG.AI_INCLUDE_NAMES:
-            reply = reply.removeprefix("Apollo: ")
-            reply = reply.removeprefix("apollo: ")
-            reply = reply.removeprefix(f"{self.bot.user.display_name}: ")
+            name = f"{self.bot.user.display_name}: "
+            reply = clean(reply, "Apollo: ", "apollo: ", name)
 
         # Truncate if long
         if len(reply) > 3990:
