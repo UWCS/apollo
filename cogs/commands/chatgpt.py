@@ -48,15 +48,12 @@ class ChatGPT(commands.Cog):
     @commands.dynamic_cooldown(cooldown_outside_chat_channels, BucketType.channel)
     async def prompt(self, ctx: Context, *, message: str):
         # Effectively a dummy command, since just needs something to allow a prompt message
-        await ctx.add_reaction("✅", allowed_mentions=mentions)
+        await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @commands.dynamic_cooldown(cooldown_outside_chat_channels, BucketType.channel)
     async def chat(self, ctx: Context, *, message: str):
-        async with ctx.typing():
-            response = await self.dispatch_api(ctx.message, False)
-            if response:
-                await ctx.reply(response, allowed_mentions=mentions)
+        await self.cmd(ctx)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -69,10 +66,8 @@ class ChatGPT(commands.Cog):
         if not previous or not previous.author.id == self.bot.user.id:
             return
 
-        # Trigger command handler
-        message.content = f"{CONFIG.PREFIX}chat {message.content}"
         ctx = await self.bot.get_context(message)
-        await self.bot.invoke(ctx)
+        await self.cmd(ctx)
 
     @chat.error
     async def on_cooldown_error(self, ctx, error):
@@ -80,21 +75,30 @@ class ChatGPT(commands.Cog):
             # await ctx.reply(f"{error} or in a chat channel.")
             await ctx.message.add_reaction("⏱️")
 
-    async def dispatch_api(
-        self, message: discord.Message, from_msg: bool = False
-    ) -> Optional[str]:
+    async def cmd(self, ctx: Context):
+        messages = await self.create_history(ctx.message)
+        if not messages:
+            return
+        async with ctx.typing():
+            response = await self.dispatch_api(messages)
+            if response:
+                await ctx.reply(response, allowed_mentions=mentions)
+
+    async def create_history(self, message):
         chat_cmd = CONFIG.PREFIX + "chat "
         prompt_cmd = CONFIG.PREFIX + "prompt "
         message_chain = await self.get_message_chain(message)
 
-        # If a message in the chain triggered a !chat or /chat
-        is_cmd = lambda m: m.content.startswith(chat_cmd) or (
-            m.interaction and m.interaction.name == "chat"
+        # If a message in the chain triggered a !chat or !prompt or /chat
+        is_cmd = (
+            lambda m: m.content.startswith(chat_cmd)
+            or m.content.startswith(prompt_cmd)
+            or (m.interaction is not None and m.interaction.name == "chat")
         )
-        if from_msg and not any(map(is_cmd, message_chain)):
-            return None
+        if not any(map(is_cmd, message_chain)):
+            return
 
-        # If first message starts with !prompt use that instead
+        # If first message starts with !prompt use that for initial
         initial_msg = message_chain[0].content
         if initial_msg.startswith(prompt_cmd):
             initial = initial_msg.removeprefix(prompt_cmd)
@@ -111,7 +115,9 @@ class ChatGPT(commands.Cog):
                 name, content = get_name_and_content(msg)
                 content = f"{name}: {content}"
             messages.append(dict(role=role, content=content))
+        return messages
 
+    async def dispatch_api(self, messages) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
 
         # Make request as async
