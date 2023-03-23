@@ -22,6 +22,8 @@ If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
+chat_cmd = CONFIG.PREFIX + "chat "
+prompt_cmd = CONFIG.PREFIX + "prompt "
 
 
 def cooldown_outside_chat_channels(ctx: Context) -> Optional[Cooldown]:
@@ -63,8 +65,12 @@ class ChatGPT(commands.Cog):
 
         # Only engage if replying to Apollo, use !chat to trigger otherwise
         previous = await self.fetch_previous(message)
-        if not previous or not previous.author.id == self.bot.user.id:
+        if not previous:
             return
+        if not previous.author.id == self.bot.user.id:
+            # Allow if replying to prompt
+            if not previous.content.startswith(prompt_cmd):
+                return
 
         ctx = await self.bot.get_context(message)
         await self.cmd(ctx)
@@ -76,17 +82,17 @@ class ChatGPT(commands.Cog):
             await ctx.message.add_reaction("⏱️")
 
     async def cmd(self, ctx: Context):
+        # Create history chain
         messages = await self.create_history(ctx.message)
         if not messages:
             return
+        # If valid, dispatch to OpenAI and reply
         async with ctx.typing():
             response = await self.dispatch_api(messages)
             if response:
                 await ctx.reply(response, allowed_mentions=mentions)
 
     async def create_history(self, message):
-        chat_cmd = CONFIG.PREFIX + "chat "
-        prompt_cmd = CONFIG.PREFIX + "prompt "
         message_chain = await self.get_message_chain(message)
 
         # If a message in the chain triggered a !chat or !prompt or /chat
