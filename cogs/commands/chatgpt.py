@@ -5,7 +5,6 @@ from typing import Optional
 
 import discord
 import openai
-from cache import AsyncLRU
 from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
@@ -157,7 +156,6 @@ class ChatGPT(commands.Cog):
             reply = reply[:3990] + "..."
         return reply
 
-    @AsyncLRU()
     async def get_message_chain(
         self, message: discord.Message
     ) -> list[discord.Message]:
