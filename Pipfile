@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-"discord.py" = "~=2.0.0"
+"discord.py" = "~=2.2.0"
 sqlalchemy = "~=1.4.45"
 sqlalchemy-utils = "~=0.39.0"
 psycopg2-binary = "~=2.9.5"
@@ -26,8 +26,7 @@ more-itertools = "~=8.8.0"
 pillow = "~=9.3.0"
 discord-simple-pretty-help = "==0.0.1"
 icalendar = "~=4.1.0"
-openai = "*"
-async-cache = "*"
+openai = "~=0.27.2"
 
 [dev-packages]
 black = "~=22.12"
