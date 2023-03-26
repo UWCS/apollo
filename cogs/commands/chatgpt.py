@@ -45,6 +45,8 @@ class ChatGPT(commands.Cog):
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def prompt(self, ctx: Context, *, message: str):
         # Effectively a dummy command, since just needs something to allow a prompt message
+        if await self.in_cooldown(ctx):
+            return
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
