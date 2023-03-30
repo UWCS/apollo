@@ -36,7 +36,7 @@ class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.model = "gpt-3.5-turbo"
+        self.model = "gpt-4"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
