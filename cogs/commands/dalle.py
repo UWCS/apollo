@@ -29,8 +29,10 @@ class Dalle(commands.Cog):
     async def dalle(self, ctx: Context, *, args: str = ""):
         """Generates an image based on the prompt using DALL-E"""
         prompt = await clean_content().convert(ctx, args)
-        url = await self.generate_image(prompt)
-        image = await self.get_image(url)
+
+        async with ctx.typing():
+            url = await self.generate_image(prompt)
+            image = await self.get_image(url)
         if image is not None:
             await ctx.reply(file=image, mention_author=True)
         else:
