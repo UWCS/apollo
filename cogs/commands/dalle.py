@@ -43,14 +43,14 @@ class Dalle(commands.Cog):
             await ctx.reply("Failed to generate image", mention_author=True)
         
 
-    def generate_image(self, prompt): # generates the image from open ai
+    async def generate_image(self, prompt): # generates the image from open ai
         logging.info(f"Generating image with prompt: {prompt}")
-        respone = openai.Image.create(
+        response = await openai.Image.acreate(
             prompt=prompt,
             n=1,
             size="256x256",
         )
-        return respone["data"][0]["url"] # returns the url of the image
+        return response["data"][0]["url"] # returns the url of the image
     
     async def get_image(self, url):
         async with aiohttp.ClientSession() as session:
