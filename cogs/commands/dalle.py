@@ -3,7 +3,8 @@ import discord
 import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
-import requests
+import aiohttp
+import asyncio
 from io import BytesIO
 
 from config import CONFIG
@@ -51,14 +52,15 @@ class Dalle(commands.Cog):
         )
         return respone["data"][0]["url"] # returns the url of the image
     
-    def get_image(self, url):
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            logging.info("successfully got image")
-            return discord.File(BytesIO(response.content), filename="image.png")
-        else:
-            logging.info("failed to get image")
-            return None
+    async def get_image(self, url):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    logging.info("successfully got image")
+                    return discord.File(BytesIO(await response.read()), filename="image.png")
+                else:
+                    logging.info("failed to get image")
+                    return None
 
 async def setup(bot: Bot):
     await bot.add_cog(Dalle(bot))
