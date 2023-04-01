@@ -1,14 +1,12 @@
 import logging
 import discord
 import openai
-from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
+from discord.ext.commands import Bot, Context, clean_content
 import requests
 from io import BytesIO
 
 from config import CONFIG
-from utils.utils import get_name_and_content
 
 LONG_HELP_TEXT = """
 Apollo is more creative than you think...
