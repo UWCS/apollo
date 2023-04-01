@@ -18,6 +18,7 @@ To use, simply type `!dalle <prompt>` . Apollo will then generate an image based
 
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
+
 class Dalle(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -51,10 +52,13 @@ class Dalle(commands.Cog):
             async with session.get(url) as response:
                 if response.status == 200:
                     logging.info("successfully got image")
-                    return discord.File(BytesIO(await response.read()), filename="image.png")
+                    return discord.File(
+                        BytesIO(await response.read()), filename="image.png"
+                    )
                 else:
                     logging.info("failed to get image")
                     return None
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Dalle(bot))
