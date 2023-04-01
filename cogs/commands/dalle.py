@@ -3,9 +3,9 @@ from io import BytesIO
 
 import aiohttp
 import discord
-import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
+import openai
 
 from config import CONFIG
 
