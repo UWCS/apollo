@@ -4,9 +4,10 @@ from io import BytesIO
 import aiohttp
 import discord
 import openai
-from config import CONFIG
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
+
+from config import CONFIG
 
 LONG_HELP_TEXT = """
 Apollo is more creative than you think...
