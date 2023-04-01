@@ -41,8 +41,8 @@ jobs:
 
       - name: Check formatting with isort and black
         run: |
-          pipenv run isort --check-only --skip __tests__ .
-          pipenv run black --check --exclude __tests__ .
+          pipenv run isort --check-only --diff --skip __tests__ .
+          pipenv run black --check --diff --exclude __tests__ .
 
   test:
     name: Run Tests with Pytest
@@ -155,7 +155,7 @@ jobs:
           tags: | # tag with commit hash and with 'latest'
             type=sha 
             type=raw,value=latest,enable={{is_default_branch}}
-            
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
