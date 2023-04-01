@@ -6,7 +6,7 @@ from typing import Literal, Optional
 import discord
 from discord import Intents
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, Greedy, check, when_mentioned_or
+from discord.ext.commands import Bot, Context, Greedy, check, errors, when_mentioned_or
 from discord_simple_pretty_help import SimplePrettyHelp
 
 from config import CONFIG
@@ -107,6 +107,40 @@ async def sync(ctx: Context) -> None:
     """
     synced = await ctx.bot.tree.sync()
     await ctx.send(f"Synced {len(synced)} commands globally to the current guild.")
+
+
+@bot.event
+async def on_command_error(ctx: Context, error: Exception):
+    # await ctx.message.add_reaction("🚫")
+    message = ""
+    reraise = None
+    # Custom discord parsing error messages
+    if isinstance(error, errors.CommandNotFound):
+        pass
+    elif isinstance(error, errors.NoPrivateMessage):
+        message = "Cannot run this command in DMs"
+    elif isinstance(error, errors.ExpectedClosingQuoteError):
+        message = f"Mismatching quotes, {str(error)}"
+    elif isinstance(error, errors.MissingRequiredArgument):
+        message = f"Argument {str(error.param.name)} is missing\nUsage: `{ctx.prefix}{ctx.command.name} {ctx.command.signature}`"
+    elif isinstance(error, discord.Forbidden):
+        message = f"Bot does not have permissions to do this. {str(error.text)}"
+        reraise = error
+    elif hasattr(error, "original"):
+        await on_command_error(ctx, error.original)
+        return
+    elif isinstance(error, errors.CommandError):
+        message = str(error)
+    else:
+        message = f"{error}"
+        reraise = error
+    if reraise:
+        logging.error(reraise, exc_info=True)
+
+    if message:
+        await ctx.send(f"**Error:** `{message}`")
+    if reraise:
+        raise reraise
 
 
 if __name__ == "__main__":
