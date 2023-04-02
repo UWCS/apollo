@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  apollo-db:
+  db:
     image: postgres:12
     environment:
       POSTGRES_USER: apollo
@@ -13,8 +13,7 @@ services:
 
   apollo:
     build: .
-    depends_on:
-      - apollo-db
+      - db
     volumes:
       - type: bind
         source: ./config.yaml
