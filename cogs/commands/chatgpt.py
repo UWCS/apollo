@@ -1,7 +1,8 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone, date
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
+
 import aiohttp
 import discord
 import openai
