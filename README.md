@@ -28,7 +28,7 @@ Run Apollo using `pipenv run python apollo.py`
 
 A Dockerfile and docker-compose are provided for easily running Apollo. Assuming you already have docker installed, run `docker compose up` to start both Apollo and a postgres database.
 
-The compose file uses a docker compose config to mount `config.yaml` into the container at runtime, not at build time. Copy `config.example.yaml` to `config.yaml` and configure the fields so that compose can do this. You will need to change the database url to `postgresql://apollo:apollo@apollo-db/apollo` if you wish to connect to the containerised database.
+The compose file uses a read-only bind mount to mount `config.yaml` into the container at runtime, not at build time. Copy `config.example.yaml` to `config.yaml` and configure the fields so that compose can do this. You will need to change the database url to `postgresql://apollo:apollo@apollo-db/apollo` if you wish to connect to the containerised database.
 
 The docker image builds `alembic.ini` into it by copying the example, as it is rare any values in this wish to be changed on a per-deployment basis.
 

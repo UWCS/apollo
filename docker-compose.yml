@@ -8,7 +8,6 @@ services:
       POSTGRES_DB: apollo
       POSTGRES_PASSWORD: apollo
       POSTGRES_PORT: "5432"
-    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -16,13 +15,11 @@ services:
     build: .
     depends_on:
       - apollo-db
-    configs:
-      - source: bot-config
+    volumes:
+      - type: bind
+        source: ./config.yaml
         target: /app/config.yaml
-
-configs:
-  bot-config:
-    file: config.yaml
+        read_only: true
 
 volumes:
   postgres_data:
