@@ -5,7 +5,7 @@ import aiohttp
 import discord
 import openai
 from discord.ext import commands
-from discord.ext.commands import Bot, BucketType, Context, clean_content
+from discord.ext.commands import Bot, Context, clean_content, DynamicCooldownMapping
 
 from config import CONFIG
 
@@ -23,19 +23,18 @@ class Dalle(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.cooldowns = {}
 
-    @commands.cooldown(1, 10, BucketType.user)
+    @DynamicCooldownMapping(get_cooldown)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def dalle(self, ctx: Context, *, args: str):
         """Generates an image based on the prompt using DALL-E"""
         prompt = await clean_content().convert(ctx, args)
 
-        if prompt == "":
+        if prompt == "": # if no prompt error
             await ctx.reply("Please provide a prompt", mention_author=True)
             return
 
-        async with ctx.typing():
+        async with ctx.typing(): # show typing whilst generating image
             url = await self.generate_image(prompt)
             image = await self.get_image(url)
         if image is not None:
@@ -65,6 +64,18 @@ class Dalle(commands.Cog):
                 else:
                     logging.info("failed to get image")
                     return None
+                
+    async def get_cooldown (self, ctx: Context):
+        channel = ctx.channel
+        if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
+            return 5
+        if isinstance(ctx.channel, discord.Thread):
+            if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
+                return 5
+        if isinstance(ctx.channel, discord.DMChannel):
+            return 5
+        return 60
+        
 
 
 async def setup(bot: Bot):
