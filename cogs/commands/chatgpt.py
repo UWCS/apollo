@@ -188,12 +188,12 @@ class ChatGPT(commands.Cog):
     async def update_channel_descriptions(self):
         """
         Update the AI chat description to include the current API usage.
+        Assumes the channel to be updated is the first one in the list.
         Runs in a task loop, firing periodically
         """
-        channels = (
-            discord.utils.get(self.bot.get_all_channels(), id=c)
-            for c in CONFIG.AI_CHAT_CHANNELS
-        )
+        channel = self.bot.get_channel(CONFIG.AI_CHAT_CHANNELS[0])
+        if not isinstance(channel, discord.TextChannel):
+            raise Exception("First channel in AI_CHAT_CHANNELS must be a text channel")
         spent_usd = await self.get_api_usage() / 100
 
         # we need to do currency conversion
@@ -204,13 +204,9 @@ class ChatGPT(commands.Cog):
             rate = (await resp.json())["result"]
 
         spent_gbp = round(spent_usd * rate, 4)
-
-        for ch in channels:
-            # fetches all channels, we only want to edit them if they're text channels
-            if isinstance(ch, discord.TextChannel):
-                await ch.edit(
-                    topic=f"Chat with Apollo here! API usage to date: £{spent_gbp}"
-                )
+        await channel.edit(
+            topic=f"Chat with Apollo here! API usage to date: £{spent_gbp}"
+        )
 
     @update_channel_descriptions.before_loop
     async def before_updates(self):
@@ -242,7 +238,7 @@ class ChatGPT(commands.Cog):
                 *(session.get(url=self.usage_endpoint, params=ps) for ps in date_pairs)
             )
 
-            if all(r.status == 200 for r in responses):
+            if all(r.ok for r in responses):
                 # happy path
                 # fetching response content as json is a coro
                 usage = await asyncio.gather(*(r.json() for r in responses))
