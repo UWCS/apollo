@@ -26,7 +26,7 @@ class Dalle(commands.Cog):
         self.cooldowns = {}
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def dalle(self, ctx: Context, *, args: str = ""):
+    async def dalle(self, ctx: Context, *, args: str):
         """Generates an image based on the prompt using DALL-E"""
         prompt = await clean_content().convert(ctx, args)
 
