@@ -66,7 +66,7 @@ class Dalle(commands.Cog):
                     return None
                 
     async def get_cooldown (self, ctx: Context):
-        channel = ctx.channel
+        """cooldown for command: 5s in ai channels (or DMs), 60s everywhere else"""
         if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
             return 5
         if isinstance(ctx.channel, discord.Thread):
