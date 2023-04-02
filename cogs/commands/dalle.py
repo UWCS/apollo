@@ -25,14 +25,14 @@ class Dalle(commands.Cog):
         openai.api_key = CONFIG.OPENAI_API_KEY
 
     def get_cooldown (ctx: Context):
-        """cooldown for command: 5s in ai channels (or DMs), 60s everywhere else"""
+        """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
         if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
-            return commands.cooldown(1, 5)
+            return commands.cooldown(1, 1)
         if isinstance(ctx.channel, discord.Thread):
             if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
-                return commands.cooldown(1, 5)
+                return commands.cooldown(1, 1)
         if isinstance(ctx.channel, discord.DMChannel):
-            return commands.cooldown(1, 5)
+            return commands.cooldown(1, 1)
         return commands.cooldown(1, 60)
 
     @commands.dynamic_cooldown(get_cooldown, commands.BucketType.channel)
@@ -75,7 +75,6 @@ class Dalle(commands.Cog):
                 else:
                     logging.info("failed to get image")
                     return None
-
 
 async def setup(bot: Bot):
     await bot.add_cog(Dalle(bot))
