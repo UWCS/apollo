@@ -5,7 +5,7 @@ import aiohttp
 import discord
 import openai
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, BucketType, Context, clean_content
 
 from config import CONFIG
 
@@ -13,7 +13,7 @@ LONG_HELP_TEXT = """
 Apollo is more creative than you think...
 
 Apollo can now generate images using openAI's DALL-E model. 
-To use, simply type `!dalle <prompt>` . Apollo will then generate an image based on the prompt.
+To use, simply type `!dalle <prompt>` or `/dalle <prompt>`. Apollo will then generate an image based on the prompt.
 """
 
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
@@ -25,6 +25,7 @@ class Dalle(commands.Cog):
         openai.api_key = CONFIG.OPENAI_API_KEY
         self.cooldowns = {}
 
+    @commands.cooldown(1, 10, BucketType.user)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def dalle(self, ctx: Context, *, args: str):
         """Generates an image based on the prompt using DALL-E"""
