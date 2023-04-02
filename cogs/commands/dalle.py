@@ -5,7 +5,7 @@ import aiohttp
 import discord
 import openai
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content, DynamicCooldownMapping
+from discord.ext.commands import Bot, Context, clean_content
 
 from config import CONFIG
 
@@ -24,7 +24,18 @@ class Dalle(commands.Cog):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
 
-    @DynamicCooldownMapping(get_cooldown)
+    def get_cooldown (ctx: Context):
+        """cooldown for command: 5s in ai channels (or DMs), 60s everywhere else"""
+        if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
+            return commands.cooldown(1, 5)
+        if isinstance(ctx.channel, discord.Thread):
+            if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
+                return commands.cooldown(1, 5)
+        if isinstance(ctx.channel, discord.DMChannel):
+            return commands.cooldown(1, 5)
+        return commands.cooldown(1, 60)
+
+    @commands.dynamic_cooldown(get_cooldown, commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def dalle(self, ctx: Context, *, args: str):
         """Generates an image based on the prompt using DALL-E"""
@@ -38,7 +49,7 @@ class Dalle(commands.Cog):
             url = await self.generate_image(prompt)
             image = await self.get_image(url)
         if image is not None:
-            await ctx.reply(file=image, mention_author=True)
+            await ctx.reply(file=image, mention_author=True)  
         else:
             await ctx.reply("Failed to generate image :wah:", mention_author=True)
 
@@ -64,18 +75,6 @@ class Dalle(commands.Cog):
                 else:
                     logging.info("failed to get image")
                     return None
-                
-    async def get_cooldown (self, ctx: Context):
-        """cooldown for command: 5s in ai channels (or DMs), 60s everywhere else"""
-        if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
-            return 5
-        if isinstance(ctx.channel, discord.Thread):
-            if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
-                return 5
-        if isinstance(ctx.channel, discord.DMChannel):
-            return 5
-        return 60
-        
 
 
 async def setup(bot: Bot):
