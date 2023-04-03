@@ -1,12 +1,13 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
+import aiohttp
 import discord
 import openai
 from discord import AllowedMentions
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
 
 from config import CONFIG
@@ -35,12 +36,19 @@ def clean(msg, *prefixes):
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        # When apollo gained ai capabilities, for calculating API costs
+        self.ai_epoch = date(year=2023, month=3, day=1)
+        self.usage_endpoint = "https://api.openai.com/dashboard/billing/usage"
+
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.model = "gpt-4"
+        self.model = "gpt-3.5-turbo"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
         self.cooldowns = {}
+
+        # have to start the task loop
+        self.update_channel_descriptions.start()
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def prompt(self, ctx: Context, *, message: str):
@@ -175,6 +183,75 @@ class ChatGPT(commands.Cog):
         if message.reference is not None and message.reference.message_id is not None:
             return await message.channel.fetch_message(message.reference.message_id)
         return None
+
+    @tasks.loop(minutes=30)
+    async def update_channel_descriptions(self):
+        """
+        Update the AI chat description to include the current API usage.
+        Assumes the channel to be updated is the first one in the list.
+        Runs in a task loop, firing periodically
+        """
+        channel = self.bot.get_channel(CONFIG.AI_CHAT_CHANNELS[0])
+        if not isinstance(channel, discord.TextChannel):
+            raise Exception("First channel in AI_CHAT_CHANNELS must be a text channel")
+        spent_usd = await self.get_api_usage() / 100
+
+        # we need to do currency conversion
+        async with aiohttp.ClientSession() as session:
+            resp = await session.get(
+                "https://api.exchangerate.host/convert?from=USD&to=GBP"
+            )
+            rate = (await resp.json())["result"]
+
+        spent_gbp = round(spent_usd * rate, 4)
+        await channel.edit(
+            topic=f"Chat with Apollo here! API usage to date: £{spent_gbp}"
+        )
+
+    @update_channel_descriptions.before_loop
+    async def before_updates(self):
+        """
+        Tells the task loop to wait until the bot is ready before starting
+        """
+        await self.bot.wait_until_ready()
+
+    async def get_api_usage(self) -> float:
+        """
+        Gets the cumulative usage of the OpenAI API since self.ai_epoch
+        Returns the usage in USD cents
+        **The API endpoint being used is undocumented, and may break at any time**
+        """
+        # we have to fetch it in 100 day chunks, because of odd API limitations
+        chunks = [date.today() + timedelta(days=1)]
+        while chunks[-1] > self.ai_epoch:
+            chunks.append(chunks[-1] - timedelta(days=98))
+
+        date_pairs = (
+            {"start_date": str(start), "end_date": str(end)}
+            for (end, start) in zip(chunks, chunks[1:])
+        )
+
+        headers = {"Authorization": f"Bearer {CONFIG.OPENAI_API_KEY}"}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            # asyncio.gather schedules all the futures simultaneously
+            responses = await asyncio.gather(
+                *(session.get(url=self.usage_endpoint, params=ps) for ps in date_pairs)
+            )
+
+            if all(r.ok for r in responses):
+                # happy path
+                # fetching response content as json is a coro
+                usage = await asyncio.gather(*(r.json() for r in responses))
+                return sum(float(u["total_usage"]) for u in usage)
+            else:
+                # pin down the errors
+                statuses = ", ".join(
+                    f"{r.status}: {r.reason}" for r in responses if r.status != 200
+                )
+                raise Exception(
+                    "Failed to fetch OpenAI API usage: error responses were: "
+                    + statuses
+                )
 
 
 async def setup(bot: Bot):

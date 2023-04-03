@@ -1,28 +1,25 @@
 version: "3"
 
 services:
-  apollo-db:
+  db:
     image: postgres:12
     environment:
       POSTGRES_USER: apollo
       POSTGRES_DB: apollo
       POSTGRES_PASSWORD: apollo
       POSTGRES_PORT: "5432"
-    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   apollo:
     build: .
     depends_on:
-      - apollo-db
-    configs:
-      - source: bot-config
+      - db
+    volumes:
+      - type: bind
+        source: ./config.yaml
         target: /app/config.yaml
-
-configs:
-  bot-config:
-    file: config.yaml
+        read_only: true
 
 volumes:
   postgres_data:

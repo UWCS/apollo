@@ -28,16 +28,18 @@ Run Apollo using `pipenv run python apollo.py`
 
 A Dockerfile and docker-compose are provided for easily running Apollo. Assuming you already have docker installed, run `docker compose up` to start both Apollo and a postgres database.
 
-The compose file uses a docker compose config to mount `config.yaml` into the container at runtime, not at build time. Copy `config.example.yaml` to `config.yaml` and configure the fields so that compose can do this. You will need to change the database url to `postgresql://apollo:apollo@apollo-db/apollo` if you wish to connect to the containerised database.
+The compose file uses a read-only bind mount to mount `config.yaml` into the container at runtime, not at build time. Copy `config.example.yaml` to `config.yaml` and configure the fields so that compose can do this. You will need to change the database url to `postgresql://apollo:apollo@db/apollo` if you wish to connect to the containerised database. Be sure to configure the rest of the fields too: you need a discord bot token.
 
 The docker image builds `alembic.ini` into it by copying the example, as it is rare any values in this wish to be changed on a per-deployment basis.
 
 When you first create the database container, you'll need to apply migrations:
 
-1. Run `docker compose up` to start both services. The python one won't work, but leave it running.
+1. Run `docker compose up -d` to start both services in the background. The python one won't work, but leave it running.
    - When changing any source files, the container will have to be rebuilt: `docker compose up --build`
+   - For containers running in the background, you can get the outputs using `docker compose logs`
 2. Run `docker compose exec apollo alembic upgrade head` to apply the database migrations.
-3. Run `docker compose restart apollo` to restart the bot with migrations applied.
+3. Run `docker compose down && docker compose up` to restart both services with the migrations applied.
+   - Apollo will now be running in the foreground
 
 Migrations will need to be re-applied every time the database schema changes.
 

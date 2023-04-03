@@ -8,9 +8,6 @@ from discord.ext.commands import Bot, Context
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.git_rev = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"], capture_output=True
-        ).stdout.decode()
 
     @commands.hybrid_command()
     async def zed0(self, ctx: Context):
@@ -100,11 +97,6 @@ A Minecraft survival server running at `warwickminecraft.uk`
     async def pong(self, ctx: Context):
         """Ping!"""
         await ctx.send("<:pong_ping:1009151221338230875>")
-
-    @commands.hybrid_command(brief="Apollo's current version")
-    async def version(self, ctx: Context):
-        """Print the SHA1 hash of HEAD in the deployed Apollo repository."""
-        await ctx.send(self.git_rev)
 
     @commands.hybrid_command(aliases=["xyproblem"])
     async def xy(self, ctx: Context):
