@@ -14,6 +14,7 @@ Apollo is more creative than you think...
 
 Apollo can now generate images using openAI's DALL-E model. 
 To use, simply type `!dalle <prompt>` or `/dalle <prompt>`. Apollo will then generate an image based on the prompt.
+Once generated buttons can be used to regenerate the image (create a new image based on the prompt) or create a variant of the original image.
 """
 
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
@@ -48,7 +49,7 @@ class Dalle(commands.Cog):
         async with ctx.typing(): # show typing whilst generating image
             url = await self.generate_image(prompt)
             image = discord.File(
-                await get_image(url), 
+                await self.get_image(url), 
                 filename="image.png"
             )
         if image is not None:
