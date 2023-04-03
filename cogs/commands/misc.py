@@ -9,7 +9,6 @@ class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-
     @commands.hybrid_command()
     async def zed0(self, ctx: Context):
         """Very important command."""
