@@ -25,11 +25,11 @@ class Dalle(commands.Cog):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
 
-    def get_cooldown (ctx: Context):
+    def get_cooldown(self, ctx: Context):
         """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
         if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
             return commands.cooldown(1, 1)
-        if isinstance(ctx.channel, discord.Thread):
+        if isinstance(ctx.channel, discord.Thread) and ctx.channel.parent:
             if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
                 return commands.cooldown(1, 1)
         if isinstance(ctx.channel, discord.DMChannel):
@@ -42,19 +42,17 @@ class Dalle(commands.Cog):
         """Generates an image based on the prompt using DALL-E"""
         prompt = await clean_content().convert(ctx, args)
 
-        if prompt == "": # if no prompt error
+        if prompt == "":  # if no prompt error
             await ctx.reply("Please provide a prompt", mention_author=True)
             return
 
-        async with ctx.typing(): # show typing whilst generating image
+        async with ctx.typing():  # show typing whilst generating image
             url = await self.generate_image(prompt)
-            image = discord.File(
-                await self.get_image(url), 
-                filename="image.png"
-            )
+            image = await self.get_image(url)
         if image is not None:
+            file = discord.File(image, filename="image.png")
             view = DalleView(timeout=None)
-            message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
+            message = await ctx.reply(prompt, file=file, mention_author=True, view=view)
             view.message = message
         else:
             await ctx.reply("Failed to generate image :wah:", mention_author=True)
@@ -79,8 +77,8 @@ class Dalle(commands.Cog):
                 else:
                     logging.info("failed to get image")
                     return None
-                
-    async def generate_variant(image):
+
+    async def generate_variant(self, image):
         """generates a variant of the image"""
         byte_array = image.getvalue()
         response = await openai.Image.acreate_variation(
@@ -89,19 +87,24 @@ class Dalle(commands.Cog):
             size="256x256",
         )
         return response["data"][0]["url"]
-    
-class DalleView(discord.ui.view):
+
+
+class DalleView(discord.ui.View):
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
     async def regenerate(self, interaction, button):
         """renegerates the image"""
-        self.edit_buttons(True) # disables buttons
-        message = interaction.message # gets message for use later
+        self.edit_buttons(True)  # disables buttons
+        message = interaction.message  # gets message for use later
         logging.info(f"regenerating image with prompt: {message.content}")
-        await interaction.response.edit_message(content="Regenerating...", attachments=[], view=self) # send initial confirmatino (dsicord needs response within 30s)
-        new_url = await Dalle.generate_image(message.content) # generates new image
+        await interaction.response.edit_message(
+            content="Regenerating...", attachments=[], view=self
+        )  # send initial confirmatino (dsicord needs response within 30s)
+        new_url = await Dalle.generate_image(message.content)  # generates new image
         new_image = discord.File(await Dalle.get_image(new_url), filename="image.png")
-        self.edit_buttons(False) # re-enables buttons
-        await interaction.followup.edit_message(message.id, content=message.content, attachments=[new_image], view=self)
+        self.edit_buttons(False)  # re-enables buttons
+        await interaction.followup.edit_message(
+            message.id, content=message.content, attachments=[new_image], view=self
+        )
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
     async def variant(self, interaction, button):
@@ -109,12 +112,18 @@ class DalleView(discord.ui.view):
         logging.info("generating variant")
         self.edit_buttons(True)
         message = interaction.message
-        await interaction.response.edit_message(content="Creating variant...", attachments=[], view=self)
-        new_url = await Dalle.generate_variant(await Dalle.get_image(message.attachments[0].url))
+        await interaction.response.edit_message(
+            content="Creating variant...", attachments=[], view=self
+        )
+        new_url = await Dalle.generate_variant(
+            await Dalle.get_image(message.attachments[0].url)
+        )
         new_image = discord.File(await Dalle.get_image(new_url), filename="image.png")
         self.edit_buttons(False)
-        await interaction.followup.edit_message(message.id, content=message.content, attachments=[new_image], view=self)
-    
+        await interaction.followup.edit_message(
+            message.id, content=message.content, attachments=[new_image], view=self
+        )
+
     async def on_timeout(self) -> None:
         await self.message.reply("timeout")
         await self.edit_buttons(True)
@@ -122,6 +131,7 @@ class DalleView(discord.ui.view):
     def edit_buttons(self, state):
         for button in self.children:
             button.disabled = state
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Dalle(bot))
