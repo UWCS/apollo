@@ -51,14 +51,12 @@ class Dalle(commands.Cog):
         async with ctx.typing():  # show typing whilst generating image
             url = await self.generate_image(prompt)
             image = discord.File(await self.get_image(url), filename="image.png")
-        if image is None: # if image is not created error
+        if image is None:  # if image is not created error
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
             )
         view = DalleView(timeout=None, bot=self.bot) # otherwise rpley with image
-        message = await ctx.reply(
-            prompt, file=image, mention_author=True, view=view
-        )
+        message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
         view.message = message
 
     async def generate_image(self, prompt):
@@ -97,7 +95,7 @@ class Dalle(commands.Cog):
 class DalleView(discord.ui.View):
     def __init__(self, timeout, bot) -> None:
         super().__init__(timeout=timeout)
-        self.dalle_cog = bot.get_cog("Dalle") # get dalle cog to use image generation
+        self.dalle_cog = bot.get_cog("Dalle")  # get dalle cog to use image generation
 
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
     async def regenerate(self, interaction, button):
