@@ -38,9 +38,9 @@ class Dalle(commands.Cog):
 
     #@commands.dynamic_cooldown(get_cooldown, commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def dalle(self, ctx: Context, *, args: str):
+    async def dalle(self, ctx: Context, *, prompt: str):
         """Generates an image based on the prompt using DALL-E"""
-        prompt = await clean_content().convert(ctx, args)
+        prompt = await clean_content().convert(ctx, prompt)
 
         if prompt == "":  # if no prompt error
             await ctx.reply("Please provide a prompt", mention_author=True)
