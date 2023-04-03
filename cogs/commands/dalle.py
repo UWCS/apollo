@@ -43,7 +43,8 @@ class Dalle(commands.Cog):
         """Generates an image based on the prompt using DALL-E"""
         prompt = await clean_content().convert(ctx, prompt)
 
-        if prompt == "":  # if no prompt error (i think unused thanks to previous error handling but nice to have)
+        # if no prompt error (i think unused thanks to previous error handling but nice to have)
+        if prompt == "":
             await ctx.reply("Please provide a prompt", mention_author=True)
             return
 
@@ -96,9 +97,7 @@ class Dalle(commands.Cog):
 class DalleView(discord.ui.View):
     def __init__(self, timeout, bot) -> None:
         super().__init__(timeout=timeout)
-        self.dalle_cog = bot.get_cog(
-            "Dalle"
-        ) # get dalle cog to use image generation
+        self.dalle_cog = bot.get_cog("Dalle") # get dalle cog to use image generation
 
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
     async def regenerate(self, interaction, button):
