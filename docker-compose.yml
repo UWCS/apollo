@@ -13,6 +13,7 @@ services:
 
   apollo:
     build: .
+    depends_on:
       - db
     volumes:
       - type: bind
