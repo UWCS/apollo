@@ -47,9 +47,14 @@ class Dalle(commands.Cog):
 
         async with ctx.typing(): # show typing whilst generating image
             url = await self.generate_image(prompt)
-            image = await self.get_image(url)
+            image = discord.File(
+                await get_image(url), 
+                filename="image.png"
+            )
         if image is not None:
-            await ctx.reply(file=image, mention_author=True)  
+            view = DalleView(timeout=None)
+            message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
+            view.message = message
         else:
             await ctx.reply("Failed to generate image :wah:", mention_author=True)
 
@@ -69,12 +74,51 @@ class Dalle(commands.Cog):
             async with session.get(url) as response:
                 if response.status == 200:
                     logging.info("successfully got image")
-                    return discord.File(
-                        BytesIO(await response.read()), filename="image.png"
-                    )
+                    BytesIO(await response.read())
                 else:
                     logging.info("failed to get image")
                     return None
+                
+    async def generate_variant(image):
+        """generates a variant of the image"""
+        byte_array = image.getvalue()
+        response = await openai.Image.acreate_variation(
+            image=byte_array,
+            n=1,
+            size="256x256",
+        )
+        return response["data"][0]["url"]
+    
+class DalleView(discord.ui.view):
+    @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
+    async def regenerate(self, interaction, button):
+        """renegerates the image"""
+        self.edit_buttons(True) # disables buttons
+        message = interaction.message # gets message for use later
+        await interaction.response.edit_message(content="Regenerating...", attachments=[], view=self) # send initial confirmatino (dsicord needs response within 30s)
+        new_url = await generate_image(message.content) # generates new image
+        new_image = discord.File(await get_image(new_url), filename="image.png")
+        self.edit_buttons(False) # re-enables buttons
+        await interaction.followup.edit_message(message.id, content=message.content, attachments=[new_image], view=self)
+
+    @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
+    async def variant(self, interaction, button):
+        """generates a variant of the image"""
+        self.edit_buttons(True)
+        message = interaction.message
+        await interaction.response.edit_message(content="Creating variant...", attachments=[], view=self)
+        new_url = await generate_variant(await get_image(message.attachments[0].url))
+        new_image = discord.File(await get_image(new_url), filename="image.png")
+        self.edit_buttons(False)
+        await interaction.followup.edit_message(message.id, content=message.content, attachments=[new_image], view=self)
+    
+    async def on_timeout(self) -> None:
+        await self.message.reply("timeout")
+        await self.edit_buttons(True)
+
+    def edit_buttons(self, state):
+        for button in self.children:
+            button.disabled = state
 
 async def setup(bot: Bot):
     await bot.add_cog(Dalle(bot))
