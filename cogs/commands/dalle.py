@@ -96,8 +96,8 @@ class DalleView(discord.ui.view):
         self.edit_buttons(True) # disables buttons
         message = interaction.message # gets message for use later
         await interaction.response.edit_message(content="Regenerating...", attachments=[], view=self) # send initial confirmatino (dsicord needs response within 30s)
-        new_url = await generate_image(message.content) # generates new image
-        new_image = discord.File(await get_image(new_url), filename="image.png")
+        new_url = await Dalle.generate_image(message.content) # generates new image
+        new_image = discord.File(await Dalle.get_image(new_url), filename="image.png")
         self.edit_buttons(False) # re-enables buttons
         await interaction.followup.edit_message(message.id, content=message.content, attachments=[new_image], view=self)
 
@@ -107,8 +107,8 @@ class DalleView(discord.ui.view):
         self.edit_buttons(True)
         message = interaction.message
         await interaction.response.edit_message(content="Creating variant...", attachments=[], view=self)
-        new_url = await generate_variant(await get_image(message.attachments[0].url))
-        new_image = discord.File(await get_image(new_url), filename="image.png")
+        new_url = await Dalle.generate_variant(await Dalle.get_image(message.attachments[0].url))
+        new_image = discord.File(await Dalle.get_image(new_url), filename="image.png")
         self.edit_buttons(False)
         await interaction.followup.edit_message(message.id, content=message.content, attachments=[new_image], view=self)
     
