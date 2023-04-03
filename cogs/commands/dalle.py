@@ -55,7 +55,7 @@ class Dalle(commands.Cog):
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
             )
-        view = DalleView(timeout=None, bot=self.bot) # otherwise rpley with image
+        view = DalleView(timeout=None, bot=self.bot)  # otherwise rpley with image
         message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
         view.message = message
 
