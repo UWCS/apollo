@@ -19,6 +19,7 @@ Once generated buttons can be used to regenerate the image (create a new image b
 
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
+
 def get_cooldown(ctx):
     """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
     if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
@@ -29,6 +30,7 @@ def get_cooldown(ctx):
     if isinstance(ctx.channel, discord.DMChannel):
         return commands.Cooldown(1, 1)
     return commands.Cooldown(1, 60)
+
 
 class Dalle(commands.Cog):
     def __init__(self, bot: Bot):
@@ -41,7 +43,7 @@ class Dalle(commands.Cog):
         """Generates an image based on the prompt using DALL-E"""
         prompt = await clean_content().convert(ctx, prompt)
 
-        if prompt.isspace():  # if no prompt error (i think unused thanks to previous error handling but nice to have)
+        if prompt == "":  # if no prompt error (i think unused thanks to previous error handling but nice to have)
             await ctx.reply("Please provide a prompt", mention_author=True)
             return
 
@@ -49,7 +51,9 @@ class Dalle(commands.Cog):
             url = await self.generate_image(prompt)
             image = discord.File(await self.get_image(url), filename="image.png")
         if image is None: # if image is not created error
-            return await ctx.reply("Failed to generate image :wah:", mention_author=True)
+            return await ctx.reply(
+                "Failed to generate image :wah:", mention_author=True
+            )
         view = DalleView(timeout=None, bot=self.bot) # otherwise rpley with image
         message = await ctx.reply(
             prompt, file=image, mention_author=True, view=view
@@ -80,7 +84,7 @@ class Dalle(commands.Cog):
     @staticmethod
     async def generate_variant(image):
         """generates a variant of the image"""
-        byte_array = image.getvalue() # get raw bytes of the image from file
+        byte_array = image.getvalue()  # get raw bytes of the image from file
         response = await openai.Image.acreate_variation(
             image=byte_array,
             n=1,
@@ -92,7 +96,9 @@ class Dalle(commands.Cog):
 class DalleView(discord.ui.View):
     def __init__(self, timeout, bot) -> None:
         super().__init__(timeout=timeout)
-        self.dalle_cog = self.bot.get_cog("Dalle") # get dalle cog to use image generation
+        self.dalle_cog = bot.get_cog(
+            "Dalle"
+        ) # get dalle cog to use image generation
 
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
     async def regenerate(self, interaction, button):
