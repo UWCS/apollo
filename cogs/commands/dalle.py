@@ -25,18 +25,18 @@ class Dalle(commands.Cog):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
 
-    def get_cooldown(self, ctx: Context):
-        """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
-        if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
-            return commands.cooldown(1, 1)
-        if isinstance(ctx.channel, discord.Thread) and ctx.channel.parent:
-            if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
-                return commands.cooldown(1, 1)
-        if isinstance(ctx.channel, discord.DMChannel):
-            return commands.cooldown(1, 1)
-        return commands.cooldown(1, 60)
+    #def get_cooldown(ctx):
+        #"""cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
+        #if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
+            #return commands.cooldown(1, 1)
+        #if isinstance(ctx.channel, discord.Thread) and ctx.channel.parent:
+            #if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
+                #return commands.cooldown(1, 1)
+        #if isinstance(ctx.channel, discord.DMChannel):
+            #return commands.cooldown(1, 1)
+        #return commands.cooldown(1, 60)
 
-    @commands.dynamic_cooldown(get_cooldown, commands.BucketType.channel)
+    #@commands.dynamic_cooldown(get_cooldown, commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def dalle(self, ctx: Context, *, args: str):
         """Generates an image based on the prompt using DALL-E"""
@@ -48,11 +48,13 @@ class Dalle(commands.Cog):
 
         async with ctx.typing():  # show typing whilst generating image
             url = await self.generate_image(prompt)
-            image = await self.get_image(url)
+            image = discord.File(
+                await self.get_image(url),
+                filename="image.png"
+            )
         if image is not None:
-            file = discord.File(image, filename="image.png")
             view = DalleView(timeout=None)
-            message = await ctx.reply(prompt, file=file, mention_author=True, view=view)
+            message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
             view.message = message
         else:
             await ctx.reply("Failed to generate image :wah:", mention_author=True)
@@ -73,7 +75,7 @@ class Dalle(commands.Cog):
             async with session.get(url) as response:
                 if response.status == 200:
                     logging.info("successfully got image")
-                    BytesIO(await response.read())
+                    return BytesIO(await response.read())
                 else:
                     logging.info("failed to get image")
                     return None
