@@ -58,6 +58,7 @@ class Dalle(commands.Cog):
         view = DalleView(timeout=None, bot=self.bot)  # otherwise rpley with image
         message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
         view.message = message
+
     async def generate_image(self, prompt):
         """gets image from openAI and returns url for that image"""
         logging.info(f"Generating image with prompt: {prompt}")
@@ -115,7 +116,7 @@ class DalleView(discord.ui.View):
         new_attachments = [
             discord.File(
                 await self.dalle_cog.get_image(attachment.url), filename="image.png"
-            ) 
+            )
             for attachment in message.attachments
         ] + [new_image]
         # for some reason message.attachments are not valid attachments so convert into files and then append new file
@@ -134,7 +135,7 @@ class DalleView(discord.ui.View):
         )
         new_url = await self.dalle_cog.generate_variant(
             await self.dalle_cog.get_image(
-                message.attachments[len(message.attachments)-1].url
+                message.attachments[len(message.attachments) - 1].url
             )
         )
         new_image = discord.File(
@@ -144,7 +145,7 @@ class DalleView(discord.ui.View):
         new_attachments = [
             discord.File(
                 await self.dalle_cog.get_image(attachment.url), filename="image.png"
-            ) 
+            )
             for attachment in message.attachments
         ] + [new_image]
         await interaction.followup.edit_message(
