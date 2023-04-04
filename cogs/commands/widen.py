@@ -38,7 +38,7 @@ class Widen(commands.Cog):
             target_raw = message
         elif (reference := ctx.message.reference) is not None:
             m = reference.resolved
-            if m is None:
+            if m is None or isinstance(m, discord.DeletedReferencedMessage):
                 return
             target_raw = m.clean_content
             if target_raw is None:
@@ -56,7 +56,7 @@ class Widen(commands.Cog):
             else:
                 await ctx.send(apply_widen("The output is too wide") + "　:frowning:")
 
-    async def widen_base(self, message):
+    async def widen_base(self, message: str):
         target_raw = re.sub(r"<:.+:\d+>", "", message)  # Remove custom emoji
         target_raw = re.sub(r"^\*\*<\w+>\*\* ", "", target_raw)  # Remove IRC usernames
         target_raw = html.escape(

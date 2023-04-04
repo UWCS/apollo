@@ -8,8 +8,8 @@ import discord
 import openai
 from discord import AllowedMentions
 from discord.ext import commands, tasks
-from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
-
+from discord.ext.commands import Bot, Context
+from typing import Callable
 from config import CONFIG
 from utils.utils import get_name_and_content
 
@@ -27,7 +27,7 @@ chat_cmd = CONFIG.PREFIX + "chat"
 prompt_cmd = CONFIG.PREFIX + "prompt"
 
 
-def clean(msg, *prefixes):
+def clean(msg: str, *prefixes: str) -> str:
     for pre in prefixes:
         msg = msg.strip().removeprefix(pre)
     return msg.strip()
@@ -40,7 +40,6 @@ class ChatGPT(commands.Cog):
         self.ai_epoch = date(year=2023, month=3, day=1)
         self.usage_endpoint = "https://api.openai.com/dashboard/billing/usage"
 
-        openai.api_key = CONFIG.OPENAI_API_KEY
         self.model = "gpt-3.5-turbo"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
@@ -51,18 +50,19 @@ class ChatGPT(commands.Cog):
         self.update_channel_descriptions.start()
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def prompt(self, ctx: Context, *, message: str):
+    async def prompt(self, ctx: Context[Bot], *, message: str) -> None:
         # Effectively a dummy command, since just needs something to allow a prompt message
         if await self.in_cooldown(ctx):
             return
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def chat(self, ctx: Context, *, message: Optional[str] = None):
+    async def chat(self, ctx: Context[Bot], *, message: Optional[str] = None) -> None:
         await self.cmd(ctx)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        assert self.bot.user
         # Avoid replying to bot or msg that triggers the command anyway
         if message.author.bot or message.content.startswith(CONFIG.PREFIX):
             return
@@ -79,7 +79,7 @@ class ChatGPT(commands.Cog):
         ctx = await self.bot.get_context(message)
         await self.cmd(ctx)
 
-    async def cmd(self, ctx: Context):
+    async def cmd(self, ctx: Context[Bot]) -> None:
         # Create history chain
         messages = await self.create_history(ctx.message)
         if not messages or await self.in_cooldown(ctx):
@@ -91,15 +91,18 @@ class ChatGPT(commands.Cog):
             if response:
                 await ctx.reply(response, allowed_mentions=mentions)
 
-    async def create_history(self, message):
+    async def create_history(
+        self, message: discord.Message
+    ) -> list[dict[str, str]] | None:
         message_chain = await self.get_message_chain(message)
 
         # If a message in the chain triggered a !chat or !prompt or /chat
-        is_cmd = (
+        is_cmd: Callable[[discord.Message], bool] = (
             lambda m: m.content.startswith(chat_cmd)
             or m.content.startswith(prompt_cmd)
             or (m.interaction is not None and m.interaction.name == "chat")
         )
+
         if not any(map(is_cmd, message_chain)):
             return
 
@@ -126,11 +129,14 @@ class ChatGPT(commands.Cog):
             messages.append(dict(role=role, content=content))
         return messages
 
-    async def in_cooldown(self, ctx):
+    async def in_cooldown(self, ctx: Context[Bot]) -> bool:
         # If is in allowed channel
         if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
             return False
         if isinstance(ctx.channel, discord.Thread):
+            # we're in a thread, there's a parent channel
+            assert ctx.channel.parent is not None
+
             if ctx.channel.parent.id in CONFIG.AI_CHAT_CHANNELS:
                 return False
         if isinstance(ctx.channel, discord.DMChannel):
@@ -146,7 +152,8 @@ class ChatGPT(commands.Cog):
         self.cooldowns[ctx.channel.id] = now
         return False
 
-    async def dispatch_api(self, messages) -> Optional[str]:
+    async def dispatch_api(self, messages: list[dict[str, str]]) -> Optional[str]:
+        assert self.bot.user
         logging.info(f"Making OpenAI request: {messages}")
 
         # Make request
@@ -156,7 +163,7 @@ class ChatGPT(commands.Cog):
         logging.info(f"OpenAI Response: {response}")
 
         # Remove prefix that chatgpt might add
-        reply = response.choices[0].message.content
+        reply: str = response.choices[0].message.content  # type: ignore
         if CONFIG.AI_INCLUDE_NAMES:
             name = f"{self.bot.user.display_name}: "
             reply = clean(reply, "Apollo: ", "apollo: ", name)
@@ -167,7 +174,7 @@ class ChatGPT(commands.Cog):
         return reply
 
     async def get_message_chain(
-        self, message: discord.Message
+        self, message: discord.Message | None
     ) -> list[discord.Message]:
         """
         Traverses a chain of replies to get a thread of chat messages between a user and Apollo.
@@ -185,7 +192,7 @@ class ChatGPT(commands.Cog):
         return None
 
     @tasks.loop(minutes=30)
-    async def update_channel_descriptions(self):
+    async def update_channel_descriptions(self) -> None:
         """
         Update the AI chat description to include the current API usage.
         Assumes the channel to be updated is the first one in the list.
@@ -209,7 +216,7 @@ class ChatGPT(commands.Cog):
         )
 
     @update_channel_descriptions.before_loop
-    async def before_updates(self):
+    async def before_updates(self) -> None:
         """
         Tells the task loop to wait until the bot is ready before starting
         """
@@ -234,7 +241,7 @@ class ChatGPT(commands.Cog):
         headers = {"Authorization": f"Bearer {CONFIG.OPENAI_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
             # asyncio.gather schedules all the futures simultaneously
-            responses = await asyncio.gather(
+            responses: list[aiohttp.ClientResponse] = await asyncio.gather(
                 *(session.get(url=self.usage_endpoint, params=ps) for ps in date_pairs)
             )
 
@@ -254,5 +261,12 @@ class ChatGPT(commands.Cog):
                 )
 
 
-async def setup(bot: Bot):
+async def setup(bot: Bot) -> None:
+    # check we have api access
+    openai.api_key = CONFIG.OPENAI_API_KEY
+    try:
+        openai.Model.list()  # type: ignore
+    except openai.OpenAIError:
+        logging.error("Failed to authenticate with OpenAI API")
+        return
     await bot.add_cog(ChatGPT(bot))

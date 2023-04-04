@@ -27,12 +27,14 @@ pillow = "~=9.3.0"
 discord-simple-pretty-help = "==0.0.1"
 icalendar = "~=4.1.0"
 openai = "~=0.27.2"
+aiohttp = "~=3.8.4"
 
 [dev-packages]
 black = "~=22.12"
 isort = "~=5.11"
 pytest = "~=6.2"
 pretend = "~=1.0"
+pyright = "*"
 
 [requires]
 python_version = "3.10"
