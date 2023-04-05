@@ -128,7 +128,7 @@ class DalleView(discord.ui.View):
             message.id,
             content=message.content,
             attachments=attachment_files + [new_image],
-            view=self
+            view=self,
         )
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
@@ -161,7 +161,7 @@ class DalleView(discord.ui.View):
             message.id,
             content=message.content,
             attachments=attachment_files + [new_image],
-            view=self
+            view=self,
         )
 
     async def on_timeout(self) -> None:
