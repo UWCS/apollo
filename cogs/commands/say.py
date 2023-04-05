@@ -22,7 +22,7 @@ class Say(commands.Cog):
 
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def say(self, ctx: Context, *message: clean_content):
-        await ctx.send(" ".join([x.lstrip("@") for x in message]))  # type: ignore clean_content is an str
+        await ctx.send(" ".join([x.lstrip("@") for x in message]))
 
 
 async def setup(bot: Bot):

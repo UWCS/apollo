@@ -110,8 +110,7 @@ async def sync(ctx: Context) -> None:
 
 
 @bot.event
-async def on_command_error(ctx: Context, error: commands.CommandError):
-    assert ctx.command
+async def on_command_error(ctx: Context, error: Exception):
     # await ctx.message.add_reaction("🚫")
     message = ""
     reraise = None
@@ -128,7 +127,7 @@ async def on_command_error(ctx: Context, error: commands.CommandError):
         message = f"Bot does not have permissions to do this. {str(error.text)}"
         reraise = error
     elif hasattr(error, "original"):
-        await on_command_error(ctx, error.original)  #  type: ignore
+        await on_command_error(ctx, error.original)
         return
     elif isinstance(error, errors.CommandError):
         message = str(error)
