@@ -1,8 +1,8 @@
+import asyncio
 import logging
 from io import BytesIO
 
 import aiohttp
-import asyncio
 import discord
 import openai
 from discord.ext import commands
