@@ -1,5 +1,7 @@
+import asyncio
 import logging
 from io import BytesIO
+from typing import Iterable
 
 import aiohttp
 import discord
@@ -14,7 +16,7 @@ Apollo is more creative than you think...
 
 Apollo can now generate images using openAI's DALL-E model.
 To use, simply type `!dalle <prompt>` or `/dalle <prompt>`. Apollo will then generate an image based on the prompt.
-Once generated buttons can be used to regenerate the image (create a new image based on the prompt) or create a variant of the original image.
+Once generated buttons can be used to regenerate the image (create a new image based on the prompt) or create a variant of the the most recent image.
 """
 
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
@@ -113,8 +115,21 @@ class DalleView(discord.ui.View):
             await self.dalle_cog.get_image(new_url), filename="image.png"
         )
         self.edit_buttons(False)  # re-enables buttons
+        # for some reason message.attachments are not valid attachments so convert into files and then append new file
+        # iterates over all attachments and gets the bytes of the image
+        files: Iterable[BytesIO] = await asyncio.gather(
+            *(
+                self.dalle_cog.get_image(attachment.url)
+                for attachment in message.attachments
+            )
+        )
+        # converts the images into files
+        attachment_files = [discord.File(f, filename="image.png") for f in files]
         await interaction.followup.edit_message(
-            message.id, content=message.content, attachments=[new_image], view=self
+            message.id,
+            content=message.content,
+            attachments=attachment_files + [new_image],
+            view=self,
         )
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
@@ -127,14 +142,27 @@ class DalleView(discord.ui.View):
             content="Creating variant...", attachments=[], view=self
         )
         new_url = await self.dalle_cog.generate_variant(
-            await self.dalle_cog.get_image(message.attachments[0].url)
+            await self.dalle_cog.get_image(
+                message.attachments[len(message.attachments) - 1].url
+            )
         )
         new_image = discord.File(
             await self.dalle_cog.get_image(new_url), filename="image.png"
         )
         self.edit_buttons(False)
+        # see abobe for wtf this is
+        files: Iterable[BytesIO] = await asyncio.gather(
+            *(
+                self.dalle_cog.get_image(attachment.url)
+                for attachment in message.attachments
+            )
+        )
+        attachment_files = [discord.File(f, filename="image.png") for f in files]
         await interaction.followup.edit_message(
-            message.id, content=message.content, attachments=[new_image], view=self
+            message.id,
+            content=message.content,
+            attachments=attachment_files + [new_image],
+            view=self,
         )
 
     async def on_timeout(self) -> None:
