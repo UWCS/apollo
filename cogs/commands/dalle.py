@@ -116,11 +116,19 @@ class DalleView(discord.ui.View):
         self.edit_buttons(False)  # re-enables buttons
         # for some reason message.attachments are not valid attachments so convert into files and then append new file
         # iterates over all attachments and gets the bytes of the image
-        files: Iterable[BytesIO] = await asyncio.gather(*(self.dalle_cog.get_image(attachment.url) for attachment in message.attachments))
+        files: Iterable[BytesIO] = await asyncio.gather(
+            *(
+                self.dalle_cog.get_image(attachment.url)
+                for attachment in message.attachments
+            )
+        )
         # converts the images into files
         attachment_files = [discord.File(f, filename="image.png") for f in files]
         await interaction.followup.edit_message(
-            message.id, content=message.content, attachments=attachment_files + [new_image], view=self
+            message.id,
+            content=message.content,
+            attachments=attachment_files + [new_image],
+            view=self
         )
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
@@ -142,10 +150,18 @@ class DalleView(discord.ui.View):
         )
         self.edit_buttons(False)
         # see abobe for wtf this is
-        files: Iterable[BytesIO] = await asyncio.gather(*(self.dalle_cog.get_image(attachment.url) for attachment in message.attachments))
+        files: Iterable[BytesIO] = await asyncio.gather(
+            *(
+                self.dalle_cog.get_image(attachment.url)
+                for attachment in message.attachments
+            )
+        )
         attachment_files = [discord.File(f, filename="image.png") for f in files]
         await interaction.followup.edit_message(
-            message.id, content=message.content, attachments=attachment_files + [new_image], view=self
+            message.id,
+            content=message.content,
+            attachments=attachment_files + [new_image],
+            view=self
         )
 
     async def on_timeout(self) -> None:
