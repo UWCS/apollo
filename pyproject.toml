@@ -30,3 +30,12 @@ minversion = "6.0"
 addopts = "-ra"
 testpaths = ["tests"]
 python_files = "test_*.py"
+
+[tool.pyright]
+pythonVersion = "3.10"
+pythonPlatform = "Linux"
+
+typeCheckingMode = "basic"        # "strict" is also a thing...
+useLibraryCodeForTypes = true
+reportMissingParameterType = true
+# https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
