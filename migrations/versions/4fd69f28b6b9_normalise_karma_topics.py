@@ -73,7 +73,7 @@ class Karma(Base):
 
 def upgrade():
     bind = op.get_bind()
-    session = orm.Session(bind=bind, autoflush=False)
+    session = orm.Session(bind=bind, autoflush=False, future=True)
     karma_items = session.query(Karma).order_by(Karma.added.asc())
 
     def topic_transformations(k: Karma):

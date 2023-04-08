@@ -7,11 +7,11 @@ from config import CONFIG
 
 Base = declarative_base()
 
-engine = create_engine(CONFIG.DATABASE_CONNECTION)
+engine = create_engine(CONFIG.DATABASE_CONNECTION, future=True)
 if CONFIG.SQL_LOGGING:
     logging.basicConfig()
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-db_session = Session(bind=engine)
+db_session = Session(bind=engine, future=True)
 
 
 def auto_str(cls):

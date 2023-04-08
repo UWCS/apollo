@@ -11,7 +11,7 @@ import sqlalchemy as sa
 import sqlalchemy_utils as sau
 from alembic import op
 from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from config.config import CONFIG
 
@@ -81,7 +81,7 @@ class Karma(Base):
 
 def upgrade():
     bind = op.get_bind()
-    session = orm.Session(bind=bind)
+    session = orm.Session(bind=bind, future=True)
 
     op.add_column(
         "karma_changes", sa.Column("reasons_new", sau.ScalarListType, nullable=True)
@@ -119,7 +119,7 @@ def upgrade():
 
 def downgrade():
     bind = op.get_bind()
-    session = orm.Session(bind=bind)
+    session = orm.Session(bind=bind, future=True)
 
     with op.batch_alter_table("karma_changes") as bop:
         bop.alter_column("reasons", new_column_name="reasons_new")
