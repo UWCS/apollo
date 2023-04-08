@@ -44,9 +44,9 @@ def database():
         os.environ["SECRET_KEY"] = "test"
 
     # Start up the in-memory database instance
-    db_engine = create_engine("sqlite:///:memory:")
+    db_engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(db_engine)
-    db_session = Session(bind=db_engine)
+    db_session = Session(bind=db_engine, future=True)
 
     # Mark it as up-to-date with migrations
     command.stamp(config, "head")

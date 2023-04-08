@@ -68,7 +68,7 @@ class KarmaChange(Base):
 def upgrade():
     bind = op.get_bind()
 
-    with Session(bind) as session:
+    with Session(bind, future=True) as session:
         op.add_column("karma_changes", sa.Column("reason", sa.String(), nullable=True))
         session.query(KarmaChange).update({"reason": KarmaChange.reasons})
 
@@ -78,7 +78,7 @@ def upgrade():
 
 def downgrade():
     bind = op.get_bind()
-    with Session(bind) as session:
+    with Session(bind, future=True) as session:
         op.add_column(
             "karma_changes", sa.Column("reasons", sau.ScalarListType, nullable=True)
         )
