@@ -13,8 +13,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from models import User
 from models.models import Base, auto_str
+from models.user import User
 
 
 class VoteType(enum.Enum):
