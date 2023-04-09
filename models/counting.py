@@ -1,7 +1,9 @@
-from sqlalchemy.orm import Mapped
-from models.models import Base, int_pk, user_id
 from datetime import datetime
 from decimal import Decimal
+
+from sqlalchemy.orm import Mapped
+
+from models.models import Base, int_pk, user_id
 
 
 class CountingRun(Base):

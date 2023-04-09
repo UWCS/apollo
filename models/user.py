@@ -1,10 +1,12 @@
-from sqlalchemy import String, func, DateTime
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from datetime import datetime
+
+from sqlalchemy import DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy_utils import EncryptedType  # type: ignore
+
 from config import CONFIG
 from models.karma import KarmaChange
 from models.models import Base, discord_snowflake
-from datetime import datetime
 
 
 class User(Base):
