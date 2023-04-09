@@ -50,17 +50,14 @@ class XKCD(commands.Cog):
 
         # reply with comic title, url, and image
         comic_title = comic_json["safe_title"]
-        await ctx.reply(
-            f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>",
-            file=comic_img,
-        )
+        msg = f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>"
+        await ctx.reply(msg, file=comic_img)
 
     async def get_comic(self, comic_id: int) -> str | None:
         """gets a comic with a specific id"""
         async with aiohttp.ClientSession() as session:
-            async with session.get(
-                f"https://xkcd.com/{comic_id}/info.0.json"
-            ) as response:
+            url = f"https://xkcd.com/{comic_id}/info.0.json"
+            async with session.get(url) as response:
                 if response.status == 200:
                     logging.info("successfully got comic:" + str(comic_id))
                     return await response.read()
@@ -86,9 +83,8 @@ class XKCD(commands.Cog):
             async with session.get(url) as response:
                 if response.status == 200:
                     logging.info("successfully got comic image")
-                    return discord.File(
-                        BytesIO(await response.read()), filename="image.png"
-                    )
+                    file = BytesIO(await response.read())
+                    return discord.File(file, filename="image.png")
                 else:
                     logging.info("failed to get comic image")
                     return None
