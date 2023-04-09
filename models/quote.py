@@ -1,12 +1,12 @@
 from datetime import datetime
+from typing import Optional
 
-from sqlalchemy import func, ForeignKey
+from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.models import Base, user_id
 from models.user import User
 from utils.mentions import MentionType
-from typing import Optional
 
 
 class Quote(Base):

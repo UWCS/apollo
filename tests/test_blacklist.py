@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 import pytest
 from alembic import command
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from karma.parser import KarmaItem, KarmaOperation
 from karma.transaction import KarmaTransaction, apply_blacklist
 from models import Base, BlockedKarma, User
-from typing import Tuple
+
 
 @pytest.fixture(scope="module")
 def database():
