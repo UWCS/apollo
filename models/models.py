@@ -1,7 +1,7 @@
 import logging
 
 from sqlalchemy import BigInteger, ForeignKey, create_engine
-from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
+from sqlalchemy.orm import DeclarativeBase, Session, mapped_column
 from typing_extensions import Annotated
 
 from config import CONFIG
@@ -36,7 +36,8 @@ user_id = Annotated[int, mapped_column(ForeignKey("users.id"), nullable=False)]
 discord_snowflake = Annotated[int, mapped_column(BigInteger, nullable=False)]
 discord_snowflake_pk = Annotated[int, mapped_column(BigInteger, primary_key=True)]
 
-
+# TODO: add MappedAsDataclass as subclass
+# some more tidying required first...
 class Base(DeclarativeBase):
     """
     Base model for all of Apollo's Models

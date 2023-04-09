@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.models import Base, discord_snowflake_pk, int_pk, user_id
+from models.models import Base, discord_snowflake_pk, user_id
 
 
 class IgnoredChannel(Base):
