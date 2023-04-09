@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from karma.parser import KarmaItem, KarmaOperation
 from karma.transaction import KarmaTransaction, apply_blacklist
 from models import Base, BlockedKarma, User
-
+from typing import Tuple
 
 @pytest.fixture(scope="module")
 def database():
@@ -40,7 +40,7 @@ def database():
     return db_session
 
 
-TEST_CASES = {
+TEST_CASES: dict[str, Tuple[list[KarmaTransaction], list[KarmaTransaction]]] = {
     # Make sure the blacklist does not interfere with regular karma parsing
     "not in blacklist": (
         [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
