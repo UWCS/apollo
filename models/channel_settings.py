@@ -12,7 +12,7 @@ class IgnoredChannel(Base):
     channel: Mapped[discord_snowflake] = mapped_column(init=False, primary_key=True)
     user_id: Mapped[user_id]
     added_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(), insert_default=func.current_timestamp()
+        default_factory=datetime.now, insert_default=func.current_timestamp()
     )
 
 
@@ -22,5 +22,5 @@ class MiniKarmaChannel(Base):
     channel: Mapped[discord_snowflake] = mapped_column(init=False, primary_key=True)
     user_id: Mapped[user_id]
     added_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(), insert_default=func.current_timestamp()
+        default_factory=datetime.now, insert_default=func.current_timestamp()
     )

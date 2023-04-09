@@ -21,5 +21,5 @@ class Announcement(Base):
     )
     irc_name: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(), insert_default=func.current_timestamp()
+        default_factory=datetime.now, insert_default=func.current_timestamp()
     )
