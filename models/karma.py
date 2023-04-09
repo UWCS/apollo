@@ -40,11 +40,11 @@ class KarmaChange(Base):
 class Karma(Base):
     __tablename__ = "karma"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
     name: Mapped[str]
 
     changes: Mapped[list["KarmaChange"]] = relationship(
-        back_populates="karma", order_by=KarmaChange.created_at.asc()
+        back_populates="karma", order_by=KarmaChange.created_at.asc(), init=False
     )
 
     added: Mapped[datetime] = mapped_column(
