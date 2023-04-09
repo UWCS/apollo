@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, discord_snowflake, discord_snowflake_pk, int_pk
+from models.models import Base, discord_snowflake, int_pk
 
 
 class RoleMenu(Base):
@@ -29,7 +29,7 @@ class RoleEntry(Base):
 
     role: Mapped[discord_snowflake_pk]
     title: Mapped[str]
-    description: Mapped[str | None]= mapped_column(default=None)
-    emoji: Mapped[str | None]= mapped_column(default=None)
+    description: Mapped[str | None] = mapped_column(default=None)
+    emoji: Mapped[str | None] = mapped_column(default=None)
 
     menu: Mapped["RoleMenu"] = relationship(back_populates="choices")
