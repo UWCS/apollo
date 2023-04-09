@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import BigInteger, ForeignKey, create_engine
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
 from typing_extensions import Annotated
+
 from config import CONFIG
 
 # this is bad, redo this
