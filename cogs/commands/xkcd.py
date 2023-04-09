@@ -48,11 +48,11 @@ class XKCD(commands.Cog):
         if comic_img == None:
             return await ctx.reply("Error: could not get comic image")
         comic_title = comic_json["safe_title"]
+        # reply with comic title,url, and image
         await ctx.reply(
-            f"**{comic_title}**, avaiable at https://xkcd.com/{comic_id}/",
+            f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>",
             file=comic_img,
-            suppress_embeds=True,
-        )  # reply with comic title,url, and image
+        )
 
     async def get_comic(self, comic_id: int) -> str | None:
         """gets a comic with a specific id"""
