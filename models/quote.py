@@ -17,7 +17,7 @@ class Quote(Base):
     author_id: Mapped[user_id | None] = mapped_column(default=None)
     author_string: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
-        default=datetime.now(), insert_default=func.current_timestamp()
+        default_factory=datetime.now, insert_default=func.current_timestamp()
     )
     edited_at: Mapped[datetime | None] = mapped_column(default=None)
     author: Mapped[Optional["User"]] = relationship(
