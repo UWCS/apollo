@@ -12,7 +12,6 @@ from sqlalchemy.orm import declarative_base
 
 from config.config import CONFIG
 from models.karma import KarmaChange
-from models.models import auto_str
 
 Base = declarative_base()
 
@@ -29,7 +28,6 @@ naming_convention = {
 }
 
 
-@auto_str
 class KarmaChange(Base):
     __tablename__ = "karma_changes"
 
@@ -44,7 +42,6 @@ class KarmaChange(Base):
     score = sa.Column(sa.Integer, nullable=False)
 
 
-@auto_str
 class LoggedMessage(Base):
     __tablename__ = "messages"
 
@@ -105,7 +102,6 @@ def upgrade():
 Base2 = declarative_base()
 
 
-@auto_str
 class KarmaChange2(Base2):
     __tablename__ = "karma_changes"
 

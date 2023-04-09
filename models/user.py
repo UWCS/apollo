@@ -17,16 +17,19 @@ class User(Base):
     username: Mapped[str] = mapped_column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY)
     )
-    first_seen: Mapped[datetime] = mapped_column(default=func.current_timestamp())
-    last_seen: Mapped[datetime] = mapped_column(default=func.current_timestamp())
+    karma_changes: Mapped[list["KarmaChange"]] = relationship(
+        back_populates="user", order_by=KarmaChange.created_at
+    )
+    first_seen: Mapped[datetime] = mapped_column(
+        default_factory=datetime.now, insert_default=func.current_timestamp()
+    )
+    last_seen: Mapped[datetime] = mapped_column(
+        default_factory=datetime.now, insert_default=func.current_timestamp()
+    )
 
     uni_id = mapped_column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY), nullable=True
     )
     verified_at = mapped_column(
         EncryptedType(type_in=DateTime, key=CONFIG.BOT_SECRET_KEY), nullable=True
-    )
-
-    karma_changes: Mapped[list["KarmaChange"]] = relationship(
-        back_populates="user", order_by=KarmaChange.created_at
     )

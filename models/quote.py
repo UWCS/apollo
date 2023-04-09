@@ -6,6 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from models.models import Base, user_id, int_pk
 from models.user import User
 from utils.mentions import MentionType
+from typing import Optional
 
 
 class Quote(Base):
@@ -19,7 +20,7 @@ class Quote(Base):
         default=datetime.now(), insert_default=func.current_timestamp()
     )
     edited_at: Mapped[datetime | None] = mapped_column(default=None)
-    author: Mapped["User" | None] = relationship(
+    author: Mapped[Optional["User"]] = relationship(
         "User", uselist=False, foreign_keys=author_id, default=None
     )
 
