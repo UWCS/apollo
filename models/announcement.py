@@ -1,7 +1,9 @@
-from sqlalchemy import func
-from sqlalchemy.orm import relationship, mapped_column, Mapped
 from datetime import datetime
-from models.models import Base, user_id, int_pk
+
+from sqlalchemy import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from models.models import Base, int_pk, user_id
 from models.user import User
 
 

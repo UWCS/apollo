@@ -1,7 +1,7 @@
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, discord_snowflake, int_pk, discord_snowflake_pk
+from models.models import Base, discord_snowflake, discord_snowflake_pk, int_pk
 
 
 class RoleMenu(Base):

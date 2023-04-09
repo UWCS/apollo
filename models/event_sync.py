@@ -1,6 +1,8 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from models.models import Base, discord_snowflake
 from datetime import datetime
+
+from sqlalchemy.orm import Mapped, mapped_column
+
+from models.models import Base, discord_snowflake
 
 
 class EventLink(Base):

@@ -1,7 +1,9 @@
-from sqlalchemy import func
-from sqlalchemy.orm import mapped_column, Mapped
-from models.models import Base, user_id, int_pk, discord_snowflake_pk
 from datetime import datetime
+
+from sqlalchemy import func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from models.models import Base, discord_snowflake_pk, int_pk, user_id
 
 
 class IgnoredChannel(Base):

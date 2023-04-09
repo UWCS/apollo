@@ -1,10 +1,11 @@
+from datetime import datetime
+
 from sqlalchemy import func
-from sqlalchemy.orm import relationship, mapped_column, Mapped
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.models import Base, user_id
-from utils.mentions import MentionType
-from datetime import datetime
 from models.user import User
+from utils.mentions import MentionType
 
 
 class Quote(Base):
