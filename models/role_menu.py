@@ -11,7 +11,7 @@ class RoleMenu(Base):
     guild_id: Mapped[discord_snowflake]
     channel_id: Mapped[discord_snowflake]
     choices: Mapped[list["RoleEntry"]] = relationship(
-        "RoleEntry", back_populates="menu", cascade="all, delete-orphan"
+        "RoleEntry", back_populates="menu", cascade="all, delete-orphan", init=False
     )
     title: Mapped[str] = mapped_column(default="Vote", insert_default="Vote")
     message_id: Mapped[discord_snowflake | None] = mapped_column(default=None)
@@ -24,7 +24,7 @@ class RoleEntry(Base):
         ForeignKey("rolemenu.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    menu: Mapped["RoleMenu"] = relationship(back_populates="choices")
+    menu: Mapped["RoleMenu"] = relationship(back_populates="choices", init=False)
     role: Mapped[discord_snowflake] = mapped_column(primary_key=True)
     title: Mapped[str]
     description: Mapped[str | None] = mapped_column(default=None)
