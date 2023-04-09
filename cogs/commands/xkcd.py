@@ -1,8 +1,7 @@
-import logging
-from io import BytesIO
 import json
+import logging
 import random
-from typing import Iterable
+from io import BytesIO
 
 import aiohttp
 import discord
