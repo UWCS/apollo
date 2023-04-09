@@ -2,7 +2,6 @@
 # we need to import User for type checking but that gives a circular import
 
 from datetime import datetime
-from typing import Optional
 
 from pytz import timezone, utc
 from sqlalchemy import ForeignKey, func
