@@ -29,26 +29,27 @@ class XKCD(commands.Cog):
     async def xkcd(self, ctx: Context, comic_id: int | None = None):
         """gets either a random comic or a specific one"""
         max_comic_id = await self.get_recent_comic()  # gets the most recent comic's id
-        if max_comic_id == None:
+        if max_comic_id is None:
             return await ctx.reply("Error: could not get most recent comic")
 
-        if comic_id == None:
+        # If unspecified, randomize
+        if comic_id is None:
             comic_id = random.randint(1, max_comic_id)
-        elif (
-            comic_id <= 0 or comic_id > max_comic_id
-        ):  # if invalid id then generate a random valid one
+        # If invalid id then generate a random valid one
+        elif comic_id <= 0 or comic_id > max_comic_id:
             return await ctx.reply("Error: invalid comic id")
 
         comic_return = await self.get_comic(comic_id)  # get the raw json of the comic
-        if comic_return == None:
+        if comic_return is None:
             return await ctx.reply(f"Error: could not get comic {comic_id}")
 
         comic_json = json.loads(comic_return)  # convert into readable
         comic_img = await self.get_comic_image(comic_json["img"])
-        if comic_img == None:
+        if comic_img is None:
             return await ctx.reply("Error: could not get comic image")
+
+        # reply with comic title, url, and image
         comic_title = comic_json["safe_title"]
-        # reply with comic title,url, and image
         await ctx.reply(
             f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>",
             file=comic_img,
