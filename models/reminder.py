@@ -1,31 +1,24 @@
-from sqlalchemy import (
-    BigInteger,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
-    func,
-)
-from sqlalchemy.orm import relationship
+from datetime import datetime
 
-from models.models import Base, auto_str
+from sqlalchemy import func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from models.models import Base, discord_snowflake, int_pk, user_id
+from models.user import User
 
 
-@auto_str
 class Reminder(Base):
     __tablename__ = "reminders"
-    id = Column(Integer, primary_key=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    reminder_content = Column(String, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
-    trigger_at = Column(DateTime, nullable=False)
-    triggered = Column(Boolean, nullable=False)
-    playback_channel_id = Column(BigInteger, nullable=False)
-    irc_name = Column(String, nullable=True)
+    id: Mapped[int_pk]
+    user_id: Mapped[user_id]
+    reminder_content: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(default=func.current_timestamp())
+    trigger_at: Mapped[datetime]
+    triggered: Mapped[bool]
+    playback_channel_id: Mapped[discord_snowflake]
+    irc_name: Mapped[str | None]
 
-    user = relationship(
+    user: Mapped["User"] = relationship(
         "User",
         uselist=False,
     )

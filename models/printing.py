@@ -1,9 +1,8 @@
 from sqlalchemy import Column, Integer, String, Text
 
-from models.models import Base, auto_str
+from models.models import Base
 
 
-@auto_str
 class FilamentType(Base):
     FILLAMENTUM = "fillamentum"
     PRUSAMENT = "prusament"
