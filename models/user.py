@@ -12,13 +12,13 @@ from models.models import Base, discord_snowflake
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, init=False)
     user_uid: Mapped[discord_snowflake]
     username: Mapped[str] = mapped_column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY)
     )
     karma_changes: Mapped[list["KarmaChange"]] = relationship(
-        back_populates="user", order_by=KarmaChange.created_at
+        back_populates="user", order_by=KarmaChange.created_at, init=False
     )
     first_seen: Mapped[datetime] = mapped_column(
         default_factory=datetime.now, insert_default=func.current_timestamp()

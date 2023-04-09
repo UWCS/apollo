@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import func
+from sqlalchemy import func, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from models.models import Base, user_id, int_pk
@@ -14,12 +14,15 @@ class Quote(Base):
     quote_id: Mapped[int_pk] = mapped_column(autoincrement=True, init=False)
     author_type: Mapped[MentionType]
     quote: Mapped[str]
-    author_id: Mapped[user_id | None] = mapped_column(default=None)
-    author_string: Mapped[str | None] = mapped_column(default=None)
+    author_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), default=None
+    )
+
+    author_string: Mapped[Optional[str]] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
         default_factory=datetime.now, insert_default=func.current_timestamp()
     )
-    edited_at: Mapped[datetime | None] = mapped_column(default=None)
+    edited_at: Mapped[Optional[datetime]] = mapped_column(default=None)
     author: Mapped[Optional["User"]] = relationship(
         "User", uselist=False, foreign_keys=author_id, default=None
     )
@@ -57,4 +60,4 @@ class QuoteOptouts(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, init=False)
     user_type: Mapped[MentionType]
     user_id: Mapped[user_id]
-    user_string: Mapped[str]
+    user_string: Mapped[Optional[str]]

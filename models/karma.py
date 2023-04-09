@@ -29,8 +29,8 @@ class KarmaChange(Base):
     change: Mapped[int]
     score: Mapped[int]
 
-    karma: Mapped["Karma"] = relationship(back_populates="changes")
-    user: Mapped["User"] = relationship(back_populates="karma_changes")
+    karma: Mapped["Karma"] = relationship(back_populates="changes", init=False)
+    user: Mapped["User"] = relationship(back_populates="karma_changes", init=False)
 
     @hybrid_property
     def local_time(self):
