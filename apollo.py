@@ -41,7 +41,7 @@ EXTENSIONS = [
     "cogs.commands.tex",
     "cogs.commands.vote",
     "cogs.commands.widen",
-    "cogs.channel_checker",
+    "cogs.commands.xkcd" "cogs.channel_checker",
     "cogs.database",
     "cogs.irc",
     "cogs.parallelism",
