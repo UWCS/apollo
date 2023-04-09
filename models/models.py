@@ -1,8 +1,8 @@
 import logging
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session
-
+from sqlalchemy import create_engine, ForeignKey, BigInteger
+from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
+from typing_extensions import Annotated
 from config import CONFIG
 
 # this is bad, redo this
@@ -25,6 +25,12 @@ def auto_str(cls):
 
     cls.__repr__ = __repr__
     return cls
+
+
+int_pk = Annotated[int, mapped_column(primary_key=True)]
+user_id = Annotated[int, mapped_column(ForeignKey("users.id"), nullable=False)]
+discord_snowflake = Annotated[int, mapped_column(BigInteger, nullable=False)]
+discord_snowflake_pk = Annotated[int, mapped_column(BigInteger, primary_key=True)]
 
 
 class Base(DeclarativeBase):
