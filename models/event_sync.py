@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy.orm import Mapped, mapped_column
-from typing import Optional
+
 from models.models import Base, discord_snowflake
 
 

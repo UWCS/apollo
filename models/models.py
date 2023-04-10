@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import BigInteger, ForeignKey, create_engine, MetaData
+from sqlalchemy import BigInteger, ForeignKey, MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
 from typing_extensions import Annotated
 
@@ -10,7 +10,6 @@ from config import CONFIG
 engine = create_engine(CONFIG.DATABASE_CONNECTION, future=True)
 
 from config import CONFIG
-
 
 engine = create_engine(CONFIG.DATABASE_CONNECTION)
 if CONFIG.SQL_LOGGING:

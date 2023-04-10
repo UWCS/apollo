@@ -1,6 +1,7 @@
+from typing import Optional
+
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import Optional
 
 from models.models import Base, discord_snowflake, int_pk
 
