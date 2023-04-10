@@ -8,10 +8,9 @@ import discord
 import platform
 from datetime import datetime
 from typing import Any
-
-APOLLO_URL = (
-    "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
-)
+from models.system import SystemEvent, EventKind
+from models.models import db_session
+from sqlalchemy import select
 
 
 class System(commands.Cog):
@@ -75,11 +74,29 @@ Started {started} (uptime {uptime})"""
         else:
             await ctx.reply("Could not find version")
 
+    @commands.hybrid_command()
+    async def restart(self, ctx: Context[Bot]):
+        headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/restart"
+            event = SystemEvent(EventKind.RESTART, ctx.message.id)
+            db_session.add(event)
+            db_session.commit()
+            resp = await session.post(url)
+            if not resp.ok:
+                status = resp.status
+                msg = (await resp.json())["message"]
+                logging.error(f"{status} from Portainer API: {msg}")
+                # remove our event that just failed to happen
+                db_session.delete(event)
+                db_session.commit()
+
     @staticmethod
     async def get_docker_json() -> dict[Any, Any] | None:
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
-            resp = await session.get(APOLLO_URL)
+            url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
+            resp = await session.get(url)
             if not resp.ok:
                 logging.error("Could not reach Portainer API")
                 return None

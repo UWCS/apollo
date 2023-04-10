@@ -11,7 +11,7 @@ class EventKind(Enum):
     UPDATE = 1
 
 
-class SystemEvents(Base):
+class SystemEvent(Base):
     __tablename__ = "system_events"
     id: Mapped[int_pk] = mapped_column(init=False)
 
