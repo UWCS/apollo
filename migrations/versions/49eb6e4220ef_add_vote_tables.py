@@ -105,4 +105,5 @@ def downgrade():
     op.drop_table("user_vote")
     op.drop_table("discord_vote")
     op.drop_table("vote")
+    sa.Enum(name="votetype").drop(op.get_bind(), checkfirst=False)
     # ### end Alembic commands ###
