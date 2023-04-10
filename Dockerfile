@@ -15,7 +15,9 @@ WORKDIR /app
 
 RUN /root/.local/bin/pipenv sync
 
+COPY .git .git
 RUN echo $(git rev-parse --short HEAD) > .version
+RUN echo $(date -Is) >> .version
 
 FROM python:3.10-slim AS runtime
 
@@ -24,6 +26,9 @@ WORKDIR /app
 # copy venv into runtime
 COPY --from=builder /app/.venv/ /app/.venv/
 COPY --from=builder /app/.version /app/.version
+
+# keep container size down + we don't need it
+RUN rm -rf .git
 
 # add venv to path
 ENV PATH="/app/.venv/bin:$PATH"

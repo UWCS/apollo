@@ -13,6 +13,7 @@ APOLLO_URL = (
     "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
 )
 
+
 class System(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -20,8 +21,8 @@ class System(commands.Cog):
         try:
             with open(".version", "r") as f:
                 content = f.readlines()
-                self.version_from_file = content[0]
-                self.build_timestamp_from_file = content[1]
+                self.version_from_file = content[0].rstrip()
+                self.build_timestamp_from_file = content[1].rstrip()
         except FileNotFoundError:
             logging.error("Could not load git revision from file")
             self.version_from_file = None
@@ -40,11 +41,17 @@ class System(commands.Cog):
         version = self.version_from_file
         built = self.build_timestamp_from_file
 
-        description = json["Config"]["Labels"]["org.opencontainers.image.description"]
+        description: str = json["Config"]["Labels"][
+            "org.opencontainers.image.description"
+        ]
 
         py_version = platform.python_version()
         dpy_version = discord.__version__
-        started = datetime.fromisoformat(json["State"]["StartedAt"])
+
+        # the timestamp docker gives does not conform to ISO.
+        # we strip the fractional secconds and add the suffix which assumes UTC (may cause issues in summer)
+        timestamp: str = json["State"]["StartedAt"]
+        started = datetime.fromisoformat(timestamp.split(".")[0])
         uptime = datetime.now() - started
 
         if version and built:
