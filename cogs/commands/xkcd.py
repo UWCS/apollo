@@ -77,7 +77,7 @@ class XKCD(commands.Cog):
                     logging.info("failed to get comic")
                     return None
 
-    async def get_comic_image(self, url: str) -> str | None:
+    async def get_comic_image(self, url: str) -> discord.File | None:
         """gets an image in the form of a discord file"""
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:

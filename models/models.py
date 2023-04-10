@@ -1,6 +1,6 @@
 import logging
 
-from sqlalchemy import BigInteger, ForeignKey, create_engine
+from sqlalchemy import BigInteger, ForeignKey, create_engine, MetaData
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
 from typing_extensions import Annotated
 
@@ -8,6 +8,19 @@ from config import CONFIG
 
 # this is bad, redo this
 engine = create_engine(CONFIG.DATABASE_CONNECTION, future=True)
+
+from config import CONFIG
+
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+metadata = MetaData(naming_convention=convention)
+
+engine = create_engine(CONFIG.DATABASE_CONNECTION)
 if CONFIG.SQL_LOGGING:
     logging.basicConfig()
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)

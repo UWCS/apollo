@@ -48,3 +48,4 @@ def upgrade():
 def downgrade():
     op.drop_table("quotes")
     op.drop_table("quotes_opt_out")
+    sa.Enum(name="mentiontype").drop(op.get_bind(), checkfirst=False)
