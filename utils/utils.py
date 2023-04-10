@@ -1,10 +1,14 @@
 import functools
+import json
+import logging
 import re
 import textwrap
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Iterable, List, Union
+from io import BytesIO
+from typing import Iterable, List, TypeAlias, Union, overload
 
+import aiohttp
 import dateparser
 import discord
 from discord.ext.commands import CommandError, Context
@@ -312,3 +316,36 @@ def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
         return decorator
 
     return decorator_actual
+
+
+async def get_from_url(url: str) -> bytes | None:
+    """gets content from url"""
+    async with aiohttp.ClientSession() as session:  # sets up a session
+        async with session.get(url) as response:  # gets the response
+            if response.status == 200:  # if successful return response
+                logging.info("successfully got from " + url)
+                return await response.read()
+            else:  # otherwise none
+                logging.info("failed to get from " + url)
+                return None
+
+
+JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
+
+
+async def get_json_from_url(url: str) -> JSON:
+    """gets json from url"""
+    response = await get_from_url(url)
+    if response is None:
+        return None
+    return json.loads(response)  # convert response to json
+
+
+async def get_file_from_url(url: str) -> discord.File | None:
+    """gets an image from a url and returns as a discord file"""
+    response = await get_from_url(url)
+    if response is None:
+        return None
+    return discord.File(
+        BytesIO(response), filename="image.png"
+    )  # convert response to files
