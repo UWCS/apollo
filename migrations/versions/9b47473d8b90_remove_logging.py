@@ -22,6 +22,7 @@ down_revision = "988a71e876c3"
 branch_labels = None
 depends_on = None
 
+
 @auto_str
 class KarmaChange(Base):
     __tablename__ = "karma_changes"

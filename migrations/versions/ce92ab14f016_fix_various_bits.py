@@ -15,14 +15,13 @@ down_revision = "9b47473d8b90"
 branch_labels = None
 depends_on = None
 
+
 def upgrade():
     bind = op.get_bind()
     inspector = sa.engine.reflection.Inspector(bind)
     tables = inspector.get_table_names()
 
-    with op.batch_alter_table(
-        "karma_changes", schema=None
-    ) as batch_op:
+    with op.batch_alter_table("karma_changes", schema=None) as batch_op:
         batch_op.alter_column("message_id", existing_type=sa.BIGINT(), nullable=False)
         batch_op.drop_column("mid_old")
 
@@ -32,9 +31,7 @@ def upgrade():
     if "messages" in tables:
         op.drop_table("messages")
 
-    with op.batch_alter_table(
-        "user_vote", schema=None
-    ) as batch_op:
+    with op.batch_alter_table("user_vote", schema=None) as batch_op:
         batch_op.create_foreign_key(
             "fk_user_vote_vote_id_vote_choice",
             "vote_choice",
@@ -45,9 +42,7 @@ def upgrade():
 
 
 def downgrade():
-    with op.batch_alter_table(
-        "user_vote", schema=None
-    ) as batch_op:
+    with op.batch_alter_table("user_vote", schema=None) as batch_op:
         batch_op.drop_constraint("fk_user_vote_vote_id_vote_choice", type_="foreignkey")
 
     op.create_table(
@@ -60,7 +55,7 @@ def downgrade():
         sa.Column("channel_name", sau.EncryptedType, nullable=False),
         sa.Column("deleted_at", sa.DateTime, nullable=False),
     )
-    
+
     op.create_table(
         "message_edits",
         sa.Column("id", sa.Integer, primary_key=True, nullable=False),
@@ -70,13 +65,13 @@ def downgrade():
         sa.Column("new_content", sau.EncryptedType, nullable=False),
         sa.Column("created_at", sa.DateTime, nullable=False),
     )
-    
+
     # with op.batch_alter_table(
     #     "karma_changes", schema=None
     # ) as batch_op:
     #     batch_op.add_column(sa.Column("mid_old", sa.Integer, nullable=True))
     #     batch_op.alter_column("message_id", existing_type=sa.BIGINT(), nullable=True)
-    
+
     op.drop_table("karma_changes")
     op.create_table(
         "karma_changes",
@@ -88,5 +83,5 @@ def downgrade():
         sa.Column("change", sa.Integer, nullable=False),
         sa.Column("score", sa.Integer, nullable=False),
         sa.Column("reason", sa.String, nullable=True),
-        sa.PrimaryKeyConstraint("karma_id", "user_id", "message_id")
+        sa.PrimaryKeyConstraint("karma_id", "user_id", "message_id"),
     )
