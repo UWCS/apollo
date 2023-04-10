@@ -53,7 +53,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:12
+        image: postgres:14.7
         env:
           POSTGRES_USER: apollo
           POSTGRES_PASSWORD: apollo
@@ -120,8 +120,8 @@ jobs:
       - name: Check upgrade migrations
         run: pipenv run alembic upgrade head
 
-      # - name: Check no migrations need to be generated
-      #   run: pipenv run alembic check
+      - name: Check no migrations need to be generated
+        run: pipenv run alembic check
 
       - name: Check downgrade migrations
         #if: always() #check downgrade even if check failes

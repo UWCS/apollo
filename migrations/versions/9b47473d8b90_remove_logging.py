@@ -22,12 +22,6 @@ down_revision = "988a71e876c3"
 branch_labels = None
 depends_on = None
 
-# https://alembic.sqlalchemy.org/en/latest/batch.html#dropping-unnamed-or-named-foreign-key-constraints
-naming_convention = {
-    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
-    "pk": "%(table_name)s_pkey",
-}
-
 
 @auto_str
 class KarmaChange(Base):
@@ -66,11 +60,8 @@ def upgrade():
     session = sa.orm.Session(bind=bind)
 
     # Drop FK and add column
-    with op.batch_alter_table(
-        "karma_changes", recreate="always", naming_convention=naming_convention
-    ) as batch_op:
-        if bind.engine.name != "sqlite":
-            op.drop_constraint("karma_changes_message_id_fkey", "karma_changes")
+    with op.batch_alter_table("karma_changes", recreate="always") as batch_op:
+        op.drop_constraint("fk_karma_changes_message_id_messages", "karma_changes")
         batch_op.add_column(
             sa.Column("mid_new", sa.BigInteger, server_default="-1"),
             insert_after="message_id",
@@ -87,11 +78,9 @@ def upgrade():
     session.commit()
 
     # Edit PK and column names
-    with op.batch_alter_table(
-        "karma_changes", schema=None, naming_convention=naming_convention
-    ) as bop:
+    with op.batch_alter_table("karma_changes", schema=None) as bop:
         # bop.drop_constraint("pk_karma_changes", type_='primary')
-        bop.drop_constraint("karma_changes_pkey", type_="primary")
+        bop.drop_constraint("pk_karma_changes", type_="primary")
         bop.create_primary_key("pk_karma_changes", ["karma_id", "user_id", "mid_new"])
         bop.alter_column("message_id", new_column_name="mid_old", nullable=True)
         bop.alter_column("mid_new", new_column_name="message_id", server_default=None)
