@@ -14,6 +14,7 @@ from voting.vote_types.base_vote import base_vote
 DENSE_ARRANGE = True
 Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str])])
 
+
 # Records last ephemeral message to each user, so can edit for future votes
 class VoteButton(Button):
     """Interactive button to add vote for an option"""

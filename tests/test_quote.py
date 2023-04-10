@@ -476,7 +476,6 @@ def test_optout_fails(database, is_exec, requester, target, error, oo_size, q_si
     ["requester", "try_quote", "oo_size", "q_size"], OPTINS.values(), ids=OPTINS.keys()
 )
 def test_optin(database, requester, try_quote, oo_size, q_size):
-
     opt_in_to_quotes(requester, database)
     actual_from_quote = add_quote(requester, "quote thingy", datetime.now(), database)
 

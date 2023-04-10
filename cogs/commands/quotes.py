@@ -154,7 +154,6 @@ def add_quote(author: Mention, quote, time, session=db_session) -> str:
 def delete_quote(
     is_exec, requester: Mention, query: QuoteID, session=db_session
 ) -> str:
-
     quote = quotes_query(query, session).one_or_none()
 
     if quote is None:
@@ -177,7 +176,6 @@ def delete_quote(
 def update_quote(
     is_exec, requester: Mention, quote_id: QuoteID, new_text, session=db_session
 ) -> str:
-
     quote = quotes_query(quote_id, session).one_or_none()
 
     if quote is None:
