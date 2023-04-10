@@ -39,8 +39,21 @@ def upgrade():
     if "messages" in tables: 
         op.drop_table("messages")
 
+    with op.batch_alter_table("user_vote", schema=None, naming_convention=nc) as batch_op:
+        batch_op.create_foreign_key(
+            "fk_user_vote_vote_id_vote_choice",
+            "vote_choice",
+            ["vote_id", "choice"],
+            ["vote_id", "choice_index"],
+            ondelete="CASCADE",
+        )
+
+
 
 def downgrade():
+    with op.batch_alter_table("user_vote", schema=None, naming_convention=nc) as batch_op:
+        batch_op.drop_constraint("fk_user_vote_vote_id_vote_choice",, type_="foreignkey")
+
     op.create_table(
         "message_edits",
         sa.Column("id", sa.INTEGER(), nullable=False),
