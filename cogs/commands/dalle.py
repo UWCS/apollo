@@ -3,12 +3,12 @@ import logging
 from io import BytesIO
 from typing import Iterable
 
-import aiohttp
 import discord
 import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
+import utils
 from config import CONFIG
 
 LONG_HELP_TEXT = """
@@ -52,7 +52,7 @@ class Dalle(commands.Cog):
 
         async with ctx.typing():  # show typing whilst generating image
             url = await self.generate_image(prompt)
-            image = discord.File(await self.get_image(url), filename="image.png")
+            image = await utils.get_file_from_url(url)
         if image is None:  # if image is not created error
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
@@ -70,17 +70,6 @@ class Dalle(commands.Cog):
             size="256x256",  # maybe change later? (you're wlecome treasurer btw)
         )
         return response["data"][0]["url"]
-
-    async def get_image(self, url):
-        """gets image from url and returns it as a discord file"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    logging.info("successfully got image")
-                    return BytesIO(await response.read())
-                else:
-                    logging.info("failed to get image")
-                    return None
 
     @staticmethod
     async def generate_variant(image):
