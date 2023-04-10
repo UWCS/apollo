@@ -9,7 +9,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing_extensions import TYPE_CHECKING
 
-from models.models import Base
+from models.models import Base, discord_snowflake
 
 # breaks the circular import at runtime
 # still happens when type checking
@@ -22,7 +22,7 @@ class KarmaChange(Base):
 
     karma_id: Mapped[int] = mapped_column(ForeignKey("karma.id"), primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
-    message_id: Mapped[int] = mapped_column(primary_key=True)
+    message_id: Mapped[discord_snowflake] = mapped_column(primary_key=True)
 
     created_at: Mapped[datetime]
     reason: Mapped[str | None]
