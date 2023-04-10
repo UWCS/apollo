@@ -1,14 +1,13 @@
 import random
 from pathlib import Path
 
-import requests
 import yaml
 from discord import Colour, Embed
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
 from utils import get_name_string
-from utils.utils import user_is_irc_bot
+from utils.utils import get_json_from_url, user_is_irc_bot
 
 LONG_HELP_TEXT = """
 Selects a random "interesting" "fact".
@@ -29,17 +28,10 @@ class Fact(commands.Cog):
         self.bot = bot
         self.options, self.endpoint = load_facts()
 
-    def get_online_fact(self):
-        r = requests.get(self.endpoint)
-        if r.ok:
-            return r.json()
-        else:
-            return None
-
     @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def fact(self, ctx: Context):
         display_name = get_name_string(ctx.message)
-        if json := self.get_online_fact():
+        if json := await get_json_from_url(self.endpoint):
             if user_is_irc_bot(ctx):
                 await ctx.send(
                     f"{display_name}: {json['text']} (from <{json['source']}>)"
