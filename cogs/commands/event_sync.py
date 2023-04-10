@@ -30,7 +30,7 @@ class Sync(commands.Cog):
         after = None if after is None else parse_time(after)
         # Fetch and parse ical from website
         r = await get_from_url(ICAL_URL)
-        c = io.BytesIO(r.content)
+        c = io.BytesIO(r)
         cal = Calendar.from_ical(c.getvalue())
         db_links = db_session.query(EventLink).all()
         links = {e.uid: e for e in db_links}

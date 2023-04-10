@@ -6,6 +6,8 @@ from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
 from PIL import Image
 
+import utils
+
 LONG_HELP_TEXT = """
 Render a LaTeX maths expression to an image and show it in-line.
 """
@@ -37,8 +39,8 @@ class Tex(commands.Cog):
 
         # Make request
         url = API_URL + requests.utils.quote(tex_code)
-        r = requests.get(url)
-        c = io.BytesIO(r.content)
+        r = await utils.get_from_url(url)
+        c = io.BytesIO(r)
 
         # Mask in colours (API only does a few colours)
         mask = Image.open(c).convert("L")
