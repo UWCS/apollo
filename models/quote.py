@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, user_id
+from models.models import Base
 from models.user import User
 from utils.mentions import MentionType
 

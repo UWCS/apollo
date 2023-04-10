@@ -1,12 +1,16 @@
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from typing import Optional
 
 from models.models import Base, discord_snowflake, int_pk
 
 
 class RoleMenu(Base):
     __tablename__ = "rolemenu"
+    __table_args__ = (UniqueConstraint("msg_ref", "guild_id"),)
+
     id: Mapped[int_pk] = mapped_column(init=False)
+
     msg_ref: Mapped[str]
     guild_id: Mapped[discord_snowflake]
     channel_id: Mapped[discord_snowflake]
@@ -14,8 +18,9 @@ class RoleMenu(Base):
         "RoleEntry", back_populates="menu", cascade="all, delete-orphan", init=False
     )
     title: Mapped[str] = mapped_column(default="Vote", insert_default="Vote")
-    message_id: Mapped[discord_snowflake | None] = mapped_column(default=None)
-    unique_roles: Mapped[bool] = mapped_column(default=False)
+
+    message_id: Mapped[Optional[discord_snowflake]] = mapped_column(default=None)
+    unique_roles: Mapped[Optional[bool]] = mapped_column(default=False)
 
 
 class RoleEntry(Base):

@@ -20,10 +20,10 @@ db_session = Session(bind=engine, future=True)
 
 # some useful re-usable column types
 int_pk = Annotated[int, mapped_column(primary_key=True, init=False)]
-user_id = Annotated[int, mapped_column(ForeignKey("users.id"), nullable=False)]
+user_id = Annotated[int, mapped_column(ForeignKey("users.id"))]
 # discord 'snowflakes' are the really long IDs that you get as like channel or user IDs
 # this annotated column map type uses BigInteger to encode those and convert to python ints
-discord_snowflake = Annotated[int, mapped_column(BigInteger, nullable=False)]
+discord_snowflake = Annotated[int, mapped_column(BigInteger)]
 
 
 class Base(MappedAsDataclass, DeclarativeBase):
