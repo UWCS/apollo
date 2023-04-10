@@ -71,32 +71,22 @@ def downgrade():
         sa.Column("created_at", sa.DateTime, nullable=False),
     )
     
+    # with op.batch_alter_table(
+    #     "karma_changes", schema=None
+    # ) as batch_op:
+    #     batch_op.add_column(sa.Column("mid_old", sa.Integer, nullable=True))
+    #     batch_op.alter_column("message_id", existing_type=sa.BIGINT(), nullable=True)
+    
     op.drop_table("karma_changes")
     op.create_table(
         "karma_changes",
-        sa.Column(
-            "karma_id",
-            sa.Integer,
-            sa.ForeignKey("karma.id"),
-            primary_key=True,
-            nullable=False,
-        ),
-        sa.Column(
-            "user_id",
-            sa.Integer,
-            sa.ForeignKey("users.id"),
-            primary_key=True,
-            nullable=False,
-        ),
-        sa.Column(
-            "message_id",
-            sa.Integer,
-            sa.ForeignKey("messages.id"),
-            primary_key=True,
-            nullable=False,
-        ),
+        sa.Column("karma_id", sa.Integer, sa.ForeignKey("karma.id")),
+        sa.Column("user_id", sa.Integer, sa.ForeignKey("users.id")),
+        sa.Column("mid_old", sa.Integer, sa.ForeignKey("messages.id")),
+        sa.Column("message_id", sa.BigInteger),
         sa.Column("created_at", sa.DateTime, nullable=False),
         sa.Column("change", sa.Integer, nullable=False),
         sa.Column("score", sa.Integer, nullable=False),
-        sa.Column("reason", sa.String, nullable=True)
+        sa.Column("reason", sa.String, nullable=True),
+        sa.PrimaryKeyConstraint("karma_id", "user_id", "message_id")
     )
