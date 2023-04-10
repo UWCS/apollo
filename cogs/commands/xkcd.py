@@ -1,13 +1,10 @@
 import json
-import logging
 import random
-from io import BytesIO
 
-import aiohttp
-import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
+import utils
 from config import CONFIG
 
 LONG_HELP_TEXT = """
@@ -39,12 +36,14 @@ class XKCD(commands.Cog):
         elif comic_id <= 0 or comic_id > max_comic_id:
             return await ctx.reply("Error: invalid comic id")
 
-        comic_return = await self.get_comic(comic_id)  # get the raw json of the comic
+        comic_return = await utils.get_from_url(
+            f"https://xkcd.com/{comic_id}/info.0.json"
+        )  # get the raw json of the comic
         if comic_return is None:
             return await ctx.reply(f"Error: could not get comic {comic_id}")
 
         comic_json = json.loads(comic_return)  # convert into readable
-        comic_img = await self.get_comic_image(comic_json["img"])
+        comic_img = await utils.get_file_from_url(comic_json["img"])
         if comic_img is None:
             return await ctx.reply("Error: could not get comic image")
 
@@ -53,41 +52,12 @@ class XKCD(commands.Cog):
         msg = f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>"
         await ctx.reply(msg, file=comic_img)
 
-    async def get_comic(self, comic_id: int) -> str | None:
-        """gets a comic with a specific id"""
-        async with aiohttp.ClientSession() as session:
-            url = f"https://xkcd.com/{comic_id}/info.0.json"
-            async with session.get(url) as response:
-                if response.status == 200:
-                    logging.info("successfully got comic:" + str(comic_id))
-                    return await response.read()
-                else:
-                    logging.info("failed to get comic: " + str(comic_id))
-                    return None
-
     async def get_recent_comic(self) -> int | None:
         """gets the most recent comic id"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://xkcd.com/info.0.json") as response:
-                if response.status == 200:
-                    logging.info("successfully got moset recent comic")
-                    xkcd_response = json.loads(await response.read())
-                    return xkcd_response["num"]
-                else:
-                    logging.info("failed to get comic")
-                    return None
-
-    async def get_comic_image(self, url: str) -> discord.File | None:
-        """gets an image in the form of a discord file"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    logging.info("successfully got comic image")
-                    file = BytesIO(await response.read())
-                    return discord.File(file, filename="image.png")
-                else:
-                    logging.info("failed to get comic image")
-                    return None
+        xkcd_response = await utils.get_json_from_url("https://xkcd.com/info.0.json")
+        if xkcd_response:
+            return xkcd_response["num"]
+        return None
 
 
 async def setup(bot: Bot):
