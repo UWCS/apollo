@@ -113,7 +113,6 @@ def function(xs):
 
 
 class ProgramParser(TextParsers):
-
     # Actual grammar
     split1 = lambda item, separator: item & rep(separator & item)
     split = lambda item, separator: opt(split1(item, separator))

@@ -16,7 +16,6 @@ class BaseVote:
         vote_limit=None,
         seats=None,
     ) -> Tuple[Vote, List[VoteChoice]]:
-
         new_vote = Vote(
             title=title,
             owner_id=owner_id,

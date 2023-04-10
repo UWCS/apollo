@@ -22,7 +22,9 @@ class Misc(commands.Cog):
     @commands.hybrid_command()
     async def go(self, ctx: Context):
         """The eternal #cs meme."""
-        await ctx.send("Why did the Gopher become a programmer? Because it had a knack for golang out of its way to solve problems inefficiently!")
+        await ctx.send(
+            "Why did the Gopher become a programmer? Because it had a knack for golang out of its way to solve problems inefficiently!"
+        )
 
     @commands.hybrid_command()
     async def dunno(self, ctx: Context):
