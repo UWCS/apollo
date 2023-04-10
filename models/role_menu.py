@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.types import BigInteger, Boolean, Integer, String
 
@@ -15,6 +15,7 @@ class RoleMenu(Base):
     channel_id = Column(BigInteger, nullable=False)
     message_id = Column(BigInteger)
     unique_roles = Column(Boolean, default=False)
+    __table_args__ = (UniqueConstraint("msg_ref", "guild_id"),)
 
     choices = relationship(
         "RoleEntry", back_populates="menu", cascade="all, delete-orphan"
