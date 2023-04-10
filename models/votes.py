@@ -1,19 +1,10 @@
 import enum
+from datetime import datetime
 
-from sqlalchemy import (
-    Boolean,
-    Column,
-    DateTime,
-    Enum,
-    ForeignKey,
-    ForeignKeyConstraint,
-    Integer,
-    String,
-    func,
-)
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base
+from models.models import Base, DiscordSnowflake, UserId, IntPk
 from models.user import User
 
 
@@ -27,108 +18,105 @@ class VoteType(enum.Enum):
 
 class Vote(Base):
     __tablename__ = "vote"
-    id = Column(Integer, primary_key=True, nullable=False)
-    owner_id = Column(Integer, ForeignKey(User.id), nullable=False)
-    title = Column(String, nullable=False, server_default="Vote")
-    vote_limit = Column(Integer, nullable=False, server_default="0")
-    ranked_choice = Column(Boolean, nullable=False)
-    type = Column(Enum(VoteType), nullable=False)
-    seats = Column(Integer, nullable=False, server_default="1")
-    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
-
-    choices = relationship(
-        "VoteChoice", back_populates="vote", cascade="all, delete-orphan"
+    id: Mapped[IntPk] = mapped_column(primary_key=True, init=False)
+    owner_id: Mapped[UserId]
+    type: Mapped[VoteType]
+    ranked_choice: Mapped[bool]
+    created_at: Mapped[datetime] = mapped_column(
+        default_factory=datetime.now, insert_default=func.current_timestamp()
     )
-    discord_vote = relationship(
-        "DiscordVote", back_populates="vote", cascade="all, delete-orphan"
+    title: Mapped[str] = mapped_column(default="Vote")
+    vote_limit: Mapped[int] = mapped_column(default="0")
+    seats: Mapped[int] = mapped_column(default="1")
+
+    choices: Mapped[list["VoteChoice"]] = relationship(
+        back_populates="vote", cascade="all, delete-orphan", init=False
+    )
+    discord_vote: Mapped[list["DiscordVote"]] = relationship(
+        back_populates="vote", cascade="all, delete-orphan", init=False
     )
 
 
 class VoteChoice(Base):
     __tablename__ = "vote_choice"
-    vote_id = Column(
-        Integer,
-        ForeignKey("vote.id", ondelete="CASCADE"),
-        primary_key=True,
-        nullable=False,
+    vote_id: Mapped[int] = mapped_column(
+        ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True
     )
-    choice_index = Column(Integer, primary_key=True, nullable=False)
-    choice = Column(String, nullable=False)
+    vote: Mapped[Vote] = relationship(back_populates="choices", init=False)
+    choice_index: Mapped[int] = mapped_column(primary_key=True)
+    choice: Mapped[str]
 
-    vote = relationship(Vote, back_populates="choices")
-    user_votes = relationship(
-        "UserVote", back_populates="vote_choice", cascade="all, delete-orphan"
+    user_votes: Mapped[list["UserVote"]] = relationship(
+        back_populates="vote_choice", cascade="all, delete-orphan", init=False
     )
 
 
 class UserVote(Base):
     __tablename__ = "user_vote"
-    vote_id = Column(
-        Integer,
-        ForeignKey("vote.id", ondelete="CASCADE"),
+    vote_id: Mapped[int] = mapped_column(
+        ForeignKey(Vote.id, ondelete="CASCADE"),
         primary_key=True,
-        nullable=False,
     )
-    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True, nullable=False)
-    choice = Column(Integer, primary_key=True, nullable=False)
-    preference = Column(Integer, nullable=False, server_default="0")
+    user_id: Mapped[int] = mapped_column(ForeignKey(User.id), primary_key=True)
+    user: Mapped[User] = relationship(init=False)
+    choice: Mapped[int] = mapped_column(primary_key=True)
+    vote_choice: Mapped[VoteChoice] = relationship(
+        back_populates="user_votes", init=False
+    )
+    preference: Mapped[int] = mapped_column(server_default="0", init=False)
     ForeignKeyConstraint(
         (vote_id, choice),
         (VoteChoice.vote_id, VoteChoice.choice_index),
         ondelete="CASCADE",
     )
 
-    vote_choice = relationship(VoteChoice, back_populates="user_votes")
-    user = relationship(User)
-
 
 class DiscordVoteMessage(Base):
     __tablename__ = "discord_vote_message"
-    message_id = Column(Integer, primary_key=True)
-    channel_id = Column(Integer, nullable=False)
-    vote_id = Column(
-        Integer,
+    message_id: Mapped[DiscordSnowflake] = mapped_column(primary_key=True)
+    channel_id: Mapped[DiscordSnowflake]
+    vote_id: Mapped[int] = mapped_column(
         ForeignKey("discord_vote.id", ondelete="CASCADE"),
         ForeignKey("vote.id", ondelete="CASCADE"),
-        nullable=False,
     )
-    choices_start_index = Column(Integer, nullable=False)
-    numb_choices = Column(Integer, nullable=False, server_default="20")
-    part = Column(Integer, nullable=False)
+    choices_start_index: Mapped[int]
+    numb_choices: Mapped[int] = mapped_column(server_default="20", init=False)
+    part: Mapped[int]
 
-    discord_vote = relationship("DiscordVote", back_populates="messages")
+    discord_vote: Mapped["DiscordVote"] = relationship(
+        back_populates="messages", init=False
+    )
 
 
 # TODO Add unique constraints, remove emoji
 class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
-    vote_id = Column(Integer, primary_key=True, nullable=False)
-    choice_index = Column(Integer, primary_key=True, nullable=False)
-    emoji = Column(String)
-    msg_id = Column(
-        Integer, ForeignKey("discord_vote_message.message_id", ondelete="CASCADE")
+    vote_id: Mapped[int] = mapped_column(primary_key=True)
+    choice_index: Mapped[int] = mapped_column(primary_key=True)
+    msg_id: Mapped[int] = mapped_column(
+        ForeignKey("discord_vote_message.message_id", ondelete="CASCADE")
     )
-    ForeignKeyConstraint(
-        (vote_id, choice_index), (VoteChoice.vote_id, VoteChoice.choice_index)
+    msg: Mapped["DiscordVoteMessage"]
+    emoji: Mapped[str | None] = mapped_column(default="", init=False)
+    __table_args__ = (
+        ForeignKeyConstraint(
+            (vote_id, choice_index), (VoteChoice.vote_id, VoteChoice.choice_index)
+        ),
     )
-
-    msg = relationship(DiscordVoteMessage)
-    choice = relationship(VoteChoice)
+    choice: Mapped[VoteChoice] = relationship(init=False)
 
 
 # Currently pretty useless
 # TODO Limit to role
 class DiscordVote(Base):
     __tablename__ = "discord_vote"
-    id = Column(
-        Integer,
+    id: Mapped[int] = mapped_column(
         ForeignKey("vote.id", ondelete="CASCADE"),
         primary_key=True,
-        nullable=False,
     )
-    allowed_role_id = Column(Integer)
+    vote: Mapped[Vote] = mapped_column(back_populates="discord_vote")
+    allowed_role_id: Mapped[int]
 
-    messages = relationship(
-        DiscordVoteMessage, back_populates="discord_vote", cascade="all, delete-orphan"
+    messages: Mapped["DiscordVoteMessage"] = mapped_column(
+        back_populates="discord_vote", cascade="all, delete-orphan"
     )
-    vote = relationship(Vote, back_populates="discord_vote")
