@@ -25,6 +25,9 @@ COPY --from=builder /app/.venv/ /app/.venv/
 # add venv to path
 ENV PATH="/app/.venv/bin:$PATH"
 
+# let apollo know that it's in a container
+ENV CONTAINER=1
+
 # copy in everything
 COPY . /app
 

@@ -31,6 +31,9 @@ config:
   # Initial priming prompt for chatgpt
   ai_system_prompt: |
     You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
+  # API key for access to apollo's container runtime
+  portainer_api_key: portainer
+
   # Configuration
   # Level of messages logged to file
   log_level: WARNING
