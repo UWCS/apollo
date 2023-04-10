@@ -15,7 +15,7 @@ Apollo uses `pipenv` for dependency and venv management. Install it with `pip in
 2. Copy `config.example.yaml` to `config.yaml` and configure the fields.
 3. Copy `alembic.example.ini` to `alembic.ini` and configure any fields you wish to change.
 4. Set up the database by running migrations with `alembic upgrade head`.
-   - The default database location is `postgresql://apollo:apollo@localhost/apollo` (in `config.example.yaml`)
+   - The default database location is `postgresql+psycopg://apollo:apollo@localhost/apollo` (in `config.example.yaml`)
      This requires PostgreSQL to be installed, with a database called `apollo` and a user with name and password `apollo` with access to it.
    - For testing purposes, you may wish to change it to a locally stored file such as `sqlite:///apollo.sqlite3`. 
    - Alternatively, see the instructions below for using Docker.
@@ -28,7 +28,7 @@ Run Apollo using `pipenv run python apollo.py`
 
 A Dockerfile and docker-compose are provided for easily running Apollo. Assuming you already have docker installed, run `docker compose up` to start both Apollo and a postgres database.
 
-The compose file uses a read-only bind mount to mount `config.yaml` into the container at runtime, not at build time. Copy `config.example.yaml` to `config.yaml` and configure the fields so that compose can do this. You will need to change the database url to `postgresql://apollo:apollo@db/apollo` if you wish to connect to the containerised database. Be sure to configure the rest of the fields too: you need a discord bot token.
+The compose file uses a read-only bind mount to mount `config.yaml` into the container at runtime, not at build time. Copy `config.example.yaml` to `config.yaml` and configure the fields so that compose can do this. You will need to change the database url to `postgresql+psycopg://apollo:apollo@db/apollo` if you wish to connect to the containerised database. Be sure to configure the rest of the fields too: you need a discord bot token.
 
 The docker image builds `alembic.ini` into it by copying the example, as it is rare any values in this wish to be changed on a per-deployment basis.
 
