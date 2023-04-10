@@ -43,6 +43,7 @@ EXTENSIONS = [
     "cogs.commands.widen",
     "cogs.commands.xkcd",
     "cogs.channel_checker",
+    "cogs.commands.system",
     "cogs.database",
     "cogs.irc",
     "cogs.parallelism",

@@ -15,12 +15,15 @@ WORKDIR /app
 
 RUN /root/.local/bin/pipenv sync
 
+RUN echo $(git rev-parse --short HEAD) > .version
+
 FROM python:3.10-slim AS runtime
 
 WORKDIR /app
 
 # copy venv into runtime
 COPY --from=builder /app/.venv/ /app/.venv/
+COPY --from=builder /app/.version /app/.version
 
 # add venv to path
 ENV PATH="/app/.venv/bin:$PATH"
