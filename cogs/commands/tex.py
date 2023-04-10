@@ -56,7 +56,7 @@ class Tex(commands.Cog):
 
         # Load the image as a file to be attached to an image
         img_file = File(img, filename="tex.png")
-        if r.status_code == 200:
+        if r is not None:
             await ctx.send(f"Here you go! :abacus:", file=img_file)
         else:
             await ctx.message.add_reaction("❓")

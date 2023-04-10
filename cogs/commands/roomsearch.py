@@ -196,9 +196,9 @@ class RoomSearch(commands.Cog):
             self.last_week_check = datetime.now()
             weeks_json = await utils.get_json_from_url(
                 "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
-            ).get("weeks")
+            )
 
-            for week in weeks_json:
+            for week in weeks_json["weeks"]:
                 start = datetime.strptime(week.get("start"), "%Y-%m-%d").date()
                 end = datetime.strptime(week.get("end"), "%Y-%m-%d").date()
                 current = (datetime.now() + timedelta(days=3)).date()
