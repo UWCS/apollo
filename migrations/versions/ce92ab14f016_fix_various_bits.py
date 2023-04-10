@@ -56,7 +56,7 @@ def upgrade():
 
 def downgrade():
     with op.batch_alter_table(
-        "user_vote", schema=None, naming_convention=nc
+        "user_vote", schema=None
     ) as batch_op:
         batch_op.drop_constraint("fk_user_vote_vote_id_vote_choice", type_="foreignkey")
 
