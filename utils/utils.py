@@ -318,9 +318,7 @@ def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
     return decorator_actual
 
 
-async def get_from_url(
-    url: str, headers: aiohttp.LooseHeaders | None = None
-) -> bytes | None:
+async def get_from_url(url: str, headers: dict | None = None) -> bytes | None:
     """gets content from url"""
     async with aiohttp.ClientSession(headers=headers) as session:  # sets up a session
         async with session.get(url) as response:  # gets the response
@@ -335,9 +333,7 @@ async def get_from_url(
 JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 
 
-async def get_json_from_url(
-    url: str, headers: aiohttp.LooseHeaders | None = None
-) -> JSON:
+async def get_json_from_url(url: str, headers: dict | None = None) -> JSON:
     """gets json from url"""
     response = await get_from_url(url, headers)
     if response is None:
