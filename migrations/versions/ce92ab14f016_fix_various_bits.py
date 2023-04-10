@@ -20,26 +20,31 @@ nc = {
     "pk": "%(table_name)s_pkey",
 }
 
+
 def upgrade():
     bind = op.get_bind()
     inspector = sa.engine.reflection.Inspector(bind)
     tables = inspector.get_table_names()
 
-    with op.batch_alter_table("karma_changes", schema=None, naming_convention=nc) as batch_op:
+    with op.batch_alter_table(
+        "karma_changes", schema=None, naming_convention=nc
+    ) as batch_op:
         batch_op.alter_column("message_id", existing_type=sa.BIGINT(), nullable=False)
-        
+
         batch_op.drop_constraint(
             "fk_karma_changes_message_id_messages", type_="foreignkey"
         )
         batch_op.drop_column("mid_old")
-    
+
     # Drop if existing
-    if "message_edits" in tables: 
+    if "message_edits" in tables:
         op.drop_table("message_edits")
-    if "messages" in tables: 
+    if "messages" in tables:
         op.drop_table("messages")
 
-    with op.batch_alter_table("user_vote", schema=None, naming_convention=nc) as batch_op:
+    with op.batch_alter_table(
+        "user_vote", schema=None, naming_convention=nc
+    ) as batch_op:
         batch_op.create_foreign_key(
             "fk_user_vote_vote_id_vote_choice",
             "vote_choice",
@@ -49,10 +54,11 @@ def upgrade():
         )
 
 
-
 def downgrade():
-    with op.batch_alter_table("user_vote", schema=None, naming_convention=nc) as batch_op:
-        batch_op.drop_constraint("fk_user_vote_vote_id_vote_choice",, type_="foreignkey")
+    with op.batch_alter_table(
+        "user_vote", schema=None, naming_convention=nc
+    ) as batch_op:
+        batch_op.drop_constraint("fk_user_vote_vote_id_vote_choice", type_="foreignkey")
 
     op.create_table(
         "message_edits",
@@ -81,11 +87,12 @@ def downgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    
-    with op.batch_alter_table("karma_changes", schema=None, naming_convention=nc) as batch_op:
+
+    with op.batch_alter_table(
+        "karma_changes", schema=None, naming_convention=nc
+    ) as batch_op:
         batch_op.add_column(sa.Column("mid_old", sa.INTEGER(), nullable=True))
         batch_op.create_foreign_key(
             "fk_karma_changes_message_id_messages", "messages", ["mid_old"], ["id"]
         )
         batch_op.alter_column("message_id", existing_type=sa.BIGINT(), nullable=True)
-    
