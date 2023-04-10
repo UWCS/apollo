@@ -32,10 +32,43 @@ def upgrade():
             "fk_karma_changes_message_id_messages", type_="foreignkey"
         )
         batch_op.drop_column("mid_old")
+    
+    # Drop if existing
+    if "message_edits" in tables: 
+        op.drop_table("message_edits")
+    if "messages" in tables: 
+        op.drop_table("messages")
 
 
-
-def downgrade():    
+def downgrade():
+    op.create_table(
+        "message_edits",
+        sa.Column("id", sa.INTEGER(), nullable=False),
+        sa.Column("original_message", sa.INTEGER(), nullable=False),
+        sa.Column("new_content", sa.BLOB(), nullable=False),
+        sa.Column("created_at", sa.DATETIME(), nullable=False),
+        sa.ForeignKeyConstraint(
+            ["original_message"],
+            ["messages.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    op.create_table(
+        "messages",
+        sa.Column("id", sa.INTEGER(), nullable=False),
+        sa.Column("message_uid", sa.BIGINT(), nullable=False),
+        sa.Column("message_content", sa.BLOB(), nullable=False),
+        sa.Column("author", sa.INTEGER(), nullable=False),
+        sa.Column("created_at", sa.DATETIME(), nullable=False),
+        sa.Column("channel_name", sa.BLOB(), nullable=False),
+        sa.Column("deleted_at", sa.DATETIME(), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["author"],
+            ["users.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+    )
+    
     with op.batch_alter_table("karma_changes", schema=None, naming_convention=nc) as batch_op:
         batch_op.add_column(sa.Column("mid_old", sa.INTEGER(), nullable=True))
         batch_op.create_foreign_key(
