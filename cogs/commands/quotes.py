@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from enum import Enum, auto, unique
 from functools import singledispatch
-from typing import List, Optional, Union
+from typing import Optional
 
 import discord
 from discord import AllowedMentions
@@ -297,7 +297,7 @@ def opt_in_to_quotes(requester: Mention, session=db_session) -> str:
 
 
 class QueryInputConverter(Converter):
-    async def convert(self, ctx, argument) -> Union[Mention, QuoteID, str]:
+    async def convert(self, ctx, argument) -> Mention | QuoteID | str:
         if is_id(argument):
             return int(argument[1:])
 
@@ -535,7 +535,7 @@ class Quotes(commands.Cog):
             query = db_session.query(Quote)
 
         # select a random quote if one exists
-        quotes: List[Quote] = query.all()
+        quotes: list[Quote] = query.all()
 
         if not quotes:
             message = "No quote matched the criteria"
