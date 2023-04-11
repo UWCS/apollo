@@ -58,5 +58,6 @@ class Vote(commands.Cog):
                 view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
             )
 
+
 async def setup(bot: Bot):
     await bot.add_cog(Vote(bot))

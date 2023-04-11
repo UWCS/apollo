@@ -158,7 +158,9 @@ class DiscordBase:
                 for db_ch in choices_obj[start_ind:end_ind]:
                     new_dc_choice = DiscordVoteChoice(
                         # vote_id=db_ch.vote_id, choice_index=db_ch.choice_index, emoji="", msg_id=new_dc_msg.message_id
-                        choice=db_ch, emoji="", msg_id=new_dc_msg.message_id
+                        choice=db_ch,
+                        emoji="",
+                        msg_id=new_dc_msg.message_id,
                     )
                     db_session.add(new_dc_choice)
 

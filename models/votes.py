@@ -1,10 +1,11 @@
 import enum
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import ForeignKey, ForeignKeyConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, DiscordSnowflake, UserId, IntPk
+from models.models import Base, DiscordSnowflake, IntPk, UserId
 from models.user import User
 
 
@@ -80,7 +81,7 @@ class DiscordVote(Base):
         primary_key=True,
     )
     vote: Mapped["Vote"] = relationship(init=False, back_populates="discord_vote")
-    allowed_role_id: Mapped[int | None] = mapped_column(default=None)
+    allowed_role_id: Mapped[Optional[int]] = mapped_column(default=None)
 
     messages: Mapped[list["DiscordVoteMessage"]] = relationship(
         init=False, cascade="all, delete-orphan"
@@ -114,7 +115,7 @@ class DiscordVoteChoice(Base):
     )
     msg: Mapped[DiscordVoteMessage] = relationship(init=False)
     choice: Mapped[VoteChoice] = relationship()
-    emoji: Mapped[str | None] = mapped_column(default="")
+    emoji: Mapped[Optional[str]] = mapped_column(default="")
     __table_args__ = (
         ForeignKeyConstraint(
             (vote_id, choice_index), (VoteChoice.vote_id, VoteChoice.choice_index)
