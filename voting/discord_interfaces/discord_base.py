@@ -6,8 +6,7 @@ from discord.ext.commands import Context
 from discord.ui import Button, View
 from sqlalchemy.exc import SQLAlchemyError
 
-from models import db_session
-from models.user import User
+from models import User, db_session
 from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType
 from utils import get_database_user_from_id
 from voting.vote_types.base_vote import base_vote

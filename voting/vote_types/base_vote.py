@@ -2,8 +2,7 @@ from typing import List, Tuple
 
 from sqlalchemy import func
 
-from models import db_session
-from models.user import User
+from models import User, db_session
 from models.votes import UserVote, Vote, VoteChoice, VoteType
 
 

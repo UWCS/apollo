@@ -12,8 +12,7 @@ from sqlalchemy_utils import ScalarListException
 
 import utils.utils
 from config import CONFIG
-from models import db_session
-from models.announcement import Announcement
+from models import Announcement, db_session
 from utils import (
     DateTimeConverter,
     get_database_user,

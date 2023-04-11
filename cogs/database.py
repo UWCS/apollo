@@ -8,9 +8,7 @@ from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
 from karma.karma import process_karma
-from models import db_session
-from models.channel_settings import IgnoredChannel
-from models.user import User
+from models import IgnoredChannel, User, db_session
 from utils import get_database_user, is_compsoc_exec_in_guild, user_is_irc_bot
 
 

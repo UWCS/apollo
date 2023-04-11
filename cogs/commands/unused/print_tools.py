@@ -13,8 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
-from models import db_session
-from models.printing import FilamentType
+from models import FilamentType, db_session
 from utils import get_name_string, is_compsoc_exec_in_guild
 
 # TODO Convert to DPY 2.0, waiting until i can be bothered

@@ -10,8 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
 from config import CONFIG
-from models import db_session
-from models.user import User
+from models import User, db_session
 from utils import get_database_user
 
 
