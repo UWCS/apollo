@@ -546,7 +546,7 @@ class Quotes(commands.Cog):
 
         # Split if too long
         prev = ctx.message
-        for msg in split_into_messages(message, limit=2000):
+        for msg in split_into_messages(message):
             await ctx.send(msg, allowed_mentions=AllowedMentions().none())
 
 

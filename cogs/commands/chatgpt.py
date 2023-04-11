@@ -90,7 +90,7 @@ class ChatGPT(commands.Cog):
             response = await self.dispatch_api(messages)
             if response:
                 prev = ctx.message
-                for content in split_into_messages(response, limit=2000):
+                for content in split_into_messages(response):
                     prev = await prev.reply(content, allowed_mentions=mentions)
 
     async def create_history(self, message):

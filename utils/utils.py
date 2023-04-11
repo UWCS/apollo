@@ -211,8 +211,8 @@ def replace_external_emoji(guild, string):
     return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
 
 
-def split_into_messages(sections: str | list[str], limit=4096):
-    """Split a string (or list of sections) into small enough chunks to send (4096 chars)"""
+def split_into_messages(sections: str | list[str], limit=2000):
+    """Split a string (or list of sections) into small enough chunks to send (2000 chars)"""
     if isinstance(sections, str):
         sections = [sections]
 
