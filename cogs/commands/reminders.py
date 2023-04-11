@@ -12,7 +12,8 @@ from sqlalchemy_utils import ScalarListException
 
 import utils.utils
 from config import CONFIG
-from models import Reminder, db_session
+from models import db_session
+from models.reminder import Reminder
 from utils import get_database_user, get_name_string, parse_time, user_is_irc_bot
 
 LONG_HELP_TEXT = """

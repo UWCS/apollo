@@ -2,7 +2,8 @@ import datetime as datetime_module
 from datetime import datetime
 
 from karma.karma import is_in_cooldown
-from models import Karma, KarmaChange, User
+from models.karma import Karma, KarmaChange
+from models.user import User
 
 _TIMEOUT = 60
 
