@@ -358,15 +358,29 @@ class Quotes(commands.Cog):
 
         await ctx.send(result)
 
+    @add.error
+    async def add_on_reply(self, ctx: Context, error):
+        if isinstance(error, commands.MissingRequiredArgument):
+            # If only "!quote add" and has reply
+            if ctx.message.content.strip() == f"{ctx.prefix}{ctx.command}" and ctx.message.reference:
+                replied_message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+
+                await self.quote_discord_user(ctx.author.mention, replied_message, ctx.message)
+                return
+        raise error
+
     @Cog.listener()
     async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
         if payload.emoji.name != QUOTE_EMOJI: return
-        requester = payload.member.mention
 
         # Fetch message
         channel = self.bot.get_channel(payload.channel_id)
         quoted_message: discord.Message = await channel.fetch_message(payload.message_id)
 
+        await self.quote_discord_user(payload.member.mention, quoted_message, quoted_message)
+
+
+    async def quote_discord_user(self, requester: discord.Member, quoted_message: discord.Message, reply_to: discord.Message):
         # Get mention for DB. Modified from MentionConverter
         db_user = utils.get_database_user_from_id(quoted_message.author.id)
         if db_user is not None:
@@ -391,8 +405,7 @@ class Quotes(commands.Cog):
             else:
                 result += MYSTERY_ERROR
 
-        await quoted_message.reply(result, mention_author=False)
-
+        await reply_to.reply(result, mention_author=False)
 
     @quote.command()
     async def delete(self, ctx: Context, query: QuoteIDConverter):
