@@ -3,12 +3,14 @@ import logging
 from datetime import datetime
 
 import discord
+from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from humanize import precisedelta
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
+import utils.utils
 from config import CONFIG
 from models import Reminder, db_session
 from utils import get_database_user, get_name_string, parse_time, user_is_irc_bot
@@ -102,6 +104,59 @@ class Reminders(commands.Cog):
             logging.exception(e)
             return {"content": f"Something went wrong with the database"}
 
+
+    @reminder.command()
+    async def list(self, ctx: Context):
+        """
+        Lists all reminders upcoming
+        """
+
+        reminders = (
+            db_session.query(Reminder)
+            .filter(
+                Reminder.trigger_at >= datetime.now(),
+                Reminder.triggered == False,
+            )
+            .all()
+        )
+
+
+        msg_text = ["**Upcoming Reminders**"]
+        for r in reminders:
+            id = r.id
+            if r.irc_name:
+                author_name = r.irc_name
+            else:
+                author_name = self.bot.get_user(r.user.user_uid).mention
+            time = r.trigger_at
+            loc = r.playback_channel_id
+            preview = r.reminder_content.split("\n")[0]
+
+            msg_text.append(
+                f"**{id}: in <#{loc}> <t:{int(time.timestamp())}:R> by {author_name}**\n\t{preview}\n"
+            )
+        for text in utils.utils.split_into_messages(msg_text):
+            await ctx.send(text, allowed_mentions=AllowedMentions.none())
+
+
+    @reminder.command()
+    async def remove(self, ctx: Context, reminder_id: int):
+        """
+        Removes a reminder specified via id.
+        The id is found through !reminder list
+        """
+        result = (
+            db_session.query(Reminder)
+            .where(Reminder.id == reminder_id)
+            .first()
+        )
+
+        if result:
+            db_session.delete(result)
+            db_session.commit()
+            await ctx.send("Reminder deleted!")
+        else:
+            await ctx.send("I couldn't find the reminder you asked for")
 
 async def setup(bot: Bot):
     await bot.add_cog(Reminders(bot))
