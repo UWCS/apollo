@@ -167,14 +167,14 @@ class RoomSearch(commands.Cog):
         )
         if map_req is None:
             return []
-        
+
         return self.remove_duplicate_rooms(map_req)
 
     def remove_duplicate_rooms(self, rooms):
         remove = [r for r in rooms if r.get("w2gid") is None]
         for room in remove:
-                rooms.remove(room)
-        
+            rooms.remove(room)
+
         # Map has duplicate entries for MSB for some reason
         rooms = self.remove_duplicate_building(
             rooms, "Mathematical Sciences", "Mathematical Sciences Building"
