@@ -20,6 +20,7 @@ class Announcement(Base):
     user: Mapped["User"] = relationship(
         "User",
         uselist=False,
+        init=False
     )
     irc_name: Mapped[Optional[str]] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
