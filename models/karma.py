@@ -2,12 +2,12 @@
 # we need to import User for type checking but that gives a circular import
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pytz import timezone, utc
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing import TYPE_CHECKING
 
 from models.models import Base, DiscordSnowflake
 

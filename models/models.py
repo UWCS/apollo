@@ -1,8 +1,8 @@
 import logging
+from typing import Annotated
 
 from sqlalchemy import BigInteger, ForeignKey, MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
-from typing import Annotated
 
 from config import CONFIG
 
