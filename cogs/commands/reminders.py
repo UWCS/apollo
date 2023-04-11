@@ -107,19 +107,20 @@ class Reminders(commands.Cog):
     @reminder.command()
     async def list(self, ctx: Context):
         """
-        Lists all reminders upcoming
+        Lists all your reminders upcoming
         """
-
+        author = utils.get_database_user(ctx.author)
         reminders = (
             db_session.query(Reminder)
             .filter(
                 Reminder.trigger_at >= datetime.now(),
                 Reminder.triggered == False,
+                Reminder.user_id == author.id,
             )
             .all()
         )
 
-        msg_text = ["**Upcoming Reminders**"]
+        msg_text = ["**Your Upcoming Reminders**"]
         for r in reminders:
             id = r.id
             if r.irc_name:
@@ -142,14 +143,16 @@ class Reminders(commands.Cog):
         Removes a reminder specified via id.
         The id is found through !reminder list
         """
-        result = db_session.query(Reminder).where(Reminder.id == reminder_id).first()
 
-        if result:
+        result = db_session.query(Reminder).where(Reminder.id == reminder_id).first()
+        author_id = utils.get_database_user(ctx.author).id
+
+        if result and result.user_id == author_id:
             db_session.delete(result)
             db_session.commit()
             await ctx.send("Reminder deleted!")
         else:
-            await ctx.send("I couldn't find the reminder you asked for")
+            await ctx.send("I couldn't delete the reminder you asked for")
 
 
 async def setup(bot: Bot):
