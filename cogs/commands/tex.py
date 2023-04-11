@@ -1,6 +1,6 @@
 import io
+import urllib.parse
 
-import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
@@ -38,7 +38,7 @@ class Tex(commands.Cog):
             tex_code = f"\\text{{{tex_code}}}"
 
         # Make request
-        url = API_URL + requests.utils.quote(tex_code)
+        url = API_URL + urllib.parse.quote(tex_code)
         r = await utils.get_from_url(url)
         c = io.BytesIO(r)
 
