@@ -3,11 +3,12 @@ import re
 from datetime import datetime
 from enum import Enum, auto, unique
 from functools import singledispatch
-from typing import Optional, Union
+from typing import Optional
 
+import discord
 from discord import AllowedMentions
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, Converter
+from discord.ext.commands import Bot, Cog, Context, Converter
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 from sqlalchemy_utils import ScalarListException
@@ -19,13 +20,14 @@ from utils import (
     get_name_string,
     is_compsoc_exec_in_guild,
     user_is_irc_bot,
+    utils,
 )
 from utils.mentions import Mention, MentionConverter, MentionType
 
-# TODO Convert to DPY 2.0, waiting for PR #106 to be completed
+QUOTE_EMOJI = "💬"
 
-LONG_HELP_TEXT = """
-Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text
+LONG_HELP_TEXT = f"""
+Pull a random quote. Pull quotes by ID using "#ID", by author using "@username", or by topic by entering plain text. Quotes can be added by reacting with {QUOTE_EMOJI} or replying with `!quote add`
 """
 SHORT_HELP_TEXT = """Record and manage quotes attributed to authors"""
 
@@ -295,7 +297,7 @@ def opt_in_to_quotes(requester: Mention, session=db_session) -> str:
 
 
 class QueryInputConverter(Converter):
-    async def convert(self, ctx, argument) -> Union[Mention, QuoteID, str]:
+    async def convert(self, ctx, argument) -> Mention | QuoteID | str:
         if is_id(argument):
             return int(argument[1:])
 
@@ -311,7 +313,7 @@ class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(
+    @commands.hybrid_group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
     async def quote(self, ctx: Context, *, query_arg: QueryInputConverter = None):
@@ -334,7 +336,7 @@ class Quotes(commands.Cog):
 
     @quote.command()
     async def add(self, ctx: Context, author: MentionConverter, *, quote):
-        """Add a quote, format !quote add <author> <quote text>"""
+        """Add a quote. Can also react with 💬 or reply with `!quote add`."""
         requester = get_name_string(ctx)
         now = datetime.now()
 
@@ -353,6 +355,71 @@ class Quotes(commands.Cog):
                 result = MYSTERY_ERROR
 
         await ctx.send(result)
+
+    @add.error
+    async def add_on_reply(self, ctx: Context, error):
+        """Allows `!quote add` with reply to count as a quote"""
+        if isinstance(error, commands.MissingRequiredArgument):
+            # If only "!quote add" and has reply
+            content = ctx.message.content.strip()
+            target = f"{ctx.prefix}{ctx.command}"
+            reference = ctx.message.reference
+            if content == target and reference:
+
+                replied_message = await ctx.channel.fetch_message(reference.message_id)
+
+                await self.quote_discord_user(
+                    ctx.author.mention, replied_message, ctx.message
+                )
+                return
+        raise error
+
+    @Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent):
+        """Quote on reaction"""
+        if payload.emoji.name != QUOTE_EMOJI:
+            return
+
+        # Fetch message
+        channel = self.bot.get_channel(payload.channel_id)
+        quoted_message = await channel.fetch_message(payload.message_id)
+
+        await self.quote_discord_user(
+            payload.member.mention, quoted_message, quoted_message
+        )
+
+    async def quote_discord_user(
+        self,
+        requester: discord.Member,
+        quoted_message: discord.Message,
+        reply_to: discord.Message,
+    ):
+        """Modified version of original quote add, has more context and creates mention"""
+        # Get mention for DB. Modified from MentionConverter
+        db_user = utils.get_database_user_from_id(quoted_message.author.id)
+        if db_user is not None:
+            author = Mention.id_mention(db_user.id)
+        else:
+            author = Mention.string_mention(get_name_string(quoted_message))
+        now = datetime.now()
+
+        # Add quote and feedback. Modified from above quote add function
+        try:
+            quote_id = add_quote(author, quoted_message.clean_content, now)
+
+            result = f"Thank you {requester}, recorded quote with ID #{quote_id}."
+        except QuoteException as e:
+            result = f"{requester} attempted to quote this message: "
+            if e.err == QuoteError.BAD_FORMAT:
+                result += "Invalid format: no quote to record."
+            elif e.err == QuoteError.OPTED_OUT:
+                result += "Invalid Author: User has opted out of being quoted."
+            elif e.err == QuoteError.DB_ERROR:
+                result += "Database error."
+            else:
+                result += MYSTERY_ERROR
+
+        await reply_to.reply(result, mention_author=False)
 
     @quote.command()
     async def delete(self, ctx: Context, query: QuoteIDConverter):
@@ -402,7 +469,10 @@ class Quotes(commands.Cog):
 
     @quote.command()
     async def purge(self, ctx: Context, target: MentionConverter):
-        """Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."""
+        """
+        Purge all quotes by an author, format !quote purge <author>.
+        Only exec may purge authors other than themselves.
+        """
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
 
@@ -455,6 +525,29 @@ class Quotes(commands.Cog):
                 result = MYSTERY_ERROR
 
         await ctx.send(result)
+
+    @quote.command()
+    async def list(self, ctx: Context, *, query_arg: QueryInputConverter = None):
+        """List all quotes. Filter"""
+        if query_arg is not None:
+            query = quotes_query(query_arg)
+        else:
+            query = db_session.query(Quote)
+
+        # select a random quote if one exists
+        quotes: list[Quote] = query.all()
+
+        if not quotes:
+            message = "No quote matched the criteria"
+        else:
+            # create message
+            message = "\n".join(quote_str(q) for q in quotes)
+
+        # Limit to a single message long
+        if len(message) > 4000:
+            message = message[:4000] + "..."
+        # send message with no pings
+        await ctx.send(message, allowed_mentions=AllowedMentions().none())
 
 
 async def setup(bot: Bot):
