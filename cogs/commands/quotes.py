@@ -313,7 +313,7 @@ class Quotes(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.group(
+    @commands.hybrid_group(
         invoke_without_command=True, help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT
     )
     async def quote(self, ctx: Context, *, query_arg: QueryInputConverter = None):
@@ -336,7 +336,7 @@ class Quotes(commands.Cog):
 
     @quote.command()
     async def add(self, ctx: Context, author: MentionConverter, *, quote):
-        """Add a quote, format `!quote add [<author> <quote text>]`. Can also react with 💬 or reply with `!quote add`."""
+        """Add a quote. Can also react with 💬 or reply with `!quote add`."""
         requester = get_name_string(ctx)
         now = datetime.now()
 
@@ -469,7 +469,10 @@ class Quotes(commands.Cog):
 
     @quote.command()
     async def purge(self, ctx: Context, target: MentionConverter):
-        """Purge all quotes by an author, format !quote purge <author>. Only exec may purge authors other than themselves."""
+        """
+        Purge all quotes by an author, format !quote purge <author>.
+        Only exec may purge authors other than themselves.
+        """
         is_exec = await is_compsoc_exec_in_guild(ctx)
         requester = ctx_to_mention(ctx)
 
