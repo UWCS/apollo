@@ -47,7 +47,6 @@ class Tex(commands.Cog):
         white = Image.new("RGB", (mask.width, mask.height), (255, 255, 255))
         bg = Image.new("RGB", (mask.width, mask.height), (54, 57, 63))
         result = Image.composite(white, bg, mask)
-        result.save("res.png")
 
         # Save masked image
         img = io.BytesIO()
