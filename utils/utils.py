@@ -6,7 +6,7 @@ import textwrap
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
-from typing import Iterable, List, TypeAlias, Union, overload
+from typing import Iterable, TypeAlias
 
 import aiohttp
 import dateparser
@@ -211,7 +211,7 @@ def replace_external_emoji(guild, string):
     return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
 
 
-def split_into_messages(sections: Union[str, List[str]], limit=4096):
+def split_into_messages(sections: str | list[str], limit=4096):
     """Split a string (or list of sections) into small enough chunks to send (4096 chars)"""
     if isinstance(sections, str):
         sections = [sections]
@@ -250,8 +250,12 @@ def split_by(split_funcs, section, limit=4000):
             else:  # If too long, clear accumulator, and attempt next level of split
                 if accum:
                     result.append(accum.strip("\n"))
-                result += split_by(split_funcs[1:], part, limit)
-                accum = ""
+                if len(part) > limit:
+                    # If part on it's own is too long, split it
+                    result += split_by(split_funcs[1:], part, limit)
+                    accum = ""
+                else: 
+                    accum = part
         # Add any tail to result
         if accum:
             result.append(accum.strip("\n"))
