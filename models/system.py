@@ -3,9 +3,10 @@ from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import func
 from models.models import Base, int_pk, discord_snowflake
-from enum import Enum
+from enum import Enum, unique
 
 
+@unique
 class EventKind(Enum):
     RESTART = 0
     UPDATE = 1
