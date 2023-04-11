@@ -1,11 +1,13 @@
-from sqlalchemy import BigInteger, Column, DateTime, String
+from datetime import datetime
+from typing import Optional
 
-from models.models import Base, auto_str
+from sqlalchemy.orm import Mapped, mapped_column
+
+from models.models import Base, DiscordSnowflake
 
 
-@auto_str
 class EventLink(Base):
     __tablename__ = "event_links"
-    uid = Column(String, primary_key=True)
-    discord_event = Column(BigInteger, nullable=False, unique=True)
-    last_modified = Column(DateTime)
+    uid: Mapped[str] = mapped_column(primary_key=True)
+    discord_event: Mapped[DiscordSnowflake] = mapped_column(unique=True)
+    last_modified: Mapped[Optional[datetime]]

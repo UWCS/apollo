@@ -1,48 +1,63 @@
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, Text, func
-from sqlalchemy.orm import relationship
+from datetime import datetime
+from typing import Optional
 
-from models.models import Base, auto_str
+from sqlalchemy import ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from models.models import Base
+from models.user import User
 from utils.mentions import MentionType
 
 
-@auto_str
 class Quote(Base):
     __tablename__ = "quotes"
-    quote_id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    author_type = Column(Enum(MentionType), nullable=False)
-    author_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    author_string = Column(String, nullable=True)
-    quote = Column(Text, nullable=False)
-    created_at = Column(DateTime, nullable=False, default=func.current_timestamp())
-    edited_at = Column(DateTime, nullable=True)
-
-    author = relationship("User", uselist=False, foreign_keys=author_id)
+    quote_id: Mapped[int] = mapped_column(
+        primary_key=True, autoincrement=True, init=False
+    )
+    author_type: Mapped[MentionType]
+    quote: Mapped[str]
+    author_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    author: Mapped[Optional["User"]] = relationship(
+        "User", uselist=False, foreign_keys=author_id, init=False
+    )
+    author_string: Mapped[Optional[str]] = mapped_column(default=None)
+    created_at: Mapped[datetime] = mapped_column(
+        default_factory=datetime.now, insert_default=func.current_timestamp()
+    )
+    edited_at: Mapped[Optional[datetime]] = mapped_column(default=None)
 
     def author_to_string(self) -> str:
-        if self.author_type == MentionType.ID:
-            return f"<@{self.author.user_uid}>"
-        return self.author_string
+        match self.author_type:
+            case MentionType.ID:
+                assert self.author
+                return f"<@{self.author.user_uid}>"
+            case MentionType.STRING:
+                assert self.author_string
+                return self.author_string
 
     @staticmethod
-    def id_quote(id, quote, created):
+    def id_quote(id: int, quote: str, created: datetime):
         return Quote(
-            author_type=MentionType.ID, author_id=id, quote=quote, created_at=created
+            author_type=MentionType.ID,
+            author_id=id,
+            quote=quote,
+            created_at=created,
         )
 
     @staticmethod
-    def string_quote(string, quote, created):
+    def string_quote(string: str, quote: str, created: datetime):
         return Quote(
             author_type=MentionType.STRING,
             author_string=string,
             quote=quote,
             created_at=created,
+            author_id=None,
         )
 
 
-@auto_str
 class QuoteOptouts(Base):
     __tablename__ = "quotes_opt_out"
-    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
-    user_type = Column(Enum(MentionType), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    user_string = Column(String, nullable=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True, init=False)
+    user_type: Mapped[MentionType]
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    user_string: Mapped[Optional[str]]

@@ -2,12 +2,12 @@ import datetime as datetime_module
 from datetime import datetime
 
 from karma.karma import is_in_cooldown
-from models import KarmaChange
+from models import Karma, KarmaChange, User
 
 _TIMEOUT = 60
 
 
-def build_karma_change(created_at):
+def build_karma_change(created_at: datetime):
     return KarmaChange(
         karma_id=1,
         user_id=1,

@@ -1,21 +1,26 @@
-from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, func
+from datetime import datetime
 
-from models.models import Base, auto_str
+from sqlalchemy import func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from models.models import Base, DiscordSnowflake, UserId
 
 
-@auto_str
 class IgnoredChannel(Base):
     __tablename__ = "ignored_channels"
 
-    channel = Column(BigInteger, primary_key=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    added_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+    channel: Mapped[DiscordSnowflake] = mapped_column(init=False, primary_key=True)
+    user_id: Mapped[UserId]
+    added_at: Mapped[datetime] = mapped_column(
+        default_factory=datetime.now, insert_default=func.current_timestamp()
+    )
 
 
-@auto_str
 class MiniKarmaChannel(Base):
     __tablename__ = "mini_karma_channels"
 
-    channel = Column(BigInteger, primary_key=True, nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    added_at = Column(DateTime, nullable=False, default=func.current_timestamp())
+    channel: Mapped[DiscordSnowflake] = mapped_column(init=False, primary_key=True)
+    user_id: Mapped[UserId]
+    added_at: Mapped[datetime] = mapped_column(
+        default_factory=datetime.now, insert_default=func.current_timestamp()
+    )

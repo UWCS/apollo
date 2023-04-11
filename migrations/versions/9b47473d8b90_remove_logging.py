@@ -8,11 +8,10 @@ Create Date: 2022-12-31 15:45:53.589887
 import sqlalchemy as sa
 import sqlalchemy_utils as sau
 from alembic import op
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 from config.config import CONFIG
 from models.karma import KarmaChange
-from models.models import auto_str
 
 Base = declarative_base()
 
@@ -23,7 +22,6 @@ branch_labels = None
 depends_on = None
 
 
-@auto_str
 class KarmaChange(Base):
     __tablename__ = "karma_changes"
 
@@ -38,7 +36,6 @@ class KarmaChange(Base):
     score = sa.Column(sa.Integer, nullable=False)
 
 
-@auto_str
 class LoggedMessage(Base):
     __tablename__ = "messages"
 
@@ -57,7 +54,7 @@ class LoggedMessage(Base):
 
 def upgrade():
     bind = op.get_bind()
-    session = sa.orm.Session(bind=bind)
+    session = sa.orm.Session(bind=bind, future=True)
 
     # Drop FK and add column
     with op.batch_alter_table("karma_changes", recreate="always") as batch_op:
@@ -94,7 +91,6 @@ def upgrade():
 Base2 = declarative_base()
 
 
-@auto_str
 class KarmaChange2(Base2):
     __tablename__ = "karma_changes"
 
@@ -111,7 +107,7 @@ class KarmaChange2(Base2):
 
 def downgrade():
     bind = op.get_bind()
-    session = sa.orm.Session(bind=bind)
+    session = sa.orm.Session(bind=bind, future=True)
 
     # Update value of new column
     for change in session.query(KarmaChange2):

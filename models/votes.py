@@ -13,8 +13,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from models import User
-from models.models import Base, auto_str
+from models.models import Base
+from models.user import User
 
 
 class VoteType(enum.Enum):
@@ -25,7 +25,6 @@ class VoteType(enum.Enum):
     ranked_pairs = 4
 
 
-@auto_str
 class Vote(Base):
     __tablename__ = "vote"
     id = Column(Integer, primary_key=True, nullable=False)
@@ -45,7 +44,6 @@ class Vote(Base):
     )
 
 
-@auto_str
 class VoteChoice(Base):
     __tablename__ = "vote_choice"
     vote_id = Column(
@@ -63,7 +61,6 @@ class VoteChoice(Base):
     )
 
 
-@auto_str
 class UserVote(Base):
     __tablename__ = "user_vote"
     vote_id = Column(
@@ -85,7 +82,6 @@ class UserVote(Base):
     user = relationship(User)
 
 
-@auto_str
 class DiscordVoteMessage(Base):
     __tablename__ = "discord_vote_message"
     message_id = Column(Integer, primary_key=True)
@@ -104,7 +100,6 @@ class DiscordVoteMessage(Base):
 
 
 # TODO Add unique constraints, remove emoji
-@auto_str
 class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
     vote_id = Column(Integer, primary_key=True, nullable=False)
@@ -123,7 +118,6 @@ class DiscordVoteChoice(Base):
 
 # Currently pretty useless
 # TODO Limit to role
-@auto_str
 class DiscordVote(Base):
     __tablename__ = "discord_vote"
     id = Column(

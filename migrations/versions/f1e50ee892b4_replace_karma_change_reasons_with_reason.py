@@ -10,8 +10,7 @@ import os
 import sqlalchemy as sa
 import sqlalchemy_utils as sau
 from alembic import op
-from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session, declarative_base
 
 from config.config import CONFIG
 
@@ -68,11 +67,10 @@ class KarmaChange(Base):
 
 def upgrade():
     bind = op.get_bind()
-    session = orm.create_session(bind)
 
-    op.add_column("karma_changes", sa.Column("reason", sa.String(), nullable=True))
-
-    session.query(KarmaChange).update({"reason": KarmaChange.reasons})
+    with Session(bind, future=True) as session:
+        op.add_column("karma_changes", sa.Column("reason", sa.String(), nullable=True))
+        session.query(KarmaChange).update({"reason": KarmaChange.reasons})
 
     with op.batch_alter_table("karma_changes") as bop:
         bop.drop_column("reasons")
@@ -80,13 +78,11 @@ def upgrade():
 
 def downgrade():
     bind = op.get_bind()
-    session = orm.create_session(bind)
-
-    op.add_column(
-        "karma_changes", sa.Column("reasons", sau.ScalarListType, nullable=True)
-    )
-
-    session.query(KarmaChange).update({"reasons": KarmaChange.reason})
+    with Session(bind, future=True) as session:
+        op.add_column(
+            "karma_changes", sa.Column("reasons", sau.ScalarListType, nullable=True)
+        )
+        session.query(KarmaChange).update({"reasons": KarmaChange.reason})
 
     with op.batch_alter_table("karma_changes") as bop:
         bop.drop_column("reason")

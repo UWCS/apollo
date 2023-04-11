@@ -9,7 +9,7 @@ config:
   # Token for Discord API from https://discord.com/developers/applications
   discord_token: discord_token
   # Database URL, can use other providers such as SQLite
-  database_connection: "postgresql://apollo:apollo@localhost/apollo"
+  database_connection: "postgresql+psycopg://apollo:apollo@localhost/apollo"
   # Secret key used to encrypt DB
   db_secret_key: secret_key
 

@@ -1,4 +1,5 @@
 import os
+from typing import Tuple
 
 import pytest
 from alembic import command
@@ -21,9 +22,9 @@ def database():
         os.environ["SECRET_KEY"] = "test"
 
     # Start up the in-memory database instance
-    db_engine = create_engine("sqlite:///:memory:")
+    db_engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(db_engine)
-    db_session = Session(bind=db_engine)
+    db_session = Session(bind=db_engine, future=True)
 
     # Mark it as up-to-date with migrations
     command.stamp(config, "head")
@@ -40,7 +41,8 @@ def database():
     return db_session
 
 
-TEST_CASES = {
+# interesting: pyright thinks empty list is list[unknown], hence why this cannot auto-deduce
+TEST_CASES: dict[str, Tuple[list[KarmaTransaction], list[KarmaTransaction]]] = {
     # Make sure the blacklist does not interfere with regular karma parsing
     "not in blacklist": (
         [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],

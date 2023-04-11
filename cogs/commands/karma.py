@@ -34,7 +34,7 @@ from pytz import timezone, utc
 from sqlalchemy import func
 
 from models import Karma as KarmaModel
-from models import KarmaChange, db_session
+from models import KarmaChange, User, db_session
 from utils import get_name_string, pluralise
 
 matplotlib.use("Agg")
@@ -301,11 +301,18 @@ class Karma(commands.Cog):
             .order_by(KarmaChange.created_at.asc())
             .all()
         )
-        user_changes = defaultdict(list)
+
+        # User is not a hashable type (?) due to dataclass fuckery (???)
+        user_changes: defaultdict[int, list[KarmaChange]] = defaultdict(list)
         for change in all_changes:
-            user_changes[change.user].append(change)
+            user_changes[change.user.id].append(change)
 
         most_karma = max(user_changes.items(), key=lambda item: len(item[1]))
+        most_karma = (
+            db_session.query(User).filter(User.id == most_karma[0]).one_or_none(),
+            most_karma[1],
+        )
+        assert most_karma[0]
 
         # Calculate the approval rating of the karma
         approval = 100 * (
@@ -408,7 +415,13 @@ class Karma(commands.Cog):
             karma_dict[karma_stripped] = karma_item.changes
 
         if len(karma_dict) == 0:
-            return await ctx.send("No items to graph!")
+            if failed:
+                msg = "Could not plot the following item(s):"
+                for karma, reason in failed:
+                    msg += f"\n{karma}: {reason}"
+                return await ctx.send(msg)
+            else:
+                return await ctx.send("No items to graph!")
 
         # Plot the graph and save it to a png
         img, filename = await plot_karma(karma_dict)

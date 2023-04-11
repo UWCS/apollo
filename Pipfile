@@ -5,9 +5,8 @@ name = "pypi"
 
 [packages]
 "discord.py" = "~=2.2.0"
-sqlalchemy = "~=1.4.45"
-sqlalchemy-utils = "~=0.39.0"
-psycopg2-binary = "~=2.9.5"
+sqlalchemy = "~=2.0.9"
+sqlalchemy-utils = "~=0.40.0"
 cryptography = "~=3.4.6"
 pytz = "~=2021.1"
 matplotlib = "~=3.3.4"
@@ -27,6 +26,7 @@ pillow = "~=9.3.0"
 discord-simple-pretty-help = "==0.0.1"
 icalendar = "~=4.1.0"
 openai = "~=0.27.2"
+psycopg = {extras = ["binary"], version = "~=3.1"}
 
 [dev-packages]
 black = "~=22.12"
