@@ -79,7 +79,7 @@ Started {started} (uptime {uptime})"""
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
             url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/restart"
-            event = SystemEvent(EventKind.RESTART, ctx.message.id)
+            event = SystemEvent(EventKind.RESTART, ctx.channel.id, ctx.message.id)
             db_session.add(event)
             db_session.commit()
             resp = await session.post(url)
@@ -90,6 +90,33 @@ Started {started} (uptime {uptime})"""
                 # remove our event that just failed to happen
                 db_session.delete(event)
                 db_session.commit()
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # check for any unacknowledged events
+        latest, *old = db_session.scalars(
+            select(SystemEvent)
+            .where(SystemEvent.acknowledged == False)
+            .order_by(SystemEvent.time)
+        ).all()
+        if len(old) != 0:
+            logging.warn(
+                "Old unacknowledged system events found, purging old and ackowledging recent"
+            )
+            for event in old:
+                db_session.delete(event)
+
+        channel = await self.bot.fetch_channel(latest.channel_id)
+        if not isinstance(channel, (discord.TextChannel)):
+            logging.error("message id invalid, cannot fetch message id")
+            return
+
+        message = await channel.fetch_message(latest.message_id)
+        name = message.author.display_name
+        await message.reply(
+            f"Hello {name}. Apollo, version {self.version_from_file}, started!"
+        )
+        db_session.commit()
 
     @staticmethod
     async def get_docker_json() -> dict[Any, Any] | None:

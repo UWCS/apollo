@@ -18,6 +18,7 @@ class SystemEvent(Base):
 
     kind: Mapped[EventKind]
     message_id: Mapped[discord_snowflake]
+    channel_id: Mapped[discord_snowflake]
     acknowledged: Mapped[bool] = mapped_column(default=False, insert_default=False)
     time: Mapped[datetime] = mapped_column(
         default_factory=datetime.now, insert_default=func.cur
