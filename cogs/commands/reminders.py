@@ -104,7 +104,6 @@ class Reminders(commands.Cog):
             logging.exception(e)
             return {"content": f"Something went wrong with the database"}
 
-
     @reminder.command()
     async def list(self, ctx: Context):
         """
@@ -119,7 +118,6 @@ class Reminders(commands.Cog):
             )
             .all()
         )
-
 
         msg_text = ["**Upcoming Reminders**"]
         for r in reminders:
@@ -138,18 +136,13 @@ class Reminders(commands.Cog):
         for text in utils.utils.split_into_messages(msg_text):
             await ctx.send(text, allowed_mentions=AllowedMentions.none())
 
-
     @reminder.command()
     async def remove(self, ctx: Context, reminder_id: int):
         """
         Removes a reminder specified via id.
         The id is found through !reminder list
         """
-        result = (
-            db_session.query(Reminder)
-            .where(Reminder.id == reminder_id)
-            .first()
-        )
+        result = db_session.query(Reminder).where(Reminder.id == reminder_id).first()
 
         if result:
             db_session.delete(result)
@@ -157,6 +150,7 @@ class Reminders(commands.Cog):
             await ctx.send("Reminder deleted!")
         else:
             await ctx.send("I couldn't find the reminder you asked for")
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Reminders(bot))
