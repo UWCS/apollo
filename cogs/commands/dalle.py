@@ -98,26 +98,27 @@ class DalleView(discord.ui.View):
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         """generates a variant of the image"""
-        await self.new_image(interaction, "Varianting")
+        await self.new_image(interaction, "Creating variant")
 
     async def new_image(self, interaction: discord.Interaction, mode: str):
         """generic function for updating the image"""
         self.edit_buttons(True)  # disables buttons
         message = interaction.message  # gets message for use later
+        # i tired moving the files and attachment_files stuff up here into but for some reason unbeknownst to man kind this means all files have 0 bytes and i have no clue why
         await interaction.response.edit_message(
-            content=f"{mode}...", attachments=[], view=self
-        )  # send initial confirmation (dsicord needs response within 30s)
+            content=f"{mode} ⌛", attachments=[], view=self
+        )  # send initial confirmation (discord needs response within 30s)
         new_url = ""
         if mode == "Regenerating":
             new_url = await self.dalle_cog.generate_image(
                 message.content
             )  # generates new image
-        elif mode == "Varianting":
+        elif mode == "Creating variant":
             new_url = await self.dalle_cog.generate_variant(
-                await utils.get_from_url(
-                    message.attachments[len(message.attachments) - 1].url
+                await utils.get_from_url(  # gets url of last attachment
+                    message.attachments[-1].url
                 )
-            )
+            )  # creates variant of image
         new_image = await utils.get_file_from_url(new_url)  # gets file from url
         self.edit_buttons(False)  # re-enables buttons
         # for some reason message.attachments are not valid attachments so convert into files and then append new file
