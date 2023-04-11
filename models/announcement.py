@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, IntPK, user_id
+from models.models import Base, IntPk, UserId
 from models.user import User
 from typing import Optional
 
@@ -11,8 +11,8 @@ from typing import Optional
 class Announcement(Base):
     __tablename__ = "announcements"
 
-    id: Mapped[IntPK] = mapped_column(init=False)
-    user_id: Mapped[user_id]
+    id: Mapped[IntPk] = mapped_column(init=False)
+    user_id: Mapped[UserId]
     announcement_content: Mapped[str]
     trigger_at: Mapped[datetime]
     triggered: Mapped[bool]

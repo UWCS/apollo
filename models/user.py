@@ -6,14 +6,14 @@ from sqlalchemy_utils import EncryptedType  # type: ignore
 
 from config import CONFIG
 from models.karma import KarmaChange
-from models.models import Base, discord_snowflake
+from models.models import Base, DiscordSnowflake
 
 
 class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, init=False)
-    user_uid: Mapped[discord_snowflake]
+    user_uid: Mapped[DiscordSnowflake]
     username: Mapped[str] = mapped_column(
         EncryptedType(type_in=String, key=CONFIG.BOT_SECRET_KEY)
     )
