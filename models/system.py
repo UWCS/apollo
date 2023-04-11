@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import func
-from models.models import Base, int_pk, discord_snowflake
+from models.models import Base, IntPk, DiscordSnowflake
 from enum import Enum, unique
 
 
@@ -15,12 +15,12 @@ class EventKind(Enum):
 
 class SystemEvent(Base):
     __tablename__ = "system_events"
-    id: Mapped[int_pk] = mapped_column(init=False)
+    id: Mapped[IntPk] = mapped_column(init=False)
 
     kind: Mapped[EventKind]
 
-    message_id: Mapped[discord_snowflake]  # id of message that triggered the event
-    channel_id: Mapped[discord_snowflake]  # channel message is in
+    message_id: Mapped[DiscordSnowflake]  # id of message that triggered the event
+    channel_id: Mapped[DiscordSnowflake]  # channel message is in
 
     acknowledged: Mapped[bool] = mapped_column(default=False, insert_default=False)
     time: Mapped[datetime] = mapped_column(
