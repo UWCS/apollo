@@ -7,7 +7,7 @@ from pytz import timezone, utc
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from typing_extensions import TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from models.models import Base, discord_snowflake
 

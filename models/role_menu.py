@@ -3,14 +3,14 @@ from typing import Optional
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, discord_snowflake, int_pk
+from models.models import Base, discord_snowflake, IntPK
 
 
 class RoleMenu(Base):
     __tablename__ = "rolemenu"
     __table_args__ = (UniqueConstraint("msg_ref", "guild_id"),)
 
-    id: Mapped[int_pk] = mapped_column(init=False)
+    id: Mapped[IntPK] = mapped_column(init=False)
 
     msg_ref: Mapped[str]
     guild_id: Mapped[discord_snowflake]
@@ -33,5 +33,5 @@ class RoleEntry(Base):
     menu: Mapped["RoleMenu"] = relationship(back_populates="choices", init=False)
     role: Mapped[discord_snowflake] = mapped_column(primary_key=True)
     title: Mapped[str]
-    description: Mapped[str | None] = mapped_column(default=None)
-    emoji: Mapped[str | None] = mapped_column(default=None)
+    description: Mapped[Optional[str]] = mapped_column(default=None)
+    emoji: Mapped[Optional[str]] = mapped_column(default=None)

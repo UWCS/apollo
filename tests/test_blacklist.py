@@ -41,6 +41,7 @@ def database():
     return db_session
 
 
+# interesting: pyright thinks empty list is list[unknown], hence why this cannot auto-deduce
 TEST_CASES: dict[str, Tuple[list[KarmaTransaction], list[KarmaTransaction]]] = {
     # Make sure the blacklist does not interfere with regular karma parsing
     "not in blacklist": (

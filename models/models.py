@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy import BigInteger, ForeignKey, MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_column
-from typing_extensions import Annotated
+from typing import Annotated
 
 from config import CONFIG
 
