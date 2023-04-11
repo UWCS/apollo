@@ -17,11 +17,7 @@ class Announcement(Base):
     trigger_at: Mapped[datetime]
     triggered: Mapped[bool]
     playback_channel_id: Mapped[int]
-    user: Mapped["User"] = relationship(
-        "User",
-        uselist=False,
-        init=False
-    )
+    user: Mapped["User"] = relationship("User", uselist=False, init=False)
     irc_name: Mapped[Optional[str]] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
         default_factory=datetime.now, insert_default=func.current_timestamp()
