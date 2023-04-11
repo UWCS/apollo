@@ -74,7 +74,7 @@ class DiscordVote(Base):
         primary_key=True,
     )
     vote: Mapped["Vote"] = relationship(init=False)
-    allowed_role_id: Mapped[int | None]
+    allowed_role_id: Mapped[int | None] = mapped_column(default=None)
 
     messages: Mapped[list["DiscordVoteMessage"]] = relationship(init=False)
 
@@ -88,8 +88,8 @@ class DiscordVoteMessage(Base):
         ForeignKey("vote.id", ondelete="CASCADE"),
     )
     choices_start_index: Mapped[int]
-    numb_choices: Mapped[int] = mapped_column(default=20, init=False)
     part: Mapped[int]
+    numb_choices: Mapped[int] = mapped_column(default=20)
 
     discord_vote: Mapped["DiscordVote"] = relationship(init=False)
 
@@ -97,16 +97,16 @@ class DiscordVoteMessage(Base):
 # # TODO Add unique constraints, remove emoji
 class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
-    vote_id: Mapped[int] = mapped_column(primary_key=True)
-    choice_index: Mapped[int] = mapped_column(primary_key=True)
+    vote_id: Mapped[int] = mapped_column(primary_key=True, init=False)
+    choice_index: Mapped[int] = mapped_column(primary_key=True, init=False)
     msg_id: Mapped[DiscordSnowflake | None] = mapped_column(
-        ForeignKey(DiscordVoteMessage.message_id, ondelete="CASCADE")
+        ForeignKey("DiscordVoteMessage.message_id", ondelete="CASCADE")
     )
     msg: Mapped[DiscordVoteMessage] = relationship(init=False)
-    emoji: Mapped[str | None] = mapped_column(default="", init=False)
+    choice: Mapped[VoteChoice] = relationship()
+    emoji: Mapped[str | None] = mapped_column(default="")
     __table_args__ = (
         ForeignKeyConstraint(
             (vote_id, choice_index), (VoteChoice.vote_id, VoteChoice.choice_index)
         ),
     )
-    choice: Mapped[VoteChoice] = relationship(init=False)

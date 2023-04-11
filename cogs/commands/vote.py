@@ -58,21 +58,5 @@ class Vote(commands.Cog):
                 view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
             )
 
-    async def cog_command_error(self, ctx: Context, error):
-        if isinstance(error, CommandInvokeError):
-            if isinstance(error.original, sqlite3.Error):
-                raise error.original
-            if isinstance(error.original, SQLAlchemyError):
-                raise error.original
-            err_msg = str(error.original)
-        elif isinstance(error, CommandError):
-            err_msg = str(error)
-        else:
-            raise error
-        msg = await ctx.send("Error: " + err_msg)
-        # await msg.delete(delay=10)
-        raise error
-
-
 async def setup(bot: Bot):
     await bot.add_cog(Vote(bot))

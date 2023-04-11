@@ -8,7 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from models import User, db_session
 from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType
-from utils import get_database_user_from_id
+from utils import get_database_user
 from voting.vote_types.base_vote import base_vote
 
 DENSE_ARRANGE = True
@@ -123,12 +123,11 @@ class DiscordBase:
 
         try:
             # Create DB entry for vote
-            # TODO Get DB user from DC user properly
-            owner = get_database_user_from_id(ctx.author.id)  # Questionable
+            owner = get_database_user(ctx.author)
             vote_obj, choices_obj = self.vote_type.create_vote(
                 title, owner.id, choices, VoteType.basic, vote_limit, seats
             )
-            new_dc_vote = DiscordVote(vote=vote_obj)
+            new_dc_vote = DiscordVote(id=vote_obj.id)
             db_session.add(new_dc_vote)
 
             # Post messages
@@ -144,9 +143,9 @@ class DiscordBase:
                 # Add msg to DB
                 start_ind, end_ind = chunk.start, chunk.end
                 new_dc_msg = DiscordVoteMessage(
+                    vote_id=new_dc_vote.id,
                     message_id=msg.id,
                     channel_id=msg.channel.id,
-                    discord_vote=new_dc_vote,
                     choices_start_index=start_ind,
                     numb_choices=end_ind - start_ind,
                     part=msg_index,
@@ -158,10 +157,12 @@ class DiscordBase:
                 view = View(timeout=None)
                 for db_ch in choices_obj[start_ind:end_ind]:
                     new_dc_choice = DiscordVoteChoice(
-                        choice=db_ch, emoji="", msg=new_dc_msg
+                        # vote_id=db_ch.vote_id, choice_index=db_ch.choice_index, emoji="", msg_id=new_dc_msg.message_id
+                        choice=db_ch, emoji="", msg_id=new_dc_msg.message_id
                     )
                     db_session.add(new_dc_choice)
 
+                    print("########### DVC", new_dc_choice)
                     view.add_item(self.BtnClass(self, new_dc_choice, msg_title))
 
                 # Add close and votes button to first message
