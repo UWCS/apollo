@@ -22,7 +22,7 @@ Once generated buttons can be used to regenerate the image (create a new image b
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
 
-def get_cooldown(ctx):
+def get_cooldown(ctx: Context):
     """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
     if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
         return commands.Cooldown(1, 1)
@@ -58,10 +58,9 @@ class Dalle(commands.Cog):
                 "Failed to generate image :wah:", mention_author=True
             )
         view = DalleView(timeout=None, bot=self.bot)  # otherwise rpley with image
-        message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
-        view.message = message
+        await ctx.reply(prompt, file=image, mention_author=True, view=view)
 
-    async def generate_image(self, prompt):
+    async def generate_image(self, prompt: str):
         """gets image from openAI and returns url for that image"""
         logging.info(f"Generating image with prompt: {prompt}")
         response = await openai.Image.acreate(
@@ -72,7 +71,7 @@ class Dalle(commands.Cog):
         return response["data"][0]["url"]
 
     @staticmethod
-    async def generate_variant(image):
+    async def generate_variant(image: bytes):
         """generates a variant of the image"""
         response = await openai.Image.acreate_variation(
             image=image,
@@ -83,12 +82,14 @@ class Dalle(commands.Cog):
 
 
 class DalleView(discord.ui.View):
-    def __init__(self, timeout, bot) -> None:
+    def __init__(self, timeout: float | None, bot: Bot) -> None:
         super().__init__(timeout=timeout)
         self.dalle_cog = bot.get_cog("Dalle")  # get dalle cog to use image generation
 
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
-    async def regenerate(self, interaction, button):
+    async def regenerate(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """renegerates the image"""
         self.edit_buttons(True)  # disables buttons
         message = interaction.message  # gets message for use later
@@ -118,7 +119,9 @@ class DalleView(discord.ui.View):
         )
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
-    async def variant(self, interaction, button):
+    async def variant(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """generates a variant of the image"""
         logging.info("generating variant")
         self.edit_buttons(True)
@@ -149,9 +152,9 @@ class DalleView(discord.ui.View):
 
     async def on_timeout(self) -> None:
         await self.message.reply("timeout")
-        await self.edit_buttons(True)
+        self.edit_buttons(True)
 
-    def edit_buttons(self, state):
+    def edit_buttons(self, state: bool):
         for button in self.children:
             button.disabled = state
 
