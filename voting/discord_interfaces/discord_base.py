@@ -162,7 +162,6 @@ class DiscordBase:
                     )
                     db_session.add(new_dc_choice)
 
-                    print("########### DVC", new_dc_choice)
                     view.add_item(self.BtnClass(self, new_dc_choice, msg_title))
 
                 # Add close and votes button to first message

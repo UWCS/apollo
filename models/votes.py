@@ -29,8 +29,12 @@ class Vote(Base):
     vote_limit: Mapped[int] = mapped_column(default=0)
     seats: Mapped[int] = mapped_column(default=1)
 
-    choices: Mapped[list["VoteChoice"]] = relationship(init=False)
-    discord_vote: Mapped["DiscordVote"] = relationship(init=False)
+    choices: Mapped[list["VoteChoice"]] = relationship(
+        init=False, cascade="all, delete-orphan", back_populates="vote"
+    )
+    discord_vote: Mapped["DiscordVote"] = relationship(
+        init=False, cascade="all, delete-orphan", back_populates="vote"
+    )
 
 
 class VoteChoice(Base):
@@ -38,12 +42,12 @@ class VoteChoice(Base):
     vote_id: Mapped[int] = mapped_column(
         ForeignKey("vote.id", ondelete="CASCADE"), primary_key=True
     )
-    vote: Mapped[Vote] = relationship(init=False)
+    vote: Mapped[Vote] = relationship(init=False, back_populates="choices")
     choice_index: Mapped[int] = mapped_column(primary_key=True)
     choice: Mapped[str]
 
     user_votes: Mapped[list["UserVote"]] = relationship(
-        cascade="all, delete-orphan", init=False
+        cascade="all, delete-orphan", init=False, back_populates="vote_choice"
     )
 
 
@@ -56,7 +60,9 @@ class UserVote(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey(User.id), primary_key=True)
     user: Mapped[User] = relationship(init=False)
     choice: Mapped[int] = mapped_column(primary_key=True)
-    vote_choice: Mapped[VoteChoice] = relationship(init=False)
+    vote_choice: Mapped[VoteChoice] = relationship(
+        init=False, back_populates="user_votes"
+    )
     preference: Mapped[int] = mapped_column(default=0, init=False)
     ForeignKeyConstraint(
         (vote_id, choice),
@@ -73,10 +79,12 @@ class DiscordVote(Base):
         ForeignKey(Vote.id, ondelete="CASCADE"),
         primary_key=True,
     )
-    vote: Mapped["Vote"] = relationship(init=False)
+    vote: Mapped["Vote"] = relationship(init=False, back_populates="discord_vote")
     allowed_role_id: Mapped[int | None] = mapped_column(default=None)
 
-    messages: Mapped[list["DiscordVoteMessage"]] = relationship(init=False)
+    messages: Mapped[list["DiscordVoteMessage"]] = relationship(
+        init=False, cascade="all, delete-orphan"
+    )
 
 
 class DiscordVoteMessage(Base):
@@ -91,7 +99,9 @@ class DiscordVoteMessage(Base):
     part: Mapped[int]
     numb_choices: Mapped[int] = mapped_column(default=20)
 
-    discord_vote: Mapped["DiscordVote"] = relationship(init=False)
+    discord_vote: Mapped["DiscordVote"] = relationship(
+        init=False, back_populates="messages"
+    )
 
 
 # # TODO Add unique constraints, remove emoji
@@ -99,8 +109,8 @@ class DiscordVoteChoice(Base):
     __tablename__ = "discord_vote_choice"
     vote_id: Mapped[int] = mapped_column(primary_key=True, init=False)
     choice_index: Mapped[int] = mapped_column(primary_key=True, init=False)
-    msg_id: Mapped[DiscordSnowflake | None] = mapped_column(
-        ForeignKey("DiscordVoteMessage.message_id", ondelete="CASCADE")
+    msg_id: Mapped[DiscordSnowflake] = mapped_column(
+        ForeignKey(DiscordVoteMessage.message_id, ondelete="CASCADE")
     )
     msg: Mapped[DiscordVoteMessage] = relationship(init=False)
     choice: Mapped[VoteChoice] = relationship()
