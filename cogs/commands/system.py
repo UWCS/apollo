@@ -91,6 +91,9 @@ Started {started} (uptime {uptime})"""
                 db_session.delete(event)
                 db_session.commit()
 
+    # TODO: same as above but re-create container
+    # have to do it all through Docker API; fetch config, save it, pull image, start contaienr
+
     @commands.Cog.listener()
     async def on_ready(self):
         # check for any unacknowledged events
