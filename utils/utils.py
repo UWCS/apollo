@@ -254,7 +254,7 @@ def split_by(split_funcs, section, limit=4000):
                     # If part on it's own is too long, split it
                     result += split_by(split_funcs[1:], part, limit)
                     accum = ""
-                else: 
+                else:
                     accum = part
         # Add any tail to result
         if accum:
