@@ -173,6 +173,7 @@ class DiscordBase:
                 await msg.edit(view=view)
 
             db_session.commit()
+            db_session.flush()
         except SQLAlchemyError:
             db_session.rollback()
             await ctx.send("Error creating vote")
