@@ -104,7 +104,8 @@ class RoomSearch(commands.Cog):
         # embed.set_image(url=f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}")
         # Slows command down quite a lot, but Discord can't take images without extensions
         img = await utils.get_file_from_url(
-            f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"
+            f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}",
+            filename="map.png",
         )
         embed.set_image(url="attachment://map.png")
         embed.set_footer(

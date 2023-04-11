@@ -341,11 +341,13 @@ async def get_json_from_url(url: str, headers: dict | None = None) -> JSON:
     return json.loads(response)  # convert response to json
 
 
-async def get_file_from_url(url: str) -> discord.File | None:
+async def get_file_from_url(
+    url: str, filename: str = "image.png"
+) -> discord.File | None:
     """gets an image from a url and returns as a discord file"""
     response = await get_from_url(url)
     if response is None:
         return None
     return discord.File(
-        BytesIO(response), filename="image.png"
+        BytesIO(response), filename=filename
     )  # convert response to files
