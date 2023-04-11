@@ -3,12 +3,12 @@ import logging
 from io import BytesIO
 from typing import Iterable
 
-import aiohttp
 import discord
 import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
+import utils
 from config import CONFIG
 
 LONG_HELP_TEXT = """
@@ -52,7 +52,7 @@ class Dalle(commands.Cog):
 
         async with ctx.typing():  # show typing whilst generating image
             url = await self.generate_image(prompt)
-            image = discord.File(await self.get_image(url), filename="image.png")
+            image = await utils.get_file_from_url(url)
         if image is None:  # if image is not created error
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
@@ -71,23 +71,11 @@ class Dalle(commands.Cog):
         )
         return response["data"][0]["url"]
 
-    async def get_image(self, url):
-        """gets image from url and returns it as a discord file"""
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                if response.status == 200:
-                    logging.info("successfully got image")
-                    return BytesIO(await response.read())
-                else:
-                    logging.info("failed to get image")
-                    return None
-
     @staticmethod
     async def generate_variant(image):
         """generates a variant of the image"""
-        byte_array = image.getvalue()  # get raw bytes of the image from file
         response = await openai.Image.acreate_variation(
-            image=byte_array,
+            image=image,
             n=1,
             size="256x256",
         )
@@ -111,20 +99,17 @@ class DalleView(discord.ui.View):
         new_url = await self.dalle_cog.generate_image(
             message.content
         )  # generates new image
-        new_image = discord.File(
-            await self.dalle_cog.get_image(new_url), filename="image.png"
-        )
+        new_image = await utils.get_file_from_url(new_url)  # gets file from url
         self.edit_buttons(False)  # re-enables buttons
         # for some reason message.attachments are not valid attachments so convert into files and then append new file
         # iterates over all attachments and gets the bytes of the image
-        files: Iterable[BytesIO] = await asyncio.gather(
-            *(
-                self.dalle_cog.get_image(attachment.url)
-                for attachment in message.attachments
-            )
+        files: Iterable[bytes] = await asyncio.gather(
+            *(utils.get_from_url(attachment.url) for attachment in message.attachments)
         )
         # converts the images into files
-        attachment_files = [discord.File(f, filename="image.png") for f in files]
+        attachment_files = [
+            discord.File(BytesIO(f), filename="image.png") for f in files
+        ]
         await interaction.followup.edit_message(
             message.id,
             content=message.content,
@@ -142,22 +127,19 @@ class DalleView(discord.ui.View):
             content="Creating variant...", attachments=[], view=self
         )
         new_url = await self.dalle_cog.generate_variant(
-            await self.dalle_cog.get_image(
+            await utils.get_from_url(
                 message.attachments[len(message.attachments) - 1].url
             )
         )
-        new_image = discord.File(
-            await self.dalle_cog.get_image(new_url), filename="image.png"
-        )
+        new_image = await utils.get_file_from_url(new_url)
         self.edit_buttons(False)
         # see abobe for wtf this is
-        files: Iterable[BytesIO] = await asyncio.gather(
-            *(
-                self.dalle_cog.get_image(attachment.url)
-                for attachment in message.attachments
-            )
+        files: Iterable[bytes] = await asyncio.gather(
+            *(utils.get_from_url(attachment.url) for attachment in message.attachments)
         )
-        attachment_files = [discord.File(f, filename="image.png") for f in files]
+        attachment_files = [
+            discord.File(BytesIO(f), filename="image.png") for f in files
+        ]
         await interaction.followup.edit_message(
             message.id,
             content=message.content,

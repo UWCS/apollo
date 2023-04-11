@@ -1,31 +1,18 @@
 import asyncio
 import json
 from datetime import date, datetime, time, timedelta
-from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
 
 import discord
-import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
+
+import utils
 
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
 map_api_token = "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"
-
-
-def req_or_none(url, **kwargs):
-    r = requests.get(url, **kwargs)
-    if not r.ok:
-        return None
-    return r.json()
-
-
-def req_img(url):
-    r = requests.get(url)
-    bytes = BytesIO(r.content)
-    return bytes
 
 
 def read_json_file(filename):
@@ -61,7 +48,7 @@ class RoomSearch(commands.Cog):
 
         Finds a room on the various Warwick systems.
         """
-        rooms = self.get_room_infos(name)
+        rooms = await self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
                 "Room does not exist. Try a more general search, "
@@ -97,7 +84,7 @@ class RoomSearch(commands.Cog):
 
         # Timetable
         if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
-            self.get_week()
+            await self.get_week()
             if self.year:
                 this_year = self.year.replace("/", "")
                 if self.week < 52:
@@ -116,10 +103,8 @@ class RoomSearch(commands.Cog):
 
         # embed.set_image(url=f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}")
         # Slows command down quite a lot, but Discord can't take images without extensions
-        img = discord.File(
-            req_img(
-                f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}"
-            ),
+        img = await utils.get_file_from_url(
+            f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}",
             filename="map.png",
         )
         embed.set_image(url="attachment://map.png")
@@ -171,20 +156,25 @@ class RoomSearch(commands.Cog):
         ind = emojis.index(str(react_emoji))
         return rooms[ind]
 
-    def get_room_infos(self, room):
+    async def get_room_infos(self, room):
         stripped = room.replace(".", "").replace(" ", "").lower()
         if new := self.custom_room_names.get(stripped):
             room = new
         # Check Map Autocomplete API
-        map_req = req_or_none(
+        map_req = await utils.get_json_from_url(
             f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
-            headers={"Authorization": map_api_token},
+            {"Authorization": map_api_token},
         )
         if map_req is None:
             return []
+
         return self.remove_duplicate_rooms(map_req)
 
     def remove_duplicate_rooms(self, rooms):
+        remove = [r for r in rooms if r.get("w2gid") is None]
+        for room in remove:
+            rooms.remove(room)
+
         # Map has duplicate entries for MSB for some reason
         rooms = self.remove_duplicate_building(
             rooms, "Mathematical Sciences", "Mathematical Sciences Building"
@@ -203,18 +193,18 @@ class RoomSearch(commands.Cog):
                 rooms.remove(fake_room)
         return rooms
 
-    def get_week(self):
+    async def get_week(self):
         # Definitely don't need to check each request
         # Only check if last request was before today
         today = datetime.combine(date.today(), time.min)
 
         if self.last_week_check is None or self.last_week_check < today:
             self.last_week_check = datetime.now()
-            weeks_json = req_or_none(
+            weeks_json = await utils.get_json_from_url(
                 "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
-            ).get("weeks")
+            )
 
-            for week in weeks_json:
+            for week in weeks_json["weeks"]:
                 start = datetime.strptime(week.get("start"), "%Y-%m-%d").date()
                 end = datetime.strptime(week.get("end"), "%Y-%m-%d").date()
                 current = (datetime.now() + timedelta(days=3)).date()

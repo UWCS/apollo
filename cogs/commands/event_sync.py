@@ -2,14 +2,13 @@ import datetime
 import io
 
 import discord
-import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from icalendar import Calendar
 
 from models import db_session
 from models.event_sync import EventLink
-from utils.utils import is_compsoc_exec_in_guild, parse_time, wait_react
+from utils.utils import get_from_url, is_compsoc_exec_in_guild, parse_time, wait_react
 
 LONG_HELP_TEXT = """
 Sync events to our website uwcs.co.uk/events."""
@@ -30,8 +29,8 @@ class Sync(commands.Cog):
         before = None if before is None else parse_time(before)
         after = None if after is None else parse_time(after)
         # Fetch and parse ical from website
-        r = requests.get(ICAL_URL)
-        c = io.BytesIO(r.content)
+        r = await get_from_url(ICAL_URL)
+        c = io.BytesIO(r)
         cal = Calendar.from_ical(c.getvalue())
         db_links = db_session.query(EventLink).all()
         links = {e.uid: e for e in db_links}

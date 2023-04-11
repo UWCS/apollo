@@ -1,10 +1,12 @@
 import io
+import urllib.parse
 
-import requests
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 from discord.file import File
 from PIL import Image
+
+import utils
 
 LONG_HELP_TEXT = """
 Render a LaTeX maths expression to an image and show it in-line.
@@ -36,16 +38,15 @@ class Tex(commands.Cog):
             tex_code = f"\\text{{{tex_code}}}"
 
         # Make request
-        url = API_URL + requests.utils.quote(tex_code)
-        r = requests.get(url)
-        c = io.BytesIO(r.content)
+        url = API_URL + urllib.parse.quote(tex_code)
+        r = await utils.get_from_url(url)
+        c = io.BytesIO(r)
 
         # Mask in colours (API only does a few colours)
         mask = Image.open(c).convert("L")
         white = Image.new("RGB", (mask.width, mask.height), (255, 255, 255))
         bg = Image.new("RGB", (mask.width, mask.height), (54, 57, 63))
         result = Image.composite(white, bg, mask)
-        result.save("res.png")
 
         # Save masked image
         img = io.BytesIO()
@@ -54,7 +55,7 @@ class Tex(commands.Cog):
 
         # Load the image as a file to be attached to an image
         img_file = File(img, filename="tex.png")
-        if r.status_code == 200:
+        if r is not None:
             await ctx.send(f"Here you go! :abacus:", file=img_file)
         else:
             await ctx.message.add_reaction("❓")
