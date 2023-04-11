@@ -91,15 +91,33 @@ class DalleView(discord.ui.View):
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         """renegerates the image"""
+        await self.new_image(interaction, "Regenerating")
+
+    @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
+    async def variant(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        """generates a variant of the image"""
+        await self.new_image(interaction, "Varianting")
+
+    async def new_image(self, interaction: discord.Interaction, mode: str):
+        """generic function for updating the image"""
         self.edit_buttons(True)  # disables buttons
         message = interaction.message  # gets message for use later
-        logging.info(f"regenerating image with prompt: {message.content}")
         await interaction.response.edit_message(
-            content="Regenerating...", attachments=[], view=self
+            content=f"{mode}...", attachments=[], view=self
         )  # send initial confirmation (dsicord needs response within 30s)
-        new_url = await self.dalle_cog.generate_image(
-            message.content
-        )  # generates new image
+        new_url = ""
+        if mode == "Regenerating":
+            new_url = await self.dalle_cog.generate_image(
+                message.content
+            )  # generates new image
+        elif mode == "Varianting":
+            new_url = await self.dalle_cog.generate_variant(
+                await utils.get_from_url(
+                    message.attachments[len(message.attachments) - 1].url
+                )
+            )
         new_image = await utils.get_file_from_url(new_url)  # gets file from url
         self.edit_buttons(False)  # re-enables buttons
         # for some reason message.attachments are not valid attachments so convert into files and then append new file
@@ -108,38 +126,6 @@ class DalleView(discord.ui.View):
             *(utils.get_from_url(attachment.url) for attachment in message.attachments)
         )
         # converts the images into files
-        attachment_files = [
-            discord.File(BytesIO(f), filename="image.png") for f in files
-        ]
-        await interaction.followup.edit_message(
-            message.id,
-            content=message.content,
-            attachments=attachment_files + [new_image],
-            view=self,
-        )
-
-    @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
-    async def variant(
-        self, interaction: discord.Interaction, button: discord.ui.Button
-    ):
-        """generates a variant of the image"""
-        logging.info("generating variant")
-        self.edit_buttons(True)
-        message = interaction.message
-        await interaction.response.edit_message(
-            content="Creating variant...", attachments=[], view=self
-        )
-        new_url = await self.dalle_cog.generate_variant(
-            await utils.get_from_url(
-                message.attachments[len(message.attachments) - 1].url
-            )
-        )
-        new_image = await utils.get_file_from_url(new_url)
-        self.edit_buttons(False)
-        # see abobe for wtf this is
-        files: Iterable[bytes] = await asyncio.gather(
-            *(utils.get_from_url(attachment.url) for attachment in message.attachments)
-        )
         attachment_files = [
             discord.File(BytesIO(f), filename="image.png") for f in files
         ]
