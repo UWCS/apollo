@@ -1,9 +1,10 @@
 from datetime import datetime
-
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import func
-from models.models import Base, IntPk, DiscordSnowflake
 from enum import Enum, unique
+
+from sqlalchemy import func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from models.models import Base, DiscordSnowflake, IntPk
 
 
 # only tracks events triggered by the user currently

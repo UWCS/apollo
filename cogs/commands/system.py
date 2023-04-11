@@ -1,16 +1,18 @@
-from discord.ext import commands
-from discord.ext.commands import Bot, Context
-from config import CONFIG
-import aiohttp
-from os import environ
 import logging
-import discord
 import platform
 from datetime import datetime
+from os import environ
 from typing import Any
-from models.system import SystemEvent, EventKind
-from models.models import db_session
+
+import aiohttp
+import discord
+from discord.ext import commands
+from discord.ext.commands import Bot, Context
 from sqlalchemy import select
+
+from config import CONFIG
+from models.models import db_session
+from models.system import EventKind, SystemEvent
 
 
 class System(commands.Cog):
