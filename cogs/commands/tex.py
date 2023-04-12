@@ -1,4 +1,5 @@
 import io
+import re
 import urllib.parse
 
 from discord.ext import commands
@@ -36,17 +37,24 @@ class Tex(commands.Cog):
         # If $ are included, wrap in \text to format normal text
         if tex_code.count("$") >= 2:
             tex_code = f"\\text{{{tex_code}}}"
+        # Code with no colour commands
+        tex_white = re.sub(r"\\color{.*?\}", "", tex_code)
 
         # Make request
         url = API_URL + urllib.parse.quote(tex_code)
         r = await utils.get_from_url(url)
         c = io.BytesIO(r)
+        
+        # Make second request
+        url2 = API_URL + urllib.parse.quote(tex_white)
+        r2 = await utils.get_from_url(url2)
+        c2 = io.BytesIO(r2)
 
         # Mask in colours (API only does a few colours)
-        mask = Image.open(c).convert("L")
-        white = Image.new("RGB", (mask.width, mask.height), (255, 255, 255))
-        bg = Image.new("RGB", (mask.width, mask.height), (54, 57, 63))
-        result = Image.composite(white, bg, mask)
+        text = Image.open(c).convert("RGB")
+        mask = Image.open(c2).convert("L")
+        bg = Image.new("RGB", (text.width, text.height), (54, 57, 63))
+        result = Image.composite(text, bg, mask)
 
         # Save masked image
         img = io.BytesIO()
