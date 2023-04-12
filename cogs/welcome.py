@@ -56,8 +56,7 @@ class Welcome(Cog):
         if not user:
             user = User(user_uid=member.id, username=str(member))
             db_session.add(user)
-        else:
-            user.last_seen = datetime.utcnow()
+
         try:
             db_session.commit()
         except (ScalarListException, SQLAlchemyError) as e:
