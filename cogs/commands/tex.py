@@ -64,7 +64,7 @@ class Tex(commands.Cog):
         img.seek(0)
 
         # Load the image as a file to be attached to an image
-        img_file = File(img, filename="tex.png"
+        img_file = File(img, filename="tex.png")
         await ctx.reply(f"Here you go! :abacus:", file=img_file)
 
 
