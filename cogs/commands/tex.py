@@ -43,6 +43,8 @@ class Tex(commands.Cog):
         # Make request
         url = API_URL + urllib.parse.quote(tex_code)
         r = await utils.get_from_url(url)
+        if r is None:
+            return await ctx.reply("Invalid equation :nerd:")
         c = io.BytesIO(r)
 
         # Make second request
@@ -62,13 +64,8 @@ class Tex(commands.Cog):
         img.seek(0)
 
         # Load the image as a file to be attached to an image
-        img_file = File(img, filename="tex.png")
-        if r is not None:
-            await ctx.reply(f"Here you go! :abacus:", file=img_file)
-        else:
-            await ctx.message.add_reaction("❓")
-            if ctx.interaction:
-                await ctx.reply("Invalid Equation")
+        img_file = File(img, filename="tex.png"
+        await ctx.reply(f"Here you go! :abacus:", file=img_file)
 
 
 async def setup(bot: Bot):
