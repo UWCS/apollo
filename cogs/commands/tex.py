@@ -44,7 +44,7 @@ class Tex(commands.Cog):
         url = API_URL + urllib.parse.quote(tex_code)
         r = await utils.get_from_url(url)
         c = io.BytesIO(r)
-        
+
         # Make second request
         url2 = API_URL + urllib.parse.quote(tex_white)
         r2 = await utils.get_from_url(url2)
