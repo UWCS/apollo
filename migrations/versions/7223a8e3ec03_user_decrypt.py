@@ -10,6 +10,7 @@ import sqlalchemy as sa
 from alembic import op
 from sqlalchemy.dialects import postgresql
 from sqlalchemy_utils import EncryptedType
+
 from config import CONFIG
 
 # revision identifiers, used by Alembic.
