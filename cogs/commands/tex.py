@@ -64,11 +64,11 @@ class Tex(commands.Cog):
         # Load the image as a file to be attached to an image
         img_file = File(img, filename="tex.png")
         if r is not None:
-            await ctx.send(f"Here you go! :abacus:", file=img_file)
+            await ctx.reply(f"Here you go! :abacus:", file=img_file)
         else:
             await ctx.message.add_reaction("❓")
             if ctx.interaction:
-                await ctx.send("Invalid Equation")
+                await ctx.reply("Invalid Equation")
 
 
 async def setup(bot: Bot):
