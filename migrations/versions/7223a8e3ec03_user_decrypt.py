@@ -60,5 +60,30 @@ def upgrade():
 
 
 def downgrade():
-    ...
-    # left as an exercise to the reader
+    with op.batch_alter_table("users", schema=None) as batch_op:
+        batch_op.add_column(
+            sa.Column(
+                "first_seen",
+                postgresql.TIMESTAMP(),
+                server_default=sa.text("CURRENT_TIMESTAMP"),
+                autoincrement=False,
+                nullable=False,
+            )
+        )
+        batch_op.add_column(
+            sa.Column(
+                "last_seen",
+                postgresql.TIMESTAMP(),
+                server_default=sa.text("CURRENT_TIMESTAMP"),
+                autoincrement=False,
+                nullable=False,
+            )
+        )
+        batch_op.add_column(
+            sa.Column(
+                "verified_at", postgresql.BYTEA(), autoincrement=False, nullable=True
+            )
+        )
+        batch_op.add_column(
+            sa.Column("uni_id", postgresql.BYTEA(), autoincrement=False, nullable=True)
+        )
