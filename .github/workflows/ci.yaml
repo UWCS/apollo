@@ -37,7 +37,7 @@ jobs:
       - name: Install pipenv and dependencies
         run: |
           pip install --user pipenv
-          pipenv sync
+          pipenv sync --dev
 
       - name: Check formatting with isort and black
         run: |
@@ -75,7 +75,7 @@ jobs:
       - name: Install pipenv and dependencies
         run: |
           pip install --user pipenv
-          pipenv sync
+          pipenv sync --dev
           cp config.example.yaml config.yaml
 
       - name: Test with pytest
@@ -113,7 +113,7 @@ jobs:
       - name: Install pipenv and dependencies
         run: |
           pip install --user pipenv
-          pipenv sync
+          pipenv sync --dev
           cp config.example.yaml config.yaml
           cp alembic.example.ini alembic.ini
 
