@@ -89,7 +89,7 @@ Started {started} (uptime {uptime})"""
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
             url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/restart"
-            event = SystemEvent(EventKind.RESTART, ctx.channel.id, ctx.message.id)
+            event = SystemEvent(EventKind.RESTART, ctx.message.id, ctx.channel.id)
             db_session.add(event)
             db_session.commit()
             resp = await session.post(url)
