@@ -133,6 +133,7 @@ Started {started} (uptime {uptime})"""
         await message.reply(
             f"Hello {name}. Apollo, version {self.version_from_file}, started!"
         )
+        latest.acknowledged = True
         db_session.commit()
 
     @staticmethod
