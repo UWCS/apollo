@@ -1,2 +1,5 @@
 config.yaml
 config.yml
+*.md
+tests
+.github

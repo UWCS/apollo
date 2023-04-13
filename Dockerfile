@@ -27,8 +27,6 @@ WORKDIR /app
 COPY --from=builder /app/.venv/ /app/.venv/
 COPY --from=builder /app/.version /app/.version
 
-# keep container size down + we don't need it
-RUN rm -rf .git
 
 # add venv to path
 ENV PATH="/app/.venv/bin:$PATH"
