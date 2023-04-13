@@ -1,18 +1,24 @@
 import logging
 import platform
-from datetime import datetime
+from datetime import datetime, timezone
 from os import environ
 from typing import Any
 
 import aiohttp
 import discord
+from dateutil import parser
 from discord.ext import commands
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, check
 from sqlalchemy import select
 
 from config import CONFIG
 from models.models import db_session
 from models.system import EventKind, SystemEvent
+from utils import is_compsoc_exec_in_guild
+
+APOLLO_JSON_URL = (
+    "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
+)
 
 
 class System(commands.Cog):
@@ -49,11 +55,10 @@ class System(commands.Cog):
         py_version = platform.python_version()
         dpy_version = discord.__version__
 
-        # the timestamp docker gives does not conform to ISO.
-        # we strip the fractional secconds and add the suffix which assumes UTC (may cause issues in summer)
+        # the timestamp docker gives is in ISO 8601 format, but py3.10 does not fully support it
         timestamp: str = json["State"]["StartedAt"]
-        started = datetime.fromisoformat(timestamp.split(".")[0])
-        uptime = datetime.now() - started
+        started = parser.parse(timestamp)
+        uptime = datetime.utcnow() - started.astimezone(timezone.utc)
 
         if version and built:
             reply = f"""Apollo, {description}\n
@@ -77,6 +82,7 @@ Started {started} (uptime {uptime})"""
             await ctx.reply("Could not find version")
 
     @commands.hybrid_command()
+    @check(is_compsoc_exec_in_guild)
     async def restart(self, ctx: Context[Bot]):
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
@@ -127,8 +133,7 @@ Started {started} (uptime {uptime})"""
     async def get_docker_json() -> dict[Any, Any] | None:
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
-            url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
-            resp = await session.get(url)
+            resp = await session.get(APOLLO_JSON_URL)
             if not resp.ok:
                 logging.error("Could not reach Portainer API")
                 return None
@@ -136,10 +141,9 @@ Started {started} (uptime {uptime})"""
 
 
 async def setup(bot: Bot):
-    url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
     headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
     async with aiohttp.ClientSession(headers=headers) as session:
-        resp = await session.get(url)
+        resp = await session.get(APOLLO_JSON_URL)
     match (resp.ok, (environ.get("CONTAINER") is not None)):
         case (True, True):
             await bot.add_cog(System(bot))
