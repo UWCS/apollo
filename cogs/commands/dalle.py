@@ -62,6 +62,7 @@ class Dalle(commands.Cog):
 
     async def generate_image(self, prompt: str):
         """gets image from openAI and returns url for that image"""
+        return "https://www.google.com/images/branding/googlelogo/1x/googlelogo_light_color_272x92dp.png"
         logging.info(f"Generating image with prompt: {prompt}")
         response = await openai.Image.acreate(
             prompt=prompt,
@@ -73,6 +74,7 @@ class Dalle(commands.Cog):
     @staticmethod
     async def generate_variant(image: bytes):
         """generates a variant of the image"""
+        return "https://1000logos.net/wp-content/uploads/2017/12/Bing-Logo-2020.png"
         response = await openai.Image.acreate_variation(
             image=image,
             n=1,
@@ -103,11 +105,13 @@ class DalleView(discord.ui.View):
     async def new_image(self, interaction: discord.Interaction, mode: str):
         """generic function for updating the image"""
         self.edit_buttons(True)  # disables buttons
-        message = interaction.message  # gets message for use later
-        # i tired moving the files and attachment_files stuff up here into but for some reason unbeknownst to man kind this means all files have 0 bytes and i have no clue why
         await interaction.response.edit_message(
-            content=f"{mode} ⌛", attachments=[], view=self
+            content=f"{mode} ⌛", view=self
         )  # send initial confirmation (discord needs response within 30s)
+        message = interaction.message  # gets message for use later
+        attachment_files = await asyncio.gather(
+            *[attachment.to_file() for attachment in message.attachments]
+        )
         new_url = ""
         if mode == "Regenerating":
             new_url = await self.dalle_cog.generate_image(
@@ -115,25 +119,17 @@ class DalleView(discord.ui.View):
             )  # generates new image
         elif mode == "Creating variant":
             new_url = await self.dalle_cog.generate_variant(
-                await utils.get_from_url(  # gets url of last attachment
+                await utils.get_from_url(  # gets image bytes from url
                     message.attachments[-1].url
                 )
             )  # creates variant of image
-        new_image = await utils.get_file_from_url(new_url)  # gets file from url
+        new_file = await utils.get_file_from_url(new_url)
+        attachment_files.append(new_file)
         self.edit_buttons(False)  # re-enables buttons
-        # for some reason message.attachments are not valid attachments so convert into files and then append new file
-        # iterates over all attachments and gets the bytes of the image
-        files: Iterable[bytes] = await asyncio.gather(
-            *(utils.get_from_url(attachment.url) for attachment in message.attachments)
-        )
-        # converts the images into files
-        attachment_files = [
-            discord.File(BytesIO(f), filename="image.png") for f in files
-        ]
         await interaction.followup.edit_message(
             message.id,
             content=message.content,
-            attachments=attachment_files + [new_image],
+            attachments=attachment_files,
             view=self,
         )
 
