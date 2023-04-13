@@ -8,5 +8,6 @@ from models.printing import *
 from models.quote import *
 from models.reminder import *
 from models.role_menu import *
+from models.system import *
 from models.user import *
 from models.votes import *
