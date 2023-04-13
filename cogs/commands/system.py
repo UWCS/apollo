@@ -97,7 +97,9 @@ Started {started} (uptime {uptime})"""
             if not resp.ok:
                 status = resp.status
                 msg = (await resp.json())["message"]
-                logging.error(f"Failed to restart. {status} from Portainer API: {msg}")
+                err_msg = f"Failed to restart. {status} from Portainer API: {msg}"
+                logging.error(err_msg)
+                await ctx.reply(err_msg)
                 # remove our event that just failed to happen
                 db_session.delete(event)
                 db_session.commit()
@@ -115,7 +117,9 @@ Started {started} (uptime {uptime})"""
             resp = await session.post(url)
             if not resp.ok:
                 status = resp.status
-                logging.error(f"Failed to update. {status} from Portainer webhook")
+                err_msg = f"Failed to update. {status} from Portainer API: {msg}"
+                logging.error(err_msg)
+                await ctx.reply(err_msg)
                 # remove our event that just failed to happen
                 db_session.delete(event)
                 db_session.commit()
