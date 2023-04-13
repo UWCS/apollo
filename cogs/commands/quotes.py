@@ -23,6 +23,7 @@ from utils import (
     utils,
 )
 from utils.mentions import Mention, MentionConverter, MentionType
+from utils.utils import split_into_messages
 
 QUOTE_EMOJI = "💬"
 
@@ -538,16 +539,15 @@ class Quotes(commands.Cog):
         quotes: list[Quote] = query.all()
 
         if not quotes:
-            message = "No quote matched the criteria"
+            message = ["No quote matched the criteria"]
         else:
             # create message
-            message = "\n".join(quote_str(q) for q in quotes)
+            message = [quote_str(q) for q in quotes]
 
-        # Limit to a single message long
-        if len(message) > 4000:
-            message = message[:4000] + "..."
-        # send message with no pings
-        await ctx.send(message, allowed_mentions=AllowedMentions().none())
+        # Split if too long
+        prev = ctx.message
+        for msg in split_into_messages(message):
+            await ctx.send(msg, allowed_mentions=AllowedMentions().none())
 
 
 async def setup(bot: Bot):

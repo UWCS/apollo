@@ -11,7 +11,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
 
 from config import CONFIG
-from utils.utils import get_name_and_content
+from utils.utils import get_name_and_content, split_into_messages
 
 LONG_HELP_TEXT = """
 Apollo is smarter than you think...
@@ -89,7 +89,9 @@ class ChatGPT(commands.Cog):
         async with ctx.typing():
             response = await self.dispatch_api(messages)
             if response:
-                await ctx.reply(response, allowed_mentions=mentions)
+                prev = ctx.message
+                for content in split_into_messages(response):
+                    prev = await prev.reply(content, allowed_mentions=mentions)
 
     async def create_history(self, message):
         message_chain = await self.get_message_chain(message)
@@ -161,9 +163,6 @@ class ChatGPT(commands.Cog):
             name = f"{self.bot.user.display_name}: "
             reply = clean(reply, "Apollo: ", "apollo: ", name)
 
-        # Truncate if long
-        if len(reply) > 3990:
-            reply = reply[:3990] + "..."
         return reply
 
     async def get_message_chain(
