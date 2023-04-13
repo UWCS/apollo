@@ -9,7 +9,7 @@ import discord
 from dateutil import parser
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
-from sqlalchemy import select, desc
+from sqlalchemy import desc, select
 
 from config import CONFIG
 from models.models import db_session
