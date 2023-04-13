@@ -188,7 +188,7 @@ class Counting(Cog):
             await ctx.send("Could not find user!")
             return
         c_user = (
-            db_session.query(CountingUser).filter(CountingUser.id == db_user.id).first()
+            db_session.query(CountingUser).filter(CountingUser.user_id == db_user.id).first()
         )
         if c_user is None:
             await ctx.send("User has not played any counting games!")
