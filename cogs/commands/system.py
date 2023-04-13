@@ -58,13 +58,15 @@ class System(commands.Cog):
         # the timestamp docker gives is in ISO 8601 format, but py3.10 does not fully support it
         timestamp: str = json["State"]["StartedAt"]
         started = parser.parse(timestamp)
-        uptime = datetime.utcnow() - started.astimezone(timezone.utc)
+        uptime = datetime.utcnow().astimezone(timezone.utc) - started.astimezone(
+            timezone.utc
+        )
 
         if version and built:
             reply = f"""Apollo, {description}\n
 Built from Git revision {version[:8]} on {built[0:10]} {built[11:19]}
 Python {py_version}, discord.py {dpy_version} 
-Started {started} (uptime {uptime})"""
+Started {started.strftime("%d/%m/%y, %H:%M:%S")} (uptime {uptime})"""
 
         else:
             reply = f"""Apollo, {description}\n
@@ -77,7 +79,7 @@ Started {started} (uptime {uptime})"""
     async def version(self, ctx: Context[Bot]):
         """Get Apollo's version"""
         if self.version_from_file:
-            await ctx.reply(self.version_from_file)
+            await ctx.reply(f"`{self.version_from_file}`")
         else:
             await ctx.reply("Could not find version")
 
@@ -105,11 +107,15 @@ Started {started} (uptime {uptime})"""
     @commands.Cog.listener()
     async def on_ready(self):
         # check for any unacknowledged events
-        latest, *old = db_session.scalars(
+        all_events = db_session.scalars(
             select(SystemEvent)
             .where(SystemEvent.acknowledged == False)
             .order_by(SystemEvent.time)
         ).all()
+        if len(all_events) == 0:
+            logging.info("No system events found in database")
+            return
+        latest, *old = all_events
         if len(old) != 0:
             logging.warn(
                 "Old unacknowledged system events found, purging old and ackowledging recent"
