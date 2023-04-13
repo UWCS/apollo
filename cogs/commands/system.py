@@ -92,11 +92,30 @@ Started {started} (uptime {uptime})"""
             event = SystemEvent(EventKind.RESTART, ctx.message.id, ctx.channel.id)
             db_session.add(event)
             db_session.commit()
+            await ctx.reply("Going down for reboot...")
             resp = await session.post(url)
             if not resp.ok:
                 status = resp.status
                 msg = (await resp.json())["message"]
-                logging.error(f"{status} from Portainer API: {msg}")
+                logging.error(f"Failed to restart. {status} from Portainer API: {msg}")
+                # remove our event that just failed to happen
+                db_session.delete(event)
+                db_session.commit()
+
+    @commands.hybrid_command()
+    @check(is_compsoc_exec_in_guild)
+    async def update(self, ctx: Context[Bot]):
+        assert CONFIG.PORTAINER_WEBHOOK_URL
+        async with aiohttp.ClientSession() as session:
+            url = CONFIG.PORTAINER_WEBHOOK_URL
+            event = SystemEvent(EventKind.UPDATE, ctx.message.id, ctx.channel.id)
+            db_session.add(event)
+            db_session.commit()
+            await ctx.reply("Going down for update...")
+            resp = await session.post(url)
+            if not resp.ok:
+                status = resp.status
+                logging.error(f"Failed to update. {status} from Portainer webhook")
                 # remove our event that just failed to happen
                 db_session.delete(event)
                 db_session.commit()
@@ -130,9 +149,15 @@ Started {started} (uptime {uptime})"""
 
         message = await channel.fetch_message(latest.message_id)
         name = message.author.display_name
-        await message.reply(
-            f"Hello {name}. Apollo, version {self.version_from_file}, started!"
-        )
+        match latest.kind:
+            case EventKind.RESTART:
+                await message.reply(
+                    f"Hello {name}. Apollo, version {self.version_from_file}, started!"
+                )
+            case EventKind.UPDATE:
+                await message.reply(
+                    f"Hello {name}. Apollo updated to version {self.version_from_file}!"
+                )
         latest.acknowledged = True
         db_session.commit()
 
