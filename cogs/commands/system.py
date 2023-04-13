@@ -9,7 +9,7 @@ import discord
 from dateutil import parser
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
-from sqlalchemy import select
+from sqlalchemy import select, desc
 
 from config import CONFIG
 from models.models import db_session
@@ -110,7 +110,7 @@ Started {started} (uptime {uptime})"""
         all_events = db_session.scalars(
             select(SystemEvent)
             .where(SystemEvent.acknowledged == False)
-            .order_by(SystemEvent.time)
+            .order_by(desc(SystemEvent.time))
         ).all()
         if len(all_events) == 0:
             logging.info("No system events found in database")
