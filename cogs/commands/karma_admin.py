@@ -170,16 +170,14 @@ class Admin(commands.Cog):
         help="""List the channels that are ignored or on mini-karma mode""",
     )
     async def channel_ignore_list(self, ctx: Context):
+        ignored = set(c.channel for c in db_session.query(IgnoredChannel).all())
         ignored_channels = [
-            f" • {c.mention}"
-            for c in ctx.guild.text_channels
-            if c.id in list(db_session.query(IgnoredChannel).all())
+            f" • {c.mention}" for c in ctx.guild.text_channels if c.id in ignored
         ]
 
+        mini = set(c.channel for c in db_session.query(MiniKarmaChannel).all())
         mini_karma_channels = [
-            f" • {c.mention}"
-            for c in ctx.guild.text_channels
-            if c.id in (list(db_session.query(MiniKarmaChannel).all()))
+            f" • {c.mention}" for c in ctx.guild.text_channels if c.id in mini
         ]
 
         message = []
