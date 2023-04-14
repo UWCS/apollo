@@ -107,7 +107,6 @@ class DalleView(discord.ui.View):
             content=f"{mode} ⌛", view=self
         )  # send initial confirmation (discord needs response within 30s)
         message = interaction.message  # gets message for use later
-        self.edit_buttons(False)  # re-enables buttons
         new_url = ""
         if mode == "Regenerating":  # generates new image
             new_url = await self.dalle_cog.generate_image(message.content)
@@ -116,13 +115,25 @@ class DalleView(discord.ui.View):
                 await utils.get_from_url(message.attachments[-1].url)
             )
         new_file = await utils.get_file_from_url(new_url)  # makes the new file
+        self.edit_buttons(False)  # re-enables buttons
         if len(message.attachments) == 10:
             # discord only allows 10 attachments per message so we need to send a new message
-            await interaction.followup.edit_message(message.id, content=message.content)
-            await interaction.followup.send(message.content, file=new_file, view=self)
+            items = self.children
+            self.clear_items()
+            await interaction.followup.edit_message(
+                message.id, content=message.content, view=self
+            )
+            for item in items:
+                self.add_item(item)
+            await interaction.followup.send(
+                message.content,
+                file=new_file,
+                view=self,
+            )
         else:
             # otherwise we can just edit the message
             await message.add_files(new_file)
+            self.edit_buttons(False)  # for some reason need to re-enable buttons again
             await interaction.followup.edit_message(
                 message.id, content=message.content, view=self
             )
