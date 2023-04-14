@@ -118,6 +118,7 @@ class DalleView(discord.ui.View):
         new_file = await utils.get_file_from_url(new_url)  # makes the new file
         if len(message.attachments) == 10:
             # discord only allows 10 attachments per message so we need to send a new message
+            await interaction.followup.edit_message(message.id, content=message.content)
             await interaction.followup.send(message.content, file=new_file, view=self)
         else:
             # otherwise we can just edit the message
