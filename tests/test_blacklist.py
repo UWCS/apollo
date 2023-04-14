@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 
 from karma.parser import KarmaItem, KarmaOperation
 from karma.transaction import KarmaTransaction, apply_blacklist
-from models import Base, BlockedKarma, User
+from models import Base
+from models.user import User
+from models.karma import BlockedKarma
 
 
 @pytest.fixture(scope="module")

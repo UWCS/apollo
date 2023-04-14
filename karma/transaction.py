@@ -6,7 +6,7 @@ from discord import Message
 from sqlalchemy.orm import Session
 
 from karma.parser import KarmaItem
-from models import BlockedKarma
+from models.karma import BlockedKarma
 from utils.utils import user_is_irc_bot
 
 
