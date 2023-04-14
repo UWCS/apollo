@@ -35,7 +35,8 @@ from sqlalchemy import func
 
 from models import db_session
 from models.karma import Karma as KarmaModel
-from models.karma import KarmaChange, User
+from models.karma import KarmaChange
+from models.user import User
 from utils import get_name_string, pluralise
 
 matplotlib.use("Agg")
