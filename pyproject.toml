@@ -35,19 +35,17 @@ python_files = "test_*.py"
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
 ignore = [
-  "cogs/**/*",       # everything
-  "config/**/*",     # we cut this down over time
+  "cogs/**/*",           # everything
+  "config/**/*",         # we cut this down over time
   "karma/**/*",
-  "migrations/**/*",
+  "migrations/versions",
   "roll/**/*",
   "tests/**/*",
-  "utils/**/*",
   "voting/**/*",
 ]
 # https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
 
-
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
-reportMissingParameterType = true
 reportMissingTypeStubs = false
+reportImportCycles = false     # this is actually a big issue but the bad module structure makes it hard to resolve
