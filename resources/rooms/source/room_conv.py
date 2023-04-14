@@ -7,8 +7,8 @@ These data sources need manually fetching, so combining them is a one time thing
 import json
 
 
-def read_mapping(filename):
-    with open(str(filename)) as f:
+def read_mapping(filename: str):
+    with open(filename) as f:
         l = [l.split(" | ") for l in f.readlines()]
         return {x[0].strip(): x[1].strip() for x in l if len(x) > 1}
 

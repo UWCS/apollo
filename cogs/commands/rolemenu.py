@@ -5,8 +5,9 @@ from discord.ext.commands import Bot, Context
 from discord.ui import Button, View
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
-from models import User, db_session
+from models import db_session
 from models.role_menu import RoleEntry, RoleMenu
+from models.user import User
 from utils import is_compsoc_exec_in_guild, rerun_to_confirm
 from utils.announce_utils import get_long_msg
 

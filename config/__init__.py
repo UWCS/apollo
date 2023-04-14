@@ -1,1 +1,1 @@
-from config.config import CONFIG
+from config.config import CONFIG  # type: ignore

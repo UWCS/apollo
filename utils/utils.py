@@ -6,36 +6,45 @@ import textwrap
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
-from typing import Iterable, TypeAlias
+from typing import (
+    Any,
+    Callable,
+    Concatenate,
+    Coroutine,
+    Iterable,
+    ParamSpec,
+    Tuple,
+    TypeAlias,
+)
 
 import aiohttp
 import dateparser
 import discord
-from discord.ext.commands import CommandError, Context
-from more_itertools import partition
+from discord.ext.commands import Bot, Context
 
 from config import CONFIG
 from models import db_session
 from models.user import User
-from utils.typing import Identifiable
+
+from .typing import Identifiable
 
 
 class EnumGet:
     """Only use this if you're an enum inheriting it!"""
 
     @classmethod
-    def get(cls, argument: str, default=None):
-        values = {e.name.casefold(): e.name for e in list(cls)}
+    def get(cls, argument: str, default: str | None = None):
+        values: dict[str, str] = {e.name.casefold(): e.name for e in list(cls)}  # type: ignore
         casefolded = argument.casefold()
         if casefolded not in values:
             return default
         else:
-            return cls[values[casefolded]]
+            return cls[values[casefolded]]  # type: ignore
 
 
 def clean_brackets(
-    string,
-    brackets=(("(", ")"),),
+    string: str,
+    brackets: Iterable[Tuple[str, str]] = (("(", ")"),),
 ):
     """Removes matching brackets from the outside of a string
     Only supports single-character brackets
@@ -45,11 +54,11 @@ def clean_brackets(
     return string
 
 
-def filter_out_none(iterable: Iterable, /):
+def filter_out_none(iterable: Iterable[Any], /):
     return (i for i in iterable if i is not None)
 
 
-def format_list(el: list, /):
+def format_list(el: list[Any], /):
     if len(el) == 1:
         return f"{el[0]}"
     elif len(el) == 2:
@@ -58,7 +67,7 @@ def format_list(el: list, /):
         return f'{", ".join(el[:-1])}, and {el[-1]}'
 
 
-def format_list_of_members(members, /, *, ping=True):
+def format_list_of_members(members: Iterable[discord.Member], /, *, ping: bool = True):
     if ping:
         el = [member.mention for member in members]
     else:
@@ -66,15 +75,15 @@ def format_list_of_members(members, /, *, ping=True):
     return format_list(el)
 
 
-def get_database_user_from_id(id_: int, /) -> User:
+def get_database_user_from_id(id_: int, /) -> User | None:
     return db_session.query(User).filter(User.user_uid == id_).one_or_none()
 
 
-def get_database_user(user: Identifiable, /) -> User:
+def get_database_user(user: Identifiable, /) -> User | None:
     return get_database_user_from_id(user.id)
 
 
-def get_name_string(message):
+def get_name_string(message: discord.Message):
     # if message.clean_content.startswith("**<"): <-- FOR TESTING
     if user_is_irc_bot(message):
         return message.clean_content.split(" ")[0][3:-3]
@@ -82,7 +91,7 @@ def get_name_string(message):
         return f"{message.author.mention}"
 
 
-def get_name_and_content(message):
+def get_name_and_content(message: discord.Message):
     if user_is_irc_bot(message):
         words = message.clean_content.split(" ")
         return words[0][3:-3], " ".join(words[1:])
@@ -90,7 +99,7 @@ def get_name_and_content(message):
         return message.author.display_name, message.clean_content
 
 
-async def is_compsoc_exec_in_guild(ctx: Context, /):
+async def is_compsoc_exec_in_guild(ctx: Context[Bot], /):
     """Check whether a member is an exec in the UWCS Discord"""
     compsoc_guild = next(
         (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
@@ -107,7 +116,7 @@ async def is_compsoc_exec_in_guild(ctx: Context, /):
     return any(roles)
 
 
-def is_decimal(num):
+def is_decimal(num: Any):
     try:
         Decimal(num)
         return True
@@ -115,7 +124,7 @@ def is_decimal(num):
         return False
 
 
-def parse_time(time, /):
+def parse_time(time: str, /):
     # dateparser.parse returns None if it cannot parse
     parsed_time = dateparser.parse(
         time, settings={"DATE_ORDER": "DMY", "PREFER_DATES_FROM": "future"}
@@ -177,31 +186,26 @@ def parse_time(time, /):
     return parsed_time
 
 
-def partition_list(pred, el, /):
-    a, b = partition(pred, el)
-    return list(a), list(b)
-
-
-def pluralise(el, /, word, single="", plural="s"):
+def pluralise(el: list[Any], /, word: str, single: str = "", plural: str = "s"):
     if len(el) > 1:
         return word + plural
     else:
         return word + single
 
 
-def user_is_irc_bot(ctx):
+def user_is_irc_bot(ctx: Context[Bot] | discord.Message) -> bool:
     return ctx.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
 
 
-def replace_external_emoji(guild, string):
+def replace_external_emoji(guild: discord.Guild, string: str):
     """References to external emojis aren't updated by default. Can be used so bot only emojis don't pollute server pool"""
     from apollo import bot
 
-    def emotes(match: re.Match):
+    def emotes(match: re.Match[str]):
         # If emoji body
         if match.group(2):
             # Prioritize local emoji
-            e: discord.Emoji = discord.utils.get(guild.emojis, name=match.group(2))
+            e = discord.utils.get(guild.emojis, name=match.group(2))
             if e is None:  # If no local, check all servers the bot is in
                 e = discord.utils.get(bot.emojis, name=match.group(2))
             if e is not None:
@@ -211,7 +215,7 @@ def replace_external_emoji(guild, string):
     return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
 
 
-def split_into_messages(sections: str | list[str], limit=2000):
+def split_into_messages(sections: str | list[str], limit: int = 2000):
     """Split a string (or list of sections) into small enough chunks to send (2000 chars)"""
     if isinstance(sections, str):
         sections = [sections]
@@ -232,7 +236,9 @@ def split_into_messages(sections: str | list[str], limit=2000):
     return result
 
 
-def split_by(split_funcs, section, limit=4000):
+def split_by(
+    split_funcs: list[Callable[[str], list[str]]], section: str, limit: int = 4000
+) -> list[str]:
     """Split section by each of split_funcs in descending order until each chunk is smaller than limit"""
     section = section.replace("\n\n", "\n_ _\n")
     if len(section) <= limit:
@@ -240,7 +246,7 @@ def split_by(split_funcs, section, limit=4000):
     else:
         parts = split_funcs[0](section)
         accum = ""
-        result = []
+        result: list[str] = []
         for part in parts:
             # For each part (as split by first of split_funcs), attempt to accumulate
             new_accum = accum + "\n" + part
@@ -262,49 +268,64 @@ def split_by(split_funcs, section, limit=4000):
         return result
 
 
-def wait_react(func):
+P = ParamSpec("P")
+
+
+def wait_react(
+    func: Callable[
+        Concatenate[Context[Bot], P],
+        Coroutine[Any, Any, None],
+    ]
+) -> Callable[Concatenate[Context[Bot], P], Coroutine[Any, Any, None]]:
     """
     Reacts to the command message with a clock while message processing is ongoing
     Most useful on commands with longer processing times
     """
 
     @functools.wraps(func)
-    async def decorator(*args, **kwargs):
-        ctx: Context = next(a for a in args if isinstance(a, Context))
+    async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
         await ctx.message.add_reaction("🕐")
-        await func(*args, **kwargs)
+        await func(ctx, *args, **kwargs)
         if ctx:
             await ctx.message.remove_reaction("🕐", ctx.me)
 
     return decorator
 
 
-def done_react(func):
+def done_react(
+    func: Callable[
+        Concatenate[Context[Bot], P],
+        Coroutine[Any, Any, None],
+    ]
+) -> Callable[Concatenate[Context[Bot], P], Coroutine[Any, Any, None]]:
     """
     Reacts to the command message with a thumbs up once command processing is complete
     Most useful on commands with no direct result message
     """
 
     @functools.wraps(func)
-    async def decorator(*args, **kwargs):
-        ctx: Context = next(a for a in args if isinstance(a, Context))
-        await func(*args, **kwargs)
+    async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
+        await func(ctx, *args, **kwargs)
         if ctx:
             await ctx.message.add_reaction("👍")
 
     return decorator
 
 
-def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
+def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
     """
     Records the first run of the command, only actuall runs command on confirmatory second run
     """
     first_run_times = {}
 
-    def decorator_actual(func):
+    def decorator_actual(
+        func: Callable[
+            Concatenate[Context[Bot], P],
+            Coroutine[Any, Any, None],
+        ]
+    ):
         @functools.wraps(func)
-        async def decorator(*args, **kwargs):
-            ctx: Context = next(a for a in args if isinstance(a, Context))
+        async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
             if kwargs[key_name] not in first_run_times:
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
@@ -315,14 +336,14 @@ def rerun_to_confirm(key_name, confirm_msg="Re-run to confirm"):
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
 
-            await func(*args, **kwargs)
+            await func(ctx, *args, **kwargs)
 
         return decorator
 
     return decorator_actual
 
 
-async def get_from_url(url: str, headers: dict | None = None) -> bytes | None:
+async def get_from_url(url: str, headers: dict[str, Any] | None = None) -> bytes | None:
     """gets content from url"""
     async with aiohttp.ClientSession(headers=headers) as session:  # sets up a session
         async with session.get(url) as response:  # gets the response
@@ -337,7 +358,7 @@ async def get_from_url(url: str, headers: dict | None = None) -> bytes | None:
 JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
 
 
-async def get_json_from_url(url: str, headers: dict | None = None) -> JSON:
+async def get_json_from_url(url: str, headers: dict[str, str] | None = None) -> JSON:
     """gets json from url"""
     response = await get_from_url(url, headers)
     if response is None:

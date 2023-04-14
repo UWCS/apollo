@@ -7,9 +7,9 @@ from discord.ext import commands
 from discord.ext.commands import Bot, BucketType, Cog, Context, cooldown
 from sqlalchemy.exc import SQLAlchemyError
 
-from models import CountingRun, CountingUser
-from models import User as UserModel
 from models import db_session
+from models.counting import CountingRun, CountingUser
+from models.user import User as UserModel
 from utils import get_database_user_from_id, is_decimal
 
 LONG_HELP_TEXT = """

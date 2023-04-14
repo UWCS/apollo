@@ -7,7 +7,8 @@ from discord.ext.commands import Bot, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 
 from cogs.commands.karma import current_milli_time
-from models import IgnoredChannel, MiniKarmaChannel, db_session
+from models import db_session
+from models.channel_settings import IgnoredChannel, MiniKarmaChannel
 from utils import EnumGet, get_database_user, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """

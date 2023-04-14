@@ -23,7 +23,7 @@ jobs:
           pipenv install --dev --deploy
 
   check:
-    name: Check Formatting
+    name: Check Formatting and Typing
     runs-on: ubuntu-latest
     needs:
       - install
@@ -43,6 +43,12 @@ jobs:
         run: |
           pipenv run isort --check-only --diff --skip __tests__ .
           pipenv run black --check --diff --exclude __tests__ .
+
+      - name: Check types with pyright
+        if: always()
+        run: |
+          pipenv run pyright --verbose
+
 
   test:
     name: Run Tests with Pytest

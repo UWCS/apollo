@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Union
+from typing import Any
 
-from discord.ext.commands import Converter
+from discord.ext import commands
 from discord.ext.commands.converter import MemberConverter
 
 import utils
@@ -13,12 +13,14 @@ class MentionType(Enum):
 
 
 class Mention:
-    def __init__(self, type, id, string):
-        self.type: MentionType = type
-        self.id: int = id
-        self.string: str = string
+    def __init__(self, type: MentionType, id: int | None, string: str | None):
+        self.type = type
+        self.id = id
+        self.string = string
 
-    def __eq__(self, other_m):
+    def __eq__(self, other_m: object) -> bool:
+        if not isinstance(other_m, Mention):
+            return False
         return all(
             [
                 self.type == other_m.type,
@@ -31,23 +33,27 @@ class Mention:
         return self.type == MentionType.ID
 
     @staticmethod
-    def id_mention(id):
+    def id_mention(id: int):
         return Mention(MentionType.ID, id, None)
 
     @staticmethod
-    def string_mention(string):
+    def string_mention(string: str):
         return Mention(MentionType.STRING, None, string)
 
 
-class MentionConverter(Converter):
-    async def convert(self, ctx, string) -> Mention:
+class MentionConverter(commands.Converter[Any]):
+    async def convert(
+        self,
+        ctx: commands.Context[commands.Bot | commands.AutoShardedBot],
+        argument: str,
+    ) -> Mention:
         member_converter = MemberConverter()
         try:
-            discord_user = await member_converter.convert(ctx, string)
+            discord_user = await member_converter.convert(ctx, argument)
             uid = utils.get_database_user_from_id(discord_user.id)
 
             if uid is not None:
                 return Mention.id_mention(uid.id)
-            return Mention.string_mention(string)
+            return Mention.string_mention(argument)
         except:
-            return Mention.string_mention(string)
+            return Mention.string_mention(argument)

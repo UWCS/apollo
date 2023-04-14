@@ -19,7 +19,9 @@ from cogs.commands.quotes import (
     quotes_query,
     update_quote,
 )
-from models import Base, Quote, QuoteOptouts, User, quote
+from models import Base
+from models.quote import Quote, QuoteOptouts
+from models.user import User
 from utils.mentions import Mention, MentionType
 
 TEST_QUOTES = [
