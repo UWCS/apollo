@@ -1,8 +1,9 @@
 from enum import Enum
+from typing import Any
 
 from discord.ext import commands
 from discord.ext.commands.converter import MemberConverter
-from typing import Any
+
 import utils
 
 

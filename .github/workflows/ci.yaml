@@ -45,6 +45,7 @@ jobs:
           pipenv run black --check --diff --exclude __tests__ .
 
       - name: Check types with pyright
+        if: always()
         run: |
           pipenv run pyright --verbose
 

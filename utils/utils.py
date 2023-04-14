@@ -7,23 +7,25 @@ from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
 from typing import (
-    Iterable,
-    TypeAlias,
     Any,
-    Tuple,
     Callable,
-    ParamSpec,
-    Coroutine,
     Concatenate,
+    Coroutine,
+    Iterable,
+    ParamSpec,
+    Tuple,
+    TypeAlias,
 )
+
 import aiohttp
 import dateparser
 import discord
-from discord.ext.commands import Context, Bot
+from discord.ext.commands import Bot, Context
 
 from config import CONFIG
 from models import db_session
 from models.user import User
+
 from .typing import Identifiable
 
 
