@@ -62,7 +62,6 @@ class Dalle(commands.Cog):
 
     async def generate_image(self, prompt: str):
         """gets image from openAI and returns url for that image"""
-        return "https://www.google.com/images/branding/googlelogo/1x/googlelogo_light_color_272x92dp.png"
         logging.info(f"Generating image with prompt: {prompt}")
         response = await openai.Image.acreate(
             prompt=prompt,
@@ -74,7 +73,6 @@ class Dalle(commands.Cog):
     @staticmethod
     async def generate_variant(image: bytes):
         """generates a variant of the image"""
-        return "https://1000logos.net/wp-content/uploads/2017/12/Bing-Logo-2020.png"
         response = await openai.Image.acreate_variation(
             image=image,
             n=1,
@@ -109,29 +107,24 @@ class DalleView(discord.ui.View):
             content=f"{mode} ⌛", view=self
         )  # send initial confirmation (discord needs response within 30s)
         message = interaction.message  # gets message for use later
-        attachment_files = await asyncio.gather(
-            *[attachment.to_file() for attachment in message.attachments]
-        )
-        new_url = ""
-        if mode == "Regenerating":
-            new_url = await self.dalle_cog.generate_image(
-                message.content
-            )  # generates new image
-        elif mode == "Creating variant":
-            new_url = await self.dalle_cog.generate_variant(
-                await utils.get_from_url(  # gets image bytes from url
-                    message.attachments[-1].url
-                )
-            )  # creates variant of image
-        new_file = await utils.get_file_from_url(new_url)
-        attachment_files.append(new_file)
         self.edit_buttons(False)  # re-enables buttons
-        await interaction.followup.edit_message(
-            message.id,
-            content=message.content,
-            attachments=attachment_files,
-            view=self,
-        )
+        new_url = ""
+        if mode == "Regenerating":  # generates new image
+            new_url = await self.dalle_cog.generate_image(message.content)
+        elif mode == "Creating variant":  # creates variant of image
+            new_url = await self.dalle_cog.generate_variant(
+                await utils.get_from_url(message.attachments[-1].url)
+            )
+        new_file = await utils.get_file_from_url(new_url)  # makes the new file
+        if len(message.attachments) == 10:
+            # discord only allows 10 attachments per message so we need to send a new message
+            await interaction.followup.send(message.content, file=new_file, view=self)
+        else:
+            # otherwise we can just edit the message
+            await message.add_files(new_file)
+            await interaction.followup.edit_message(
+                message.id, content=message.content, view=self
+            )
 
     async def on_timeout(self) -> None:
         await self.message.reply("timeout")
