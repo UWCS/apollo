@@ -5,8 +5,8 @@ from discord.ext.commands import Bot, CommandError, Context, check
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
-from models.karma import BlockedKarma
 from models import db_session
+from models.karma import BlockedKarma
 from utils import get_database_user, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """

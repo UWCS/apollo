@@ -17,8 +17,8 @@ from karma.transaction import (
     filter_transactions,
     make_transactions,
 )
-from models.karma import Karma, KarmaChange
 from models.channel_settings import MiniKarmaChannel
+from models.karma import Karma, KarmaChange
 from utils import filter_out_none, get_database_user, get_name_string
 
 
