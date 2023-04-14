@@ -19,8 +19,8 @@ class OutputTooLargeError(WarningError):
 
     def __init__(
         self,
-        out="Your requested output was too large!",
-        message="Maximum Discord message length exceeded",
+        out: str = "Your requested output was too large!",
+        message: str = "Maximum Discord message length exceeded",
     ):
         super().__init__(out, message)
 

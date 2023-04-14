@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import asyncio
 import logging
-from typing import Literal, Optional
 
 import discord
 from discord import Intents
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, Greedy, check, errors, when_mentioned_or
+from discord.ext.commands import Bot, Context, check, errors, when_mentioned_or
 from discord_simple_pretty_help import SimplePrettyHelp
 
 from config import CONFIG
@@ -65,7 +64,7 @@ bot = Bot(
 
 @bot.command()
 @check(is_compsoc_exec_in_guild)
-async def reload_cogs(ctx: Context):
+async def reload_cogs(ctx: Context[Bot]):
     for extension in EXTENSIONS:
         await bot.reload_extension(extension)
     await ctx.message.add_reaction("✅")
@@ -103,7 +102,7 @@ async def main():
 @check(is_compsoc_exec_in_guild)
 @done_react
 @wait_react
-async def sync(ctx: Context) -> None:
+async def sync(ctx: Context[Bot]) -> None:
     """
     Syncs slash commands to server
     """
@@ -112,7 +111,8 @@ async def sync(ctx: Context) -> None:
 
 
 @bot.event
-async def on_command_error(ctx: Context, error: Exception):
+async def on_command_error(ctx: Context[Bot], error: Exception):
+    assert ctx.command
     # await ctx.message.add_reaction("🚫")
     message = ""
     reraise = None
@@ -129,7 +129,7 @@ async def on_command_error(ctx: Context, error: Exception):
         message = f"Bot does not have permissions to do this. {str(error.text)}"
         reraise = error
     elif hasattr(error, "original"):
-        await on_command_error(ctx, error.original)
+        await on_command_error(ctx, error.original)  # type: ignore not sure what the deal is here
         return
     elif isinstance(error, errors.CommandError):
         message = str(error)
