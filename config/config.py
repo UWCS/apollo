@@ -4,7 +4,7 @@ import yaml
 
 
 class Config:
-    def __init__(self, filepath):
+    def __init__(self, filepath: str):
         with open(filepath) as f:
             parsed = yaml.full_load(f).get("config")
 

@@ -31,13 +31,13 @@ class EnumGet:
     """Only use this if you're an enum inheriting it!"""
 
     @classmethod
-    def get(cls, argument: str, default:str=None):
-        values = {e.name.casefold(): e.name for e in list(cls)}
+    def get(cls, argument: str, default: str | None = None):
+        values: dict[str, str] = {e.name.casefold(): e.name for e in list(cls)}  # type: ignore
         casefolded = argument.casefold()
         if casefolded not in values:
             return default
         else:
-            return cls[values[casefolded]]
+            return cls[values[casefolded]]  # type: ignore
 
 
 def clean_brackets(
@@ -217,7 +217,7 @@ def split_into_messages(sections: str | list[str], limit: int = 2000):
     """Split a string (or list of sections) into small enough chunks to send (2000 chars)"""
     if isinstance(sections, str):
         sections = [sections]
-    
+
     sections = "§".join(sections)
     result = split_by(
         [
@@ -234,7 +234,9 @@ def split_into_messages(sections: str | list[str], limit: int = 2000):
     return result
 
 
-def split_by(split_funcs: list[Callable[[str], list[str]]], section: str, limit:int=4000) -> list[str]:
+def split_by(
+    split_funcs: list[Callable[[str], list[str]]], section: str, limit: int = 4000
+) -> list[str]:
     """Split section by each of split_funcs in descending order until each chunk is smaller than limit"""
     section = section.replace("\n\n", "\n_ _\n")
     if len(section) <= limit:
@@ -308,16 +310,20 @@ def done_react(
     return decorator
 
 
-def rerun_to_confirm(key_name: str, confirm_msg: str = "Re-run to confirm"):
+def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
     """
     Records the first run of the command, only actuall runs command on confirmatory second run
     """
     first_run_times = {}
 
-    def decorator_actual(func):
+    def decorator_actual(
+        func: Callable[
+            Concatenate[Context[Bot], P],
+            Coroutine[Any, Any, None],
+        ]
+    ):
         @functools.wraps(func)
-        async def decorator(*args, **kwargs):
-            ctx: Context = next(a for a in args if isinstance(a, Context))
+        async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
             if kwargs[key_name] not in first_run_times:
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
@@ -328,7 +334,7 @@ def rerun_to_confirm(key_name: str, confirm_msg: str = "Re-run to confirm"):
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
 
-            await func(*args, **kwargs)
+            await func(ctx, *args, **kwargs)
 
         return decorator
 

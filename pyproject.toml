@@ -35,10 +35,10 @@ python_files = "test_*.py"
 pythonVersion = "3.10"
 pythonPlatform = "Linux"
 ignore = [
-  "cogs/**/*",           # everything
-  "config/**/*",         # we cut this down over time
+  "cogs/**/*",               # everything, cut this down over time
   "karma/**/*",
   "migrations/versions",
+  "utils/announce_utils.py",
   "roll/**/*",
   "tests/**/*",
   "voting/**/*",
@@ -48,4 +48,5 @@ ignore = [
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
 reportMissingTypeStubs = false
-reportImportCycles = false     # this is actually a big issue but the bad module structure makes it hard to resolve
+reportImportCycles = false         # this is actually a big issue but the bad module structure makes it hard to resolve
+reportMissingParameterType = false
