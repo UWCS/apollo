@@ -22,8 +22,8 @@ jobs:
           pip install --user pipenv
           pipenv install --dev --deploy
 
-  lint:
-    name: Check Formatting and Linting
+  check:
+    name: Check Formatting and Typing
     runs-on: ubuntu-latest
     needs:
       - install
