@@ -1,7 +1,5 @@
-import asyncio
 import logging
-from io import BytesIO
-from typing import Iterable
+from enum import Enum
 
 import discord
 import openai
@@ -57,7 +55,7 @@ class Dalle(commands.Cog):
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
             )
-        view = DalleView(timeout=None, bot=self.bot)  # otherwise rpley with image
+        view = DalleView(timeout=None, bot=self.bot)  # otherwise reply with image
         await ctx.reply(prompt, file=image, mention_author=True, view=view)
 
     async def generate_image(self, prompt: str):
@@ -66,7 +64,7 @@ class Dalle(commands.Cog):
         response = await openai.Image.acreate(
             prompt=prompt,
             n=1,
-            size="256x256",  # maybe change later? (you're wlecome treasurer btw)
+            size="256x256",  # maybe change later? (you're welcome treasurer btw)
         )
         return response["data"][0]["url"]
 
@@ -81,6 +79,11 @@ class Dalle(commands.Cog):
         return response["data"][0]["url"]
 
 
+class Mode(Enum):  # enums for the different modess
+    REGENERATING = "Regenerating"
+    VARIANT = "Creating variant"
+
+
 class DalleView(discord.ui.View):
     def __init__(self, timeout: float | None, bot: Bot) -> None:
         super().__init__(timeout=timeout)
@@ -91,26 +94,26 @@ class DalleView(discord.ui.View):
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         """renegerates the image"""
-        await self.new_image(interaction, "Regenerating")
+        await self.new_image(interaction, Mode.REGENERATING)
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
     async def variant(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
         """generates a variant of the image"""
-        await self.new_image(interaction, "Creating variant")
+        await self.new_image(interaction, Mode.VARIANT)
 
-    async def new_image(self, interaction: discord.Interaction, mode: str):
+    async def new_image(self, interaction: discord.Interaction, mode: Mode):
         """generic function for updating the image"""
         self.edit_buttons(True)  # disables buttons
         await interaction.response.edit_message(
-            content=f"{mode} ⌛", view=self
+            content=f"{mode.value} ⌛", view=self
         )  # send initial confirmation (discord needs response within 30s)
         message = interaction.message  # gets message for use later
         new_url = ""
-        if mode == "Regenerating":  # generates new image
+        if mode == Mode.REGENERATING:  # generates new image
             new_url = await self.dalle_cog.generate_image(message.content)
-        elif mode == "Creating variant":  # creates variant of image
+        elif mode == Mode.VARIANT:  # creates variant of image
             new_url = await self.dalle_cog.generate_variant(
                 await utils.get_from_url(message.attachments[-1].url)
             )
@@ -119,11 +122,11 @@ class DalleView(discord.ui.View):
         if len(message.attachments) == 10:
             # discord only allows 10 attachments per message so we need to send a new message
             items = self.children
-            self.clear_items()
+            self.clear_items()  # removes all children and saves for later
             await interaction.followup.edit_message(
                 message.id, content=message.content, view=self
             )
-            for item in items:
+            for item in items:  # re-adds all children
                 self.add_item(item)
             await interaction.followup.send(
                 message.content,
