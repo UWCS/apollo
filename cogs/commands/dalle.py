@@ -20,6 +20,9 @@ Once generated buttons can be used to regenerate the image (create a new image b
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
 
+IMAGE_RESOLOUTION = "256x256"  # resolution of images (maybe change later?) (you're welcome treasurer btw)
+
+
 def get_cooldown(ctx: Context):
     """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
     if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
@@ -64,7 +67,7 @@ class Dalle(commands.Cog):
         response = await openai.Image.acreate(
             prompt=prompt,
             n=1,
-            size="256x256",  # maybe change later? (you're welcome treasurer btw)
+            size=IMAGE_RESOLOUTION,  # maybe change later? (you're welcome treasurer btw)
         )
         return response["data"][0]["url"]
 
@@ -74,7 +77,7 @@ class Dalle(commands.Cog):
         response = await openai.Image.acreate_variation(
             image=image,
             n=1,
-            size="256x256",
+            size=IMAGE_RESOLOUTION,
         )
         return response["data"][0]["url"]
 
