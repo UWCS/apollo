@@ -1,7 +1,5 @@
-import asyncio
 import logging
-from io import BytesIO
-from typing import Iterable
+from enum import Enum
 
 import discord
 import openai
@@ -22,7 +20,7 @@ Once generated buttons can be used to regenerate the image (create a new image b
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
 
-def get_cooldown(ctx):
+def get_cooldown(ctx: Context):
     """cooldown for command: 1s in ai channels (or DMs), 60s everywhere else"""
     if ctx.channel.id in CONFIG.AI_CHAT_CHANNELS:
         return commands.Cooldown(1, 1)
@@ -57,22 +55,21 @@ class Dalle(commands.Cog):
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
             )
-        view = DalleView(timeout=None, bot=self.bot)  # otherwise rpley with image
-        message = await ctx.reply(prompt, file=image, mention_author=True, view=view)
-        view.message = message
+        view = DalleView(timeout=None, bot=self.bot)  # otherwise reply with image
+        await ctx.reply(prompt, file=image, mention_author=True, view=view)
 
-    async def generate_image(self, prompt):
+    async def generate_image(self, prompt: str):
         """gets image from openAI and returns url for that image"""
         logging.info(f"Generating image with prompt: {prompt}")
         response = await openai.Image.acreate(
             prompt=prompt,
             n=1,
-            size="256x256",  # maybe change later? (you're wlecome treasurer btw)
+            size="256x256",  # maybe change later? (you're welcome treasurer btw)
         )
         return response["data"][0]["url"]
 
     @staticmethod
-    async def generate_variant(image):
+    async def generate_variant(image: bytes):
         """generates a variant of the image"""
         response = await openai.Image.acreate_variation(
             image=image,
@@ -82,76 +79,73 @@ class Dalle(commands.Cog):
         return response["data"][0]["url"]
 
 
+class Mode(Enum):  # enums for the different modess
+    REGENERATING = "Regenerating"
+    VARIANT = "Creating variant"
+
+
 class DalleView(discord.ui.View):
-    def __init__(self, timeout, bot) -> None:
+    def __init__(self, timeout: float | None, bot: Bot) -> None:
         super().__init__(timeout=timeout)
         self.dalle_cog = bot.get_cog("Dalle")  # get dalle cog to use image generation
 
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
-    async def regenerate(self, interaction, button):
+    async def regenerate(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """renegerates the image"""
-        self.edit_buttons(True)  # disables buttons
-        message = interaction.message  # gets message for use later
-        logging.info(f"regenerating image with prompt: {message.content}")
-        await interaction.response.edit_message(
-            content="Regenerating...", attachments=[], view=self
-        )  # send initial confirmation (dsicord needs response within 30s)
-        new_url = await self.dalle_cog.generate_image(
-            message.content
-        )  # generates new image
-        new_image = await utils.get_file_from_url(new_url)  # gets file from url
-        self.edit_buttons(False)  # re-enables buttons
-        # for some reason message.attachments are not valid attachments so convert into files and then append new file
-        # iterates over all attachments and gets the bytes of the image
-        files: Iterable[bytes] = await asyncio.gather(
-            *(utils.get_from_url(attachment.url) for attachment in message.attachments)
-        )
-        # converts the images into files
-        attachment_files = [
-            discord.File(BytesIO(f), filename="image.png") for f in files
-        ]
-        await interaction.followup.edit_message(
-            message.id,
-            content=message.content,
-            attachments=attachment_files + [new_image],
-            view=self,
-        )
+        await self.new_image(interaction, Mode.REGENERATING)
 
     @discord.ui.button(label="Variant", style=discord.ButtonStyle.primary)
-    async def variant(self, interaction, button):
+    async def variant(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
         """generates a variant of the image"""
-        logging.info("generating variant")
-        self.edit_buttons(True)
-        message = interaction.message
+        await self.new_image(interaction, Mode.VARIANT)
+
+    async def new_image(self, interaction: discord.Interaction, mode: Mode):
+        """generic function for updating the image"""
+        self.edit_buttons(True)  # disables buttons
         await interaction.response.edit_message(
-            content="Creating variant...", attachments=[], view=self
-        )
-        new_url = await self.dalle_cog.generate_variant(
-            await utils.get_from_url(
-                message.attachments[len(message.attachments) - 1].url
+            content=f"{mode.value} ⌛", view=self
+        )  # send initial confirmation (discord needs response within 30s)
+        message = interaction.message  # gets message for use later
+        new_url = ""
+        if mode == Mode.REGENERATING:  # generates new image
+            new_url = await self.dalle_cog.generate_image(message.content)
+        elif mode == Mode.VARIANT:  # creates variant of image
+            new_url = await self.dalle_cog.generate_variant(
+                await utils.get_from_url(message.attachments[-1].url)
             )
-        )
-        new_image = await utils.get_file_from_url(new_url)
-        self.edit_buttons(False)
-        # see abobe for wtf this is
-        files: Iterable[bytes] = await asyncio.gather(
-            *(utils.get_from_url(attachment.url) for attachment in message.attachments)
-        )
-        attachment_files = [
-            discord.File(BytesIO(f), filename="image.png") for f in files
-        ]
-        await interaction.followup.edit_message(
-            message.id,
-            content=message.content,
-            attachments=attachment_files + [new_image],
-            view=self,
-        )
+        new_file = await utils.get_file_from_url(new_url)  # makes the new file
+        self.edit_buttons(False)  # re-enables buttons
+        if len(message.attachments) == 10:
+            # discord only allows 10 attachments per message so we need to send a new message
+            items = self.children
+            self.clear_items()  # removes all children and saves for later
+            await interaction.followup.edit_message(
+                message.id, content=message.content, view=self
+            )
+            for item in items:  # re-adds all children
+                self.add_item(item)
+            await interaction.followup.send(
+                message.content,
+                file=new_file,
+                view=self,
+            )
+        else:
+            # otherwise we can just edit the message
+            await message.add_files(new_file)
+            self.edit_buttons(False)  # for some reason need to re-enable buttons again
+            await interaction.followup.edit_message(
+                message.id, content=message.content, view=self
+            )
 
     async def on_timeout(self) -> None:
         await self.message.reply("timeout")
-        await self.edit_buttons(True)
+        self.edit_buttons(True)
 
-    def edit_buttons(self, state):
+    def edit_buttons(self, state: bool):
         for button in self.children:
             button.disabled = state
 
