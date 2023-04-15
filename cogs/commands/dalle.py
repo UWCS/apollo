@@ -20,7 +20,7 @@ Once generated buttons can be used to regenerate the image (create a new image b
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
 
-IMAGE_RESOLOUTION = "256x256"  # resolution of images (maybe change later?) (you're welcome treasurer btw)
+IMAGE_RESOLUTION = "256x256"  # resolution of images (maybe change later?) (you're welcome treasurer btw)
 
 
 def get_cooldown(ctx: Context):
@@ -67,7 +67,7 @@ class Dalle(commands.Cog):
         response = await openai.Image.acreate(
             prompt=prompt,
             n=1,
-            size=IMAGE_RESOLOUTION,  # maybe change later? (you're welcome treasurer btw)
+            size=IMAGE_RESOLUTION,  # maybe change later? (you're welcome treasurer btw)
         )
         return response["data"][0]["url"]
 
@@ -77,7 +77,7 @@ class Dalle(commands.Cog):
         response = await openai.Image.acreate_variation(
             image=image,
             n=1,
-            size=IMAGE_RESOLOUTION,
+            size=IMAGE_RESOLUTION,
         )
         return response["data"][0]["url"]
 
