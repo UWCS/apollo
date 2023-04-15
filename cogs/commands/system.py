@@ -117,9 +117,8 @@ Started {started} (uptime {uptime})"""
             resp = await session.post(url)
             if not resp.ok:
                 status = resp.status
-                err_msg = (
-                    f"Failed to update. {status} from Portainer API: {resp.text()}"
-                )
+                msg = (await resp.json())["message"]
+                err_msg = f"Failed to update. {status} from Portainer API: {msg}"
                 logging.error(err_msg)
                 await ctx.reply(err_msg)
                 # remove our event that just failed to happen
