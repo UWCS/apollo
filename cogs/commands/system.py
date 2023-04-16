@@ -106,14 +106,24 @@ Started {started} (uptime {uptime})"""
     @commands.hybrid_command()
     @check(is_compsoc_exec_in_guild)
     async def update(self, ctx: Context[Bot]):
-        assert CONFIG.PORTAINER_WEBHOOK_URL
-        async with aiohttp.ClientSession() as session:
-            url = CONFIG.PORTAINER_WEBHOOK_URL
+        headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            # Get ID to filter webhook list by
+            info = await session.get(f"{APOLLO_ENDPOINT_URL}/json")
+            id = (await info.json())["Id"]
+            # Get Webhook token
+            webhook_list_url = f'https://portainer.uwcs.co.uk/api/webhooks?filters={{"EndpointID":2,"ResourceID":"{id}"}}'
+            webhook_list = await session.get(webhook_list_url)
+            webhook_token = (await webhook_list.json())[0]["Token"]
+            # Construct URL
+            webhook_url = f"https://portainer.uwcs.co.uk/api/webhooks/{webhook_token}"
+            logging.info(f"Recreate webhook url {webhook_url}")
+            
             event = SystemEvent(EventKind.UPDATE, ctx.message.id, ctx.channel.id)
             db_session.add(event)
             db_session.commit()
             await ctx.reply("Going down for update...")
-            resp = await session.post(url)
+            resp = await session.post(webhook_url)
             if not resp.ok:
                 status = resp.status
                 msg = (await resp.json())["message"]
