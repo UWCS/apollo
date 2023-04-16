@@ -118,7 +118,7 @@ Started {started} (uptime {uptime})"""
             # Construct URL
             webhook_url = f"https://portainer.uwcs.co.uk/api/webhooks/{webhook_token}"
             logging.info(f"Recreate webhook url {webhook_url}")
-            
+
             event = SystemEvent(EventKind.UPDATE, ctx.message.id, ctx.channel.id)
             db_session.add(event)
             db_session.commit()
