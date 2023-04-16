@@ -26,7 +26,6 @@ class Config:
         self.AI_CHAT_CHANNELS: list[int] = parsed.get("ai_chat_channels")
         self.AI_SYSTEM_PROMPT: str = parsed.get("ai_system_prompt")
         self.PORTAINER_API_KEY: str = parsed.get("portainer_api_key")
-        self.PORTAINER_WEBHOOK_URL: str = parsed.get("portainer_webhook_url")
 
         # Configuration
         self.LOG_LEVEL: str = parsed.get("log_level")

@@ -16,8 +16,8 @@ from models.models import db_session
 from models.system import EventKind, SystemEvent
 from utils import is_compsoc_exec_in_guild
 
-APOLLO_JSON_URL = (
-    "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/json"
+APOLLO_ENDPOINT_URL = (
+    "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo"
 )
 
 
@@ -88,12 +88,11 @@ Started {started} (uptime {uptime})"""
     async def restart(self, ctx: Context[Bot]):
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
-            url = "https://portainer.uwcs.co.uk/api/endpoints/2/docker/containers/apollo/restart"
             event = SystemEvent(EventKind.RESTART, ctx.message.id, ctx.channel.id)
             db_session.add(event)
             db_session.commit()
             await ctx.reply("Going down for reboot...")
-            resp = await session.post(url)
+            resp = await session.post(f"{APOLLO_ENDPOINT_URL}/restart")
             if not resp.ok:
                 status = resp.status
                 msg = (await resp.json())["message"]
@@ -107,19 +106,28 @@ Started {started} (uptime {uptime})"""
     @commands.hybrid_command()
     @check(is_compsoc_exec_in_guild)
     async def update(self, ctx: Context[Bot]):
-        assert CONFIG.PORTAINER_WEBHOOK_URL
-        async with aiohttp.ClientSession() as session:
-            url = CONFIG.PORTAINER_WEBHOOK_URL
+        headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
+        async with aiohttp.ClientSession(headers=headers) as session:
+            # Get ID to filter webhook list by
+            info = await session.get(f"{APOLLO_ENDPOINT_URL}/json")
+            id = (await info.json())["Id"]
+            # Get Webhook token
+            webhook_list_url = f'https://portainer.uwcs.co.uk/api/webhooks?filters={{"EndpointID":2,"ResourceID":"{id}"}}'
+            webhook_list = await session.get(webhook_list_url)
+            webhook_token = (await webhook_list.json())[0]["Token"]
+            # Construct URL
+            webhook_url = f"https://portainer.uwcs.co.uk/api/webhooks/{webhook_token}"
+            logging.info(f"Recreate webhook url {webhook_url}")
+
             event = SystemEvent(EventKind.UPDATE, ctx.message.id, ctx.channel.id)
             db_session.add(event)
             db_session.commit()
             await ctx.reply("Going down for update...")
-            resp = await session.post(url)
+            resp = await session.post(webhook_url)
             if not resp.ok:
                 status = resp.status
-                err_msg = (
-                    f"Failed to update. {status} from Portainer API: {resp.text()}"
-                )
+                msg = (await resp.json())["message"]
+                err_msg = f"Failed to update. {status} from Portainer API: {msg}"
                 logging.error(err_msg)
                 await ctx.reply(err_msg)
                 # remove our event that just failed to happen
@@ -171,7 +179,7 @@ Started {started} (uptime {uptime})"""
     async def get_docker_json() -> dict[Any, Any] | None:
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
         async with aiohttp.ClientSession(headers=headers) as session:
-            resp = await session.get(APOLLO_JSON_URL)
+            resp = await session.get(f"{APOLLO_ENDPOINT_URL}/json")
             if not resp.ok:
                 logging.error("Could not reach Portainer API")
                 return None
@@ -181,7 +189,7 @@ Started {started} (uptime {uptime})"""
 async def setup(bot: Bot):
     headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
     async with aiohttp.ClientSession(headers=headers) as session:
-        resp = await session.get(APOLLO_JSON_URL)
+        resp = await session.get(f"{APOLLO_ENDPOINT_URL}/json")
     match (resp.ok, (environ.get("CONTAINER") is not None)):
         case (True, True):
             await bot.add_cog(System(bot))
