@@ -128,6 +128,8 @@ async def on_command_error(ctx: Context[Bot], error: Exception):
     elif isinstance(error, discord.Forbidden):
         message = f"Bot does not have permissions to do this. {str(error.text)}"
         reraise = error
+    elif isinstance(error, errors.CheckFailure):
+        pass
     elif hasattr(error, "original"):
         await on_command_error(ctx, error.original)  # type: ignore not sure what the deal is here
         return
