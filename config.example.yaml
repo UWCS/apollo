@@ -33,6 +33,10 @@ config:
     You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
   # API key for access to apollo's container runtime
   portainer_api_key: portainer
+  # OAuth2 Client ID for pufferpanel
+  pufferpanel_client_id: 1234abc
+  # OAuth2 Client Secret for pufferpanel
+  pufferpanel_client_secret: 1234abc
 
   # Configuration
   # Level of messages logged to file

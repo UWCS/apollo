@@ -5,6 +5,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
 from config import CONFIG
+from utils import get_json_from_url as json_url
 
 
 def create_ip(port: int) -> str:
@@ -34,24 +35,17 @@ SHORT_HELP_TEXT = "Server info from PufferPanel"
 class PufferPanel(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.token = get_oauth_token()
 
-    @app_commands.command(name="pufferpanel", description=SHORT_HELP_TEXT)
-    async def slash(self, int: discord.Interaction):
-        info = await self.get_servers()
-        await int.response.send_message(info)
-
-    @commands.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def pufferpanel(self, ctx: Context):
         info = await self.get_servers()
         await ctx.send(info)
-    
+
     async def get_servers(self) -> str:
-        header = {"Authorization": f"Bearer {self.token}"}
-        url = "https://pufferpanel.uwcs.co.uk/api/servers?name=*"
-        json = requests.get(url, headers=header).json()
+        headers = {"Authorization": f"Bearer {get_oauth_token()}"}
+        json = json_url("https://pufferpanel.uwcs.co.uk/api/servers?name=*", headers)
         out = []
-        out.append("Manage servers at: https://pufferpanel.uwcs.co.uk/")
+        out.append("🛠 Manage servers at: https://pufferpanel.uwcs.co.uk/")
         for server in json["servers"]:
             name = server["name"]
             ip = create_ip(server["port"])
