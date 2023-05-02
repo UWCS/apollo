@@ -11,27 +11,32 @@ def create_ip(port: int) -> str:
     IP = "lovelace.uwcs.co.uk"
     return f"{IP}:{port}"
 
+
 def get_oauth_token():
     client_id = CONFIG.PUFFERPANEL_CLIENT_ID
     client_secret = CONFIG.PUFFERPANEL_CLIENT_SECRET
     response = requests.post(
         "https://pufferpanel.uwcs.co.uk/oauth2/token",
-        data = {"grant_type": "client_credentials",
-                "client_id": client_id,
-                "client_secret": client_secret},
+        data={
+            "grant_type": "client_credentials",
+            "client_id": client_id,
+            "client_secret": client_secret,
+        },
     )
     return response.json()["access_token"]
+
 
 LONG_HELP_TEXT = "Lists all the servers running on PufferPanel"
 
 SHORT_HELP_TEXT = "Server info from PufferPanel"
+
 
 class PufferPanel(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.token = get_oauth_token()
 
-    @app_commands.command(name="pufferpanel", description= SHORT_HELP_TEXT)
+    @app_commands.command(name="pufferpanel", description=SHORT_HELP_TEXT)
     async def slash(self, int: discord.Interaction):
         info = await self.get_servers()
         await int.response.send_message(info)
@@ -44,7 +49,7 @@ class PufferPanel(commands.Cog):
     async def get_servers(self) -> str:
         header = {"Authorization": f"Bearer {self.token}"}
         url = "https://pufferpanel.uwcs.co.uk/api/servers?name=*"
-        json = requests.get(url, headers = header).json()
+        json = requests.get(url, headers=header).json()
         out = []
         out.append("Manage servers at: https://pufferpanel.uwcs.co.uk/")
         for server in json["servers"]:
