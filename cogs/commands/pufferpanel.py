@@ -1,11 +1,12 @@
-import requests
-from config import CONFIG
-
 import discord
-from bs4 import BeautifulSoup
+
+import requests
+
 from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
+
+from config import CONFIG
 
 def create_ip(port: int) -> str:
     IP = "lovelace.uwcs.co.uk"
