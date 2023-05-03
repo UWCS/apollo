@@ -77,19 +77,18 @@ class PufferPanel(commands.Cog):
                         players = f"{status.players.online}/{status.players.max}"
                 except:
                     logging.info(f"Couldn't Connect to MC Java - {ip_port}")
-                if 'motd' in locals():
+                if "motd" in locals():
                     out.append(f"**{name}** - {motd}")
                 else:
                     out.append(f"**{name}**")
                 out.append(f"> **{type}**")
-                if 'players' in locals():
+                if "players" in locals():
                     out.append(f"> **Players:** {players}")
 
-                
             case _:
                 out.append(f"**{name}**")
                 out.append(f"> **{type}**")
-                
+
         out.append(f"> **IP:** `{ip_port}`")
 
         return "\n".join(out)
