@@ -1,8 +1,11 @@
+import asyncio
+import logging
+
 import aiohttp
 import discord
-from discord import app_commands
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context
+from mcstatus import JavaServer
 
 from config import CONFIG
 from utils import get_json_from_url as json_url
@@ -18,32 +21,36 @@ class PufferPanel(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def pufferpanel(self, ctx: Context):
-        info = await self.get_servers()
-        await ctx.send(info)
+        async with ctx.typing():
+            token = await self.get_oauth_token()
+            if token == None:
+                logging.error("Bad ID/Token for Pufferpanel in config.yaml")
+                return
+            headers = {"Authorization": f"Bearer {token}"}
+            json = await json_url(
+                "https://pufferpanel.uwcs.co.uk/api/servers?name=*", headers
+            )
 
-    async def get_servers(self) -> str:
-        headers = {"Authorization": f"Bearer {await self.get_oauth_token()}"}
-        json = await json_url(
-            "https://pufferpanel.uwcs.co.uk/api/servers?name=*", headers
-        )
-        out = []
-        out.append("🛠 Manage servers at: https://pufferpanel.uwcs.co.uk/ \n")
-        for server in json["servers"]:
-            name = server["name"]
-            ip = f"lovelace.uwcs.co.uk:{server['port']}"
+            out = []
+            out.append("🛠 Manage servers at: https://pufferpanel.uwcs.co.uk/ \n")
+            for server in json["servers"]:
+                name = server["name"]
 
-            type = []
-            for string in server["type"].split("-"):
-                type.append(string.capitalize())
-            type = " ".join(type)
+                ip_port = f"{server['node']['publicHost']}:{server['port']}"
 
-            out.append(f"**{name}**")
-            out.append(f" > {type}")
-            out.append(f" > `{ip}`")
-            out.append(f"")
-        return "\n".join(out[:-1])
+                type = []
+                for string in server["type"].split("-"):
+                    type.append(string.capitalize())
+                type = " ".join(type)
 
-    async def get_oauth_token(_self):
+                # Reply Creation
+
+                info = await self.get_server_info(name, type, ip_port)
+                out.append(info)
+
+        await ctx.reply("\n".join(out))
+
+    async def get_oauth_token(self) -> str:
         client_id = CONFIG.PUFFERPANEL_CLIENT_ID
         client_secret = CONFIG.PUFFERPANEL_CLIENT_SECRET
         async with aiohttp.ClientSession() as session:
@@ -55,7 +62,37 @@ class PufferPanel(commands.Cog):
                     "client_secret": CONFIG.PUFFERPANEL_CLIENT_SECRET,
                 },
             ) as response:
-                return (await response.json())["access_token"]
+                return (await response.json()).get("access_token", None)
+
+    async def get_server_info(self, name: str, type: str, ip_port: str):
+        out = []
+        match type:
+            case "Minecraft Java":
+                try:
+                    server = await JavaServer.async_lookup(ip_port, 2)
+                    status = await server.async_status()
+                    if status.description:
+                        motd = status.description
+                    if status.players:
+                        players = f"{status.players.online}/{status.players.max}"
+                except:
+                    logging.info(f"Couldn't Connect to MC Java - {ip_port}")
+                if 'motd' in locals():
+                    out.append(f"**{name}** - {motd}")
+                else:
+                    out.append(f"**{name}**")
+                out.append(f"> **{type}**")
+                if 'players' in locals():
+                    out.append(f"> **Players:** {players}")
+
+                
+            case _:
+                out.append(f"**{name}**")
+                out.append(f"> **{type}**")
+                
+        out.append(f"> **IP:** `{ip_port}`")
+
+        return "\n".join(out)
 
 
 async def setup(bot: Bot):
