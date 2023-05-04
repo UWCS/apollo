@@ -276,13 +276,13 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
         item_str = "\n".join(items)
         error_str = "\n".join(errors)
         if not item_str and error_str:
-            reply = f"Sorry {author_display}, I couldn't karma the requested item{transaction_plural} because of the following problem{transaction_plural}:\n\n{error_str}"
+            reply = f"{author_display}, I couldn't karma the requested item{transaction_plural} because of the following problem{transaction_plural}:\n\n{error_str}"
         # If you have items processed successfully but some errors too
         elif item_str and error_str:
-            reply = f"Thanks {author_display}, I have made changes to the following item(s) karma:\n\n{item_str}\n\nThere were some issues with the following item(s), too:\n\n{error_str}"
+            reply = f"{author_display}, I have made changes to the following item(s) karma:\n\n{item_str}\n\nThere were some issues with the following item(s), too:\n\n{error_str}"
         # If all items were processed successfully
         else:
-            reply = f"Thanks {author_display}, I have made changes to the following karma item{transaction_plural}:\n\n{item_str}"
+            reply = f"{author_display}, I have made changes to the following karma item{transaction_plural}:\n\n{item_str}"
     else:
         item_str = " ".join(items)
         error_str = " ".join(errors)
