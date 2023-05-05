@@ -27,24 +27,24 @@ class Birthday(commands.Cog):
         else:  # if there is no birthday, initialise
             self.date = datetime(1970, 1, 1)
             self.age = 0
-            borth = Birthday(self.date, self.age)  # if you get this, i am sorry
+            borth = db_Birthday(self.date, self.age)  # if you get this, i am sorry
             db_session.add(borth)
             db_session.commit()
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def birthday(self, ctx: Context):
         current_date = datetime.now()
-        if current_date.date <= self.date.date:
+        if current_date.date() == self.date.date():
             return await ctx.reply(
                 "I'm sorry but our lord chancellor has already been wished a happy birthday today"
             )
         self.date = current_date
         self.age += 1
-        borth = Birthday(date=self.date, age=self.age)
+        borth = db_Birthday(date=self.date, age=self.age)
         db_session.add(borth)
         db_session.commit()
         await ctx.reply(
-            f"Hapy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>, you are now {self.age}"
+            f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>, you are now {self.age}"
         )
 
 
