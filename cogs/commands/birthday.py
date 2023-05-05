@@ -47,6 +47,11 @@ class Birthday(commands.Cog):
             f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>, you are now {self.age}"
         )
 
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    async def age(self, ctx: Context):
+        name = self.bot.get_user(CONFIG.LORD_CHANCELLOR_ID).name
+        await ctx.reply(f"{name} is {self.age}")
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Birthday(bot))
