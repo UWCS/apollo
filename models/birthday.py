@@ -7,6 +7,5 @@ from models.models import Base, IntPk
 
 class Birthday(Base):
     __tablename__ = "birthdays"
-    id: Mapped[IntPk] = mapped_column(init=False)
-    date: Mapped[datetime]
-    age: Mapped[int]
+    date: Mapped[datetime] = mapped_column(primary_key=True)
+    age: Mapped[int] = mapped_column(primary_key=True)

@@ -2,6 +2,7 @@ from datetime import datetime
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
+from pytz import timezone, utc
 from sqlalchemy.exc import SQLAlchemyError
 
 from config import CONFIG
@@ -25,16 +26,17 @@ class Birthday(commands.Cog):
             self.date = recent.date
             self.age = recent.age
         else:  # if there is no birthday, initialise
-            self.date = datetime(1970, 1, 1)
+            self.date = utc.localize(datetime(1970, 1, 1)).astimezone(
+                timezone("Europe/London")
+            )
             self.age = 0
-            borth = db_Birthday(self.date, self.age)  # if you get this, i am sorry
-            db_session.add(borth)
-            db_session.commit()
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def birthday(self, ctx: Context):
-        current_date = datetime.now()
-        if current_date.date() == self.date.date():
+        current_date = utc.localize(datetime.now()).astimezone(
+            timezone("Europe/London")
+        )
+        if current_date.date() <= self.date.date():
             return await ctx.reply(
                 "I'm sorry but our lord chancellor has already been wished a happy birthday today"
             )
@@ -47,7 +49,7 @@ class Birthday(commands.Cog):
             f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>, you are now {self.age}"
         )
 
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_command(help="get current age", brief="get current age")
     async def age(self, ctx: Context):
         name = self.bot.get_user(CONFIG.LORD_CHANCELLOR_ID).name
         await ctx.reply(f"{name} is {self.age}")
