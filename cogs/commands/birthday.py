@@ -3,7 +3,6 @@ from datetime import datetime
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from pytz import timezone, utc
-from sqlalchemy.exc import SQLAlchemyError
 
 from config import CONFIG
 from models import db_session
