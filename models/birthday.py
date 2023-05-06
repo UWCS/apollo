@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.models import Base, IntPk
+from models.models import Base
 
 
 class Birthday(Base):
