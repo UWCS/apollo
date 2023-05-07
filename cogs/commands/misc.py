@@ -20,6 +20,11 @@ class Misc(commands.Cog):
         await ctx.send("RUST")
 
     @commands.hybrid_command()
+    async def joey(self, ctx: Context):
+        """Another member of the Rust evangelical strike force."""
+        await ctx.send("RUST")
+
+    @commands.hybrid_command()
     async def go(self, ctx: Context):
         """The eternal #cs meme."""
         await ctx.send(
@@ -27,24 +32,24 @@ class Misc(commands.Cog):
         )
 
     @commands.hybrid_command()
-    async def dunno(self, ctx: Context):
-        """¯\\_(ツ)_/¯"""
-        await ctx.send("¯\\_(ツ)_/¯")
-
-    @commands.hybrid_command()
     async def rust(self, ctx: Context):
         """And if you gaze long into RUST, the RUST also gazes into you."""
-        await ctx.send("FAUX")
+        names = ["JOEY", "FAUX"]
+        await ctx.send(names[random.randint(0, 1)])
 
     @commands.hybrid_command()
     async def pr(self, ctx: Context):
         """You know what to do"""
-        await ctx.send("You can make a pull request for that!")
+        await ctx.send(
+            "You can make a pull request for that! (https://github.com/UWCS/apollo/pulls)"
+        )
 
     @commands.hybrid_command()
     async def issue(self, ctx: Context):
         """You know what you want someone else to do"""
-        await ctx.send("You can submit an issue for that!")
+        await ctx.send(
+            "You can submit an issue for that! (https://github.com/UWCS/apollo/issues)"
+        )
 
     @commands.hybrid_command()
     async def merge(self, ctx: Context):
@@ -72,18 +77,6 @@ class Misc(commands.Cog):
     async def sinjo(self, ctx: Context):
         """o-o"""
         await ctx.send(":neutral_face:")
-
-    @commands.hybrid_command()
-    async def servers(self, ctx: Context):
-        """List of our multiplayer servers"""
-        await ctx.send(
-            """:video_game: Running Servers :video_game:
-We have some permanently running servers:
-
-:ice_cube: Minecraft for Minecraft Society :ice_cube:
-A Minecraft survival server running at `warwickminecraft.uk`
-"""
-        )
 
     @commands.hybrid_command()
     async def haskell(self, ctx: Context):
