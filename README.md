@@ -37,7 +37,6 @@ When you first create the database container, you'll need to apply migrations:
 1. Run `docker compose up -d` to start both services in the background. The python one won't work, but leave it running.
    - When changing any source files, the container will have to be rebuilt: `docker compose up --build`
    - For containers running in the background, you can get the outputs using `docker compose logs`
-2. Run `docker compose exec apollo alembic revision --autogenerate -m "<explanation>"` to add the new database
 3. Run `docker compose exec apollo alembic upgrade head` to apply the database migrations.
 4. Run `docker compose down && docker compose up` to restart both services with the migrations applied.
    - Apollo will now be running in the foreground

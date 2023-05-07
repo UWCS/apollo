@@ -63,9 +63,9 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
 - To create a DB migration:
   1. Create model in `/models`
   2. Import in `/models/__init__.py`
-  3. Run `docker compose exec apollo alembic revision --autogenerate -m "<change description>"`
+  3. Run `alembic revision --autogenerate -m "<change description>"`
   4. Check the newly created upgrade and downgrade is correct
-  5. Upgrade your database with `docker compose exec apollo alembic upgrade head`
+  5. Upgrade your database with `alembic upgrade head`
 
 ### Testing subsections
 
