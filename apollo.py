@@ -31,7 +31,7 @@ EXTENSIONS = [
     "cogs.commands.karma",
     "cogs.commands.lcalc",
     "cogs.commands.misc",
-    "cogs.commands.pufferpanel",
+    "cogs.commands.servers",
     "cogs.commands.quotes",
     "cogs.commands.rolemenu",
     "cogs.commands.reminders",

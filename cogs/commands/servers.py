@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import re
 
 import aiohttp
 import discord
@@ -10,17 +11,19 @@ from mcstatus import JavaServer
 from config import CONFIG
 from utils import get_json_from_url as json_url
 
-LONG_HELP_TEXT = "Lists all the servers running on PufferPanel"
+LONG_HELP_TEXT = "Lists all the servers hosted by the UWCS Network"
 
-SHORT_HELP_TEXT = "Server info from PufferPanel"
+SHORT_HELP_TEXT = "Server info from UWCS"
+
+IP = "lovelace.uwcs.co.uk"
 
 
-class PufferPanel(commands.Cog):
+class GameServers(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def pufferpanel(self, ctx: Context):
+    async def servers(self, ctx: Context):
         async with ctx.typing():
             token = await self.get_oauth_token()
             if token == None:
@@ -32,11 +35,11 @@ class PufferPanel(commands.Cog):
             )
 
             out = []
-            out.append("🛠 Manage servers at: https://pufferpanel.uwcs.co.uk/ \n")
+            out.append("🛠 Manage Game servers at: https://pufferpanel.uwcs.co.uk/")
             for server in json["servers"]:
                 name = server["name"]
 
-                ip_port = f"{server['node']['publicHost']}:{server['port']}"
+                ip_port = f"{IP}:{server['port']}"
 
                 type = []
                 for string in server["type"].split("-"):
@@ -48,7 +51,7 @@ class PufferPanel(commands.Cog):
                 info = await self.get_server_info(name, type, ip_port)
                 out.append(info)
 
-        await ctx.reply("\n".join(out))
+        await ctx.reply("\n\n".join(out))
 
     async def get_oauth_token(self) -> str:
         client_id = CONFIG.PUFFERPANEL_CLIENT_ID
@@ -66,28 +69,34 @@ class PufferPanel(commands.Cog):
 
     async def get_server_info(self, name: str, type: str, ip_port: str):
         out = []
+
+        def default_case():
+            out.append(f"**{name}**")
+            out.append(f"> **{type}**")
+
         match type:
             case "Minecraft Java":
+                status = None
                 try:
                     server = await JavaServer.async_lookup(ip_port, 2)
                     status = await server.async_status()
-                    if status.description:
-                        motd = status.description
-                    if status.players:
-                        players = f"{status.players.online}/{status.players.max}"
-                except:
-                    logging.info(f"Couldn't Connect to MC Java - {ip_port}")
-                if "motd" in locals():
-                    out.append(f"**{name}** - {motd}")
-                else:
-                    out.append(f"**{name}**")
-                out.append(f"> **{type}**")
-                if "players" in locals():
-                    out.append(f"> **Players:** {players}")
+                except Exception as e:
+                    logging.warn(f"Couldn't Connect to MC Java - {ip_port}\n{e}")
 
+                if status:
+                    motd = status.description
+                    motd = motd.replace("\n", " ")
+                    motd = re.sub(r"§.", "", motd)
+
+                    players = f"{status.players.online}/{status.players.max}"
+
+                    out.append(f"**{name}** - {motd}")
+                    out.append(f"> **{type}**")
+                    out.append(f"> **Players:** {players}")
+                else:
+                    default_case()
             case _:
-                out.append(f"**{name}**")
-                out.append(f"> **{type}**")
+                default_case()
 
         out.append(f"> **IP:** `{ip_port}`")
 
@@ -95,4 +104,4 @@ class PufferPanel(commands.Cog):
 
 
 async def setup(bot: Bot):
-    await bot.add_cog(PufferPanel(bot))
+    await bot.add_cog(GameServers(bot))
