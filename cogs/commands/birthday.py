@@ -56,7 +56,7 @@ class Birthday(commands.Cog):
         await ctx.reply(f"{name} is {self.age}")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief="User happy birthday count")
-    async def birthdayUser(self, ctx: Context, user: User):
+    async def birthdayuser(self, ctx: Context, user: User):
         """How many times has someone wished the Lord Chancellor a happy birthday?"""
         num = (
             db_session.query(db_Birthday).filter(db_Birthday.user_id == user.id).count()
