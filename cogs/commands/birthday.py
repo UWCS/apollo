@@ -49,16 +49,14 @@ class Birthday(commands.Cog):
             f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>, you are now {self.age}"
         )
 
-    @birthday.command(help="Get the current age of the Lord Chancellor")
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief="Lord Chancellor age")
     async def age(self, ctx: Context):
         """Get the current age of the Lord Chancellor"""
         name = self.bot.get_user(CONFIG.LORD_CHANCELLOR_ID).name
         await ctx.reply(f"{name} is {self.age}")
 
-    @birthday.command(
-        help="How many times has someone wished the Lord Chancellor a happy birthday?",
-    )
-    async def user(self, ctx: Context, user: User):
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief="User happy birthday count")
+    async def birthdayUser(self, ctx: Context, user: User):
         """How many times has someone wished the Lord Chancellor a happy birthday?"""
         num = (
             db_session.query(db_Birthday).filter(db_Birthday.user_id == user.id).count()
