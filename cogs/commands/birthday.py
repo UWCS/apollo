@@ -8,6 +8,7 @@ from pytz import timezone, utc
 from config import CONFIG
 from models import db_session
 from models.birthday import Birthday as db_Birthday  # avoid name clash
+from utils import get_database_user
 
 LONG_HELP_TEXT = """
 Hapy birthday!!!!
@@ -41,7 +42,8 @@ class Birthday(commands.Cog):
             )  # cannot wish happy birthday twice in one day
         self.date = current_date
         self.age += 1
-        borth = db_Birthday(date=self.date, age=self.age, user_id=ctx.author.id)
+        db_user = get_database_user(ctx.author)
+        borth = db_Birthday(date=self.date, age=self.age, user_id=db_user.id)
         db_session.add(borth)
         db_session.commit()
         # update the database
@@ -58,8 +60,11 @@ class Birthday(commands.Cog):
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief="User happy birthday count")
     async def birthdayuser(self, ctx: Context, user: User):
         """How many times has someone wished the Lord Chancellor a happy birthday?"""
+        db_user = get_database_user(user)
         num = (
-            db_session.query(db_Birthday).filter(db_Birthday.user_id == user.id).count()
+            db_session.query(db_Birthday)
+            .filter(db_Birthday.user_id == db_user.id)
+            .count()
         )
         await ctx.reply(
             f"{user.name} has wished the Lord Chancellor a happy birthday {num} times"
