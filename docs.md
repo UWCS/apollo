@@ -20,25 +20,30 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
 - cogs.database
 - cogs.parallelism
 - cogs.channel_checker
-- cogs.commands.admin
-- cogs.commands.blacklist
+- cogs.commands.announce
+- cogs.commands.birthday
+- cogs.commands.chatgpt
 - cogs.commands.counting
+- cogs.commands.dalle
 - cogs.commands.date
 - cogs.commands.event_sync
 - cogs.commands.flip
+- cogs.commands.karma_admin
+- cogs.commands.karma_blacklist
 - cogs.commands.karma
 - cogs.commands.lcalc
 - cogs.commands.misc
 - cogs.commands.quotes
-- cogs.commands.rolemenu
 - cogs.commands.reminders
-- cogs.commands.announce
+- cogs.commands.rolemenu
 - cogs.commands.roll
 - cogs.commands.roomsearch
 - cogs.commands.say
+- cogs.commands.system
 - cogs.commands.tex
 - cogs.commands.vote
 - cogs.commands.widen
+- cogs.commands.xkcd
 
 ## Contributing
 
@@ -66,6 +71,15 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
   3. Run `alembic revision --autogenerate -m "<change description>"`
   4. Check the newly created upgrade and downgrade is correct
   5. Upgrade your database with `alembic upgrade head`
+  - If 3. results in a database disconnection error (`...sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: server closed the connection unexpectedly...`)
+    1. \Run `docker compose up --build d` to start apollo in the background in a docker container
+    2. Run `docker compose exec apollo alembic upgrade head` to make sure your database migration is up to date
+    3. Run `docker compose exec apollo alembic revision --autogenerate -m "<change description>"` to migrate within the container
+    4. Run `docker cp <apollo container name>:/migrations/versions/<name of migration generated> ~/` this will copy the migration file to your root directiory
+    5. Move the file from your home directory to the equivlent location in apollo
+    6. Check that the file is correct
+    7. To fulfill the migration run `docker compose down -v && docker compose up --build -d`
+    8. Then `docker compose exec apollo alembic migrate head`
 
 ### Testing subsections
 
