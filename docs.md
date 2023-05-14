@@ -71,15 +71,12 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
   3. Run `alembic revision --autogenerate -m "<change description>"`
   4. Check the newly created upgrade and downgrade is correct
   5. Upgrade your database with `alembic upgrade head`
-  - If 3. results in a database disconnection error (`...sqlalchemy.exc.OperationalError: (psycopg.OperationalError) connection failed: server closed the connection unexpectedly...`)
-    1. \Run `docker compose up --build d` to start apollo in the background in a docker container
-    2. Run `docker compose exec apollo alembic upgrade head` to make sure your database migration is up to date
-    3. Run `docker compose exec apollo alembic revision --autogenerate -m "<change description>"` to migrate within the container
-    4. Run `docker cp <apollo container name>:/migrations/versions/<name of migration generated> ~/` this will copy the migration file to your root directiory
-    5. Move the file from your home directory to the equivlent location in apollo
-    6. Check that the file is correct
-    7. To fulfill the migration run `docker compose down -v && docker compose up --build -d`
-    8. Then `docker compose exec apollo alembic migrate head`
+- If running in docker, the above is slightly different:
+    1. Run `docker compose up --build d` to start apollo and postgres in the background in a docker container
+    2. Run `docker compose exec apollo alembic upgrade head` to bring the database up to date
+    3. Run `docker compose exec apollo alembic revision --autogenerate -m "<change description>"` to generate the migration within the container
+    4. Run `docker compose cp apollo:/app/migrations/versions/<name of migration generated> ./migrations/versions` this will copy the migration out of the container and into your local directory
+    6. **Check that the migration is correct**
 
 ### Testing subsections
 
