@@ -26,6 +26,7 @@ class Config:
         self.AI_CHAT_CHANNELS: list[int] = parsed.get("ai_chat_channels")
         self.AI_SYSTEM_PROMPT: str = parsed.get("ai_system_prompt")
         self.PORTAINER_API_KEY: str = parsed.get("portainer_api_key")
+        self.LORD_CHANCELLOR_ID: int = parsed.get("lord_chancellor_id")
 
         # Configuration
         self.LOG_LEVEL: str = parsed.get("log_level")

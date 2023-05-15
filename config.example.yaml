@@ -33,6 +33,8 @@ config:
     You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
   # API key for access to apollo's container runtime
   portainer_api_key: portainer
+  # Lord Chancellor User ID
+  lord_chancellor_id: 1234
 
   # Configuration
   # Level of messages logged to file

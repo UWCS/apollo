@@ -20,25 +20,30 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
 - cogs.database
 - cogs.parallelism
 - cogs.channel_checker
-- cogs.commands.admin
-- cogs.commands.blacklist
+- cogs.commands.announce
+- cogs.commands.birthday
+- cogs.commands.chatgpt
 - cogs.commands.counting
+- cogs.commands.dalle
 - cogs.commands.date
 - cogs.commands.event_sync
 - cogs.commands.flip
+- cogs.commands.karma_admin
+- cogs.commands.karma_blacklist
 - cogs.commands.karma
 - cogs.commands.lcalc
 - cogs.commands.misc
 - cogs.commands.quotes
-- cogs.commands.rolemenu
 - cogs.commands.reminders
-- cogs.commands.announce
+- cogs.commands.rolemenu
 - cogs.commands.roll
 - cogs.commands.roomsearch
 - cogs.commands.say
+- cogs.commands.system
 - cogs.commands.tex
 - cogs.commands.vote
 - cogs.commands.widen
+- cogs.commands.xkcd
 
 ## Contributing
 
@@ -66,6 +71,12 @@ Cogs are how Discord.py organizes commands, each file is a separate cog with sep
   3. Run `alembic revision --autogenerate -m "<change description>"`
   4. Check the newly created upgrade and downgrade is correct
   5. Upgrade your database with `alembic upgrade head`
+- If running in docker, the above is slightly different:
+    1. Run `docker compose up --build d` to start apollo and postgres in the background in a docker container
+    2. Run `docker compose exec apollo alembic upgrade head` to bring the database up to date
+    3. Run `docker compose exec apollo alembic revision --autogenerate -m "<change description>"` to generate the migration within the container
+    4. Run `docker compose cp apollo:/app/migrations/versions/<name of migration generated> ./migrations/versions` this will copy the migration out of the container and into your local directory
+    6. **Check that the migration is correct**
 
 ### Testing subsections
 
