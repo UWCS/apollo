@@ -66,8 +66,7 @@ def current_milli_time():
 
 # Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
 async def plot_karma(
-    karma_dict: Dict[str, List[KarmaChange]],
-    xkcd: bool = False
+    karma_dict: Dict[str, List[KarmaChange]], xkcd: bool = False
 ) -> Tuple[Optional[BytesIO], str]:
     # Error if there's no input data
     if len(karma_dict) == 0:
@@ -77,14 +76,16 @@ async def plot_karma(
     plt.clf()
     xkcd_context = plt.xkcd if xkcd else nullcontext
     line_width = plt.rcParams["grid.linewidth"]
-    
+
     # Load Humor Sans font
     font_path = str(Path("resources", "Humor-Sans.ttf"))
     font_manager.fontManager.addfont(font_path)
-    
+
     # xkcd context sets grid.linewidth to 0 which causes an error with ax.grid.
     # Setting it back to the initial line width fixes this.
-    with xkcd_context(), rc_context({'grid.linewidth': line_width, "figure.autolayout": True}):
+    with xkcd_context(), rc_context(
+        {"grid.linewidth": line_width, "figure.autolayout": True}
+    ):
         fig, ax = plt.subplots(figsize=(8, 6))
 
     # Get the earliest and latest karma values fo
@@ -488,19 +489,21 @@ class Karma(commands.Cog):
     @commands.cooldown(5, 60, BucketType.user)
     async def plot(self, ctx: Context, *, args: str):
         await self.common_plot(ctx, args, False)
-        
+
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
         if hasattr(error, "message"):
             await ctx.send(error.message)
         else:
             raise error
-        
-    @karma.command(help="Plots the karma change over time of the given karma topic(s) in the style of xkcd")
+
+    @karma.command(
+        help="Plots the karma change over time of the given karma topic(s) in the style of xkcd"
+    )
     @commands.cooldown(5, 60, BucketType.user)
     async def xkcd(self, ctx: Context, *, args: str):
         await self.common_plot(ctx, args, True)
-        
+
     @xkcd.error
     async def xkcd_error_handler(self, ctx: Context, error: KarmaError):
         if hasattr(error, "message"):
