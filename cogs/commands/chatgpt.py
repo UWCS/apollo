@@ -9,6 +9,7 @@ import openai
 from discord import AllowedMentions
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
+from openaiadmin import OpenAIAdmin
 
 from config import CONFIG
 from utils.utils import get_name_and_content, split_into_messages
@@ -59,6 +60,10 @@ class ChatGPT(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *, message: Optional[str] = None):
+        if await OpenAIAdmin.is_user_banned(ctx.author):  # if user is banned error
+            return await ctx.reply(
+                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+            )
         await self.cmd(ctx)
 
     @commands.Cog.listener()
@@ -66,6 +71,11 @@ class ChatGPT(commands.Cog):
         # Avoid replying to bot or msg that triggers the command anyway
         if message.author.bot or message.content.startswith(CONFIG.PREFIX):
             return
+
+        if await OpenAIAdmin.is_user_banned(message.author):  # if user is banned error
+            return await message.reply(
+                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+            )
 
         # Only engage if replying to Apollo, use !chat to trigger otherwise
         previous = await self.fetch_previous(message)

@@ -5,6 +5,7 @@ import discord
 import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
+from openaiadmin import OpenAIAdmin
 
 import utils
 from config import CONFIG
@@ -44,6 +45,12 @@ class Dalle(commands.Cog):
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def dalle(self, ctx: Context, *, prompt: str):
         """Generates an image based on the prompt using DALL-E"""
+
+        if await OpenAIAdmin.is_user_banned(ctx.author):  # if user is banned error
+            return await ctx.reply(
+                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+            )
+
         prompt = await clean_content().convert(ctx, prompt)
 
         # if no prompt error (i think unused thanks to previous error handling but nice to have)
@@ -108,6 +115,12 @@ class DalleView(discord.ui.View):
 
     async def new_image(self, interaction: discord.Interaction, mode: Mode):
         """generic function for updating the image"""
+
+        if await OpenAIAdmin.is_user_banned(ctx.author):  # if user is banned error
+            return await ctx.reply(
+                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+            )
+
         self.edit_buttons(True)  # disables buttons
         await interaction.response.edit_message(
             content=f"{mode.value} ⌛", view=self

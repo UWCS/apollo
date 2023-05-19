@@ -5,6 +5,7 @@ from models.counting import *
 from models.event_sync import *
 from models.karma import *
 from models.models import *
+from models.openai import *
 from models.printing import *
 from models.quote import *
 from models.reminder import *
