@@ -11,7 +11,7 @@ from discord.ext import commands, tasks
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
 
 from config import CONFIG
-from utils.utils import get_name_and_content, split_into_messages, is_user_banned_openAI
+from utils.utils import get_name_and_content, is_user_banned_openAI, split_into_messages
 
 LONG_HELP_TEXT = """
 Apollo is smarter than you think...
