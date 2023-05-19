@@ -3,8 +3,10 @@ import os
 import shlex
 import tempfile
 from collections import defaultdict
+from contextlib import nullcontext
 from datetime import datetime, timedelta
 from io import BytesIO
+from pathlib import Path
 from time import time
 from typing import Dict, List, Optional, Tuple
 
@@ -20,6 +22,7 @@ from discord.ext.commands import (
     MissingRequiredArgument,
     clean_content,
 )
+from matplotlib import font_manager, rc_context
 from matplotlib.dates import (
     DateFormatter,
     DayLocator,
@@ -63,7 +66,8 @@ def current_milli_time():
 
 # Utility coroutine to generate the matplotlib Figure object that can be manipulated by the calling function
 async def plot_karma(
-    karma_dict: Dict[str, List[KarmaChange]]
+    karma_dict: Dict[str, List[KarmaChange]],
+    xkcd: bool = False
 ) -> Tuple[Optional[BytesIO], str]:
     # Error if there's no input data
     if len(karma_dict) == 0:
@@ -71,8 +75,17 @@ async def plot_karma(
 
     # Matplotlib preamble
     plt.clf()
-    plt.rcParams.update({"figure.autolayout": True})
-    fig, ax = plt.subplots(figsize=(8, 6))
+    xkcd_context = plt.xkcd if xkcd else nullcontext
+    line_width = plt.rcParams["grid.linewidth"]
+    
+    # Load Humor Sans font
+    font_path = str(Path("resources", "Humor-Sans.ttf"))
+    font_manager.fontManager.addfont(font_path)
+    
+    # xkcd context sets grid.linewidth to 0 which causes an error with ax.grid.
+    # Setting it back to the initial line width fixes this.
+    with xkcd_context(), rc_context({'grid.linewidth': line_width, "figure.autolayout": True}):
+        fig, ax = plt.subplots(figsize=(8, 6))
 
     # Get the earliest and latest karma values fo
     earliest_karma = utc.localize(datetime.utcnow()).astimezone(
@@ -372,9 +385,7 @@ class Karma(commands.Cog):
         else:
             raise error
 
-    @karma.command(help="Plots the karma change over time of the given karma topic(s)")
-    @commands.cooldown(5, 60, BucketType.user)
-    async def plot(self, ctx: Context, *, args: str):
+    async def common_plot(self, ctx: Context, args: str, xkcd: bool):
         args = await clean_content().convert(ctx, args)
         args = shlex.split(args)
         name = get_name_string(ctx.message)
@@ -426,7 +437,7 @@ class Karma(commands.Cog):
                 return await ctx.send("No items to graph!")
 
         # Plot the graph and save it to a png
-        img, filename = await plot_karma(karma_dict)
+        img, filename = await plot_karma(karma_dict, xkcd)
         t_end = current_milli_time()
 
         # Construct the embed
@@ -473,8 +484,25 @@ class Karma(commands.Cog):
         file = File(img, filename=filename)
         await ctx.send(f"Here you go, {name}! {emoji}", embed=embed, file=file)
 
+    @karma.command(help="Plots the karma change over time of the given karma topic(s)")
+    @commands.cooldown(5, 60, BucketType.user)
+    async def plot(self, ctx: Context, *, args: str):
+        await self.common_plot(ctx, args, False)
+        
     @plot.error
     async def plot_error_handler(self, ctx: Context, error: KarmaError):
+        if hasattr(error, "message"):
+            await ctx.send(error.message)
+        else:
+            raise error
+        
+    @karma.command(help="Plots the karma change over time of the given karma topic(s) in the style of xkcd")
+    @commands.cooldown(5, 60, BucketType.user)
+    async def xkcd(self, ctx: Context, *, args: str):
+        await self.common_plot(ctx, args, True)
+        
+    @xkcd.error
+    async def xkcd_error_handler(self, ctx: Context, error: KarmaError):
         if hasattr(error, "message"):
             await ctx.send(error.message)
         else:
