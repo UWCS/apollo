@@ -9,10 +9,9 @@ import openai
 from discord import AllowedMentions
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
-from openaiadmin import OpenAIAdmin
 
 from config import CONFIG
-from utils.utils import get_name_and_content, split_into_messages
+from utils.utils import get_name_and_content, split_into_messages, is_user_banned_openAI
 
 LONG_HELP_TEXT = """
 Apollo is smarter than you think...
@@ -60,7 +59,7 @@ class ChatGPT(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chat(self, ctx: Context, *, message: Optional[str] = None):
-        if await OpenAIAdmin.is_user_banned(ctx.author):  # if user is banned error
+        if is_user_banned_openAI(ctx.author):  # if user is banned error
             return await ctx.reply(
                 "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
             )
@@ -72,7 +71,7 @@ class ChatGPT(commands.Cog):
         if message.author.bot or message.content.startswith(CONFIG.PREFIX):
             return
 
-        if await OpenAIAdmin.is_user_banned(message.author):  # if user is banned error
+        if is_user_banned_openAI(message.author):  # if user is banned error
             return await message.reply(
                 "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
             )

@@ -5,7 +5,6 @@ import discord
 import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
-from openaiadmin import OpenAIAdmin
 
 import utils
 from config import CONFIG
@@ -46,7 +45,7 @@ class Dalle(commands.Cog):
     async def dalle(self, ctx: Context, *, prompt: str):
         """Generates an image based on the prompt using DALL-E"""
 
-        if await OpenAIAdmin.is_user_banned(ctx.author):  # if user is banned error
+        if utils.is_user_banned_openAI(ctx.author):  # if user is banned error
             return await ctx.reply(
                 "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
             )
