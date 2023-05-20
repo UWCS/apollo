@@ -125,7 +125,7 @@ async def on_command_error(ctx: Context[Bot], error: Exception):
     elif isinstance(error, errors.ExpectedClosingQuoteError):
         message = f"Mismatching quotes, {str(error)}"
     elif isinstance(error, errors.MissingRequiredArgument):
-        message = f"Argument {str(error.param.name)} is missing\nUsage: `{ctx.prefix}{ctx.command.name} {ctx.command.signature}`"
+        message = f"Argument {str(error.param.name)} is missing`\nUsage: `{ctx.prefix}{ctx.command.name} {ctx.command.signature}"
     elif isinstance(error, discord.Forbidden):
         message = f"Bot does not have permissions to do this. {str(error.text)}"
         reraise = error
