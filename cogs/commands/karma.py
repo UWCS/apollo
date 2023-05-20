@@ -490,13 +490,6 @@ class Karma(commands.Cog):
     async def plot(self, ctx: Context, *, args: str):
         await self.common_plot(ctx, args, False)
 
-    @plot.error
-    async def plot_error_handler(self, ctx: Context, error: KarmaError):
-        if hasattr(error, "message"):
-            await ctx.send(error.message)
-        else:
-            raise error
-
     @karma.command(
         help="Plots the karma change over time of the given karma topic(s) in the style of xkcd"
     )
@@ -504,12 +497,11 @@ class Karma(commands.Cog):
     async def xkcd(self, ctx: Context, *, args: str):
         await self.common_plot(ctx, args, True)
 
+    @plot.error
     @xkcd.error
-    async def xkcd_error_handler(self, ctx: Context, error: KarmaError):
+    async def plot_error_handler(self, ctx: Context, error: KarmaError):
         if hasattr(error, "message"):
             await ctx.send(error.message)
-        else:
-            raise error
 
     @karma.command(
         help="Lists the reasons (if any) for the specific karma", ignore_extra=True
