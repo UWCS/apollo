@@ -25,7 +25,7 @@ class OpenAIAdmin(commands.Cog):
 
         db_user = get_database_user(user)
 
-        if db_user:
+        if not db_user:
             return await ctx.reply("User not found please try again")
 
         is_banned = (  # a user is banned if in the db
