@@ -113,8 +113,12 @@ class DalleView(discord.ui.View):
         """generic function for updating the image"""
 
         if is_user_banned_openai(interaction.user):  # if user is banned error
+            if interaction.user.id == 274261420932202498:
+                return await interaction.response.send_message(
+                    content="Fuck off you horney mf"
+                )
             return await interaction.response.send_message(
-                content="Fuck off you horney mf"
+                content="You are banned from using openAI commands, please contact an exec if you think this is a mistake"
             )
 
         self.edit_buttons(True)  # disables buttons
