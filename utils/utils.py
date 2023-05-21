@@ -24,7 +24,6 @@ from discord.ext.commands import Bot, Context
 
 from config import CONFIG
 from models import db_session
-from models.openai import OpenAI
 from models.user import User
 
 from .typing import Identifiable
@@ -377,11 +376,3 @@ async def get_file_from_url(
     return discord.File(
         BytesIO(response), filename=filename
     )  # convert response to files
-
-
-def is_user_banned_openAI(user: Identifiable, /):
-    """returns true if user is banned from openAI commands"""
-    db_user = get_database_user(user)
-    if not db_user:
-        return False
-    return db_session.query(OpenAI).filter(OpenAI.user_id == db_user.id).count() == 1

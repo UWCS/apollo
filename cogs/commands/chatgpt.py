@@ -9,9 +9,10 @@ import openai
 from discord import AllowedMentions
 from discord.ext import commands, tasks
 from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
+from openaiadmin import is_user_banned_openai
 
 from config import CONFIG
-from utils.utils import get_name_and_content, is_user_banned_openAI, split_into_messages
+from utils.utils import get_name_and_content, split_into_messages
 
 LONG_HELP_TEXT = """
 Apollo is smarter than you think...
@@ -58,11 +59,8 @@ class ChatGPT(commands.Cog):
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @check(is_user_banned_openai)
     async def chat(self, ctx: Context, *, message: Optional[str] = None):
-        if is_user_banned_openAI(ctx.author):  # if user is banned error
-            return await ctx.reply(
-                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
-            )
         await self.cmd(ctx)
 
     @commands.Cog.listener()
@@ -70,11 +68,6 @@ class ChatGPT(commands.Cog):
         # Avoid replying to bot or msg that triggers the command anyway
         if message.author.bot or message.content.startswith(CONFIG.PREFIX):
             return
-
-        if is_user_banned_openAI(message.author):  # if user is banned error
-            return await message.reply(
-                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
-            )
 
         # Only engage if replying to Apollo, use !chat to trigger otherwise
         previous = await self.fetch_previous(message)
@@ -89,6 +82,11 @@ class ChatGPT(commands.Cog):
         await self.cmd(ctx)
 
     async def cmd(self, ctx: Context):
+        if is_user_banned_openai(ctx.author):  # if user is banned error
+            return await ctx.message.reply(
+                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+            )
+
         # Create history chain
         messages = await self.create_history(ctx.message)
         if not messages or await self.in_cooldown(ctx):
