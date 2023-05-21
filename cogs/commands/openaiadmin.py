@@ -90,10 +90,14 @@ def is_user_banned_openai(user: Identifiable, /):
     db_user = get_database_user(user)
     if not db_user:
         return False
-    return (
+    is_banned = (
         db_session.query(OpenAI).filter(OpenAI.user_id == db_user.id).first()
         is not None
     )
+    if is_banned:
+        commands.CommandError(
+            "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+        )
 
 
 async def setup(bot: Bot):
