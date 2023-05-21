@@ -159,7 +159,8 @@ async def plot_karma(
 
     # Create a legend if more than  1 line and format the dates
     if len(karma_dict.keys()) > 1:
-        ax.legend()
+        with xkcd_context():
+            ax.legend()
     fig.autofmt_xdate()
 
     # Save the file to disk and set the right permissions
