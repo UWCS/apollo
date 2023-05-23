@@ -1,23 +1,12 @@
-from typing import (
-    Any,
-    Callable,
-    Concatenate,
-    Coroutine,
-    Iterable,
-    ParamSpec,
-    Tuple,
-    TypeAlias,
-)
-
 from discord import User
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
 
 from models import db_session
-from models.openai import OpenAI
-from utils import get_database_user, is_compsoc_exec_in_guild
-
-from .typing import Identifiable
+from models.openai import OpenAIBans
+from models.user import User as db_user
+from utils import get_database_user, get_database_user_from_id, is_compsoc_exec_in_guild
+from utils.typing import Identifiable
 
 LONG_HELP_TEXT = """
 Exec-only command to stop or reallow a user from usinf openAI functionality in apollo (Dalle and ChatGPT)
@@ -42,20 +31,24 @@ class OpenAIAdmin(commands.Cog):
             return await ctx.reply("User not found please try again")
 
         is_banned = (  # a user is banned if in the db
-            db_session.query(OpenAI).filter(OpenAI.user_id == db_user.id).first()
+            db_session.query(OpenAIBans)
+            .filter(OpenAIBans.user_id == db_user.id)
+            .first()
             is not None
         )
         if ban:
             if is_banned:
                 return await ctx.reply("User already banned")
 
-            banned_user = OpenAI(user_id=db_user.id)
+            banned_user = OpenAIBans(user_id=db_user.id)
             db_session.add(banned_user)
         else:
             if not is_banned:
                 return await ctx.reply("User not banned")
 
-            db_session.query(OpenAI).filter(OpenAI.user_id == db_user.id).delete()
+            db_session.query(OpenAIBans).filter(
+                OpenAIBans.user_id == db_user.id
+            ).delete()
 
         db_session.commit()
         await ctx.reply(
@@ -66,38 +59,53 @@ class OpenAIAdmin(commands.Cog):
     @check(is_compsoc_exec_in_guild)
     async def openai_ban_list(self, ctx: Context):
         """lists all users banned from openAI commands"""
-        banned_users = db_session.query(OpenAI).all()  # get all users in db
+        banned_users = db_session.query(OpenAIBans).all()  # get all users in db
+
         if not banned_users:
             return await ctx.reply("No users banned")
 
-        banned_users = "\n".join(  # make list of names
-            [self.bot.get_user(user.user_id).name for user in banned_users]
+        banned_users_str = "\n".join(  # make list of names
+            [
+                db_session.query(db_user)
+                .filter(db_user.id == user.user_id)
+                .first()
+                .username
+                for user in banned_users
+            ]
         )
-        await ctx.reply(f"Users banned from openAI:\n{banned_users}")
+
+        await ctx.reply(f"Users banned from openAI:\n{banned_users_str}")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief="is user banned")
     async def openai_is_banned(self, ctx: Context, user: User):
         """checks if user is banned from openAI commands"""
-        is_banned = is_user_banned_openAI(user)
+        is_banned = is_user_banned_openai(user.id)
         await ctx.reply(
-            f"User {user} is {'banned' if is_banned else 'not banned'} from using openAI commands"
+            f"User {user} **is {'**banned' if is_banned else 'not** banned'} from using openAI commands"
         )
 
 
 @staticmethod
-def is_user_banned_openai(user: Identifiable, /):
-    """returns true if user is banned from openAI commands"""
-    db_user = get_database_user(user)
-    if not db_user:
-        return False
-    is_banned = (
-        db_session.query(OpenAI).filter(OpenAI.user_id == db_user.id).first()
-        is not None
-    )
-    if is_banned:
-        commands.CommandError(
+def is_author_banned_openai(ctx: Context):
+    """returns true if author is banned from openAI commands"""
+    banned = is_user_banned_openai(ctx.author.id)
+    if banned:
+        ctx.reply(
             "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
         )
+    return not banned
+
+
+@staticmethod
+def is_user_banned_openai(id: int):
+    """returns true if user is banned from openAI commands"""
+    db_user = get_database_user_from_id(id)
+    if not db_user:
+        return False
+    return (
+        db_session.query(OpenAIBans).filter(OpenAIBans.user_id == db_user.id).first()
+        is not None
+    )
 
 
 async def setup(bot: Bot):
