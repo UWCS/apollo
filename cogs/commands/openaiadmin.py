@@ -1,4 +1,4 @@
-from discord import User
+from discord import Interaction, User
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
 
@@ -86,13 +86,12 @@ class OpenAIAdmin(commands.Cog):
 
 
 @staticmethod
-def is_author_banned_openai(ctx: Context):
+async def is_author_banned_openai(ctx: Context | Interaction):
     """returns true if author is banned from openAI commands"""
-    banned = is_user_banned_openai(ctx.author.id)
+    id = ctx.author.id if isinstance(ctx, Context) else ctx.user.id
+    banned = is_user_banned_openai(id)
     if banned:
-        ctx.reply(
-            "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
-        )
+        await openai_ban_error(ctx, id)
     return not banned
 
 
@@ -106,6 +105,22 @@ def is_user_banned_openai(id: int):
         db_session.query(OpenAIBans).filter(OpenAIBans.user_id == db_user.id).first()
         is not None
     )
+
+
+@staticmethod
+async def openai_ban_error(ctx: Context | Interaction, id: int):
+    """error for openai commands"""
+
+    message = (
+        "no you horny mf :mega_flushed:"
+        if id == 274261420932202498
+        else "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+    )
+
+    if isinstance(ctx, Context):
+        await ctx.reply(message)
+    else:
+        await ctx.response.send_message(message)
 
 
 async def setup(bot: Bot):

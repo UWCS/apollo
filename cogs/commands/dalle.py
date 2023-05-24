@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context, check, clean_content
 
 import utils
-from cogs.commands.openaiadmin import is_author_banned_openai, is_user_banned_openai
+from cogs.commands.openaiadmin import is_author_banned_openai
 from config import CONFIG
 
 LONG_HELP_TEXT = """
@@ -112,14 +112,8 @@ class DalleView(discord.ui.View):
     async def new_image(self, interaction: discord.Interaction, mode: Mode):
         """generic function for updating the image"""
 
-        if is_user_banned_openai(interaction.user.id):  # if user is banned error
-            if interaction.user.id == 274261420932202498:
-                return await interaction.response.send_message(
-                    content="Fuck off you horney mf"
-                )
-            return await interaction.response.send_message(
-                content="You are banned from using openAI commands, please contact an exec if you think this is a mistake"
-            )
+        if not await is_author_banned_openai(interaction):
+            return
 
         self.edit_buttons(True)  # disables buttons
         await interaction.response.edit_message(

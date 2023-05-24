@@ -17,7 +17,7 @@ from discord.ext.commands import (
     clean_content,
 )
 
-from cogs.commands.openaiadmin import is_author_banned_openai, is_user_banned_openai
+from cogs.commands.openaiadmin import is_author_banned_openai
 from config import CONFIG
 from utils.utils import get_name_and_content, split_into_messages
 
@@ -66,7 +66,6 @@ class ChatGPT(commands.Cog):
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    @check(is_author_banned_openai)
     async def chat(self, ctx: Context, *, message: Optional[str] = None):
         await self.cmd(ctx)
 
@@ -89,10 +88,8 @@ class ChatGPT(commands.Cog):
         await self.cmd(ctx)
 
     async def cmd(self, ctx: Context):
-        if is_user_banned_openai(ctx.author.id):  # if user is banned error
-            return await ctx.message.reply(
-                "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
-            )
+        if not await is_author_banned_openai(ctx):
+            return
 
         # Create history chain
         messages = await self.create_history(ctx.message)
