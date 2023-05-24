@@ -26,12 +26,10 @@ if secret_key is None:
 
 
 def upgrade():
-
     encrypt_type = EncryptedType(type_in=sa.String, key=CONFIG.BOT_SECRET_KEY)
     # add temp username column
     op.add_column("users", sa.Column("username_new", sa.String, nullable=True))
     with op.batch_alter_table("users", schema=None) as batch_op:
-
         # get encrypted usernames
         result = batch_op.get_bind().execute(sa.text("SELECT username FROM users"))
         for row in result:
@@ -45,9 +43,13 @@ def upgrade():
                 ),
                 {"name": name_decrypted, "name_enc": name_encrypted},
             )
+
+    with op.batch_alter_table("users", schema=None) as batch_op:
         # switch out the username columns
         batch_op.drop_column("username")
         batch_op.alter_column("username_new", new_column_name="username")
+
+    with op.batch_alter_table("users", schema=None) as batch_op:
         # make non-nullable
         batch_op.alter_column("username", nullable=False)
 

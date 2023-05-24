@@ -58,7 +58,9 @@ def upgrade():
 
     # Drop FK and add column
     with op.batch_alter_table("karma_changes", recreate="always") as batch_op:
-        op.drop_constraint("fk_karma_changes_message_id_messages", "karma_changes")
+        batch_op.drop_constraint(
+            "fk_karma_changes_message_id_messages", type_="foreignkey"
+        )
         batch_op.add_column(
             sa.Column("mid_new", sa.BigInteger, server_default="-1"),
             insert_after="message_id",
