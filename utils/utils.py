@@ -272,20 +272,25 @@ P = ParamSpec("P")
 
 
 def wait_react(
-    func: Callable[
-        Concatenate[Context[Bot], P],
-        Coroutine[Any, Any, None],
-    ]
-) -> Callable[Concatenate[Context[Bot], P], Coroutine[Any, Any, None]]:
+    func: Callable[P, Coroutine[Any, Any, None]]
+) -> Callable[P, Coroutine[Any, Any, None]]:
     """
     Reacts to the command message with a clock while message processing is ongoing
     Most useful on commands with longer processing times
     """
 
     @functools.wraps(func)
-    async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
+    async def decorator(*args: P.args, **kwargs: P.kwargs):
+        ctx: Context[Bot] | None = None
+        for arg in args:
+            if isinstance(arg, Context):
+                ctx = arg
+                break
+        if ctx is None:
+            raise Exception("No Context in command args, what are you decorating on?")
+
         await ctx.message.add_reaction("🕐")
-        await func(ctx, *args, **kwargs)
+        await func(*args, **kwargs)
         if ctx:
             await ctx.message.remove_reaction("🕐", ctx.me)
 
@@ -293,21 +298,25 @@ def wait_react(
 
 
 def done_react(
-    func: Callable[
-        Concatenate[Context[Bot], P],
-        Coroutine[Any, Any, None],
-    ]
-) -> Callable[Concatenate[Context[Bot], P], Coroutine[Any, Any, None]]:
+    func: Callable[P, Coroutine[Any, Any, None]]
+) -> Callable[P, Coroutine[Any, Any, None]]:
     """
     Reacts to the command message with a thumbs up once command processing is complete
     Most useful on commands with no direct result message
     """
 
     @functools.wraps(func)
-    async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
-        await func(ctx, *args, **kwargs)
-        if ctx:
-            await ctx.message.add_reaction("👍")
+    async def decorator(*args: P.args, **kwargs: P.kwargs):
+        ctx: Context[Bot] | None = None
+        for arg in args:
+            if isinstance(arg, Context):
+                ctx = arg
+                break
+        if ctx is None:
+            raise Exception("No Context in command args, what are you decorating on?")
+
+        await func(*args, **kwargs)
+        await ctx.message.add_reaction("👍")
 
     return decorator
 
