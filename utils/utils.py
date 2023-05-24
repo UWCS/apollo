@@ -6,16 +6,7 @@ import textwrap
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
-from typing import (
-    Any,
-    Callable,
-    Concatenate,
-    Coroutine,
-    Iterable,
-    ParamSpec,
-    Tuple,
-    TypeAlias,
-)
+from typing import Any, Callable, Coroutine, Iterable, ParamSpec, Tuple, TypeAlias
 
 import aiohttp
 import dateparser
@@ -327,14 +318,19 @@ def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
     """
     first_run_times = {}
 
-    def decorator_actual(
-        func: Callable[
-            Concatenate[Context[Bot], P],
-            Coroutine[Any, Any, None],
-        ]
-    ):
+    def decorator_actual(func: Callable[P, Coroutine[Any, Any, None]]):
         @functools.wraps(func)
-        async def decorator(ctx: Context[Bot], *args: P.args, **kwargs: P.kwargs):
+        async def decorator(*args: P.args, **kwargs: P.kwargs):
+            ctx: Context[Bot] | None = None
+            for arg in args:
+                if isinstance(arg, Context):
+                    ctx = arg
+                    break
+            if ctx is None:
+                raise Exception(
+                    "No Context in command args, what are you decorating on?"
+                )
+
             if kwargs[key_name] not in first_run_times:
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
@@ -345,7 +341,7 @@ def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
                 first_run_times[kwargs[key_name]] = datetime.now()
                 return await ctx.send(confirm_msg, ephemeral=True)
 
-            await func(ctx, *args, **kwargs)
+            await func(*args, **kwargs)
 
         return decorator
 
