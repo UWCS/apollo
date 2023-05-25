@@ -32,6 +32,7 @@ EXTENSIONS = [
     "cogs.commands.karma",
     "cogs.commands.lcalc",
     "cogs.commands.misc",
+    "cogs.commands.openaiadmin",
     "cogs.commands.quotes",
     "cogs.commands.rolemenu",
     "cogs.commands.reminders",

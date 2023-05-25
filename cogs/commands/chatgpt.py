@@ -8,8 +8,16 @@ import discord
 import openai
 from discord import AllowedMentions
 from discord.ext import commands, tasks
-from discord.ext.commands import Bot, BucketType, Context, Cooldown, clean_content
+from discord.ext.commands import (
+    Bot,
+    BucketType,
+    Context,
+    Cooldown,
+    check,
+    clean_content,
+)
 
+from cogs.commands.openaiadmin import is_author_banned_openai
 from config import CONFIG
 from utils.utils import get_name_and_content, split_into_messages
 
@@ -80,6 +88,9 @@ class ChatGPT(commands.Cog):
         await self.cmd(ctx)
 
     async def cmd(self, ctx: Context):
+        if not await is_author_banned_openai(ctx):
+            return
+
         # Create history chain
         messages = await self.create_history(ctx.message)
         if not messages or await self.in_cooldown(ctx):
