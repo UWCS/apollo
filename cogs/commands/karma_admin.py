@@ -33,6 +33,16 @@ class MiniKarmaMode(EnumGet, Enum):
     Normal = 1
 
 
+def get_mini_karma(c_id):
+    # Get whether the channel is on mini karma or not
+    channel = (
+        db_session.query(MiniKarmaChannel)
+        .filter(MiniKarmaChannel.channel == c_id)
+        .one_or_none()
+    )
+    return MiniKarmaMode.Normal if channel is None else MiniKarmaMode.Mini
+
+
 class Admin(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot

@@ -9,6 +9,7 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
 import utils
+from cogs.commands.karma_admin import MiniKarmaMode, get_mini_karma
 
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
@@ -107,10 +108,13 @@ class RoomSearch(commands.Cog):
             f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}",
             filename="map.png",
         )
-        embed.set_image(url="attachment://map.png")
-        embed.set_footer(
-            text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more"
-        )
+        if get_mini_karma(ctx.channel.id) == MiniKarmaMode.Normal:
+            embed.set_image(url="attachment://map.png")
+            embed.set_footer(
+                text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more"
+            )
+        else:
+            embed.set_thumbnail(url="attachment://map.png")
         await ctx.reply(embed=embed, file=img)
 
     async def choose_room(self, ctx, rooms):
