@@ -49,10 +49,10 @@ class ChatGPT(commands.Cog):
         self.usage_endpoint = "https://api.openai.com/dashboard/billing/usage"
 
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.model = "gpt-4"
+        self.model = "gpt-3.5-turbo"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
-            self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon. Omit your name when responding to messages."
+            self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon."
         self.cooldowns = {}
 
         # have to start the task loop
@@ -106,6 +106,7 @@ class ChatGPT(commands.Cog):
 
     async def create_history(self, message):
         message_chain = await self.get_message_chain(message)
+        gpt4 = False
 
         # If a message in the chain triggered a !chat or !prompt or /chat
         is_cmd = (
@@ -120,6 +121,9 @@ class ChatGPT(commands.Cog):
         initial_msg = message_chain[0].content
         if initial_msg.startswith(prompt_cmd):
             initial = clean(initial_msg, prompt_cmd)
+            if initial.startswith("--gpt4"):
+                gpt4 = True
+                initial = clean(initial, "--gpt4")
             message_chain = message_chain[1:]
         else:
             initial = self.system_prompt
@@ -131,13 +135,16 @@ class ChatGPT(commands.Cog):
             # Skip empty messages (if you want to invoke on a pre-existing chain)
             if not (content := clean(msg.clean_content, chat_cmd)):
                 continue
+            if initial.startswith("--gpt4"):
+                gpt4 = True
+                initial = clean(initial, "--gpt4")
             # Add name to start of message for user msgs
             if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
                 name, content = get_name_and_content(msg)
                 content = f"{name}: {clean(content, chat_cmd)}"
 
             messages.append(dict(role=role, content=content))
-        return messages
+        print(gpt4)
 
     async def in_cooldown(self, ctx):
         # If is in allowed channel
