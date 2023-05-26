@@ -81,9 +81,12 @@ class RoomSearch(commands.Cog):
                 description=f"Building: **{room.get('building')} {room.get('floor')}**",
             )
             # Campus Map
+            content = f"**[{room.get('value')}]({self.get_map_url(room)})**"
+            if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
+                content += f"\n[Google Maps]({self.get_google_maps_url(lat, lon)})"
             embed.add_field(
                 name="Campus Map:",
-                value=f"**[{room.get('value')}]({self.get_map_url(room)})**",
+                value=content,
                 inline=True,
             )
 
@@ -111,19 +114,23 @@ class RoomSearch(commands.Cog):
                 )
         else:  # If mini
             desc = f"Building: **{room.get('building')} {room.get('floor')}**\n"
-            # Campus Map
-            desc += f"**[Campus Map]({self.get_map_url(room)})**"
-            # Room info (for centrally timetabled rooms)
-            if url := self.get_info_url(room):
-                desc += f" | [Room Info]({url})"
             # Timetable
             if urls := await self.get_tt_urls(room):
                 in_term, _, _ = self.get_next_term_weeks()
                 desc += (
-                    f"\nTimetable: **[This Week]({urls[0]})** "
-                    + f"[Next Week]({urls[1]}) "
-                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
+                    f"Timetable:⠀**[This Week]({urls[0]})**⠀"
+                    + f"[Next Week]({urls[1]})⠀"
+                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})\n"
                 )
+
+            # Campus Map
+            desc += f"**[Campus Map]({self.get_map_url(room)})**"
+            # Room info (for centrally timetabled rooms)
+            if url := self.get_info_url(room):
+                desc += f"⠀**[Room Info]({url})**"
+
+            if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
+                desc += f"⠀[Google Maps]({self.get_google_maps_url(lat, lon)})"
 
             embed = discord.Embed(
                 title=f"Room Search: {room.get('value')}",
@@ -143,6 +150,10 @@ class RoomSearch(commands.Cog):
     def get_map_url(self, room):
         """Constructs url for campus map for room"""
         return f"https://campus.warwick.ac.uk/?cmsid={room.get('id')}"
+
+    def get_google_maps_url(self, lat, lon):
+        """Constructs url for room lat/lon on Google Maps"""
+        return f"https://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},20z"
 
     def get_info_url(self, room):
         """Constructs url for ITS info on room"""
