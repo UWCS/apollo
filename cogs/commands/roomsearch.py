@@ -20,7 +20,7 @@ map_api_token = "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"
 img_cache_dir = room_resource_root / "images"
 img_cache_dir.mkdir(parents=True, exist_ok=True)
 img_cache_paths = set(map(str, img_cache_dir.glob("*.png")))
-logging.info("Initial rooms", img_cache_paths)
+logging.info(f"Currently cached rooms {img_cache_paths}")
 
 
 def read_json_file(filename):
@@ -41,6 +41,8 @@ class RoomSearch(commands.Cog):
         self.last_week_check = None
         self.year = None
         self.week = None
+        self.wb = None
+        self.next_wb = None
 
     @commands.hybrid_command()
     async def roompr(self, ctx: Context):
@@ -94,18 +96,41 @@ class RoomSearch(commands.Cog):
         if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
             await self.get_week()
             if self.year:
+                # This week
                 this_year = self.year.replace("/", "")
+                content = f"**[This Week (wb {self.wb})](https://timetablingmanagement.warwick.ac.uk/SWS{this_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week})**\n"
+                # Next week
                 if self.week < 52:
                     next_week_year = this_year
                     next_week = self.week + 1
                 else:
-                    year_int = int(this_year[:2])
-                    next_week_year = f"{year_int+1}{year_int+2}"
+                    year_int = int(this_year[:2]) + 1
+                    next_week_year = f"{year_int}{year_int+1}"
                     next_week = 1
+                content += f"[Next Week (wb {self.next_wb})](https://timetablingmanagement.warwick.ac.uk/SWS{next_week_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={next_week})\n"
+
+                # This/next term
+                term_yr = this_year
+                if 1 <= self.week <= 10:  # T1
+                    in_term, term_wks = True, "1-10"
+                elif 11 <= self.week <= 14:  # Xmas
+                    in_term, term_wks = False, "15-24"
+                elif 15 <= self.week <= 24:  # T2
+                    in_term, term_wks = True, "15-24"
+                elif 25 <= self.week <= 29:  # Easter
+                    in_term, term_wks = False, "30-39"
+                elif 30 <= self.week <= 39:  # T3
+                    in_term, term_wks = True, "30-39"
+                else:  # Summer
+                    in_term, term_wks = False, "1-10"
+                    year_int = int(this_year[:2]) + 1
+                    term_yr = f"{year_int}{year_int+1}"
+
+                content += f"[{'This' if in_term else 'Next'} Term](https://timetablingmanagement.warwick.ac.uk/SWS{term_yr}/roomtimetable.asp?id={quote(tt_room_id)}&week={term_wks})"
+
                 embed.add_field(
                     name="Timetable:",
-                    value=f"**[This Week](https://timetablingmanagement.warwick.ac.uk/SWS{this_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week})**\n"
-                    f"[Next Week](https://timetablingmanagement.warwick.ac.uk/SWS{next_week_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={next_week})\n",
+                    value=content,
                     inline=True,
                 )
 
@@ -228,14 +253,21 @@ class RoomSearch(commands.Cog):
                 "https://tabula.warwick.ac.uk/api/v1/termdates/weeks"
             )
 
+            # TODO Could binary search here as sorted
             for week in weeks_json["weeks"]:
                 start = datetime.strptime(week.get("start"), "%Y-%m-%d").date()
                 end = datetime.strptime(week.get("end"), "%Y-%m-%d").date()
-                current = (datetime.now() + timedelta(days=3)).date()
+                current = (datetime.now() + timedelta(days=1)).date()
+                print(current, start, end)
                 if start < current <= end:
+                    print("Match")
                     self.year = week.get("academicYear")
                     self.week = week.get("weekNumber")
+                    self.wb = start.strftime("%d %b")
+                    self.next_wb = (start + timedelta(weeks=1)).strftime("%d %b")
                     return self.year, self.week
+                if current < start:  # As sorted, no matches
+                    break
             return None, None
         return self.year, self.week
 
