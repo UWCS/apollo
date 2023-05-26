@@ -74,39 +74,60 @@ class RoomSearch(commands.Cog):
         else:
             room = rooms[0]  # Only one in rooms
 
-        # Room info
-        embed = discord.Embed(
-            title=f"Room Search: {room.get('value')}",
-            description=f"Building: **{room.get('building')} {room.get('floor')}**",
-        )
-        # Campus Map
-        embed.add_field(
-            name="Campus Map:",
-            value=f"**[{room.get('value')}]({self.get_map_url(room)})**",
-            inline=True,
-        )
-
-        # Room info (for centrally timetabled rooms)
-        if url := self.get_info_url(room):
+        if not mini:
+            # Room info
+            embed = discord.Embed(
+                title=f"Room Search: {room.get('value')}",
+                description=f"Building: **{room.get('building')} {room.get('floor')}**",
+            )
+            # Campus Map
             embed.add_field(
-                name="Room Info:",
-                value=f"**[{room.get('value')}]({url})**",
+                name="Campus Map:",
+                value=f"**[{room.get('value')}]({self.get_map_url(room)})**",
                 inline=True,
             )
 
-        # Timetable
-        if urls := self.get_tt_urls(room):
-            in_term, _, _ = self.get_next_term_weeks()
-            content = (
-                f"**[This Week (wb {self.wb})]({urls[0]})**\n"
-                + f"[Next Week (wb {self.next_wb})]({urls[1]})\n"
-                + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
-            )
+            # Room info (for centrally timetabled rooms)
+            if url := self.get_info_url(room):
+                embed.add_field(
+                    name="Room Info:",
+                    value=f"**[{room.get('value')}]({url})**",
+                    inline=True,
+                )
 
-            embed.add_field(
-                name="Timetable:",
-                value=content,
-                inline=not mini,
+            # Timetable
+            if urls := await self.get_tt_urls(room):
+                in_term, _, _ = self.get_next_term_weeks()
+                content = (
+                    f"**[This Week (wb {self.wb})]({urls[0]})**\n"
+                    + f"[Next Week (wb {self.next_wb})]({urls[1]})\n"
+                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
+                )
+
+                embed.add_field(
+                    name="Timetable:",
+                    value=content,
+                    inline=True,
+                )
+        else:  # If mini
+            desc = f"Building: **{room.get('building')} {room.get('floor')}**\n"
+            # Campus Map
+            desc += f"**[Campus Map]({self.get_map_url(room)})**"
+            # Room info (for centrally timetabled rooms)
+            if url := self.get_info_url(room):
+                desc += f" | [Room Info]({url})"
+            # Timetable
+            if urls := await self.get_tt_urls(room):
+                in_term, _, _ = self.get_next_term_weeks()
+                desc += (
+                    f"\nTimetable: **[This Week]({urls[0]})** "
+                    + f"[Next Week]({urls[1]}) "
+                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
+                )
+
+            embed = discord.Embed(
+                title=f"Room Search: {room.get('value')}",
+                description=desc,
             )
 
         img = await self.get_img(ctx, room.get("w2gid"))
@@ -151,6 +172,7 @@ class RoomSearch(commands.Cog):
 
     def get_next_week_url(self, room, tt_room_id):
         """Constructs url for next week timetable for room"""
+        this_year = self.year.replace("/", "")
         if self.week < 52:  # Deal with wrap around on welcome week
             next_week_year = this_year
             next_week = self.week + 1
@@ -167,6 +189,7 @@ class RoomSearch(commands.Cog):
 
     def get_next_term_weeks(self):
         """Gets week range for current/next term timetable for room"""
+        this_year = self.year.replace("/", "")
         term_yr = this_year
         # If in holiday, give dates of next term, otherwise current
         if 1 <= self.week <= 10:  # T1
