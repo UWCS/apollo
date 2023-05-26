@@ -109,7 +109,6 @@ class RoomSearch(commands.Cog):
                 inline=not mini,
             )
 
-        # Slows command down quite a lot, but Discord can't take images without extensions
         img = await self.get_img(ctx, room.get("w2gid"))
         if not mini:
             embed.set_image(url="attachment://map.png")
@@ -121,14 +120,17 @@ class RoomSearch(commands.Cog):
         msg = await ctx.reply(embed=embed, file=img)
 
     def get_map_url(self, room):
+        """Constructs url for campus map for room"""
         return f"https://campus.warwick.ac.uk/?cmsid={room.get('id')}"
 
     def get_info_url(self, room):
+        """Constructs url for ITS info on room"""
         if url := self.is_central(room.get("value")):
             return f"https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url}"
         return None
 
     async def get_tt_urls(self, room):
+        """Constructs urls for timetable for room"""
         tt_room_id = self.timetable_room_mapping.get(room.get("value"))
         if tt_room_id is None:
             return None
@@ -143,11 +145,13 @@ class RoomSearch(commands.Cog):
         )
 
     def get_this_week_url(self, room, tt_room_id):
+        """Constructs url for current week timetable for room"""
         this_year = self.year.replace("/", "")
         return f"https://timetablingmanagement.warwick.ac.uk/SWS{this_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week}"
 
     def get_next_week_url(self, room, tt_room_id):
-        if self.week < 52:
+        """Constructs url for next week timetable for room"""
+        if self.week < 52:  # Deal with wrap around on welcome week
             next_week_year = this_year
             next_week = self.week + 1
         else:
@@ -156,8 +160,15 @@ class RoomSearch(commands.Cog):
             next_week = 1
         return f"https://timetablingmanagement.warwick.ac.uk/SWS{next_week_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={next_week}"
 
+    def get_term_url(self, room, tt_room_id):
+        """Constructs url for current/next term timetable for room"""
+        in_term, term_wks, term_yr = self.get_next_term_weeks()
+        return f"https://timetablingmanagement.warwick.ac.uk/SWS{term_yr}/roomtimetable.asp?id={quote(tt_room_id)}&week={term_wks}"
+
     def get_next_term_weeks(self):
+        """Gets week range for current/next term timetable for room"""
         term_yr = this_year
+        # If in holiday, give dates of next term, otherwise current
         if 1 <= self.week <= 10:  # T1
             in_term, term_wks = True, "1-10"
         elif 11 <= self.week <= 14:  # Xmas
@@ -174,11 +185,9 @@ class RoomSearch(commands.Cog):
             term_yr = f"{year_int}{year_int+1}"
         return in_term, term_wks, term_yr
 
-    def get_term_url(self, room, tt_room_id):
-        in_term, term_wks, term_yr = self.get_next_term_weeks()
-        return f"https://timetablingmanagement.warwick.ac.uk/SWS{term_yr}/roomtimetable.asp?id={quote(tt_room_id)}&week={term_wks}"
-
     async def get_img(self, ctx, w2gid):
+        """Fetch location preview image for room, but cache to disk"""
+        # The fetch slows command down quite a lot, but Discord can't take images without extensions
         # Cache file on disk if not fetched before
         fp = img_cache_dir / f"{w2gid}.png"
         if str(fp) not in img_cache_paths:
