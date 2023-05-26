@@ -1,6 +1,8 @@
 import asyncio
 import json
+import logging
 from datetime import date, datetime, time, timedelta
+from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
 
@@ -14,6 +16,11 @@ from cogs.commands.karma_admin import MiniKarmaMode, get_mini_karma
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
 map_api_token = "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"
+
+img_cache_dir = room_resource_root / "images"
+img_cache_dir.mkdir(parents=True, exist_ok=True)
+img_cache_paths = set(map(str, img_cache_dir.glob("*.png")))
+logging.info("Initial rooms", img_cache_paths)
 
 
 def read_json_file(filename):
@@ -102,12 +109,8 @@ class RoomSearch(commands.Cog):
                     inline=True,
                 )
 
-        # embed.set_image(url=f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}")
         # Slows command down quite a lot, but Discord can't take images without extensions
-        img = await utils.get_file_from_url(
-            f"https://search.warwick.ac.uk/api/map-thumbnail/{room.get('w2gid')}",
-            filename="map.png",
-        )
+        img = await self.get_img(ctx, room.get("w2gid"))
         if get_mini_karma(ctx.channel.id) == MiniKarmaMode.Normal:
             embed.set_image(url="attachment://map.png")
             embed.set_footer(
@@ -115,7 +118,24 @@ class RoomSearch(commands.Cog):
             )
         else:
             embed.set_thumbnail(url="attachment://map.png")
-        await ctx.reply(embed=embed, file=img)
+        msg = await ctx.reply(embed=embed, file=img)
+
+    async def get_img(self, ctx, w2gid):
+        # Cache file on disk if not fetched before
+        fp = img_cache_dir / f"{w2gid}.png"
+        if str(fp) not in img_cache_paths:
+            logging.info(f"Caching img for room {w2gid}")
+            img = await utils.get_from_url(
+                f"https://search.warwick.ac.uk/api/map-thumbnail/{w2gid}"
+            )
+
+            with open(fp, "wb") as f:
+                f.write(img)
+            img_cache_paths.add(str(fp))
+            return discord.File(BytesIO(img), filename="map.png")
+        else:
+            with open(fp, "rb") as f:
+                return discord.File(f, filename="map.png")
 
     async def choose_room(self, ctx, rooms):
         # Confirms room choice, esp. important with autocomplete api
