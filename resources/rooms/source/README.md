@@ -20,7 +20,7 @@ These data sources are all a mess to get at and translate, so a few steps are ma
 
 1. Update central room info `central-room-data.json` periodically from https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/room-data.js
 2. Convert result from js to json, e.g. with https://www.convertsimple.com/convert-javascript-to-json/
-3. Update tabula mapping `tabula-sciencianame.txt` from Tabula src code: common/src/main/scala/uk/ac/warwick/tabula/services/timetables/ScientiaCentrallyManagedRooms.scala
+3. Update tabula mapping `tabula-sciencianame.txt` from Tabula src code: https://github.warwick.ac.uk/Software-Engineering/tabula/ `common/src/main/scala/uk/ac/warwick/tabula/services/timetables/ScientiaCentrallyManagedRooms.scala`
 4. Chop off ends and comments, then can regex convert `"(.+)"` -> `MapLocation\("(.+)", "(\d+)", Some\("(.+)"\)\),` to `$2 | $1`
-5. Update scientia mapping `scientianame-url.txt` from http://go.warwick.ac.uk/timetablereports > Locations > Open Dev Tools > Inspect "Select Room(s)" menu, and copy out internal HTML
+5. Update scientia mapping `scientianame-url.txt` from http://go.warwick.ac.uk/timetablereports > Locations > Open Dev Tools > Inspect "Select Room(s)" menu, and copy out inner HTML
 6. Convert with regex convert `\t*<option value="([^"]+)">([^<]+)</option>` -> `$2 | $1`
