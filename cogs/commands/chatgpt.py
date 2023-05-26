@@ -26,6 +26,7 @@ Apollo is smarter than you think...
 
 GPT will be given the full chain of replied messages, *it does not look at latest messages*.
 If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to that.
+This defaults to GPT3.5, if you need GPT4, use `--gpt4` to switch (will inherit down conversation)
 """
 
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
@@ -92,13 +93,13 @@ class ChatGPT(commands.Cog):
             return
 
         # Create history chain
-        messages = await self.create_history(ctx.message)
+        messages, gpt4 = await self.create_history(ctx.message)
         if not messages or await self.in_cooldown(ctx):
             return
 
         # If valid, dispatch to OpenAI and reply
         async with ctx.typing():
-            response = await self.dispatch_api(messages)
+            response = await self.dispatch_api(messages, gpt4)
             if response:
                 prev = ctx.message
                 for content in split_into_messages(response):
@@ -135,16 +136,16 @@ class ChatGPT(commands.Cog):
             # Skip empty messages (if you want to invoke on a pre-existing chain)
             if not (content := clean(msg.clean_content, chat_cmd)):
                 continue
-            if initial.startswith("--gpt4"):
+            if content.startswith("--gpt4"):
                 gpt4 = True
-                initial = clean(initial, "--gpt4")
+                content = clean(content, "--gpt4")
             # Add name to start of message for user msgs
             if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
                 name, content = get_name_and_content(msg)
-                content = f"{name}: {clean(content, chat_cmd)}"
+                content = f"{name}: {clean(content, chat_cmd, '--gpt4')}"
 
             messages.append(dict(role=role, content=content))
-        print(gpt4)
+        return messages, gpt4
 
     async def in_cooldown(self, ctx):
         # If is in allowed channel
@@ -166,13 +167,12 @@ class ChatGPT(commands.Cog):
         self.cooldowns[ctx.channel.id] = now
         return False
 
-    async def dispatch_api(self, messages) -> Optional[str]:
+    async def dispatch_api(self, messages, gpt4) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
 
         # Make request
-        response = await openai.ChatCompletion.acreate(
-            model=self.model, messages=messages
-        )
+        model = "gpt-4" if gpt4 else self.model
+        response = await openai.ChatCompletion.acreate(model=model, messages=messages)
         logging.info(f"OpenAI Response: {response}")
 
         # Remove prefix that chatgpt might add
