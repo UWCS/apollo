@@ -60,6 +60,11 @@ class RoomSearch(commands.Cog):
         """
         mini = get_mini_karma(ctx.channel.id) == MiniKarmaMode.Mini
 
+        # Look up name in custom room dict
+        clean_name = self.clean_name(name)
+        if new := self.custom_room_names.get(clean_name):
+            name = new
+            clean_name = self.clean_name(name)
         rooms = await self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
@@ -68,12 +73,19 @@ class RoomSearch(commands.Cog):
             )
 
         if len(rooms) > 1:
-            room = await self.choose_room(ctx, rooms)
+            # If exact match, use that
+            for r in rooms:
+                if self.clean_name(r.get("value")) == clean_name:
+                    room = r
+                    break
+            else:  # Otherwise give user choice
+                room = await self.choose_room(ctx, rooms)
             if room is None:
                 return
         else:
             room = rooms[0]  # Only one in rooms
 
+        print(room)
         if not mini:
             # Room info
             embed = discord.Embed(
@@ -239,7 +251,7 @@ class RoomSearch(commands.Cog):
                 return discord.File(f, filename="map.png")
 
     async def choose_room(self, ctx, rooms):
-        # Confirms room choice, esp. important with autocomplete api
+        """Confirms room choice, esp. important with autocomplete api"""
         # Create and send message
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
@@ -282,9 +294,6 @@ class RoomSearch(commands.Cog):
         return rooms[ind]
 
     async def get_room_infos(self, room):
-        stripped = room.replace(".", "").replace(" ", "").lower()
-        if new := self.custom_room_names.get(stripped):
-            room = new
         # Check Map Autocomplete API
         map_req = await utils.get_json_from_url(
             f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
@@ -352,6 +361,9 @@ class RoomSearch(commands.Cog):
                 if r.get("name") == room_name:
                     return r.get("url")
         return None
+
+    def clean_name(self, name):
+        return name.lower().strip().replace(".", "")
 
 
 async def setup(bot: Bot):
