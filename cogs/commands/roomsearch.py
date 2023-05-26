@@ -36,7 +36,7 @@ class RoomSearch(commands.Cog):
 
         root = room_resource_root
         self.central_rooms = read_json_file(root / "central-room-data.json")
-        self.custom_room_names = read_json_file(root / "room-mapname.json")
+        self.custom_room_names = read_json_file(root / "custom-room-mapname.json")
         self.timetable_room_mapping = read_json_file(root / "room_to_surl.json")
         self.last_week_check = None
         self.year = None
