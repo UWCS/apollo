@@ -2,18 +2,25 @@ from typing import Dict, Iterable, List, NamedTuple, Tuple, Union
 
 import discord
 from discord import AllowedMentions, ButtonStyle, InteractionMessage
-from discord.ext.commands import Context
+from discord.ext.commands import Bot, Context
 from discord.ui import Button, View
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session
 from models.user import User
-from models.votes import DiscordVote, DiscordVoteChoice, DiscordVoteMessage, VoteType
+from models.votes import (
+    DiscordVote,
+    DiscordVoteChoice,
+    DiscordVoteMessage,
+    Vote,
+    VoteType,
+)
 from utils import get_database_user
 from voting.vote_types.base_vote import base_vote
 
 DENSE_ARRANGE = True
 Chunk = NamedTuple("Chunk", [("start", int), ("end", int), ("choices", List[str])])
+
 
 # Records last ephemeral message to each user, so can edit for future votes
 class VoteButton(Button):
@@ -60,8 +67,7 @@ class CloseButton(Button):
         )
         if db_user.id == self.vote.owner_id:
             await interaction.message.edit(view=None)
-            await self.interface.end_vote(interaction, self.vote)
-            self.interface.vote_type.end(self.vote)
+            await self.interface.end_vote(self.vote)
 
 
 class MyVotesButton(Button):
@@ -101,7 +107,7 @@ class DiscordBase:
             Tuple[int, int], InteractionMessage
         ] = {}
 
-    def recreate_view(self, vid, msg, dvm):
+    def recreate_view(self, vid: int, msg: discord.Message, dvm: DiscordVoteMessage):
         """Recreates the buttons on a poll on startup. Refreshes the interactions"""
         view = View()
         msg_title = self.get_title(dvm.discord_vote.vote.title, dvm.part)
@@ -115,6 +121,10 @@ class DiscordBase:
         )
         for dvc in msg_choices:
             view.add_item(self.BtnClass(self, dvc, msg_title))
+
+        if s == 0:
+            view.add_item(CloseButton(self, dvm.discord_vote.vote))
+            view.add_item(MyVotesButton(self, dvm.discord_vote.vote, msg_title))
         return view
 
     async def create_vote(
@@ -271,8 +281,8 @@ class DiscordBase:
         new_msg = await interaction.original_response()
         self.users_last_vote_update_message[key] = new_msg
 
-    async def end_vote(self, interaction: discord.Interaction, vote_id):
-        votes = self.vote_type.get_votes_for(vote_id)
+    async def end_vote(self, vote: Vote):
+        votes = self.vote_type.get_votes_for(vote)
 
         options = []
         last_pos, last_count = 1, -1
@@ -292,4 +302,17 @@ class DiscordBase:
             inline=False,
         )
 
-        await interaction.response.edit_message(embed=embed)
+        dvms = (
+            db_session.query(DiscordVoteMessage)
+            .where(DiscordVoteMessage.vote_id == vote.id)
+            .order_by(DiscordVoteMessage.part)
+            .all()
+        )
+        channel: discord.TextChannel = self.bot.get_channel(dvms[0].channel_id)
+        first_msg = await channel.fetch_message(dvms[0].message_id)
+        await first_msg.edit(embed=embed)
+        for dvm in dvms[1:]:
+            msg = channel.get_partial_message(dvm.message_id)
+            await msg.delete()
+
+        self.vote_type.end(vote)

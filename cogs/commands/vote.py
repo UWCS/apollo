@@ -1,5 +1,7 @@
 import sqlite3
+from datetime import datetime, timedelta, timezone
 
+import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandInvokeError, Context, clean_content
 from discord.ext.commands.errors import CommandError
@@ -57,6 +59,7 @@ class Vote(commands.Cog):
             if msg is None or msg.created_at < threshold_time:
                 print("Ending", msg)
                 await msg.edit(view=None)
+                await DiscordBase(self.bot).end_vote(msg, dvm.discord_vote.vote)
             else:
                 await msg.edit(
                     view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
