@@ -1,5 +1,7 @@
 import sqlite3
+from datetime import datetime, timedelta, timezone
 
+import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, CommandInvokeError, Context, clean_content
 from discord.ext.commands.errors import CommandError
@@ -21,18 +23,20 @@ class Vote(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def vote(self, ctx: Context):
-        if not ctx.invoked_subcommand:
-            await ctx.send("Subcommand not found")
+    # @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    # async def vote(self, ctx: Context):
+    #     if not ctx.invoked_subcommand:
+    #         await ctx.send("Subcommand not found")
 
-    @vote.command(
+    # @vote.command(
+    @commands.hybrid_command(
         help="Run basic poll with given options, votes are visible. Provide options as new-line, semi-colon, comma or space separated options, the first will be taken as the title. If you wish to use a separator in an option, escape it with a backslash `\\`.",
         brief="Runs basic poll with visible votes. Can use `\\n`, `;`, `,` or ` ` separators. Escape with `\\`",
-        aliases=["quick", "visible"],
+        aliases=["poll"],
         usage="<title>; [<option 1>; <option 2>; [...]]",
     )
-    async def basic(self, ctx: Context, *, args: str):
+    # async def basic(self, ctx: Context, *, args: str):
+    async def vote(self, ctx: Context, *, args: str):
         print(args)
         args = await clean_content().convert(ctx, args)
         # noinspection PyTypeChecker
@@ -55,6 +59,7 @@ class Vote(commands.Cog):
             if msg is None or msg.created_at < threshold_time:
                 print("Ending", msg)
                 await msg.edit(view=None)
+                await DiscordBase(self.bot).end_vote(msg, dvm.discord_vote.vote)
             else:
                 await msg.edit(
                     view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
