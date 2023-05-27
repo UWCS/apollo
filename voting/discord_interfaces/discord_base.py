@@ -162,6 +162,7 @@ class DiscordBase:
                     part=msg_index,
                 )
                 db_session.add(new_dc_msg)
+                db_session.flush()
                 msg_index += 1
 
                 # Add choices to DB and add buttons

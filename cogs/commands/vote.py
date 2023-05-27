@@ -52,7 +52,7 @@ class Vote(commands.Cog):
         await self.bot.wait_until_ready()
 
         vote_msgs = db_session.query(DiscordVoteMessage).all()
-        threshold_time = datetime.now().astimezone(timezone.utc) - timedelta(months=1)
+        threshold_time = datetime.now().astimezone(timezone.utc) - timedelta(days=30)
         for dvm in vote_msgs:
             channel = self.bot.get_channel(dvm.channel_id)
             msg = await channel.fetch_message(dvm.message_id)
