@@ -112,7 +112,7 @@ async def openai_ban_error(ctx: Context | Interaction, id: int):
     """error for openai commands"""
 
     message = (
-        "no you horny mf :mega_flushed:"
+        "no you horny mf <:mega_flushed:1018541064325451887>"
         if id == 274261420932202498
         else "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
     )
