@@ -36,7 +36,7 @@ class RoomSearch(commands.Cog):
 
         root = room_resource_root
         self.central_rooms = read_json_file(root / "central-room-data.json")
-        self.custom_room_names = read_json_file(root / "room-mapname.json")
+        self.custom_room_names = read_json_file(root / "custom-room-mapname.json")
         self.timetable_room_mapping = read_json_file(root / "room_to_surl.json")
         self.last_week_check = None
         self.year = None
@@ -58,6 +58,13 @@ class RoomSearch(commands.Cog):
 
         Finds a room on the various Warwick systems.
         """
+        mini = get_mini_karma(ctx.channel.id) == MiniKarmaMode.Mini
+
+        # Look up name in custom room dict
+        clean_name = self.clean_name(name)
+        if new := self.custom_room_names.get(clean_name):
+            name = new
+            clean_name = self.clean_name(name)
         rooms = await self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
@@ -66,77 +73,84 @@ class RoomSearch(commands.Cog):
             )
 
         if len(rooms) > 1:
-            room = await self.choose_room(ctx, rooms)
+            # If exact match, use that
+            for r in rooms:
+                if self.clean_name(r.get("value")) == clean_name:
+                    room = r
+                    break
+            else:  # Otherwise give user choice
+                room = await self.choose_room(ctx, rooms)
             if room is None:
                 return
         else:
             room = rooms[0]  # Only one in rooms
 
-        # Room info
-        embed = discord.Embed(
-            title=f"Room Search: {room.get('value')}",
-            description=f"Building: **{room.get('building')} {room.get('floor')}**",
-        )
-        # Campus Map
-        embed.add_field(
-            name="Campus Map:",
-            value=f"**[{room.get('value')}](https://campus.warwick.ac.uk/?cmsid={room.get('id')})**",
-            inline=True,
-        )
-
-        # Room info (for centrally timetabled rooms)
-        if url := self.is_central(room.get("value")):
+        print(room)
+        if not mini:
+            # Room info
+            embed = discord.Embed(
+                title=f"Room Search: {room.get('value')}",
+                description=f"Building: **{room.get('building')} {room.get('floor')}**",
+            )
+            # Campus Map
+            content = f"**[{room.get('value')}]({self.get_map_url(room)})**"
+            if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
+                content += f"\n[Google Maps]({self.get_google_maps_url(lat, lon)})"
             embed.add_field(
-                name="Room Info:",
-                value=f"**[{room.get('value')}](https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url})**",
+                name="Campus Map:",
+                value=content,
                 inline=True,
             )
 
-        # Timetable
-        if tt_room_id := self.timetable_room_mapping.get(room.get("value")):
-            await self.get_week()
-            if self.year:
-                # This week
-                this_year = self.year.replace("/", "")
-                content = f"**[This Week (wb {self.wb})](https://timetablingmanagement.warwick.ac.uk/SWS{this_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week})**\n"
-                # Next week
-                if self.week < 52:
-                    next_week_year = this_year
-                    next_week = self.week + 1
-                else:
-                    year_int = int(this_year[:2]) + 1
-                    next_week_year = f"{year_int}{year_int+1}"
-                    next_week = 1
-                content += f"[Next Week (wb {self.next_wb})](https://timetablingmanagement.warwick.ac.uk/SWS{next_week_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={next_week})\n"
+            # Room info (for centrally timetabled rooms)
+            if url := self.get_info_url(room):
+                embed.add_field(
+                    name="Room Info:",
+                    value=f"**[{room.get('value')}]({url})**",
+                    inline=True,
+                )
 
-                # This/next term
-                term_yr = this_year
-                if 1 <= self.week <= 10:  # T1
-                    in_term, term_wks = True, "1-10"
-                elif 11 <= self.week <= 14:  # Xmas
-                    in_term, term_wks = False, "15-24"
-                elif 15 <= self.week <= 24:  # T2
-                    in_term, term_wks = True, "15-24"
-                elif 25 <= self.week <= 29:  # Easter
-                    in_term, term_wks = False, "30-39"
-                elif 30 <= self.week <= 39:  # T3
-                    in_term, term_wks = True, "30-39"
-                else:  # Summer
-                    in_term, term_wks = False, "1-10"
-                    year_int = int(this_year[:2]) + 1
-                    term_yr = f"{year_int}{year_int+1}"
-
-                content += f"[{'This' if in_term else 'Next'} Term](https://timetablingmanagement.warwick.ac.uk/SWS{term_yr}/roomtimetable.asp?id={quote(tt_room_id)}&week={term_wks})"
+            # Timetable
+            if urls := await self.get_tt_urls(room):
+                in_term, _, _ = self.get_next_term_weeks()
+                content = (
+                    f"**[This Week (wb {self.wb})]({urls[0]})**\n"
+                    + f"[Next Week (wb {self.next_wb})]({urls[1]})\n"
+                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
+                )
 
                 embed.add_field(
                     name="Timetable:",
                     value=content,
                     inline=True,
                 )
+        else:  # If mini
+            desc = f"Building: **{room.get('building')} {room.get('floor')}**\n"
+            # Timetable
+            if urls := await self.get_tt_urls(room):
+                in_term, _, _ = self.get_next_term_weeks()
+                desc += (
+                    f"Timetable:⠀**[This Week]({urls[0]})**⠀"
+                    + f"[Next Week]({urls[1]})⠀"
+                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})\n"
+                )
 
-        # Slows command down quite a lot, but Discord can't take images without extensions
+            # Campus Map
+            desc += f"**[Campus Map]({self.get_map_url(room)})**"
+            # Room info (for centrally timetabled rooms)
+            if url := self.get_info_url(room):
+                desc += f"⠀**[Room Info]({url})**"
+
+            if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
+                desc += f"⠀[Google Maps]({self.get_google_maps_url(lat, lon)})"
+
+            embed = discord.Embed(
+                title=f"Room Search: {room.get('value')}",
+                description=desc,
+            )
+
         img = await self.get_img(ctx, room.get("w2gid"))
-        if get_mini_karma(ctx.channel.id) == MiniKarmaMode.Normal:
+        if not mini:
             embed.set_image(url="attachment://map.png")
             embed.set_footer(
                 text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more"
@@ -145,7 +159,81 @@ class RoomSearch(commands.Cog):
             embed.set_thumbnail(url="attachment://map.png")
         msg = await ctx.reply(embed=embed, file=img)
 
+    def get_map_url(self, room):
+        """Constructs url for campus map for room"""
+        return f"https://campus.warwick.ac.uk/?cmsid={room.get('id')}"
+
+    def get_google_maps_url(self, lat, lon):
+        """Constructs url for room lat/lon on Google Maps"""
+        return f"https://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},20z"
+
+    def get_info_url(self, room):
+        """Constructs url for ITS info on room"""
+        if url := self.is_central(room.get("value")):
+            return f"https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url}"
+        return None
+
+    async def get_tt_urls(self, room):
+        """Constructs urls for timetable for room"""
+        tt_room_id = self.timetable_room_mapping.get(room.get("value"))
+        if tt_room_id is None:
+            return None
+        await self.get_week()
+        if self.year is None:
+            return None
+        in_term, _, _ = self.get_next_term_weeks()
+        return (
+            self.get_this_week_url(room, tt_room_id),
+            self.get_next_week_url(room, tt_room_id),
+            self.get_term_url(room, tt_room_id),
+        )
+
+    def get_this_week_url(self, room, tt_room_id):
+        """Constructs url for current week timetable for room"""
+        this_year = self.year.replace("/", "")
+        return f"https://timetablingmanagement.warwick.ac.uk/SWS{this_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={self.week}"
+
+    def get_next_week_url(self, room, tt_room_id):
+        """Constructs url for next week timetable for room"""
+        this_year = self.year.replace("/", "")
+        if self.week < 52:  # Deal with wrap around on welcome week
+            next_week_year = this_year
+            next_week = self.week + 1
+        else:
+            year_int = int(this_year[:2]) + 1
+            next_week_year = f"{year_int}{year_int+1}"
+            next_week = 1
+        return f"https://timetablingmanagement.warwick.ac.uk/SWS{next_week_year}/roomtimetable.asp?id={quote(tt_room_id)}&week={next_week}"
+
+    def get_term_url(self, room, tt_room_id):
+        """Constructs url for current/next term timetable for room"""
+        in_term, term_wks, term_yr = self.get_next_term_weeks()
+        return f"https://timetablingmanagement.warwick.ac.uk/SWS{term_yr}/roomtimetable.asp?id={quote(tt_room_id)}&week={term_wks}"
+
+    def get_next_term_weeks(self):
+        """Gets week range for current/next term timetable for room"""
+        this_year = self.year.replace("/", "")
+        term_yr = this_year
+        # If in holiday, give dates of next term, otherwise current
+        if 1 <= self.week <= 10:  # T1
+            in_term, term_wks = True, "1-10"
+        elif 11 <= self.week <= 14:  # Xmas
+            in_term, term_wks = False, "15-24"
+        elif 15 <= self.week <= 24:  # T2
+            in_term, term_wks = True, "15-24"
+        elif 25 <= self.week <= 29:  # Easter
+            in_term, term_wks = False, "30-39"
+        elif 30 <= self.week <= 39:  # T3
+            in_term, term_wks = True, "30-39"
+        else:  # Summer
+            in_term, term_wks = False, "1-10"
+            year_int = int(this_year[:2]) + 1
+            term_yr = f"{year_int}{year_int+1}"
+        return in_term, term_wks, term_yr
+
     async def get_img(self, ctx, w2gid):
+        """Fetch location preview image for room, but cache to disk"""
+        # The fetch slows command down quite a lot, but Discord can't take images without extensions
         # Cache file on disk if not fetched before
         fp = img_cache_dir / f"{w2gid}.png"
         if str(fp) not in img_cache_paths:
@@ -163,7 +251,7 @@ class RoomSearch(commands.Cog):
                 return discord.File(f, filename="map.png")
 
     async def choose_room(self, ctx, rooms):
-        # Confirms room choice, esp. important with autocomplete api
+        """Confirms room choice, esp. important with autocomplete api"""
         # Create and send message
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
@@ -206,9 +294,6 @@ class RoomSearch(commands.Cog):
         return rooms[ind]
 
     async def get_room_infos(self, room):
-        stripped = room.replace(".", "").replace(" ", "").lower()
-        if new := self.custom_room_names.get(stripped):
-            room = new
         # Check Map Autocomplete API
         map_req = await utils.get_json_from_url(
             f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
@@ -258,9 +343,7 @@ class RoomSearch(commands.Cog):
                 start = datetime.strptime(week.get("start"), "%Y-%m-%d").date()
                 end = datetime.strptime(week.get("end"), "%Y-%m-%d").date()
                 current = (datetime.now() + timedelta(days=1)).date()
-                print(current, start, end)
                 if start < current <= end:
-                    print("Match")
                     self.year = week.get("academicYear")
                     self.week = week.get("weekNumber")
                     self.wb = start.strftime("%d %b")
@@ -278,6 +361,9 @@ class RoomSearch(commands.Cog):
                 if r.get("name") == room_name:
                     return r.get("url")
         return None
+
+    def clean_name(self, name):
+        return name.lower().strip().replace(".", "")
 
 
 async def setup(bot: Bot):
