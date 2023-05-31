@@ -17,7 +17,6 @@ class BaseVote:
         vote_limit=None,
         seats=None,
     ) -> Tuple[Vote, List[VoteChoice]]:
-
         new_vote = Vote(
             title=title,
             owner_id=owner_id,
@@ -34,6 +33,7 @@ class BaseVote:
             new_choice = VoteChoice(vote_id=new_vote.id, choice_index=i, choice=choice)
             db_session.add(new_choice)
             choice_objs.append(new_choice)
+        db_session.flush()
 
         return new_vote, choice_objs
 
