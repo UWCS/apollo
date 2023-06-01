@@ -6,9 +6,9 @@ import discord
 from discord import Intents
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check, errors, when_mentioned_or
-from discord_simple_pretty_help import SimplePrettyHelp
 
 from config import CONFIG
+from utils.custom_help import SimplePrettyHelp
 from utils.utils import done_react, is_compsoc_exec_in_guild, wait_react
 
 DESCRIPTION = """

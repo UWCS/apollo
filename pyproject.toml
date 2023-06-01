@@ -42,6 +42,7 @@ ignore = [
   "roll/**/*",
   "tests/**/*",
   "voting/**/*",
+  "utils/custom_help.py"
 ]
 # https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
 

@@ -66,7 +66,9 @@ class ChatGPT(commands.Cog):
             return
         await ctx.message.add_reaction("✅")
 
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_command(
+        help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, usage="[--gpt4] <message ...>"
+    )
     async def chat(self, ctx: Context, *, message: Optional[str] = None):
         await self.cmd(ctx)
 

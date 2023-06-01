@@ -23,7 +23,6 @@ dateparser = "~=1.1.1"
 humanize = "~=3.5.0"
 more-itertools = "~=8.8.0"
 pillow = "~=9.3.0"
-discord-simple-pretty-help = "==0.0.1"
 icalendar = "~=4.1.0"
 openai = "~=0.27.2"
 psycopg = {extras = ["binary"], version = "~=3.1"}
