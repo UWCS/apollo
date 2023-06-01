@@ -30,8 +30,8 @@ class Vote(commands.Cog):
 
     # @vote.command(
     @commands.hybrid_command(
-        help="Run basic poll with given options, votes are visible. Provide options as new-line, semi-colon, comma or space separated options, the first will be taken as the title. If you wish to use a separator in an option, escape it with a backslash `\\`.",
-        brief="Runs basic poll with visible votes. Can use `\\n`, `;`, `,` or ` ` separators. Escape with `\\`",
+        help="Run basic poll with given options, votes are hidden. Provide options as new-line, semi-colon, comma or space separated options, the first will be taken as the title. If you wish to use a separator in an option, escape it with a backslash `\\`.",
+        brief="Runs basic poll with visible votes. Can use `\\n`, `;`, `,` or ` ` separators",
         aliases=["poll"],
         usage="<title>; [<option 1>; <option 2>; [...]]",
     )
@@ -59,7 +59,7 @@ class Vote(commands.Cog):
             if msg is None or msg.created_at < threshold_time:
                 print("Ending", msg)
                 await msg.edit(view=None)
-                await DiscordBase(self.bot).end_vote(msg, dvm.discord_vote.vote)
+                await DiscordBase(self.bot).end_vote(dvm.discord_vote.vote)
             else:
                 await msg.edit(
                     view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
