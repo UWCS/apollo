@@ -35,7 +35,7 @@ class Misc(commands.Cog):
     async def rust(self, ctx: Context):
         """And if you gaze long into RUST, the RUST also gazes into you."""
         names = ["JOEY", "FAUX"]
-        await ctx.send(random.choices(names))
+        await ctx.send(random.choice(names))
 
     @commands.hybrid_command()
     async def pr(self, ctx: Context):
