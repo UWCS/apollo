@@ -35,20 +35,20 @@ class Misc(commands.Cog):
     async def rust(self, ctx: Context):
         """And if you gaze long into RUST, the RUST also gazes into you."""
         names = ["JOEY", "FAUX"]
-        await ctx.send(names[random.randint(0, 1)])
+        await ctx.send(random.choices(names))
 
     @commands.hybrid_command()
     async def pr(self, ctx: Context):
         """You know what to do"""
         await ctx.send(
-            "You can make a pull request for that! (https://github.com/UWCS/apollo/pulls)"
+            "You can make a pull request for that! (<https://github.com/UWCS/apollo/pulls>)"
         )
 
     @commands.hybrid_command()
     async def issue(self, ctx: Context):
         """You know what you want someone else to do"""
         await ctx.send(
-            "You can submit an issue for that! (https://github.com/UWCS/apollo/issues)"
+            "You can submit an issue for that! (<https://github.com/UWCS/apollo/issues>)"
         )
 
     @commands.hybrid_command()
