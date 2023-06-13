@@ -20,7 +20,7 @@ class SimplePrettyHelp(commands.HelpCommand):
                 {
                     "name": name,
                     "value": "\n".join(
-                        (f"⠀- `{command.name}`" f"{command.brief or ''}")
+                        (f"⠀- `{command.name}` {command.brief or ''}")
                         for command in commands
                     ),
                     "inline": False,

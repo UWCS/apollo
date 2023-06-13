@@ -89,6 +89,7 @@ class BaseVote:
     def end(self, vote):
         db_session.delete(vote)
         db_session.commit()
+        db_session.flush()
 
     def remove(self, vote):
         raise NotImplemented()
