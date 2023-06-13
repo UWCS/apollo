@@ -90,63 +90,63 @@ class RoomSearch(commands.Cog):
 
         print(room)
         ext_ref = room.get("extRef") or {}
-        if not mini:
-            # Room info
-            embed = discord.Embed(
-                title=f"Room Search: {room.get('displayName')}",
-                description=f"Building: **{ext_ref.get('building')}** {ext_ref.get('floor')}",
-            )
-            # Campus Map
-            content = f"**[{room.get('displayName')}]({self.get_map_url(room)})**"
+        # if not mini:
+        # Room info
+        embed = discord.Embed(
+            title=f"Room Search: {room.get('displayName')}",
+            description=f"Building: **{room.get('parent').get('displayName')}** {ext_ref.get('floor')}",
+        )
+        # Campus Map
+        content = f"**[{room.get('displayName')}]({self.get_map_url(room)})**"
+        embed.add_field(
+            name="Campus Map:",
+            value=content,
+            inline=True,
+        )
+
+        # Room info (for centrally timetabled rooms)
+        if url := self.get_info_url(room):
             embed.add_field(
-                name="Campus Map:",
-                value=content,
+                name="Room Info:",
+                value=f"**[{room.get('name')}]({url})**",
                 inline=True,
             )
 
-            # Room info (for centrally timetabled rooms)
-            if url := self.get_info_url(room):
-                embed.add_field(
-                    name="Room Info:",
-                    value=f"**[{room.get('name')}]({url})**",
-                    inline=True,
-                )
-
-            # Timetable
-            if urls := await self.get_tt_urls(room):
-                in_term, _, _ = self.get_next_term_weeks()
-                content = (
-                    f"**[This Week (wb {self.wb})]({urls[0]})**\n"
-                    + f"[Next Week (wb {self.next_wb})]({urls[1]})\n"
-                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
-                )
-
-                embed.add_field(
-                    name="Timetable:",
-                    value=content,
-                    inline=True,
-                )
-        else:  # If mini
-            desc = f"Building: **{ext_ref.get('building')} {ext_ref.get('floor')}**\n"
-            # Timetable
-            if urls := await self.get_tt_urls(room):
-                in_term, _, _ = self.get_next_term_weeks()
-                desc += (
-                    f"Timetable:⠀**[This Week]({urls[0]})**⠀"
-                    + f"[Next Week]({urls[1]})⠀"
-                    + f"[{'This' if in_term else 'Next'} Term]({urls[2]})\n"
-                )
-
-            # Campus Map
-            desc += f"**[Campus Map]({self.get_map_url(room)})**"
-            # Room info (for centrally timetabled rooms)
-            if url := self.get_info_url(room):
-                desc += f"⠀**[Room Info]({url})**"
-
-            embed = discord.Embed(
-                title=f"Room Search: {room.get('displayName')}",
-                description=desc,
+        # Timetable
+        if urls := await self.get_tt_urls(room):
+            in_term, _, _ = self.get_next_term_weeks()
+            content = (
+                f"**[This Week (wb {self.wb})]({urls[0]})**\n"
+                + f"[Next Week (wb {self.next_wb})]({urls[1]})\n"
+                + f"[{'This' if in_term else 'Next'} Term]({urls[2]})"
             )
+
+            embed.add_field(
+                name="Timetable:",
+                value=content,
+                inline=True,
+            )
+        # else:  # If mini
+        #     desc = f"Building: **{ext_ref.get('building')} {ext_ref.get('floor')}**\n"
+        #     # Timetable
+        #     if urls := await self.get_tt_urls(room):
+        #         in_term, _, _ = self.get_next_term_weeks()
+        #         desc += (
+        #             f"Timetable:⠀**[This Week]({urls[0]})**⠀"
+        #             + f"[Next Week]({urls[1]})⠀"
+        #             + f"[{'This' if in_term else 'Next'} Term]({urls[2]})\n"
+        #         )
+
+        #     # Campus Map
+        #     desc += f"**[Campus Map]({self.get_map_url(room)})**"
+        #     # Room info (for centrally timetabled rooms)
+        #     if url := self.get_info_url(room):
+        #         desc += f"⠀**[Room Info]({url})**"
+
+        #     embed = discord.Embed(
+        #         title=f"Room Search: {room.get('displayName')}",
+        #         description=desc,
+        #     )
 
         # img = await self.get_img(ctx, room.get("w2gid"))
         # if not mini:
@@ -251,7 +251,7 @@ class RoomSearch(commands.Cog):
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
         rooms_text = "".join(
-            f"\n\t{e} {r.get('name')} on **{r.get('extRef').get('building')}** {r.get('extRef').get('floor')}"
+            f"\n\t{e} {r.get('name')} in **{r.get('parent').get('displayName')}** {r.get('extRef').get('floor')}"
             for r, e in zip(rooms, emojis)
         )
         conf_message = await ctx.send(header + rooms_text)
