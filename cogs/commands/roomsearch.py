@@ -98,8 +98,6 @@ class RoomSearch(commands.Cog):
             )
             # Campus Map
             content = f"**[{room.get('displayName')}]({self.get_map_url(room)})**"
-            # if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
-            #     content += f"\n[Google Maps]({self.get_google_maps_url(lat, lon)})"
             embed.add_field(
                 name="Campus Map:",
                 value=content,
@@ -145,9 +143,6 @@ class RoomSearch(commands.Cog):
             if url := self.get_info_url(room):
                 desc += f"⠀**[Room Info]({url})**"
 
-            # if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
-            #     desc += f"⠀[Google Maps]({self.get_google_maps_url(lat, lon)})"
-
             embed = discord.Embed(
                 title=f"Room Search: {room.get('displayName')}",
                 description=desc,
@@ -166,10 +161,6 @@ class RoomSearch(commands.Cog):
     def get_map_url(self, room):
         """Constructs url for campus map for room"""
         return f"https://campus.warwick.ac.uk/?slid={room.get('extRef').get('id')}"
-
-    # def get_google_maps_url(self, lat, lon):
-    #     """Constructs url for room lat/lon on Google Maps"""
-    #     return f"https://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},20z"
 
     def get_info_url(self, room):
         """Constructs url for ITS info on room"""
