@@ -1,4 +1,9 @@
 MS_A1.01 | A1.01 (Zeeman)
+A1.01 | A1.01 (Zeeman)
+D0.06 | D0.06 (Zeeman)
+F25a | F25A
+F25a | F25B
+S2.77 | FD_S2.77
 FAC.SS_S2.77 | FD_S2.77
 H1.48 | PS_H1.48
 C1.11 / C1.13 / C1.1 | c1.11/15

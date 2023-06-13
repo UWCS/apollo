@@ -437,6 +437,12 @@
         "capacity": 15
       },
       {
+        "name": "LS1.03",
+        "url": "ls103",
+        "type": "flat, teaching",
+        "capacity": 20
+      },
+      {
         "name": "R0.39",
         "url": "r039",
         "type": "flat, teaching",
@@ -461,10 +467,64 @@
         "capacity": 38
       },
       {
+        "name": "H4.47",
+        "url": "h447",
+        "type": "flat, teaching",
+        "capacity": 14
+      },
+      {
+        "name": "Library Floor 1",
+        "url": "libfl1",
+        "type": "flat, teaching",
+        "capacity": 89
+      },
+      {
+        "name": "Library Floor 2",
+        "url": "libfl2",
+        "type": "flat, teaching",
+        "capacity": 83
+      },
+      {
+        "name": "Library Floor 3",
+        "url": "lifl3",
+        "type": "flat, teaching",
+        "capacity": 8
+      },
+      {
+        "name": "Library Floor 5",
+        "url": "libfl5",
+        "type": "flat, teaching",
+        "capacity": 8
+      },
+      {
+        "name": "Library20min",
+        "url": "lib20m",
+        "type": "flat, teaching",
+        "capacity": 14
+      },
+      {
+        "name": "Social Sciences Cafe",
+        "url": "socscicafe",
+        "type": "flat, teaching",
+        "capacity": 3
+      },
+      {
+        "name": "Theatre Studies",
+        "url": "theatrestudies",
+        "type": "flat, teaching",
+        "capacity": 4
+      },
+      {
         "name": "Cafe Westwood",
         "url": "cafeww",
         "type": "flat, teaching",
         "capacity": 40
+      },
+      {
+        "name": "Avon Multimedia Centre",
+        "url": "avonmultimedia",
+        "type": "flat, teaching",
+        "capacity": 10
       }
     ]
   },
@@ -847,6 +907,12 @@
         "url": "l5",
         "type": "tiered, teaching",
         "capacity": 116
+      },
+      {
+        "name": "B2.01",
+        "url": "b212",
+        "type": "flat, teaching",
+        "capacity": 34
       },
       {
         "name": "B2.02",
