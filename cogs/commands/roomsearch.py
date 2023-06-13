@@ -15,7 +15,7 @@ from cogs.commands.karma_admin import MiniKarmaMode, get_mini_karma
 
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
-map_api_token = "Token 3a08c5091e5e477faa6ea90e4ae3e6c3"
+map_api_token = "Token 626629bcd5c05c5269b48ccb"
 
 img_cache_dir = room_resource_root / "images"
 img_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -71,11 +71,14 @@ class RoomSearch(commands.Cog):
                 "Room does not exist. Try a more general search, "
                 "or suggest a room alias (more info with `!roompr`)"
             )
-
+        print(rooms)
         if len(rooms) > 1:
             # If exact match, use that
             for r in rooms:
-                if self.clean_name(r.get("value")) == clean_name:
+                if (
+                    self.clean_name(r.get("name")) == clean_name
+                    or self.clean_name(r.get("displayName")) == clean_name
+                ):
                     room = r
                     break
             else:  # Otherwise give user choice
@@ -86,16 +89,17 @@ class RoomSearch(commands.Cog):
             room = rooms[0]  # Only one in rooms
 
         print(room)
+        ext_ref = room.get("extRef") or {}
         if not mini:
             # Room info
             embed = discord.Embed(
-                title=f"Room Search: {room.get('value')}",
-                description=f"Building: **{room.get('building')} {room.get('floor')}**",
+                title=f"Room Search: {room.get('displayName')}",
+                description=f"Building: **{ext_ref.get('building')}** {ext_ref.get('floor')}",
             )
             # Campus Map
-            content = f"**[{room.get('value')}]({self.get_map_url(room)})**"
-            if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
-                content += f"\n[Google Maps]({self.get_google_maps_url(lat, lon)})"
+            content = f"**[{room.get('displayName')}]({self.get_map_url(room)})**"
+            # if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
+            #     content += f"\n[Google Maps]({self.get_google_maps_url(lat, lon)})"
             embed.add_field(
                 name="Campus Map:",
                 value=content,
@@ -106,7 +110,7 @@ class RoomSearch(commands.Cog):
             if url := self.get_info_url(room):
                 embed.add_field(
                     name="Room Info:",
-                    value=f"**[{room.get('value')}]({url})**",
+                    value=f"**[{room.get('name')}]({url})**",
                     inline=True,
                 )
 
@@ -125,7 +129,7 @@ class RoomSearch(commands.Cog):
                     inline=True,
                 )
         else:  # If mini
-            desc = f"Building: **{room.get('building')} {room.get('floor')}**\n"
+            desc = f"Building: **{ext_ref.get('building')} {ext_ref.get('floor')}**\n"
             # Timetable
             if urls := await self.get_tt_urls(room):
                 in_term, _, _ = self.get_next_term_weeks()
@@ -141,41 +145,41 @@ class RoomSearch(commands.Cog):
             if url := self.get_info_url(room):
                 desc += f"⠀**[Room Info]({url})**"
 
-            if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
-                desc += f"⠀[Google Maps]({self.get_google_maps_url(lat, lon)})"
+            # if (lat := room.get("gpsLat")) and (lon := room.get("gpsLon")):
+            #     desc += f"⠀[Google Maps]({self.get_google_maps_url(lat, lon)})"
 
             embed = discord.Embed(
-                title=f"Room Search: {room.get('value')}",
+                title=f"Room Search: {room.get('displayName')}",
                 description=desc,
             )
 
-        img = await self.get_img(ctx, room.get("w2gid"))
-        if not mini:
-            embed.set_image(url="attachment://map.png")
-            embed.set_footer(
-                text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more"
-            )
-        else:
-            embed.set_thumbnail(url="attachment://map.png")
-        msg = await ctx.reply(embed=embed, file=img)
+        # img = await self.get_img(ctx, room.get("w2gid"))
+        # if not mini:
+        #     embed.set_image(url="attachment://map.png")
+        #     embed.set_footer(
+        #         text="Missing a room? Add it with a PR or ask exec to add an alias. !roompr for more"
+        #     )
+        # else:
+        #     embed.set_thumbnail(url="attachment://map.png")
+        msg = await ctx.reply(embed=embed)  # , file=img)
 
     def get_map_url(self, room):
         """Constructs url for campus map for room"""
-        return f"https://campus.warwick.ac.uk/?cmsid={room.get('id')}"
+        return f"https://campus.warwick.ac.uk/?slid={room.get('extRef').get('id')}"
 
-    def get_google_maps_url(self, lat, lon):
-        """Constructs url for room lat/lon on Google Maps"""
-        return f"https://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},20z"
+    # def get_google_maps_url(self, lat, lon):
+    #     """Constructs url for room lat/lon on Google Maps"""
+    #     return f"https://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},20z"
 
     def get_info_url(self, room):
         """Constructs url for ITS info on room"""
-        if url := self.is_central(room.get("value")):
+        if url := self.is_central(room.get("name")):
             return f"https://warwick.ac.uk/services/its/servicessupport/av/lecturerooms/roominformation/{url}"
         return None
 
     async def get_tt_urls(self, room):
         """Constructs urls for timetable for room"""
-        tt_room_id = self.timetable_room_mapping.get(room.get("value"))
+        tt_room_id = self.timetable_room_mapping.get(room.get("name"))
         if tt_room_id is None:
             return None
         await self.get_week()
@@ -231,24 +235,24 @@ class RoomSearch(commands.Cog):
             term_yr = f"{year_int}{year_int+1}"
         return in_term, term_wks, term_yr
 
-    async def get_img(self, ctx, w2gid):
-        """Fetch location preview image for room, but cache to disk"""
-        # The fetch slows command down quite a lot, but Discord can't take images without extensions
-        # Cache file on disk if not fetched before
-        fp = img_cache_dir / f"{w2gid}.png"
-        if str(fp) not in img_cache_paths:
-            logging.info(f"Caching img for room {w2gid}")
-            img = await utils.get_from_url(
-                f"https://search.warwick.ac.uk/api/map-thumbnail/{w2gid}"
-            )
+    # async def get_img(self, ctx, w2gid):
+    #     """Fetch location preview image for room, but cache to disk"""
+    #     # The fetch slows command down quite a lot, but Discord can't take images without extensions
+    #     # Cache file on disk if not fetched before
+    #     fp = img_cache_dir / f"{w2gid}.png"
+    #     if str(fp) not in img_cache_paths:
+    #         logging.info(f"Caching img for room {w2gid}")
+    #         img = await utils.get_from_url(
+    #             f"https://search.warwick.ac.uk/api/map-thumbnail/{w2gid}"
+    #         )
 
-            with open(fp, "wb") as f:
-                f.write(img)
-            img_cache_paths.add(str(fp))
-            return discord.File(BytesIO(img), filename="map.png")
-        else:
-            with open(fp, "rb") as f:
-                return discord.File(f, filename="map.png")
+    #         with open(fp, "wb") as f:
+    #             f.write(img)
+    #         img_cache_paths.add(str(fp))
+    #         return discord.File(BytesIO(img), filename="map.png")
+    #     else:
+    #         with open(fp, "rb") as f:
+    #             return discord.File(f, filename="map.png")
 
     async def choose_room(self, ctx, rooms):
         """Confirms room choice, esp. important with autocomplete api"""
@@ -256,7 +260,7 @@ class RoomSearch(commands.Cog):
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
         rooms_text = "".join(
-            f"\n\t{e} {r.get('value')} in **{r.get('building')}** {r.get('floor')}"
+            f"\n\t{e} {r.get('name')} on **{r.get('extRef').get('building')}** {r.get('extRef').get('floor')}"
             for r, e in zip(rooms, emojis)
         )
         conf_message = await ctx.send(header + rooms_text)
@@ -296,7 +300,7 @@ class RoomSearch(commands.Cog):
     async def get_room_infos(self, room):
         # Check Map Autocomplete API
         map_req = await utils.get_json_from_url(
-            f"https://campus-cms.warwick.ac.uk//api/v1/projects/1/autocomplete.json?term={room}",
+            f"https://hub.smartne.com/api/store/projects/warwick/live/locations/search/{room}?limit=10&fields=name,displayName,parent,floor,extRef",
             {"Authorization": map_api_token},
         )
         if map_req is None:
@@ -305,27 +309,27 @@ class RoomSearch(commands.Cog):
         return self.remove_duplicate_rooms(map_req)
 
     def remove_duplicate_rooms(self, rooms):
-        remove = [r for r in rooms if r.get("w2gid") is None]
-        for room in remove:
-            rooms.remove(room)
+        # remove = [r for r in rooms if r.get("w2gid") is None]
+        # for room in remove:
+        #     rooms.remove(room)
 
         # Map has duplicate entries for MSB for some reason
-        rooms = self.remove_duplicate_building(
-            rooms, "Mathematical Sciences", "Mathematical Sciences Building"
-        )
+        # rooms = self.remove_duplicate_building(
+        #     rooms, "Mathematical Sciences", "Mathematical Sciences Building"
+        # )
         return rooms
 
-    def remove_duplicate_building(self, rooms, orig, copy):
-        orig_rooms = [r for r in rooms if r.get("building") == orig]
-        fake_rooms = [r for r in rooms if r.get("building") == copy]
-        for orig_room in orig_rooms:
-            fake_room = next(
-                (r for r in fake_rooms if orig_room.get("value") == r.get("value")),
-                None,
-            )
-            if fake_room:
-                rooms.remove(fake_room)
-        return rooms
+    # def remove_duplicate_building(self, rooms, orig, copy):
+    #     orig_rooms = [r for r in rooms if r.get("building") == orig]
+    #     fake_rooms = [r for r in rooms if r.get("building") == copy]
+    #     for orig_room in orig_rooms:
+    #         fake_room = next(
+    #             (r for r in fake_rooms if orig_room.get("value") == r.get("value")),
+    #             None,
+    #         )
+    #         if fake_room:
+    #             rooms.remove(fake_room)
+    #     return rooms
 
     async def get_week(self):
         # Definitely don't need to check each request
