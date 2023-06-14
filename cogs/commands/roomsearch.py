@@ -11,7 +11,8 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
 import utils
-from cogs.commands.karma_admin import MiniKarmaMode, get_mini_karma
+
+# from cogs.commands.karma_admin import MiniKarmaMode, get_mini_karma
 
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
@@ -58,7 +59,7 @@ class RoomSearch(commands.Cog):
 
         Finds a room on the various Warwick systems.
         """
-        mini = get_mini_karma(ctx.channel.id) == MiniKarmaMode.Mini
+        # mini = get_mini_karma(ctx.channel.id) == MiniKarmaMode.Mini
 
         # Look up name in custom room dict
         clean_name = self.clean_name(name)
