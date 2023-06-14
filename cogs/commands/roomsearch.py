@@ -69,21 +69,11 @@ class RoomSearch(commands.Cog):
         rooms = await self.get_room_infos(name)
         if not rooms:
             return await ctx.reply(
-                "Room does not exist. Try a more general search, "
-                "or suggest a room alias (more info with `!roompr`)"
+                "Room does not exist. Try a more general search, or suggest a room alias"
             )
-        print(rooms)
+        rooms = self.find_exact_room(rooms, clean_name)
         if len(rooms) > 1:
-            # If exact match, use that
-            for r in rooms:
-                if (
-                    self.clean_name(r.get("name")) == clean_name
-                    or self.clean_name(r.get("displayName")) == clean_name
-                ):
-                    room = r
-                    break
-            else:  # Otherwise give user choice
-                room = await self.choose_room(ctx, rooms)
+            room = await self.choose_room(ctx, rooms)
             if room is None:
                 return
         else:
@@ -245,6 +235,16 @@ class RoomSearch(commands.Cog):
     #     else:
     #         with open(fp, "rb") as f:
     #             return discord.File(f, filename="map.png")
+
+    def find_exact_room(self, rooms, clean_name):
+        exact = []
+        for r in rooms:
+            if (
+                self.clean_name(r.get("name")) == clean_name
+                or self.clean_name(r.get("displayName")) == clean_name
+            ):
+                exact.append(r)
+        return exact if exact else rooms
 
     async def choose_room(self, ctx, rooms):
         """Confirms room choice, esp. important with autocomplete api"""
