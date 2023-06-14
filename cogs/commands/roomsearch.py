@@ -7,6 +7,7 @@ from pathlib import Path
 from urllib.parse import quote
 
 import discord
+import humanize
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
@@ -88,7 +89,7 @@ class RoomSearch(commands.Cog):
         # Room info
         embed = discord.Embed(
             title=f"Room Search: {room.get('displayName')}",
-            description=f"Building: **{room.get('parent').get('displayName')}** {ext_ref.get('floor')}",
+            description=f"Building: **{room.get('parent').get('displayName')}** {self.get_floor(room)}",
         )
         # Campus Map
         content = f"**[{room.get('displayName')}]({self.get_map_url(room)})**"
@@ -255,7 +256,7 @@ class RoomSearch(commands.Cog):
         emojis = self.full_emojis[: len(rooms)]
         header = "Multiple rooms exist with that name. Which do you want?:"
         rooms_text = "".join(
-            f"\n\t{e} {r.get('name')} in **{r.get('parent').get('displayName')}** {r.get('extRef').get('floor')}"
+            f"\n\t{e} {r.get('name')} in **{r.get('parent').get('displayName')}** {self.get_floor(r)}"
             for r, e in zip(rooms, emojis)
         )
         conf_message = await ctx.send(header + rooms_text)
@@ -365,6 +366,13 @@ class RoomSearch(commands.Cog):
 
     def clean_name(self, name):
         return name.lower().strip().replace(".", "")
+
+    def get_floor(self, room):
+        val = room.get("floor").get("displayName")
+        if val == "G":
+            return "Ground Floor"
+        else:
+            return f"{humanize.ordinal(val)} Floor"
 
 
 async def setup(bot: Bot):
