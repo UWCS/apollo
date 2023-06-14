@@ -17,6 +17,9 @@ import utils
 room_resource_root = Path() / "resources" / "rooms"
 # Same for all requests from campus map, so hardcode here as well
 map_api_token = "Token 626629bcd5c05c5269b48ccb"
+blacklist_ids = {
+    "623c888a421e6f5928c0d02a",  # CS0.03 server room
+}
 
 img_cache_dir = room_resource_root / "images"
 img_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -300,7 +303,7 @@ class RoomSearch(commands.Cog):
 
         return self.remove_duplicate_rooms(map_req)
 
-    def remove_duplicate_rooms(self, rooms):
+    def remove_duplicate_rooms(self, rooms: list):
         # remove = [r for r in rooms if r.get("w2gid") is None]
         # for room in remove:
         #     rooms.remove(room)
@@ -309,6 +312,8 @@ class RoomSearch(commands.Cog):
         # rooms = self.remove_duplicate_building(
         #     rooms, "Mathematical Sciences", "Mathematical Sciences Building"
         # )
+
+        rooms = [r for r in rooms if r.get("_id") not in blacklist_ids]
         return rooms
 
     # def remove_duplicate_building(self, rooms, orig, copy):
