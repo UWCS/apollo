@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, IntPk, UserId, DiscordSnowflake
+from models.models import Base, DiscordSnowflake, IntPk, UserId
 from models.user import User
 
 
