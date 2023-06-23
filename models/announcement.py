@@ -4,7 +4,7 @@ from typing import Optional
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from models.models import Base, IntPk, UserId
+from models.models import Base, IntPk, UserId, DiscordSnowflake
 from models.user import User
 
 
@@ -16,7 +16,7 @@ class Announcement(Base):
     announcement_content: Mapped[str]
     trigger_at: Mapped[datetime]
     triggered: Mapped[bool]
-    playback_channel_id: Mapped[int]
+    playback_channel_id: Mapped[DiscordSnowflake]
     user: Mapped["User"] = relationship("User", uselist=False, init=False)
     irc_name: Mapped[Optional[str]] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
