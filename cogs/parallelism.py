@@ -53,7 +53,7 @@ class Parallelism(Cog):
         return self.execute_on_thread(work, *args, **kwargs)
 
     def send_to_ctx_after_threaded(self, func, ctx, loop, /, *args, **kwargs):
-        return self.run_coro_after_threaded(func, ctx.send, loop, *args, **kwargs)
+        return self.run_coro_after_threaded(func, ctx.reply, loop, *args, **kwargs)
 
     def send_to_int_after_threaded(self, func, int, loop, /, *args, **kwargs):
         return self.run_coro_after_threaded(
