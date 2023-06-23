@@ -109,7 +109,7 @@ async def sync(ctx: Context[Bot]) -> None:
     Syncs slash commands to server
     """
     synced = await ctx.bot.tree.sync()
-    await ctx.send(f"Synced {len(synced)} commands globally to the current guild.")
+    await ctx.reply(f"Synced {len(synced)} commands globally to the current guild.")
 
 
 @bot.event
@@ -144,7 +144,7 @@ async def on_command_error(ctx: Context[Bot], error: Exception):
         logging.error(reraise, exc_info=True)
 
     if message:
-        await ctx.send(f"**Error:** `{message}`")
+        await ctx.reply(f"**Error:** `{message}`")
     if reraise:
         raise reraise
 

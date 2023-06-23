@@ -333,13 +333,13 @@ def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
 
             if kwargs[key_name] not in first_run_times:
                 first_run_times[kwargs[key_name]] = datetime.now()
-                return await ctx.send(confirm_msg, ephemeral=True)
+                return await ctx.reply(confirm_msg, ephemeral=True)
 
             timeout_threshold = datetime.now() - timedelta(minutes=5)
             if timeout_threshold > first_run_times[kwargs[key_name]]:
                 # If previous run is more than 5 mins ago (timeout after 5)
                 first_run_times[kwargs[key_name]] = datetime.now()
-                return await ctx.send(confirm_msg, ephemeral=True)
+                return await ctx.reply(confirm_msg, ephemeral=True)
 
             await func(*args, **kwargs)
 

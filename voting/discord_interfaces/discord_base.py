@@ -147,7 +147,7 @@ class DiscordBase:
                 msg_title = self.get_title(title, msg_index)
                 # Send msg
                 # embed = self.create_embed(chunk.choices, title)
-                msg = await ctx.send(
+                msg = await ctx.reply(
                     content=msg_title, allowed_mentions=AllowedMentions.none()
                 )
 
@@ -188,7 +188,7 @@ class DiscordBase:
             db_session.flush()
         except SQLAlchemyError:
             db_session.rollback()
-            await ctx.send("Error creating vote")
+            await ctx.reply("Error creating vote")
             raise
 
     def get_title(self, title, msg_index):

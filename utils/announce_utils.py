@@ -172,7 +172,7 @@ async def confirmation(
     if content:
         kwargs["content"] = content
 
-    msg: discord.Message = await ctx.send(**kwargs)
+    msg: discord.Message = await ctx.reply(**kwargs)
     for em in reactions:
         await msg.add_reaction(em)
 
