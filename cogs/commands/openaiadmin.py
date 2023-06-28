@@ -17,9 +17,15 @@ class OpenAIAdmin(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief="ban/unban user from openAI")
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief="ban/unban user from openAI")
     @check(is_compsoc_exec_in_guild)
-    async def openaiban(self, ctx: Context, user: User, ban: bool):
+    async def openaiadmin(self, ctx: Context):
+        if not ctx.invoked_subcommand:
+            await ctx.send("Subcommand not found")
+
+    @openaiadmin.command(help=LONG_HELP_TEXT, brief="ban/unban user from openAI")
+    @check(is_compsoc_exec_in_guild)
+    async def ban(self, ctx: Context, user: User, ban: bool):
         """bans or unbans a user from openAI commands"""
 
         if user == ctx.author:
@@ -55,9 +61,9 @@ class OpenAIAdmin(commands.Cog):
             f"User {user} has been {'banned' if ban else 'unbanned'} from openAI commands"
         )
 
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief="list banned users")
+    @openaiadmin.command(help=LONG_HELP_TEXT, brief="list banned users")
     @check(is_compsoc_exec_in_guild)
-    async def openai_ban_list(self, ctx: Context):
+    async def list(self, ctx: Context):
         """lists all users banned from openAI commands"""
         banned_users = db_session.query(OpenAIBans).all()  # get all users in db
 
@@ -76,8 +82,8 @@ class OpenAIAdmin(commands.Cog):
 
         await ctx.reply(f"Users banned from openAI:\n{banned_users_str}")
 
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief="is user banned")
-    async def openai_is_banned(self, ctx: Context, user: User):
+    @openaiadmin.command(help=LONG_HELP_TEXT, brief="is user banned")
+    async def is_banned(self, ctx: Context, user: User):
         """checks if user is banned from openAI commands"""
         is_banned = is_user_banned_openai(user.id)
         await ctx.reply(
