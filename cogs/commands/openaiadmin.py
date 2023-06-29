@@ -9,7 +9,7 @@ from utils import get_database_user, get_database_user_from_id, is_compsoc_exec_
 from utils.typing import Identifiable
 
 LONG_HELP_TEXT = """
-Exec-only command to stop or reallow a user from usinf openAI functionality in apollo (Dalle and ChatGPT)
+Exec-only command to stop or reallow a user from usinf OpenAI functionality in apollo (Dalle and ChatGPT)
 """
 
 
@@ -17,16 +17,16 @@ class OpenAIAdmin(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
-    @commands.hybrid_group(help=LONG_HELP_TEXT, brief="ban/unban user from openAI")
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief="ban/unban user from OpenAI")
     @check(is_compsoc_exec_in_guild)
     async def openaiadmin(self, ctx: Context):
         if not ctx.invoked_subcommand:
             await ctx.send("Subcommand not found")
 
-    @openaiadmin.command(help=LONG_HELP_TEXT, brief="ban/unban user from openAI")
+    @openaiadmin.command(help=LONG_HELP_TEXT, brief="ban/unban user from OpenAI")
     @check(is_compsoc_exec_in_guild)
     async def ban(self, ctx: Context, user: User, ban: bool):
-        """bans or unbans a user from openAI commands"""
+        """bans or unbans a user from OpenAI commands"""
 
         if user == ctx.author:
             return await ctx.reply("You can't ban yourself")
@@ -58,13 +58,13 @@ class OpenAIAdmin(commands.Cog):
 
         db_session.commit()
         await ctx.reply(
-            f"User {user} has been {'banned' if ban else 'unbanned'} from openAI commands"
+            f"User {user} has been {'banned' if ban else 'unbanned'} from OpenAI commands"
         )
 
     @openaiadmin.command(help=LONG_HELP_TEXT, brief="list banned users")
     @check(is_compsoc_exec_in_guild)
     async def list(self, ctx: Context):
-        """lists all users banned from openAI commands"""
+        """lists all users banned from OpenAI commands"""
         banned_users = db_session.query(OpenAIBans).all()  # get all users in db
 
         if not banned_users:
@@ -80,20 +80,21 @@ class OpenAIAdmin(commands.Cog):
             ]
         )
 
-        await ctx.reply(f"Users banned from openAI:\n{banned_users_str}")
+        await ctx.reply(f"Users banned from OpenAI:\n{banned_users_str}")
 
     @openaiadmin.command(help=LONG_HELP_TEXT, brief="is user banned")
+    @check(is_compsoc_exec_in_guild)
     async def is_banned(self, ctx: Context, user: User):
-        """checks if user is banned from openAI commands"""
+        """checks if user is banned from OpenAI commands"""
         is_banned = is_user_banned_openai(user.id)
         await ctx.reply(
-            f"User {user} **is {'**banned' if is_banned else 'not** banned'} from using openAI commands"
+            f"User {user} **is {'**banned' if is_banned else 'not** banned'} from using OpenAI commands"
         )
 
 
 @staticmethod
 async def is_author_banned_openai(ctx: Context | Interaction):
-    """returns true if author is banned from openAI commands"""
+    """returns true if author is banned from OpenAI commands"""
     id = ctx.author.id if isinstance(ctx, Context) else ctx.user.id
     banned = is_user_banned_openai(id)
     if banned:
@@ -103,7 +104,7 @@ async def is_author_banned_openai(ctx: Context | Interaction):
 
 @staticmethod
 def is_user_banned_openai(id: int):
-    """returns true if user is banned from openAI commands"""
+    """returns true if user is banned from OpenAI commands"""
     db_user = get_database_user_from_id(id)
     if not db_user:
         return False
@@ -115,12 +116,12 @@ def is_user_banned_openai(id: int):
 
 @staticmethod
 async def openai_ban_error(ctx: Context | Interaction, id: int):
-    """error for openai commands"""
+    """error for OpenAI commands"""
 
     message = (
         "no you horny mf :mega_flushed:"
         if id == 274261420932202498
-        else "You are banned from using openAI commands, please contact an exec if you think this is a mistake"
+        else "You are banned from using OpenAI commands, please contact an exec if you think this is a mistake"
     )
 
     if isinstance(ctx, Context):

@@ -85,8 +85,8 @@ class Birthday(commands.Cog):
         )
         leaderboard_users = "\n".join(  # make list of names
             [
-                f"{db_session.query(db_user).filter(db_user.id == user.user_id).first().username} with {user[1]} wishes"
-                for user in leaderboard[:5]
+                f"{i+1}. {db_session.query(db_user).filter(db_user.id == user.user_id).first().username} with {user[1]} wishe{"" if user[1] == 1 else "s"}"
+                for i, user in enumerate(leaderboard[:5])
             ]
         )
         await ctx.reply(f"Leaderboard:\n{leaderboard_users}")
