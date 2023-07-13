@@ -37,6 +37,7 @@ EXTENSIONS = [
     "cogs.commands.rolemenu",
     "cogs.commands.reminders",
     "cogs.commands.roll",
+    "cogs.commands.run",
     "cogs.commands.roomsearch",
     "cogs.commands.say",
     "cogs.commands.system",
