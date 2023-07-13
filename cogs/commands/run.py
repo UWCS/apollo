@@ -29,7 +29,7 @@ class Language(Enum):
                 raise Exception(f"Language '{lang}' not supported!")
 
 
-LONG_HELP_TEXT = """Run some code using out firecracker VM execution backend, Pyromaniac. 
+LONG_HELP_TEXT = """Run some code using our Firecracker VM execution backend, Pyromaniac. 
 Usage:
 !run "<input>"
 ```
@@ -45,7 +45,7 @@ Supported languages:
 SHORT_HELP_TEXT = """Run some code!"""
 
 
-class Say(commands.Cog):
+class Run(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
 
@@ -123,6 +123,6 @@ class Say(commands.Cog):
 
 async def setup(bot: Bot):
     if CONFIG.PYROMANIAC_URL:
-        await bot.add_cog(Say(bot))
+        await bot.add_cog(Run(bot))
     else:
         logging.warn("No Pyromaniac API give, not loading code runner")
