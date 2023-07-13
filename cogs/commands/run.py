@@ -1,9 +1,12 @@
+import logging
 from enum import Enum
+
+import aiohttp
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
+
 from config import CONFIG
-import aiohttp
-import logging
+
 
 # pyromaniac data model
 class Language(Enum):
