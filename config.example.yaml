@@ -51,6 +51,8 @@ config:
   announcement_search_interval: 60
   # Whether announcements should post via a Webhook to appear like the user
   announcement_impersonate: True
+  # URL for Pyromaniac (code execution backend)
+  pyromanaic_url: null
 
   # Unused
   # (not actively used) Role to give to authenticated UWCS members

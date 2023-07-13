@@ -39,6 +39,7 @@ class Config:
         )
         self.ANNOUNCEMENT_IMPERSONATE: int = parsed.get("announcement_impersonate")
         self.UNICODE_NORMALISATION_FORM: str = "NFKD"
+        self.PYROMANIAC_URL: str = parsed.get("pyromaniac_url")
 
         # Unused
         self.UWCS_MEMBER_ROLE_ID: int = parsed.get("UWCS_member_role_id")
