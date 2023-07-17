@@ -13,6 +13,8 @@ class Language(Enum):
     Python = "Python"
     Rust = "Rust"
     Java = "Java"
+    Bash = "Bash"
+    Sh = "Sh"
 
     @staticmethod
     def from_str(lang: str):
@@ -23,6 +25,10 @@ class Language(Enum):
                 return Language.Java
             case "rust" | "rs":
                 return Language.Rust
+            case "bash":
+                return Language.Bash
+            cash "sh":
+                return Language.Sh
             case "":
                 raise Exception(f"No language provided!")
             case _:
@@ -40,6 +46,8 @@ Supported languages:
 - Python
 - Rust
 - Java
+- GNU Bourne Again Shell (bash)
+- Busybox ash (sh)
 """
 
 SHORT_HELP_TEXT = """Run some code!"""
