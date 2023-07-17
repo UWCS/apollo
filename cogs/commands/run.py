@@ -27,7 +27,7 @@ class Language(Enum):
                 return Language.Rust
             case "bash":
                 return Language.Bash
-            cash "sh":
+            case "sh":
                 return Language.Sh
             case "":
                 raise Exception(f"No language provided!")
