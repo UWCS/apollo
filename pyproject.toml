@@ -42,7 +42,7 @@ ignore = [
   "roll/**/*",
   "tests/**/*",
   "voting/**/*",
-  "utils/custom_help.py"
+  "utils/custom_help.py",
 ]
 # https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
 
@@ -51,3 +51,8 @@ useLibraryCodeForTypes = true
 reportMissingTypeStubs = false
 reportImportCycles = false         # this is actually a big issue but the bad module structure makes it hard to resolve
 reportMissingParameterType = false
+
+[tool.ruff]
+target-version = "py310"
+select = ["E", "F", "I"] # defaults plus isort
+ignore = ["E501"]
