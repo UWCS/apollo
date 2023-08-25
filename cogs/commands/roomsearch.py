@@ -83,6 +83,7 @@ class RoomSearch(commands.Cog):
             room = rooms[0]  # Only one in rooms
 
         print(room)
+        # ext_ref = room.get("extRef") or {}
         # if not mini:
         # Room info
         embed = discord.Embed(
@@ -149,6 +150,8 @@ class RoomSearch(commands.Cog):
         #     )
         # else:
         #     embed.set_thumbnail(url="attachment://map.png")
+
+        await ctx.reply(embed=embed)  # , file=img)
 
     def get_map_url(self, room):
         """Constructs url for campus map for room"""
