@@ -18,7 +18,7 @@ try:
     subfont: ImageFont.ImageFont = ImageFont.truetype(
         "resources/Montserrat-Medium.ttf", 45
     )
-except OSError as e:
+except OSError:
     logging.warn("Error loading announcement title fonts")
     font, subfont = None, None
 

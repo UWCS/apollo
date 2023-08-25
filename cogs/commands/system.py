@@ -142,7 +142,7 @@ Started {started} (uptime {uptime})"""
         # check for any unacknowledged events
         all_events = db_session.scalars(
             select(SystemEvent)
-            .where(SystemEvent.acknowledged == False)
+            .where(SystemEvent.acknowledged is False)
             .order_by(desc(SystemEvent.time))
         ).all()
         if len(all_events) == 0:

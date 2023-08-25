@@ -7,7 +7,6 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from models import db_session
 from models.role_menu import RoleEntry, RoleMenu
-from models.user import User
 from utils import is_compsoc_exec_in_guild, rerun_to_confirm
 from utils.announce_utils import get_long_msg
 
@@ -299,7 +298,7 @@ class RoleMenuCog(commands.Cog):
         try:
             channel = guild.get_channel(menu.channel_id)
             msg = await channel.fetch_message(menu.message_id)
-        except discord.errors.NotFound as e:
+        except discord.errors.NotFound:
             return None, menu
         return msg, menu
 
@@ -309,7 +308,7 @@ class RoleMenuCog(commands.Cog):
             guild = self.bot.get_guild(gid)
             channel = guild.get_channel(cid)
             msg = await channel.fetch_message(mid)
-        except discord.errors.NotFound as e:
+        except discord.errors.NotFound:
             return None
         return msg
 

@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 from datetime import date, datetime, time, timedelta
-from io import BytesIO
 from pathlib import Path
 from urllib.parse import quote
 
@@ -84,7 +83,6 @@ class RoomSearch(commands.Cog):
             room = rooms[0]  # Only one in rooms
 
         print(room)
-        ext_ref = room.get("extRef") or {}
         # if not mini:
         # Room info
         embed = discord.Embed(
@@ -151,7 +149,6 @@ class RoomSearch(commands.Cog):
         #     )
         # else:
         #     embed.set_thumbnail(url="attachment://map.png")
-        msg = await ctx.reply(embed=embed)  # , file=img)
 
     def get_map_url(self, room):
         """Constructs url for campus map for room"""
@@ -272,11 +269,14 @@ class RoomSearch(commands.Cog):
         # Check for user react on msg
         async def check_reacts():
             try:
-                check = (
-                    lambda r, u: r.message.id == conf_message.id
-                    and u == ctx.message.author
-                    and str(r.emoji) in emojis
-                )
+
+                def check(r, u):
+                    return (
+                        r.message.id == conf_message.id
+                        and u == ctx.message.author
+                        and str(r.emoji) in emojis
+                    )
+
                 react_emoji, _ = await ctx.bot.wait_for(
                     "reaction_add", check=check, timeout=30
                 )

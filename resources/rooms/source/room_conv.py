@@ -9,8 +9,11 @@ import json
 
 def read_mapping(filename: str):
     with open(filename) as f:
-        l = [l.split(" | ") for l in f.readlines()]
-        return {x[0].strip(): x[1].strip() for x in l if len(x) > 1}
+        return {
+            x[0].strip(): x[1].strip()
+            for x in [ls.split(" | ") for ls in f.readlines()]
+            if len(x) > 1
+        }
 
 
 tabtonames = read_mapping("tabula-sciencianame.txt")

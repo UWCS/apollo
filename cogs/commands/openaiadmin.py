@@ -6,7 +6,6 @@ from models import db_session
 from models.openai import OpenAIBans
 from models.user import User as db_user
 from utils import get_database_user, get_database_user_from_id, is_compsoc_exec_in_guild
-from utils.typing import Identifiable
 
 LONG_HELP_TEXT = """
 Exec-only command to stop or reallow a user from usinf openAI functionality in apollo (Dalle and ChatGPT)

@@ -55,5 +55,5 @@ class MentionConverter(commands.Converter[Any]):
             if uid is not None:
                 return Mention.id_mention(uid.id)
             return Mention.string_mention(argument)
-        except:
+        except Exception:
             return Mention.string_mention(argument)

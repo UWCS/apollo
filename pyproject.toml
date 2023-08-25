@@ -22,8 +22,6 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-profile = "black"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -56,3 +54,5 @@ reportMissingParameterType = false
 target-version = "py310"
 select = ["E", "F", "I"] # defaults plus isort
 ignore = ["E501"]
+
+exclude = ["migrations/versions/*", "models/__init__.py"]
