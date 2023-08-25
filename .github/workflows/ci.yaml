@@ -39,16 +39,18 @@ jobs:
           pip install --user pipenv
           pipenv sync --dev
 
-      - name: Check formatting with isort and black
+      - name: Check formatting with black
         run: |
-          pipenv run isort --check-only --diff --skip __tests__ .
           pipenv run black --check --diff --exclude __tests__ .
+
+      - name: Check code style with ruff
+        run: |
+          pipenv run ruff check .
 
       - name: Check types with pyright
         if: always()
         run: |
           pipenv run pyright --verbose
-
 
   test:
     name: Run Tests with Pytest
