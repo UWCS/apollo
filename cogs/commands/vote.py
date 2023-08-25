@@ -57,11 +57,10 @@ class Vote(commands.Cog):
             channel = self.bot.get_channel(dvm.channel_id)
             msg = await channel.fetch_message(dvm.message_id)
             if msg is None or msg.created_at < threshold_time:
-"""
-                print("Ending", msg)
-                await msg.edit(view=None)
-                await DiscordBase(self.bot).end_vote(dvm.discord_vote.vote)
-"""
+                # print("Ending", msg)
+                # await msg.edit(view=None)
+                # await DiscordBase(self.bot).end_vote(dvm.discord_vote.vote)
+                pass
             else:
                 await msg.edit(
                     view=DiscordBase(self.bot).recreate_view(dvm.vote_id, msg, dvm)
