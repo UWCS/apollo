@@ -46,4 +46,4 @@ Migrations will need to be re-applied every time the database schema changes.
 ### Contributing
 Check [our issues](https://github.com/UWCS/apollo/contribute) for ideas of what to [contribute](https://github.com/UWCS/apollo/contribute). If you want to see a particular feature that isn't mentioned, feel free to work on it (but please do make an issue beforehand, so we can discuss it)
 
-See our wiki for a general overview of the project and and [Contributor Notes](https://github.com/UWCS/apollo/wiki/Contributing-Notes) for project specific advice and utility.
+See our wiki for a general overview of the project and and [Contributor Notes](https://techteam.uwcs.co.uk/en/apps/apollo#contributing) for project specific advice and utility.
