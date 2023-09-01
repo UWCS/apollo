@@ -115,7 +115,7 @@ class Reminders(commands.Cog):
             db_session.query(Reminder)
             .filter(
                 Reminder.trigger_at >= datetime.now(),
-                Reminder.triggered is False,
+                Reminder.triggered.is_(False),
                 Reminder.user_id == author.id,
             )
             .all()
