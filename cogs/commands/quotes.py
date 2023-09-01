@@ -157,7 +157,6 @@ def add_quote(author: Mention, quote, time, session=db_session) -> str:
 def delete_quote(
     is_exec, requester: Mention, query: QuoteID, session=db_session
 ) -> str:
-
     quote = quotes_query(query, session).one_or_none()
 
     if quote is None:
@@ -180,7 +179,6 @@ def delete_quote(
 def update_quote(
     is_exec, requester: Mention, quote_id: QuoteID, new_text, session=db_session
 ) -> str:
-
     quote = quotes_query(quote_id, session).one_or_none()
 
     if quote is None:
@@ -366,7 +364,6 @@ class Quotes(commands.Cog):
             target = f"{ctx.prefix}{ctx.command}"
             reference = ctx.message.reference
             if content == target and reference:
-
                 replied_message = await ctx.channel.fetch_message(reference.message_id)
 
                 await self.quote_discord_user(
@@ -545,7 +542,6 @@ class Quotes(commands.Cog):
             message = [quote_str(q) for q in quotes]
 
         # Split if too long
-        prev = ctx.message
         for msg in split_into_messages(message):
             await ctx.send(msg, allowed_mentions=AllowedMentions().none())
 

@@ -2,7 +2,7 @@ from typing import Dict, Iterable, List, NamedTuple, Tuple, Union
 
 import discord
 from discord import AllowedMentions, ButtonStyle, InteractionMessage
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Context
 from discord.ui import Button, View
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -203,9 +203,9 @@ class DiscordBase:
     def parse_choices(self, args: List[str]) -> Tuple[str, List[str]]:
         """Parse title and choices out of args"""
         if len(args) > 256:
-            raise Exception(f"More than 256 choices given")
+            raise Exception("More than 256 choices given")
         if len(args) == 0:
-            raise Exception(f"No choices given")
+            raise Exception("No choices given")
 
         # Truncate each choice to 256 chars
         for i, c in enumerate(args):
@@ -242,8 +242,8 @@ class DiscordBase:
         self, lines: Union[List[str], List[Tuple[str, str]]], title: str = None
     ):
         """Construct embed from list of choices"""
-        if not type(lines) is tuple:
-            lines = [(l, "_ _") for l in lines]
+        if type(lines) is not tuple:
+            lines = [(ll, "_ _") for ll in lines]
         embed = discord.Embed(title=self.get_description() if title is None else title)
         for n, v in lines:
             if len(n) > 250:

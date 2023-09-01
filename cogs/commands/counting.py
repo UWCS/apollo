@@ -42,7 +42,7 @@ class Counting(Cog):
             self.channel = ctx.channel
             started_at = datetime.utcnow()
 
-            await ctx.send(f"The game begins!")
+            await ctx.send("The game begins!")
             # The count starts at 0.
             count = 0
             # The number of successful replies in a row.

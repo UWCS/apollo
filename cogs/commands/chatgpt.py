@@ -10,11 +10,7 @@ from discord import AllowedMentions
 from discord.ext import commands, tasks
 from discord.ext.commands import (
     Bot,
-    BucketType,
     Context,
-    Cooldown,
-    check,
-    clean_content,
 )
 
 from cogs.commands.openaiadmin import is_author_banned_openai
@@ -112,11 +108,14 @@ class ChatGPT(commands.Cog):
         gpt4 = False
 
         # If a message in the chain triggered a !chat or !prompt or /chat
-        is_cmd = (
-            lambda m: m.content.startswith(chat_cmd)
-            or m.content.startswith(prompt_cmd)
-            or (m.interaction is not None and m.interaction.name == "chat")
-        )
+        def is_cmd(m):
+            return (
+                m.content.startswith(chat_cmd)
+                or m.content.startswith(prompt_cmd)
+                or m.interaction is not None
+                and m.interaction.name == "chat"
+            )
+
         if not any(map(is_cmd, message_chain)):
             return
 

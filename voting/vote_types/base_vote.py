@@ -3,7 +3,6 @@ from typing import List, Tuple
 from sqlalchemy import func
 
 from models import db_session
-from models.user import User
 from models.votes import UserVote, Vote, VoteChoice, VoteType
 
 
@@ -92,7 +91,7 @@ class BaseVote:
         db_session.flush()
 
     def remove(self, vote):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 base_vote = BaseVote()
