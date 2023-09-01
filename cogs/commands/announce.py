@@ -144,7 +144,7 @@ class Announcements(commands.Cog):
             db_session.query(Announcement)
             .filter(
                 Announcement.trigger_at >= datetime.datetime.now(),
-                Announcement.triggered is False,
+                Announcement.triggered.is_(False),
             )
             .all()
         )
@@ -261,7 +261,7 @@ async def announcement_check(bot):
         now = datetime.datetime.now()
         announcements = (
             db_session.query(Announcement)
-            .filter(Announcement.trigger_at <= now, Announcement.triggered is False)
+            .filter(Announcement.trigger_at <= now, Announcement.triggered.is_(False))
             .all()
         )
 
