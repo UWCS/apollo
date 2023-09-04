@@ -144,8 +144,8 @@ async def plot_karma(
         ax.xaxis.set_major_locator(date_locator_major)
         ax.xaxis.set_minor_locator(date_locator_minor)
         ax.xaxis.set_major_formatter(date_format)
-        ax.grid(b=True, which="minor", color="0.9", linestyle=":")
-        ax.grid(b=True, which="major", color="0.5", linestyle="--")
+        ax.grid(visible=True, which="minor", color="0.9", linestyle=":")
+        ax.grid(visible=True, which="major", color="0.5", linestyle="--")
         ax.set(
             xlabel="Time",
             ylabel="Karma",
