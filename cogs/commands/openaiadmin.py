@@ -101,10 +101,15 @@ def is_user_banned_openai(id: int):
     db_user = get_database_user_from_id(id)
     if not db_user:
         return False
-    return (
-        db_session.query(OpenAIBans).filter(OpenAIBans.user_id == db_user.id).first()
-        is not None
-    )
+    try:
+        return (
+            db_session.query(OpenAIBans)
+            .filter(OpenAIBans.user_id == db_user.id)
+            .first()
+            is not None
+        )
+    except:
+        return False
 
 
 @staticmethod

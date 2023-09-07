@@ -87,26 +87,24 @@ Started {started} (uptime {uptime})"""
     @check(is_compsoc_exec_in_guild)
     async def restart(self, ctx: Context[Bot]):
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
+        db_comitted = True
         async with aiohttp.ClientSession(headers=headers) as session:
             event = SystemEvent(EventKind.RESTART, ctx.message.id, ctx.channel.id)
-            db_session.add(event)
-            db_session.commit()
+            try:
+                db_session.add(event)
+                db_session.commit()
+            except:
+                logging.error("Failed to add event to database")
+                db_comitted = False
             await ctx.reply("Going down for reboot...")
             resp = await session.post(f"{APOLLO_ENDPOINT_URL}/restart")
-            if not resp.ok:
-                status = resp.status
-                msg = (await resp.json())["message"]
-                err_msg = f"Failed to restart. {status} from Portainer API: {msg}"
-                logging.error(err_msg)
-                await ctx.reply(err_msg)
-                # remove our event that just failed to happen
-                db_session.delete(event)
-                db_session.commit()
+            await self.process_fail(resp, ctx, db_comitted, "restart", event)
 
     @commands.hybrid_command()
     @check(is_compsoc_exec_in_guild)
     async def update(self, ctx: Context[Bot]):
         headers = {"X-API-Key": f"{CONFIG.PORTAINER_API_KEY}"}
+        db_comitted = True
         async with aiohttp.ClientSession(headers=headers) as session:
             # Get ID to filter webhook list by
             info = await session.get(f"{APOLLO_ENDPOINT_URL}/json")
@@ -120,31 +118,54 @@ Started {started} (uptime {uptime})"""
             logging.info(f"Recreate webhook url {webhook_url}")
 
             event = SystemEvent(EventKind.UPDATE, ctx.message.id, ctx.channel.id)
-            db_session.add(event)
-            db_session.commit()
+            try:
+                db_session.add(event)
+                db_session.commit()
+            except:
+                logging.error("Failed to add event to database")
+                db_comitted = False
             await ctx.reply("Going down for update...")
             resp = await session.post(webhook_url)
-            if not resp.ok:
-                status = resp.status
-                msg = (await resp.json())["message"]
-                err_msg = f"Failed to update. {status} from Portainer API: {msg}"
-                logging.error(err_msg)
-                await ctx.reply(err_msg)
-                # remove our event that just failed to happen
-                db_session.delete(event)
-                db_session.commit()
+            await self.process_fail(resp, ctx, True, "update", event)
+
+    async def process_fail(
+        self,
+        resp: aiohttp.ClientResponse,
+        ctx: Context[Bot],
+        db_comitted: bool,
+        action: str,
+        event: SystemEvent,
+    ):
+        if not resp.ok:
+            status = resp.status
+            msg = (await resp.json())["message"]
+            err_msg = f"Failed to {action}. {status} from Portainer API: {msg}"
+            logging.error(err_msg)
+            await ctx.reply(err_msg)
+            if db_comitted:
+                try:
+                    # remove our event that just failed to happen
+                    db_session.delete(event)
+                    db_session.commit()
+                except:
+                    pass
 
     # TODO: same as above but re-create container
     # have to do it all through Docker API; fetch config, save it, pull image, start contaienr
 
     @commands.Cog.listener()
     async def on_ready(self):
+        all_events = []
         # check for any unacknowledged events
-        all_events = db_session.scalars(
-            select(SystemEvent)
-            .where(SystemEvent.acknowledged == False)
-            .order_by(desc(SystemEvent.time))
-        ).all()
+        try:
+            all_events = db_session.scalars(
+                select(SystemEvent)
+                .where(SystemEvent.acknowledged == False)
+                .order_by(desc(SystemEvent.time))
+            ).all()
+        except:
+            logging.error("Failed to get system events from database")
+            return
         if len(all_events) == 0:
             logging.info("No system events found in database")
             return
