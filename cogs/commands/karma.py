@@ -144,8 +144,8 @@ async def plot_karma(
         ax.xaxis.set_major_locator(date_locator_major)
         ax.xaxis.set_minor_locator(date_locator_minor)
         ax.xaxis.set_major_formatter(date_format)
-        ax.grid(b=True, which="minor", color="0.9", linestyle=":")
-        ax.grid(b=True, which="major", color="0.5", linestyle="--")
+        ax.grid(visible=True, which="minor", color="0.9", linestyle=":")
+        ax.grid(visible=True, which="major", color="0.5", linestyle="--")
         ax.set(
             xlabel="Time",
             ylabel="Karma",
@@ -278,7 +278,7 @@ class Karma(commands.Cog):
         )
 
         # Construct the response string
-        result = f"The 5 most karma'd topics and their total karma are:\n\n"
+        result = "The 5 most karma'd topics and their total karma are:\n\n"
         for karma in most_karma:
             result += f" • **{karma.name}** being karma'd a total number of {karma.total_karma} times\n"
         result += "\nWhere equal scores, karma is sorted alphabetically. :scales:"
@@ -564,7 +564,7 @@ class Karma(commands.Cog):
                 )
                 result = f'The {reasons_plural} for "{karma_stripped}" are as follows:\n\n{bullet_points}'
             else:
-                result = f"There are no reasons down for that karma topic! :frowning:"
+                result = "There are no reasons down for that karma topic! :frowning:"
 
             file = None
             fp = None

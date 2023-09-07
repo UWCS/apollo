@@ -5,7 +5,6 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
 import utils
-from config import CONFIG
 
 LONG_HELP_TEXT = """
 For all your xkcd needs

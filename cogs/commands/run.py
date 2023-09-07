@@ -30,7 +30,7 @@ class Language(Enum):
             case "sh":
                 return Language.Sh
             case "":
-                raise Exception(f"No language provided!")
+                raise Exception("No language provided!")
             case _:
                 raise Exception(f"Language '{lang}' not supported!")
 
@@ -95,7 +95,6 @@ class Run(commands.Cog):
         json_request = {"code": code, "lang": str(language.value), "input": input}
 
         async with ctx.typing():
-
             async with aiohttp.ClientSession() as session:
                 run_endpoint = CONFIG.PYROMANIAC_URL + "/api/run"
                 response = await session.post(run_endpoint, json=json_request)

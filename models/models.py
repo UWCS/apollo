@@ -7,10 +7,6 @@ from sqlalchemy.orm import DeclarativeBase, MappedAsDataclass, Session, mapped_c
 from config import CONFIG
 
 # this is bad, redo this
-engine = create_engine(CONFIG.DATABASE_CONNECTION, future=True)
-
-from config import CONFIG
-
 engine = create_engine(CONFIG.DATABASE_CONNECTION)
 if CONFIG.SQL_LOGGING:
     logging.basicConfig()

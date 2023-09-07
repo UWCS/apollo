@@ -12,16 +12,16 @@ class SimplePrettyHelp(commands.HelpCommand):
         """Main help menu"""
 
         cog_fields = []
-        for cog, commands in mapping.items():
+        for cog, cmds in mapping.items():
             name = getattr(cog, "qualified_name", "Others")
-            if name == "Misc" or not commands:
+            if name == "Misc" or not cmds:
                 continue
             cog_fields.append(
                 {
                     "name": name,
                     "value": "\n".join(
                         (f"⠀- `{command.name}` {command.brief or ''}")
-                        for command in commands
+                        for command in cmds
                     ),
                     "inline": False,
                 }

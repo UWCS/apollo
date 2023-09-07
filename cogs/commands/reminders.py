@@ -103,7 +103,7 @@ class Reminders(commands.Cog):
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
             logging.exception(e)
-            return {"content": f"Something went wrong with the database"}
+            return {"content": "Something went wrong with the database"}
 
     @reminder.command()
     async def list(self, ctx: Context):
@@ -115,7 +115,7 @@ class Reminders(commands.Cog):
             db_session.query(Reminder)
             .filter(
                 Reminder.trigger_at >= datetime.now(),
-                Reminder.triggered == False,
+                Reminder.triggered.is_(False),
                 Reminder.user_id == author.id,
             )
             .all()

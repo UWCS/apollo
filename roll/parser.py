@@ -1,9 +1,24 @@
+# ruff:  noqa: F821 some abuse of python's binding mechanism goes on here I think
 import re
 
 from parsita import ParseError, TextParsers, lit, opt, reg, rep, rep1, rep1sep, repsep
 from parsita.util import constant
 
-from roll.ast import *
+from roll.ast import (
+    Assignment,
+    Operator,
+    Program,
+    TokenApplication,
+    TokenCase,
+    TokenFunction,
+    TokenLet,
+    TokenNumber,
+    TokenOperator,
+    TokenRoll,
+    TokenString,
+    TokenTernary,
+    TokenVariable,
+)
 
 
 def bin_operator(xs):
@@ -113,10 +128,12 @@ def function(xs):
 
 
 class ProgramParser(TextParsers):
-
     # Actual grammar
-    split1 = lambda item, separator: item & rep(separator & item)
-    split = lambda item, separator: opt(split1(item, separator))
+    def split1(item, separator):
+        return item & rep(separator & item)
+
+    def split(item, separator):
+        return opt(split1(item, separator))
 
     identifier = reg(r"[a-zA-Z]\w*")
 

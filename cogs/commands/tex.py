@@ -65,7 +65,7 @@ class Tex(commands.Cog):
 
         # Load the image as a file to be attached to an image
         img_file = File(img, filename="tex.png")
-        await ctx.reply(f"Here you go! :abacus:", file=img_file)
+        await ctx.reply("Here you go! :abacus:", file=img_file)
 
 
 async def setup(bot: Bot):
