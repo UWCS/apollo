@@ -157,23 +157,15 @@ Started {started} (uptime {uptime})"""
     async def on_ready(self):
         all_events = []
         # check for any unacknowledged events
-<<<<<<< HEAD
-        all_events = db_session.scalars(
-            select(SystemEvent)
-            .where(SystemEvent.acknowledged.is_(False))
-            .order_by(desc(SystemEvent.time))
-        ).all()
-=======
         try:
             all_events = db_session.scalars(
                 select(SystemEvent)
-                .where(SystemEvent.acknowledged.is_(False)
+                .where(SystemEvent.acknowledged.is_(False))
                 .order_by(desc(SystemEvent.time))
             ).all()
         except:
             logging.error("Failed to get system events from database")
             return
->>>>>>> fbeb7dc (added db bypasses for openai and system)
         if len(all_events) == 0:
             logging.info("No system events found in database")
             return
