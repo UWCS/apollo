@@ -10,6 +10,7 @@ from dateutil import parser
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
 from sqlalchemy import desc, select
+from sqlalchemy.exc import SQLAlchemyError
 
 from config import CONFIG
 from models.models import db_session
@@ -93,7 +94,7 @@ Started {started} (uptime {uptime})"""
             try:
                 db_session.add(event)
                 db_session.commit()
-            except:
+            except SQLAlchemyError:
                 logging.error("Failed to add event to database")
                 db_comitted = False
             await ctx.reply("Going down for reboot...")
@@ -121,12 +122,12 @@ Started {started} (uptime {uptime})"""
             try:
                 db_session.add(event)
                 db_session.commit()
-            except:
+            except SQLAlchemyError:
                 logging.error("Failed to add event to database")
                 db_comitted = False
             await ctx.reply("Going down for update...")
             resp = await session.post(webhook_url)
-            await self.process_fail(resp, ctx, True, "update", event)
+            await self.process_fail(resp, ctx, db_comitted, "update", event)
 
     async def process_fail(
         self,
@@ -147,7 +148,7 @@ Started {started} (uptime {uptime})"""
                     # remove our event that just failed to happen
                     db_session.delete(event)
                     db_session.commit()
-                except:
+                except SQLAlchemyError:
                     pass
 
     # TODO: same as above but re-create container

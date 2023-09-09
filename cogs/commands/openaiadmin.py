@@ -1,6 +1,7 @@
 from discord import Interaction, User
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
+from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session
 from models.openai import OpenAIBans
@@ -114,7 +115,7 @@ def is_user_banned_openai(id: int):
             .first()
             is not None
         )
-    except:
+    except SQLAlchemyError:
         return False
 
 
