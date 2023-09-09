@@ -1,6 +1,7 @@
 from discord import Interaction, User
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
+from psycopg import OperationalError
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session
@@ -105,17 +106,17 @@ async def is_author_banned_openai(ctx: Context | Interaction):
 @staticmethod
 def is_user_banned_openai(id: int):
     """returns true if user is banned from OpenAI commands"""
-    db_user = get_database_user_from_id(id)
-    if not db_user:
-        return False
     try:
+        db_user = get_database_user_from_id(id)
+        if not db_user:
+            return False
         return (
             db_session.query(OpenAIBans)
             .filter(OpenAIBans.user_id == db_user.id)
             .first()
             is not None
         )
-    except SQLAlchemyError:
+    except (SQLAlchemyError, OperationalError):
         return False
 
 

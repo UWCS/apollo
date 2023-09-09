@@ -9,6 +9,7 @@ import discord
 from dateutil import parser
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
+from psycopg import OperationalError
 from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -94,7 +95,7 @@ Started {started} (uptime {uptime})"""
             try:
                 db_session.add(event)
                 db_session.commit()
-            except SQLAlchemyError:
+            except (SQLAlchemyError, OperationalError):
                 logging.error("Failed to add event to database")
                 db_comitted = False
             await ctx.reply("Going down for reboot...")
@@ -122,7 +123,7 @@ Started {started} (uptime {uptime})"""
             try:
                 db_session.add(event)
                 db_session.commit()
-            except SQLAlchemyError:
+            except (SQLAlchemyError, OperationalError):
                 logging.error("Failed to add event to database")
                 db_comitted = False
             await ctx.reply("Going down for update...")
@@ -148,7 +149,7 @@ Started {started} (uptime {uptime})"""
                     # remove our event that just failed to happen
                     db_session.delete(event)
                     db_session.commit()
-                except SQLAlchemyError:
+                except (SQLAlchemyError, OperationalError):
                     pass
 
     # TODO: same as above but re-create container
@@ -164,7 +165,7 @@ Started {started} (uptime {uptime})"""
                 .where(SystemEvent.acknowledged.is_(False))
                 .order_by(desc(SystemEvent.time))
             ).all()
-        except SQLAlchemyError:
+        except (SQLAlchemyError, OperationalError):
             logging.error("Failed to get system events from database")
             return
         if len(all_events) == 0:
