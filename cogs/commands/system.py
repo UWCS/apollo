@@ -164,7 +164,7 @@ Started {started} (uptime {uptime})"""
                 .where(SystemEvent.acknowledged.is_(False))
                 .order_by(desc(SystemEvent.time))
             ).all()
-        except:
+        except SQLAlchemyError:
             logging.error("Failed to get system events from database")
             return
         if len(all_events) == 0:
