@@ -34,11 +34,9 @@ class Birthday(commands.Cog):
 
     @commands.hybrid_group(help=LONG_HELP_TEXT, brief="HAPPY BIRTHDAY!!!!")
     async def birthday(self, ctx: Context):
-        if not ctx.invoked_subcommand:
-            await ctx.send("Subcommand not found")
+        await self.wish(ctx)
 
     @birthday.command(help=LONG_HELP_TEXT, brief="HAPPY BIRTHDAY!!!!")
-    @commands.cooldown(1, 86400, commands.BucketType.user)  # 1 day cooldown per user
     async def wish(self, ctx: Context):
         """Adds 1 to the age of the Lord Chancellor and wishes them a happy birthday"""
         first = False
@@ -55,7 +53,7 @@ class Birthday(commands.Cog):
             db_session.commit()
             # update the database
         await ctx.reply(
-            f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>{f', you are now {self.age} years old' if first else ''}"
+            f"Happy birthday <@{CONFIG.LORD_CHANCELLOR_ID}>!!!!! {f' You are now {self.age} years old' if first else ''}"
         )
 
     @birthday.command(help=LONG_HELP_TEXT, brief="Lord Chancellor age")
