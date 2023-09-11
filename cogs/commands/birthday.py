@@ -85,7 +85,7 @@ class Birthday(commands.Cog):
         )
         leaderboard_users = "\n".join(  # make list of names
             [
-                f"{i+1}. {db_session.query(db_user).filter(db_user.id == user.user_id).first().username} with {user[1]} wish {'' if user[1] == 1 else 'es'}"
+                f"{i+1}. {self.bot.get_user(db_session.query(db_user).filter(db_user.id == user.user_id).first().user_uid).name} with {user[1]} wish{'' if user[1] == 1 else 'es'}"
                 for i, user in enumerate(leaderboard[:5])
             ]
         )
