@@ -41,18 +41,21 @@ class Birthday(commands.Cog):
     @commands.cooldown(1, 86400, commands.BucketType.user)  # 1 day cooldown per user
     async def wish(self, ctx: Context):
         """Adds 1 to the age of the Lord Chancellor and wishes them a happy birthday"""
+        first = False
         current_date = utc.localize(datetime.now()).astimezone(
             timezone("Europe/London")
         )  # gets the current date
-        self.date = current_date
-        self.age += 1
-        db_user = get_database_user(ctx.author)
-        borth = db_Birthday(date=self.date, age=self.age, user_id=db_user.id)
-        db_session.add(borth)
-        db_session.commit()
-        # update the database
+        if current_date.date() > self.date.date():
+            self.date = current_date
+            self.age += 1
+            first = True
+            db_user = get_database_user(ctx.author)
+            borth = db_Birthday(date=self.date, age=self.age, user_id=db_user.id)
+            db_session.add(borth)
+            db_session.commit()
+            # update the database
         await ctx.reply(
-            f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>, you are now {self.age}"
+            f"Happy birthday!!!! <@{CONFIG.LORD_CHANCELLOR_ID}>{f', you are now {self.age} years old' if first else ''}"
         )
 
     @birthday.command(help=LONG_HELP_TEXT, brief="Lord Chancellor age")
