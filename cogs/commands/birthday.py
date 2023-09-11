@@ -100,9 +100,9 @@ class Birthday(commands.Cog):
                 .user_uid
             ).name
             num_wishes = user[1]
-            leaderboard_users += f"{i+1}. {user_name} with {num_wishes} wish{'' if num_wishes == 1 else 'es'}\n"
+            leaderboard_users += f"\n{i+1}. {user_name} with {num_wishes} wish{'' if num_wishes == 1 else 'es'}"
         # for anyone that cares this can be done in one line: leaderboard_users = "\n".join([f"{i+1}. {self.bot.get_user(db_session.query(db_user).filter(db_user.id == user.user_id).first().user_uid).name} with {user[1]} wish{'' if user[1] == 1 else 'es'}" for i, user in enumerate(leaderboard[:5])]
-        await ctx.reply(f"Leaderboard:\n{leaderboard_users}")
+        await ctx.reply(f"Leaderboard:{leaderboard_users}")
 
 
 async def setup(bot: Bot):
