@@ -3,7 +3,9 @@ from datetime import datetime
 from discord import User
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
+from psycopg import OperationalError
 from pytz import timezone, utc
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import func
 
 from config import CONFIG
@@ -44,14 +46,16 @@ class Birthday(commands.Cog):
             timezone("Europe/London")
         )  # gets the current date
         if current_date.date() > self.date.date():
-            self.date = current_date
-            self.age += 1
-            first = True
-            db_user = get_database_user(ctx.author)
-            borth = db_Birthday(date=self.date, age=self.age, user_id=db_user.id)
-            db_session.add(borth)
-            db_session.commit()
-            # update the database
+            try:
+                self.date = current_date
+                self.age += 1
+                first = True
+                db_user = get_database_user(ctx.author)
+                borth = db_Birthday(date=self.date, age=self.age, user_id=db_user.id)
+                db_session.add(borth)
+                db_session.commit()
+            except (SQLAlchemyError, OperationalError):
+                pass
         await ctx.reply(
             f"Happy birthday <@{CONFIG.LORD_CHANCELLOR_ID}>!!!!! {f' You are now {self.age} years old' if first else ''}"
         )
@@ -84,12 +88,20 @@ class Birthday(commands.Cog):
             .order_by(func.count(db_Birthday.user_id).desc())
             .all()
         )
-        leaderboard_users = "\n".join(  # make list of names
-            [
-                f"{i+1}. {self.bot.get_user(db_session.query(db_user).filter(db_user.id == user.user_id).first().user_uid).name} with {user[1]} wish{'' if user[1] == 1 else 'es'}"
-                for i, user in enumerate(leaderboard[:5])
-            ]
-        )
+        leaderboard_users = ""
+        for i in range(5):
+            if i >= len(leaderboard):
+                break
+            user = leaderboard[i]
+            user_name = self.bot.get_user(
+                db_session.query(db_user)
+                .filter(db_user.id == user.user_id)
+                .first()
+                .user_uid
+            ).name
+            num_wishes = user[1]
+            leaderboard_users += f"{i+1}. {user_name} with {num_wishes} wish{'' if num_wishes == 1 else 'es'}\n"
+        # for anyone that cares this can be done in one line: leaderboard_users = "\n".join([f"{i+1}. {self.bot.get_user(db_session.query(db_user).filter(db_user.id == user.user_id).first().user_uid).name} with {user[1]} wish{'' if user[1] == 1 else 'es'}" for i, user in enumerate(leaderboard[:5])]
         await ctx.reply(f"Leaderboard:\n{leaderboard_users}")
 
 
