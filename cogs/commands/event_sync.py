@@ -15,7 +15,7 @@ Sync events to our website uwcs.co.uk/events."""
 
 SHORT_HELP_TEXT = """Sync events"""
 
-ICAL_URL = "https://uwcs.co.uk/signups/feed.ics"
+ICAL_URL = "https://uwcs.co.uk/uwcs.ical"
 
 
 class Sync(commands.Cog):

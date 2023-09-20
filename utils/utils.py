@@ -12,6 +12,7 @@ import aiohttp
 import dateparser
 import discord
 from discord.ext.commands import Bot, Context
+from pytz import timezone, utc
 
 from config import CONFIG
 from models import db_session
@@ -118,10 +119,18 @@ def is_decimal(num: Any):
 def parse_time(time: str, /):
     # dateparser.parse returns None if it cannot parse
     parsed_time = dateparser.parse(
-        time, settings={"DATE_ORDER": "DMY", "PREFER_DATES_FROM": "future"}
+        time,
+        settings={
+            "DATE_ORDER": "DMY",
+            "PREFER_DATES_FROM": "future",
+        },
     )
 
-    now = datetime.now()
+    parsed_time = (
+        timezone("Europe/London").localize(parsed_time) if parsed_time else None
+    )
+
+    now = utc.localize(datetime.now()).astimezone(timezone("Europe/London"))
 
     if not parsed_time:
         try:
@@ -332,13 +341,19 @@ def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
                 )
 
             if kwargs[key_name] not in first_run_times:
-                first_run_times[kwargs[key_name]] = datetime.now()
+                first_run_times[kwargs[key_name]] = utc.localize(
+                    datetime.now()
+                ).astimezone(timezone("Europe/London"))
                 return await ctx.reply(confirm_msg, ephemeral=True)
 
-            timeout_threshold = datetime.now() - timedelta(minutes=5)
+            timeout_threshold = utc.localize(datetime.now()).astimezone(
+                timezone("Europe/London")
+            ) - timedelta(minutes=5)
             if timeout_threshold > first_run_times[kwargs[key_name]]:
                 # If previous run is more than 5 mins ago (timeout after 5)
-                first_run_times[kwargs[key_name]] = datetime.now()
+                first_run_times[kwargs[key_name]] = utc.localize(
+                    datetime.now()
+                ).astimezone(timezone("Europe/London"))
                 return await ctx.reply(confirm_msg, ephemeral=True)
 
             await func(*args, **kwargs)

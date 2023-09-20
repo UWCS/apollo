@@ -57,7 +57,7 @@ class Birthday(commands.Cog):
             except (SQLAlchemyError, OperationalError):
                 pass
         await ctx.reply(
-            f"Happy birthday <@{CONFIG.LORD_CHANCELLOR_ID}>!!!!! {f' You are now {self.age} years old' if first else ''}"
+            f"Happy birthday <@{CONFIG.LORD_CHANCELLOR_ID}>!!!!! <:ferris_party:1016463393156247623> {f' You are now {self.age} years old' if first else ''}"
         )
 
     @birthday.command(help=LONG_HELP_TEXT, brief="Lord Chancellor age")
