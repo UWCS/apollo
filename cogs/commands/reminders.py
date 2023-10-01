@@ -88,7 +88,7 @@ class Reminders(commands.Cog):
         await ctx.send(**result)
 
     def add_base(self, reminder):
-        now = utc.localize(datetime.now()).astimezone(timezone("Europe/London"))
+        now = datetime.now(timezone("Europe/London"))
         if not reminder.trigger_at:
             return {"content": "Incorrect time format, please see help text."}
         elif reminder.trigger_at < now:

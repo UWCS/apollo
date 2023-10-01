@@ -123,14 +123,12 @@ def parse_time(time: str, /):
         settings={
             "DATE_ORDER": "DMY",
             "PREFER_DATES_FROM": "future",
+            "TIMEZONE": "Europe/London",
+            "RETURN_AS_TIMEZONE_AWARE": True,
         },
     )
 
-    parsed_time = (
-        timezone("Europe/London").localize(parsed_time) if parsed_time else None
-    )
-
-    now = utc.localize(datetime.now()).astimezone(timezone("Europe/London"))
+    now = datetime.now(timezone("Europe/London"))
 
     if not parsed_time:
         try:
