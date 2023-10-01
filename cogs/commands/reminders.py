@@ -7,7 +7,7 @@ from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from humanize import precisedelta
-from pytz import timezone, utc
+from pytz import timezone
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy_utils import ScalarListException
 
