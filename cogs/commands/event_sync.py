@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 from icalendar import Calendar
+from pytz import timezone
 
 from models import db_session
 from models.event_sync import EventLink
@@ -24,12 +25,15 @@ class Sync(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @commands.check(is_compsoc_exec_in_guild)
-    @wait_react
-    async def event(self, ctx: Context, before: str = None, after: str = None):
-        before = None if before is None else parse_time(before)
-        after = None if after is None else parse_time(after)
+    async def event(self, ctx: Context, days: int = 7):
+        now = datetime.datetime.now(timezone("Europe/London"))
+        before = now + datetime.timedelta(days=days)
+
+        await ctx.send(f"Syncing events from {now} to {before}")
+
         # Fetch and parse ical from website
         r = await get_from_url(ICAL_URL)
+        await ctx.send("Got ical")
         c = io.BytesIO(r)
         cal = Calendar.from_ical(c.getvalue())
         db_links = db_session.query(EventLink).all()
@@ -37,17 +41,29 @@ class Sync(commands.Cog):
 
         dc_events = await ctx.guild.fetch_scheduled_events()
         dc_events = {e.id: e for e in dc_events}
+
         # Add events
         for ev in cal.walk():
             if ev.name != "VEVENT":
                 continue
-            t = ev.decoded("dtstart").replace(tzinfo=None)
-            print(ev.get("summary"), t, before, after)
-            if before is not None and t < before:
+            t = (
+                ev.decoded("dtstart")
+                .replace(tzinfo=None)
+                .astimezone(timezone("Europe/London"))
+            )
+            print(ev.get("summary"), t, before)
+            if t < now:
+                await ctx.send(
+                    f"Skipping event {ev.get('summary')} as it is in the past"
+                )
                 continue
-            if after is not None and t > after:
+            if t > before:
+                await ctx.send(
+                    f"Breaking at {ev.get('summary')} at time {t} as it is after the sync period"
+                )
                 continue
             await self.update_event(ctx, ev, links, dc_events)
+        await ctx.send("Done :)")
 
     async def update_event(self, ctx, ev, links, dc_events):
         """Check discord events for match, update if existing, otherwise create it"""
@@ -115,7 +131,7 @@ class Sync(commands.Cog):
     @staticmethod
     def update_db_link(uid, event_id, link):
         """Update database record. If new, create, otherwise update"""
-        now = datetime.datetime.now()
+        now = datetime.datetime.now(timezone("Europe/London"))
         if not link:
             link = EventLink(uid=uid, discord_event=event_id, last_modified=now)
             db_session.add(link)
