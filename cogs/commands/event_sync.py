@@ -9,7 +9,7 @@ from pytz import timezone
 
 from models import db_session
 from models.event_sync import EventLink
-from utils.utils import get_from_url, is_compsoc_exec_in_guild, parse_time, wait_react
+from utils.utils import get_from_url, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Sync events to our website uwcs.co.uk/events."""
