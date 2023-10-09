@@ -25,8 +25,9 @@ class Sync(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @commands.check(is_compsoc_exec_in_guild)
-    async def event(self, ctx: Context, days: int = 7):
+    async def event(self, ctx: Context, days: int = 7, logging: bool = False):
         now = datetime.datetime.now(timezone("Europe/London"))
+        # datetime's main module also being called datetime is annoying
         before = now + datetime.timedelta(days=days)
 
         await ctx.send(f"Syncing events from {now} to {before}")
@@ -53,17 +54,19 @@ class Sync(commands.Cog):
             )
             print(ev.get("summary"), t, before)
             if t < now:
-                await ctx.send(
-                    f"Skipping event {ev.get('summary')} as it is in the past"
-                )
+                self.log_event(ctx, ev, t, logging, "in the past")
                 continue
             if t > before:
-                await ctx.send(
-                    f"Breaking at {ev.get('summary')} at time {t} as it is after the sync period"
-                )
+                await self.log_event(ctx, ev, t, logging, "outside time frme")
                 continue
             await self.update_event(ctx, ev, links, dc_events)
         await ctx.send("Done :)")
+
+    async def log_event(self, ctx, ev, t, logging, reason):
+        if logging:
+            await ctx.send(
+                f"Skipping event {ev.get('summary')} at time {t} as it is {reason}"
+            )
 
     async def update_event(self, ctx, ev, links, dc_events):
         """Check discord events for match, update if existing, otherwise create it"""
