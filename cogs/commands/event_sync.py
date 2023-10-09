@@ -54,7 +54,7 @@ class Sync(commands.Cog):
             )
             print(ev.get("summary"), t, before)
             if t < now:
-                self.log_event(ctx, ev, t, logging, "in the past")
+                await self.log_event(ctx, ev, t, logging, "in the past")
                 continue
             if t > before:
                 await self.log_event(ctx, ev, t, logging, "outside time frme")

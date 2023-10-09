@@ -90,7 +90,10 @@ class Reminders(commands.Cog):
     def add_base(self, reminder):
         now = datetime.now(timezone("Europe/London"))
         if not reminder.trigger_at:
-            return {"content": "Incorrect time format, please see help text."}
+            return {
+                "content": "I just flat out did not understand what you meant with that time"
+            }
+            # thanks carl bot for this lovely error message :)
         elif reminder.trigger_at < now:
             return {"content": "That time is in the past."}
 
