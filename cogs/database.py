@@ -1,4 +1,5 @@
 import logging
+from re import search
 
 from discord import Message
 from discord.abc import GuildChannel
@@ -61,11 +62,34 @@ class Database(Cog):
             if not any(
                 message.content.startswith(prefix) for prefix in command_prefixes
             ):
-                reply = process_karma(
-                    message, message.id, db_session, CONFIG.KARMA_TIMEOUT
-                )
-                if reply:
-                    await message.channel.send(reply)
+                # process karma if apropriate
+                if search(r"\+\+|--|\+\-", message.content):
+                    reply = process_karma(
+                        message, message.id, db_session, CONFIG.KARMA_TIMEOUT
+                    )
+                    if reply:
+                        await message.channel.send(reply)
+                elif "th" in message.content.lower():
+                    # if maybe some kind of thanks, process it
+                    await self.process_thanks(message)
+
+    async def process_thanks(self, message: Message):
+        # to whoever sees this, you're welcome for the not having a fuck off massive indented if
+        if message.author.id == self.bot.user.id:
+            # dont thank itself
+            return
+        # Get the previous message (list comprehension my beloved)
+        previous_message = [
+            message async for message in message.channel.history(limit=2)
+        ][1]
+        if previous_message.author.id != self.bot.user.id:
+            # can only thank replies to bot
+            return
+        thanks = ["thx", "thanks", "thank you"]
+        if not any(word in message.content.lower() for word in thanks):
+            # not a thank you
+            return
+        return await message.add_reaction("💜")
 
 
 async def setup(bot: Bot):
