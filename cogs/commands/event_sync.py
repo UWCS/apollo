@@ -1,5 +1,6 @@
 import datetime
 import io
+from html import unescape
 
 import discord
 from discord.ext import commands
@@ -47,6 +48,7 @@ class Sync(commands.Cog):
         for ev in cal.walk():
             if ev.name != "VEVENT":
                 continue
+
             t = (
                 ev.decoded("dtstart")
                 .replace(tzinfo=None)
@@ -105,9 +107,9 @@ class Sync(commands.Cog):
     @staticmethod
     def ical_event_to_dc_args(ev):
         """Construct args for discord event from the ical event"""
-        desc = f"{ev.get('description')}\n\nSee more at {ev.get('url')}"
+        desc = unescape(f"{ev.get('description')}\n\nSee more at {ev.get('url')}")
         return {
-            "name": str(ev.get("summary")),
+            "name": unescape(str(ev.get("summary"))),
             "description": desc,
             "start_time": ev.decoded("dtstart"),
             "end_time": ev.decoded("dtend"),
