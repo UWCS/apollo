@@ -69,7 +69,7 @@ class Database(Cog):
                     )
                     if reply:
                         await message.channel.send(reply)
-                elif "th" in message.content.lower():
+                elif "t" in message.content.lower():
                     # if maybe some kind of thanks, process it
                     await self.process_thanks(message)
 
@@ -82,10 +82,13 @@ class Database(Cog):
         previous_message = [
             message async for message in message.channel.history(limit=2)
         ][1]
-        if previous_message.author.id != self.bot.user.id:
+        if (
+            previous_message.author.id != self.bot.user.id
+            and "apollo" not in message.content.lower()
+        ):
             # can only thank replies to bot
             return
-        thanks = ["thx", "thanks", "thank you"]
+        thanks = ["thx", "thanks", "thank you", "ty"]
         if not any(word in message.content.lower() for word in thanks):
             # not a thank you
             return
