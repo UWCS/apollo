@@ -1,13 +1,11 @@
-import asyncio
 import logging
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-import aiohttp
 import discord
 import openai
 from discord import AllowedMentions
-from discord.ext import commands, tasks
+from discord.ext import commands
 from discord.ext.commands import (
     Bot,
     Context,
