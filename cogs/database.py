@@ -89,8 +89,10 @@ class Database(Cog):
             # can only thank replies to bot
             return
         thanks = ["thx", "thanks", "thank you", "ty"]
-        if not any(word in message.content.lower() for word in thanks):
-            # not a thank you
+        # only heart if thanks matches word in message
+        if not any(
+            search(r"\b" + thank + r"\b", message.content.lower()) for thank in thanks
+        ):
             return
         return await message.add_reaction("💜")
 
