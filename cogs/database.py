@@ -82,7 +82,14 @@ class Database(Cog):
         previous_message = [
             message async for message in message.channel.history(limit=2)
         ][1]
-        if (
+        if message.reference and message.reference.message_id:
+            # dont thank replies to something that isnt the bot
+            replied_message = await message.channel.fetch_message(
+                message.reference.message_id
+            )
+            if replied_message.author != self.bot.user.id:
+                return
+        elif (
             previous_message.author.id != self.bot.user.id
             and "apollo" not in message.content.lower()
         ):
