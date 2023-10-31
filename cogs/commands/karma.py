@@ -285,6 +285,24 @@ class Karma(commands.Cog):
 
         await ctx.send(result)
 
+    @karma.command(help="Gives the karma of an item", ignore_extra=True)
+    async def score(self, ctx: Context, item: str):
+        item = await clean_content().convert(ctx, item)
+        karma_item = self.get_karma_item(item)
+        if not karma_item:
+            return await ctx.reply(f"\"{item}\" hasn't been karma'd yet. :cry:")
+
+        await ctx.reply(f'"{item}" has a score of {karma_item.net_score}.')
+
+    def get_karma_item(self, item: str):
+        karma_stripped = item.lstrip("@")
+        karma_item = (
+            db_session.query(KarmaModel)
+            .filter(func.lower(KarmaModel.name) == func.lower(karma_stripped))
+            .first()
+        )
+        return karma_item
+
     @karma.command(
         help="Gives information about the specified karma topic", ignore_extra=True
     )
@@ -294,13 +312,8 @@ class Karma(commands.Cog):
         await ctx.typing()
 
         t_start = current_milli_time()
-        # Strip any leading @s and get the item from the DB
         karma_stripped = item.lstrip("@")
-        karma_item = (
-            db_session.query(KarmaModel)
-            .filter(func.lower(KarmaModel.name) == func.lower(karma_stripped))
-            .first()
-        )
+        karma_item = self.get_karma_item(item)
 
         # If the item doesn't exist then raise an error
         if not karma_item:
@@ -349,7 +362,7 @@ class Karma(commands.Cog):
         )
         embed_colour = Color.from_rgb(61, 83, 255)
         embed_title = f'Statistics for "{karma_stripped}"'
-        embed_description = f'"{karma_stripped}" has been karma\'d {len(all_changes)} {pluralise(all_changes, "time")} by {len(user_changes.keys())} {pluralise(user_changes.keys(), "user")}.'
+        embed_description = f'"{karma_stripped}" has a karma of {karma_item.net_score} and has been karma\'d {len(all_changes)} {pluralise(all_changes, "time")} by {len(user_changes.keys())} {pluralise(user_changes.keys(), "user")}.'
 
         embed = Embed(
             title=embed_title, description=embed_description, color=embed_colour
