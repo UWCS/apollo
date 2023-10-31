@@ -192,7 +192,7 @@ Started {started} (uptime {uptime})"""
             name = "World"
         send = message.reply if message else channel.send
         await send(
-            f"Hello {name}. Apollo, has {'started in' if latest.kind == EventKind.RESTART else 'updated to '} version {self.version_from_file}"
+            f"Hello {name}. Apollo, has {'started in' if latest.kind == EventKind.RESTART else 'updated to'} version {self.version_from_file}"
         )
         latest.acknowledged = True
         db_session.commit()
