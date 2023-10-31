@@ -184,17 +184,16 @@ Started {started} (uptime {uptime})"""
             logging.error("message id invalid, cannot fetch message id")
             return
 
-        message = await channel.fetch_message(latest.message_id)
-        name = message.author.display_name
-        match latest.kind:
-            case EventKind.RESTART:
-                await message.reply(
-                    f"Hello {name}. Apollo, version {self.version_from_file}, started!"
-                )
-            case EventKind.UPDATE:
-                await message.reply(
-                    f"Hello {name}. Apollo updated to version {self.version_from_file}!"
-                )
+        try:
+            message = await channel.fetch_message(latest.message_id)
+            name = message.author.display_name
+        except discord.NotFound:
+            message = None
+            name = "World"
+        send = message.reply if message else channel.send
+        await send(
+            f"Hello {name}. Apollo, has {'started in' if latest.kind == EventKind.RESTART else 'updated to '} version {self.version_from_file}"
+        )
         latest.acknowledged = True
         db_session.commit()
 
