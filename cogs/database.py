@@ -1,5 +1,5 @@
 import logging
-from re import search
+from re import search, sub
 
 from discord import Message
 from discord.abc import GuildChannel
@@ -69,9 +69,24 @@ class Database(Cog):
                     )
                     if reply:
                         await message.channel.send(reply)
-                elif "t" in message.content.lower():
+                if "t" in message.content.lower():
                     # if maybe some kind of thanks, process it
                     await self.process_thanks(message)
+                if search(r"https?://(twitter\.com|x\.com)", message.content):
+                    # if a twitter link, process it
+                    send_message = ""
+                    sentance = message.content.split(" ")  # split into words
+                    for word in sentance:
+                        # if any word contains a twitter link replace with fxtwitter
+                        if search(r"https?://(twitter\.com|x\.com)", word):
+                            send_message += "\n" + sub(
+                                r"https?://(twitter\.com|x\.com)",
+                                "https://fxtwitter.com",
+                                word,
+                            )
+                    # if there is a message to send, send it
+                    if send_message != "":
+                        await message.reply(send_message)
 
     async def process_thanks(self, message: Message):
         # to whoever sees this, you're welcome for the not having a fuck off massive indented if
