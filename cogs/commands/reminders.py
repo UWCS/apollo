@@ -90,7 +90,13 @@ class Reminders(commands.Cog):
 
     @reminder.command(help="Add a repeating reminder.")
     async def repeat(
-        self, ctx: Context, repeat: str, until: str, *, reminder_content: str
+        self,
+        ctx: Context,
+        start: str,
+        repeat: str,
+        until: str,
+        *,
+        reminder_content: str,
     ):
         repeat_time = timeparse(repeat)
         if repeat_time is None:
@@ -99,9 +105,17 @@ class Reminders(commands.Cog):
             )
         repeat_time = timedelta(seconds=repeat_time)
         until_time = parse_time(until)
-        temp_time = datetime.now(timezone("Europe/London"))
-        if until_time < temp_time:
-            return ctx.reply("That time is in the past.")
+        start_time = (
+            datetime.now(timezone("Europe/London"))
+            if start is None
+            else parse_time(start)
+        )
+        if start_time is None or until_time is None:
+            return ctx.reply(
+                "I just flat out did not understand what you meant with that start time"
+            )
+        if until_time < start_time:
+            return ctx.reply("The until time is before the start time")
 
         display_name = get_name_string(ctx.message)
         if user_is_irc_bot(ctx):
@@ -109,14 +123,13 @@ class Reminders(commands.Cog):
         else:
             author_id, irc_n = get_database_user(ctx.author).id, None
 
-        temp_time += repeat_time
         num_reminders = 0
         first_reminder = None
-        while temp_time < until_time:
+        while start_time <= until_time:
             new_reminder = Reminder(
                 user_id=author_id,
                 reminder_content=reminder_content,
-                trigger_at=temp_time,
+                trigger_at=start_time,
                 triggered=False,
                 playback_channel_id=ctx.message.channel.id,
                 irc_name=irc_n,
@@ -125,7 +138,7 @@ class Reminders(commands.Cog):
             num_reminders += 1
             if not first_reminder:
                 first_reminder = int(new_reminder.trigger_at.timestamp())
-            temp_time += repeat_time
+            start_time += repeat_time
         await ctx.reply(
             f"Added {num_reminders} reminders, first one at <t:{first_reminder}:R>, last one at <t:{int(new_reminder.trigger_at.timestamp())}:R>"
         )
