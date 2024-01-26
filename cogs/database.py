@@ -86,6 +86,7 @@ class Database(Cog):
                             )
                     # if there is a message to send, send it
                     if send_message != "":
+                        await message.edit(suppress=True)
                         await message.reply(send_message)
 
     async def process_thanks(self, message: Message):
