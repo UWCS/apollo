@@ -36,7 +36,8 @@ EXTENSIONS = [
     "cogs.commands.quotes",
     "cogs.commands.rolemenu",
     "cogs.commands.reminders",
-    "cogs.commands.roll",
+    # TODO: Roll has performance issues with large values, removing till stabilised
+    # "cogs.commands.roll",
     "cogs.commands.run",
     "cogs.commands.roomsearch",
     "cogs.commands.say",
