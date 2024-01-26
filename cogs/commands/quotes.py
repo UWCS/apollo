@@ -44,6 +44,7 @@ class QuoteError(Enum):
     NOT_FOUND = auto()
     OPTED_OUT = auto()
     DB_ERROR = auto()
+    ALREADY_EXISTS = auto()
     NO_OP = auto()
 
 
@@ -144,6 +145,10 @@ def add_quote(author: Mention, quote, time, session=db_session) -> str:
         new_quote = Quote.id_quote(author.id, quote, time)
     else:
         new_quote = Quote.string_quote(author.string, quote, time)
+
+    if len(session.query(Quote).filter(Quote.quote == quote).all()) > 0:
+        raise QuoteException(QuoteError.ALREADY_EXISTS)
+
     try:
         session.add(new_quote)
         session.commit()
@@ -350,6 +355,8 @@ class Quotes(commands.Cog):
                 result = "Invalid Author: User has opted out of being quoted."
             elif e.err == QuoteError.DB_ERROR:
                 result = "Database error."
+            elif e.err == QuoteError.ALREADY_EXISTS:
+                result = "Quote already exists."
             else:
                 result = MYSTERY_ERROR
 
@@ -414,6 +421,8 @@ class Quotes(commands.Cog):
                 result += "Invalid Author: User has opted out of being quoted."
             elif e.err == QuoteError.DB_ERROR:
                 result += "Database error."
+            elif e.err == QuoteError.ALREADY_EXISTS:
+                result += "Quote already exists."
             else:
                 result += MYSTERY_ERROR
 
