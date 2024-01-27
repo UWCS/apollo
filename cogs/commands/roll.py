@@ -80,7 +80,9 @@ class Roll(commands.Cog):
         try:
             result = await asyncio.wait_for(future, DICE_TIMEOUT)
         except asyncio.TimeoutError:
-            result = TIMEOUT_OUT.format(ping=display_name, error=f"Ran out of time ({DICE_TIMEOUT}s)!")
+            result = TIMEOUT_OUT.format(
+                ping=display_name, error=f"Ran out of time ({DICE_TIMEOUT}s)!"
+            )
 
         await ctx.reply(result)
 
@@ -93,7 +95,9 @@ class Roll(commands.Cog):
         try:
             result = await asyncio.wait_for(future, DICE_TIMEOUT)
         except asyncio.TimeoutError:
-            result = TIMEOUT_OUT.format(ping=int.user.display_name, error=f"Ran out of time ({DICE_TIMEOUT}s)!")
+            result = TIMEOUT_OUT.format(
+                ping=int.user.display_name, error=f"Ran out of time ({DICE_TIMEOUT}s)!"
+            )
 
         await int.response.send_message(result)
 
