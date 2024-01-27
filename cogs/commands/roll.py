@@ -72,7 +72,6 @@ class Roll(commands.Cog):
         help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"], rest_is_raw=True
     )
     async def roll(self, ctx: Context, *, message: clean_content):
-        loop = asyncio.get_event_loop()
         display_name = get_name_string(ctx.message)
         p = await Parallelism.get(self.bot)
         future = p.execute_on_process(run, message, display_name)
@@ -88,7 +87,6 @@ class Roll(commands.Cog):
 
     @app_commands.command(name="roll", description=SHORT_HELP_TEXT)
     async def roll_slash(self, int: discord.Interaction, dice: str):
-        loop = asyncio.get_event_loop()
         p = await Parallelism.get(self.bot)
         future = p.execute_on_process(run, dice, int.user.display_name)
 
