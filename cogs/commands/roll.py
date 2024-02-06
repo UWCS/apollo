@@ -56,6 +56,13 @@ INTERNAL_OUT = """
 {body}
 """
 
+TIMEOUT_OUT = """
+:hourglass: **DICE OUTTATIME** :hourglass:
+{ping} - **{error}**
+"""
+
+DICE_TIMEOUT = 3.0  # seconds
+
 
 class Roll(commands.Cog):
     def __init__(self, bot: Bot):
@@ -65,24 +72,32 @@ class Roll(commands.Cog):
         help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, aliases=["r"], rest_is_raw=True
     )
     async def roll(self, ctx: Context, *, message: clean_content):
-        loop = asyncio.get_event_loop()
         display_name = get_name_string(ctx.message)
-
-        def work():
-            return run(message, display_name)
-
         p = await Parallelism.get(self.bot)
-        p.send_to_ctx_after_threaded(work, ctx, loop)
+        future = p.execute_on_process(run, message, display_name)
+
+        try:
+            result = await asyncio.wait_for(future, DICE_TIMEOUT)
+        except asyncio.TimeoutError:
+            result = TIMEOUT_OUT.format(
+                ping=display_name, error=f"Ran out of time ({DICE_TIMEOUT}s)!"
+            )
+
+        await ctx.reply(result)
 
     @app_commands.command(name="roll", description=SHORT_HELP_TEXT)
     async def roll_slash(self, int: discord.Interaction, dice: str):
-        loop = asyncio.get_event_loop()
-
-        def work():
-            return run(dice, "")
-
         p = await Parallelism.get(self.bot)
-        p.send_to_int_after_threaded(work, int, loop)
+        future = p.execute_on_process(run, dice, int.user.display_name)
+
+        try:
+            result = await asyncio.wait_for(future, DICE_TIMEOUT)
+        except asyncio.TimeoutError:
+            result = TIMEOUT_OUT.format(
+                ping=int.user.display_name, error=f"Ran out of time ({DICE_TIMEOUT}s)!"
+            )
+
+        await int.response.send_message(result)
 
 
 def run(message, display_name):
