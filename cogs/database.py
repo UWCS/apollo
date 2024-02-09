@@ -75,7 +75,7 @@ class Database(Cog):
                 if search(r"https?://(twitter\.com|x\.com)", message.content):
                     # if a twitter link, process it
                     send_message = ""
-                    sentance = message.content.split(" ")  # split into words
+                    sentance = message.content.replace("\n", " ").split(" ")
                     for word in sentance:
                         # if any word contains a twitter link replace with fxtwitter
                         if search(r"https?://(twitter\.com|x\.com)", word):
