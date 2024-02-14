@@ -19,7 +19,7 @@ COPY .git .git
 RUN echo $(git rev-parse --short HEAD) > .version
 RUN echo $(date -Is) >> .version
 
-FROM python:3.12.0b1-slim AS runtime
+FROM python:3.10-slim AS runtime
 
 WORKDIR /app
 
