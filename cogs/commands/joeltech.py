@@ -1,5 +1,5 @@
 from discord.ext import commands
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, clean_content
 
 LONG_HELP_TEXT = """
 Summon the Joel of the Tech.
@@ -14,8 +14,8 @@ class JoelTech(commands.Cog):
         self.bot = bot
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def joeltech(self, ctx: Context):
-        await ctx.send("<@690594780195061760> <:joel_tech:1217584610029076480>")
+    async def joeltech(self, ctx: Context, *, message: clean_content):
+        await ctx.send("<:joel_tech:1217584610029076480>")
 
 
 async def setup(bot: Bot):
