@@ -27,11 +27,13 @@ EXTENSIONS = [
     "cogs.commands.date",
     "cogs.commands.event_sync",
     "cogs.commands.flip",
+    "cogs.commands.joeltech",
     "cogs.commands.karma_admin",
     "cogs.commands.karma_blacklist",
     "cogs.commands.karma",
     "cogs.commands.lcalc",
     "cogs.commands.misc",
+    "cogs.commands.onmessage",
     "cogs.commands.openaiadmin",
     "cogs.commands.quotes",
     "cogs.commands.rolemenu",
@@ -50,7 +52,6 @@ EXTENSIONS = [
     "cogs.irc",
     "cogs.parallelism",
     "cogs.welcome",
-    "cogs.commands.joeltech",
 ]
 
 

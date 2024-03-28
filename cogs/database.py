@@ -1,5 +1,5 @@
 import logging
-from re import search, sub
+from re import search
 
 from discord import Message
 from discord.abc import GuildChannel
@@ -69,55 +69,6 @@ class Database(Cog):
                     )
                     if reply:
                         await message.channel.send(reply)
-                if "t" in message.content.lower():
-                    # if maybe some kind of thanks, process it
-                    await self.process_thanks(message)
-                if search(r"https?://(twitter\.com|x\.com)", message.content):
-                    # if a twitter link, process it
-                    send_message = ""
-                    sentance = message.content.replace("\n", " ").split(" ")
-                    for word in sentance:
-                        # if any word contains a twitter link replace with fxtwitter
-                        if search(r"https?://(twitter\.com|x\.com)", word):
-                            send_message += "\n" + sub(
-                                r"https?://(twitter\.com|x\.com)",
-                                "https://fxtwitter.com",
-                                word,
-                            )
-                    # if there is a message to send, send it
-                    if send_message != "":
-                        await message.edit(suppress=True)
-                        await message.reply(send_message)
-
-    async def process_thanks(self, message: Message):
-        # to whoever sees this, you're welcome for the not having a fuck off massive indented if
-        if message.author.id == self.bot.user.id:
-            # dont thank itself
-            return
-        # Get the previous message (list comprehension my beloved)
-        previous_message = [
-            message async for message in message.channel.history(limit=2)
-        ][1]
-        if message.reference and message.reference.message_id:
-            # dont thank replies to something that isnt the bot
-            replied_message = await message.channel.fetch_message(
-                message.reference.message_id
-            )
-            if replied_message.author != self.bot.user.id:
-                return
-        elif (
-            previous_message.author.id != self.bot.user.id
-            and "apollo" not in message.content.lower()
-        ):
-            # can only thank replies to bot
-            return
-        thanks = ["thx", "thanks", "thank you", "ty"]
-        # only heart if thanks matches word in message
-        if not any(
-            search(r"\b" + thank + r"\b", message.content.lower()) for thank in thanks
-        ):
-            return
-        return await message.add_reaction("💜")
 
 
 async def setup(bot: Bot):
