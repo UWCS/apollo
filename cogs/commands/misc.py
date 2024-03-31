@@ -1,7 +1,11 @@
 import random
+import tempfile
 
+from discord import File
 from discord.ext import commands
-from discord.ext.commands import Bot, Context
+from discord.ext.commands import Bot, Context, check
+
+from utils import is_compsoc_exec_in_guild
 
 
 class Misc(commands.Cog):
@@ -123,6 +127,30 @@ class Misc(commands.Cog):
         await ctx.send(
             "Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?"
         )
+
+    @commands.hybrid_command()
+    @check(is_compsoc_exec_in_guild)
+    async def scrapegeneral(self, ctx: Context):
+        # get general channel by id
+        general = ctx.guild.get_channel(189453139584221185)
+        # get all messages and send as txt file
+        messages = []
+        numfiles = 0
+        async for message in general.history(limit=None):
+            messages.append(message.content)
+            if len(messages) % 10000 == 0:
+                await ctx.send(f"Scraped {len(messages)}/~288,993s messages")
+                with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+                    f.write("\n".join(messages))
+                file = File(f.name, filename=f"general{numfiles}.txt")
+                numfiles += 1
+                await ctx.send(file=file)
+                messages = []
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
+            f.write("\n".join(messages))
+        file = File(f.name, filename=f"general{numfiles}.txt")
+        await ctx.send(file=file)
+        return await ctx.send("Scraped all messages :)")
 
 
 async def setup(bot: Bot):
