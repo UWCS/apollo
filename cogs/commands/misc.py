@@ -133,7 +133,7 @@ class Misc(commands.Cog):
     async def chat(self, ctx: Context, message: str = None, gpt4: bool = False):
         message = self.model.make_sentence()
         translated = (
-            GoogleTranslator(source="en", target="en").translate(message)
+            GoogleTranslator(source="en", target="fr").translate(message)
             if gpt4
             else message
         )
