@@ -1,6 +1,7 @@
 import random
 
 import markovify
+from deep_translator import GoogleTranslator
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
@@ -129,8 +130,18 @@ class Misc(commands.Cog):
         )
 
     @commands.hybrid_command()
-    async def chat(self, ctx: Context, message: str = None):
-        await ctx.send(self.model.make_sentence())
+    async def chat(self, ctx: Context, message: str = None, gpt4: bool = False):
+        message = self.model.make_sentence()
+        translated = (
+            GoogleTranslator(source="en", target="en").translate(message)
+            if gpt4
+            else message
+        )
+        await ctx.send(translated)
+
+    @commands.hybrid_command()
+    async def gpt4(self, ctx: Context, message: str):
+        await self.chat(ctx, message, True)
 
 
 async def setup(bot: Bot):
