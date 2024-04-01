@@ -1,6 +1,6 @@
 import random
-import markovify
 
+import markovify
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
