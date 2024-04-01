@@ -1,4 +1,5 @@
 import random
+import markovify
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
@@ -7,6 +8,9 @@ from discord.ext.commands import Bot, Context
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        with open("general.txt") as f:
+            text = f.read()
+        self.model = markovify.Text(text)
 
     @commands.hybrid_command()
     async def zed0(self, ctx: Context):
@@ -123,6 +127,10 @@ class Misc(commands.Cog):
         await ctx.send(
             "Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?"
         )
+
+    @commands.hybrid_command()
+    async def chat(self, ctx: Context, message: str = None):
+        await ctx.send(self.model.make_sentence())
 
 
 async def setup(bot: Bot):
