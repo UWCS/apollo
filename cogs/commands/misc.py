@@ -143,6 +143,31 @@ class Misc(commands.Cog):
     async def gpt4(self, ctx: Context, message: str):
         await self.chat(ctx, message, True)
 
+    translateHelp = """
+            Translate a message from one language (source) to another (target)
+
+            To reply translate, ignore the message parameter
+
+    """
+
+    @commands.hybrid_command(
+        help=translateHelp, brief="translate text from one language to another"
+    )
+    async def translate(
+        self,
+        ctx: Context,
+        source: str = "auto",
+        target: str = "en",
+        *,
+        message: str = "<Empty Message>",
+    ):
+        repliedMessage = ctx.message.reference
+        if repliedMessage is not None:
+            message = await ctx.channel.fetch_message(repliedMessage.message_id)
+            message = message.content
+        translated = GoogleTranslator(source=source, target=target).translate(message)
+        await ctx.send(translated)
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Misc(bot))
