@@ -170,3 +170,4 @@ tmp/
 *.sqlite3
 
 /resources/rooms/images
+general.txt
