@@ -3,7 +3,7 @@ import random
 import markovify
 from deep_translator import GoogleTranslator
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context
 
 
 class Misc(commands.Cog):
@@ -143,16 +143,30 @@ class Misc(commands.Cog):
     async def gpt4(self, ctx: Context, message: str):
         await self.chat(ctx, message, True)
 
-    @commands.hybrid_command()
+    translateHelp = """
+            Translate a message from one language (source) to another (target)
+
+            To reply translate, ignore the message parameter
+
+    """
+
+    @commands.hybrid_command(
+        help=translateHelp, brief="translate text from one language to another"
+    )
     async def translate(
-        self, ctx: Context, source: str, target: str, message: clean_content
+        self,
+        ctx: Context,
+        source: str = "auto",
+        target: str = "en",
+        *,
+        message: str = "<Empty Message>",
     ):
+        repliedMessage = ctx.message.reference
+        if repliedMessage is not None:
+            message = await ctx.channel.fetch_message(repliedMessage.message_id)
+            message = message.content
         translated = GoogleTranslator(source=source, target=target).translate(message)
         await ctx.send(translated)
-
-    @commands.hybrid_command()
-    async def joeltech(self, ctx: Context):
-        await ctx.send("<:joel_tech:1217584610029076480>")
 
 
 async def setup(bot: Bot):
