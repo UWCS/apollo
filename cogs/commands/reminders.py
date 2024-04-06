@@ -158,7 +158,7 @@ class Reminders(commands.Cog):
             db_session.commit()
             gran = precisedelta(CONFIG.REMINDER_SEARCH_INTERVAL, minimum_unit="seconds")
             return {
-                "content": f"Reminder prepared for <t:{int(reminder.trigger_at.timestamp())}:R> (granularity is {gran})."
+                "content": f"Reminder {reminder.id} prepared for <t:{int(reminder.trigger_at.timestamp())}:R> (granularity is {gran})."
             }
         except (ScalarListException, SQLAlchemyError) as e:
             db_session.rollback()
