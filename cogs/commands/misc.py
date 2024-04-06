@@ -129,29 +129,19 @@ class Misc(commands.Cog):
             "Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?"
         )
 
+    # April Fools' Day 2024
     @commands.hybrid_command()
-    async def chat(self, ctx: Context, message: str = None, gpt4: bool = False):
-        message = self.model.make_sentence()
-        translated = (
-            GoogleTranslator(source="en", target="fr").translate(message)
-            if gpt4
-            else message
-        )
-        await ctx.send(translated)
+    async def markov(self, ctx: Context):
+        """Generate a sentence using a markov chain model"""
+        await ctx.send(self.model.make_sentence())
 
-    @commands.hybrid_command()
-    async def gpt4(self, ctx: Context, message: str):
-        await self.chat(ctx, message, True)
-
-    translateHelp = """
+    translate_help = """
             Translate a message from one language (source) to another (target)
 
-            To reply translate, ignore the message parameter
-
-    """
+            To reply translate, ignore the message parameter """
 
     @commands.hybrid_command(
-        help=translateHelp, brief="translate text from one language to another"
+        help=translate_help, brief="translate text from one language to another"
     )
     async def translate(
         self,
@@ -161,9 +151,9 @@ class Misc(commands.Cog):
         *,
         message: str = "<Empty Message>",
     ):
-        repliedMessage = ctx.message.reference
-        if repliedMessage is not None:
-            message = await ctx.channel.fetch_message(repliedMessage.message_id)
+        replied_message = ctx.message.reference
+        if replied_message is not None:
+            message = await ctx.channel.fetch_message(replied_message.message_id)
             message = message.content
         translated = GoogleTranslator(source=source, target=target).translate(message)
         await ctx.send(translated)

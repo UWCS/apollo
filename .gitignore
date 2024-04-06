@@ -170,3 +170,7 @@ tmp/
 *.sqlite3
 
 /resources/rooms/images
+<<<<<<< HEAD
+=======
+general.txt
+>>>>>>> db6fc055b9066ccb04535037c5dce6f094464a58
