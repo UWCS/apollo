@@ -27,6 +27,7 @@ secret_key = CONFIG.BOT_SECRET_KEY
 if secret_key is None:
     raise Exception("Set a secret key in config.yaml")
 
+
 # These models are defined so that SQLAlchemy can find the foreign keys
 class User(Base):
     __tablename__ = "users"
