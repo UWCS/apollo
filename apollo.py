@@ -27,6 +27,7 @@ EXTENSIONS = [
     "cogs.commands.date",
     "cogs.commands.event_sync",
     "cogs.commands.flip",
+    "cogs.commands.f1",
     "cogs.commands.karma_admin",
     "cogs.commands.karma_blacklist",
     "cogs.commands.karma",
