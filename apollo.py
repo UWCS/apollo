@@ -34,7 +34,7 @@ EXTENSIONS = [
     "cogs.commands.misc",
     "cogs.commands.onmessage",
     "cogs.commands.openaiadmin",
-    "cogs.commands.quotes",
+    # "cogs.commands.quotes",
     "cogs.commands.rolemenu",
     "cogs.commands.reminders",
     "cogs.commands.roll",
