@@ -29,6 +29,7 @@ psycopg = {extras = ["binary"], version = "~=3.1"}
 pytimeparse = "*"
 markovify = "*"
 deep-translator = "*"
+feedparser = "*"
 
 [dev-packages]
 black = "~=22.12"
