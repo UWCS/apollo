@@ -159,6 +159,20 @@ class Reminders(commands.Cog):
         else:
             await ctx.send("I couldn't delete the reminder you asked for")
 
+    @reminder.command()
+    async def clear(self, ctx: Context):
+        """
+        Removes all your reminders.
+        """
+        author = utils.get_database_user(ctx.author)
+        reminders = (
+            db_session.query(Reminder)
+            .filter(Reminder.user_id == author.id)
+            .delete(synchronize_session=False)
+        )
+        db_session.commit()
+        await ctx.send(f"Deleted {reminders} reminders.")
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Reminders(bot))
