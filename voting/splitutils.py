@@ -1,6 +1,6 @@
 import _csv
-import re
 from csv import QUOTE_ALL, Sniffer, reader
+import re
 from typing import List
 
 
