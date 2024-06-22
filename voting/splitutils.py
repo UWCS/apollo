@@ -1,8 +1,7 @@
+import _csv
 import re
 from csv import QUOTE_ALL, Sniffer, reader
 from typing import List
-
-import _csv
 
 
 # Customized sniffer with custom delimiter order
