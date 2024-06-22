@@ -110,6 +110,39 @@ class Reminders(commands.Cog):
             return {"content": "Something went wrong with the database"}
 
     @reminder.command()
+    async def edit(
+        self,
+        ctx: Context,
+        reminder_id: int,
+        *,
+        new_time: str = None,
+        new_content: str = None,
+    ):
+        """
+        Edits a reminder specified via id.
+        The id is found through !reminder list
+        """
+        result = db_session.query(Reminder).where(Reminder.id == reminder_id).first()
+        author_id = utils.get_database_user(ctx.author).id
+
+        if result and result.user_id == author_id:
+            if new_time:
+                new_time = parse_time(new_time)
+                if not new_time:
+                    return await ctx.send(
+                        "I just flat out did not understand what you meant with that time"
+                    )
+                if new_time < datetime.now(timezone("Europe/London")):
+                    return await ctx.send("That time is in the past.")
+                result.trigger_at = new_time
+            if new_content:
+                result.reminder_content = new_content
+            db_session.commit()
+            await ctx.send("Reminder edited!")
+        else:
+            await ctx.send("I couldn't edit the reminder you asked for")
+
+    @reminder.command()
     async def list(self, ctx: Context):
         """
         Lists all your reminders upcoming
