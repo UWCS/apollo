@@ -20,7 +20,7 @@ Apollo is smarter than you think...
 
 GPT will be given the full chain of replied messages, *it does not look at latest messages*.
 If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to that.
-This defaults to GPT3.5, if you need GPT4, use `--gpt4` to switch (will inherit down conversation)
+This defaults to gpt3.5, if you need gpt4o, use `--gpt4` to switch (will inherit down conversation)
 """
 
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
@@ -164,7 +164,7 @@ class ChatGPT(commands.Cog):
         logging.info(f"Making OpenAI request: {messages}")
 
         # Make request
-        model = "gpt-4" if gpt4 else self.model
+        model = "gpt-4o" if gpt4 else self.model
         response = await openai.ChatCompletion.acreate(model=model, messages=messages)
         logging.info(f"OpenAI Response: {response}")
 
