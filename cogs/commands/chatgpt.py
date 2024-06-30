@@ -57,8 +57,8 @@ class ChatGPT(commands.Cog):
     @commands.hybrid_command(
         help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, usage="[--gpt4] <message ...>"
     )
-    async def chat(self, ctx: Context, *, message: Optional[str] = None):
-        await self.cmd(ctx)
+    async def chat(self, ctx: Context, message: str):
+        await self.cmd(ctx, message)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -78,12 +78,16 @@ class ChatGPT(commands.Cog):
         ctx = await self.bot.get_context(message)
         await self.cmd(ctx)
 
-    async def cmd(self, ctx: Context):
+    async def cmd(self, ctx: Context, message: Optional[str] = None):
         if not await is_author_banned_openai(ctx):
             return
 
         # Create history chain
-        messages, gpt4 = await self.create_history(ctx.message)
+        messages, gpt4 = (
+            await self.create_history(message, ctx)
+            if message
+            else await self.create_history(ctx.message)
+        )
         if not messages or await self.in_cooldown(ctx):
             return
 
@@ -91,16 +95,18 @@ class ChatGPT(commands.Cog):
         async with ctx.typing():
             response = await self.dispatch_api(messages, gpt4)
             if response:
-                prev = ctx.message
+                prev = ctx
                 for content in split_into_messages(response):
                     prev = await prev.reply(content, allowed_mentions=mentions)
 
-    async def create_history(self, message):
+    async def create_history(self, message, ctx=None):
         message_chain = await self.get_message_chain(message)
         gpt4 = False
 
         # If a message in the chain triggered a !chat or !prompt or /chat
         def is_cmd(m):
+            if isinstance(m, str):
+                return True
             return (
                 m.content.startswith(chat_cmd)
                 or m.content.startswith(prompt_cmd)
@@ -112,7 +118,11 @@ class ChatGPT(commands.Cog):
             return
 
         # If first message starts with !prompt use that for initial
-        initial_msg = message_chain[0].content
+        initial_msg = (
+            message_chain[0]
+            if isinstance(message_chain[0], str)
+            else message_chain[0].content
+        )
         if initial_msg.startswith(prompt_cmd):
             initial = clean(initial_msg, prompt_cmd)
             if initial.startswith("--gpt4"):
@@ -125,16 +135,27 @@ class ChatGPT(commands.Cog):
 
         # Convert to dict form for request
         for msg in message_chain:
-            role = "assistant" if msg.author == self.bot.user else "user"
+            role = (
+                "user"
+                if isinstance(msg, str)
+                else "assistant" if msg.author == self.bot.user else "user"
+            )
             # Skip empty messages (if you want to invoke on a pre-existing chain)
-            if not (content := clean(msg.clean_content, chat_cmd)):
+            content = msg if isinstance(msg, str) else msg.clean_content
+            if not (content := clean(content, chat_cmd)):
                 continue
             if content.startswith("--gpt4"):
                 gpt4 = True
                 content = clean(content, "--gpt4")
             # Add name to start of message for user msgs
-            if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
-                name, content = get_name_and_content(msg)
+            if CONFIG.AI_INCLUDE_NAMES and (
+                isinstance(msg, str) or msg.author != self.bot.user
+            ):
+                name, content = (
+                    get_name_and_content(msg)
+                    if not isinstance(msg, str)
+                    else (ctx.author.display_name, content)
+                )
                 content = f"{name}: {clean(content, chat_cmd, '--gpt4')}"
 
             messages.append(dict(role=role, content=content))
@@ -177,13 +198,15 @@ class ChatGPT(commands.Cog):
         return reply
 
     async def get_message_chain(
-        self, message: discord.Message
-    ) -> list[discord.Message]:
+        self, message: discord.Message | str
+    ) -> list[discord.Message | str]:
         """
         Traverses a chain of replies to get a thread of chat messages between a user and Apollo.
         """
         if message is None:
             return []
+        if isinstance(message, str):
+            return [message]
         previous = await self.fetch_previous(message)
         return (await self.get_message_chain(previous)) + [message]
 
