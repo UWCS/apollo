@@ -100,6 +100,7 @@ class ChatGPT(commands.Cog):
                     prev = await prev.reply(content, allowed_mentions=mentions)
 
     async def create_history(self, message, ctx=None):
+        # if message is string then slash command
         message_chain = await self.get_message_chain(message)
         gpt4 = False
 
@@ -137,11 +138,11 @@ class ChatGPT(commands.Cog):
         for msg in message_chain:
             role = (
                 "user"
-                if isinstance(msg, str)
+                if isinstance(msg, str)  # slash commands will always be users
                 else "assistant" if msg.author == self.bot.user else "user"
             )
-            # Skip empty messages (if you want to invoke on a pre-existing chain)
             content = msg if isinstance(msg, str) else msg.clean_content
+            # Skip empty messages (if you want to invoke on a pre-existing chain)
             if not (content := clean(content, chat_cmd)):
                 continue
             if content.startswith("--gpt4"):
