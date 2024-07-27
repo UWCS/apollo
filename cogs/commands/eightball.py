@@ -1,7 +1,6 @@
-import random
-import shlex
-import string
-from typing import List
+from random import Random
+from shlex import split
+from typing import List, Optional
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
@@ -16,20 +15,24 @@ SHORT_HELP_TEXT = """Asks a question to a Magic 8-ball"""
 
 
 class EightBall(commands.Cog):
-    def __init__(self, bot: Bot, options: List[string]):
+    def __init__(self, bot: Bot, random: Random, options: List[str]):
         self.bot = bot
+        self.random = random
         self.options = options
 
+    def execute(self, author: str, args: List[str]) -> Optional[str]:
+        if len(args) <= 1:
+            return f"{author}: You must pose the Magic 8-ball a dilemma!"
+        else:
+            return f"{author}: {(self.random.choice(self.options))}"
+
     @commands.hybrid_command(name="8ball", help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def execute(self, ctx: Context, *, args: str = ""):
+    async def eight_ball(self, ctx: Context, *, args: str = ""):
         args = await clean_content().convert(ctx, args)
-        args = shlex.split(args)
         display_name = get_name_string(ctx.message)
 
-        if len(args) == 1:
-            await ctx.send(f"You must pose the Magic 8-ball a dilemma {display_name}!")
-        else:
-            await ctx.send(f"{display_name}: {(random.choice(self.options))}")
+        if response := self.execute(display_name, split(args)):
+            await ctx.send(response)
 
 
 async def setup(bot: Bot):
@@ -59,4 +62,4 @@ async def setup(bot: Bot):
         "Very doubtful",
     ]
 
-    await bot.add_cog(EightBall(bot, options))
+    await bot.add_cog(EightBall(bot, Random(), options))
