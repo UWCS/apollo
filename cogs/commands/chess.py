@@ -8,6 +8,10 @@ import chess.svg
 from io import StringIO, BytesIO
 from cairosvg import svg2png
 
+from PIL import Image as PilImage
+from PIL.PngImagePlugin import PngInfo
+
+
 
 
 LONG_HELP_TEXT = """
@@ -23,20 +27,26 @@ class Chess(commands.Cog):
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def chess(self, ctx: Context, *, pgn: str):
-        print(pgn)
-        pgn = StringIO(pgn)
-        game = chess.pgn.read_game(pgn)
+        
+        pgnIO = StringIO(pgn)
+        
+        game = chess.pgn.read_game(pgnIO)
         board = game.board()
+        
         for move in game.mainline_moves():
-            # print(board.san(move))
             board.push(move)
+        
         svg_board = chess.svg.board(board)
+        bytesImage = BytesIO(svg2png(bytestring=svg_board))
+        img = PilImage.open(bytesImage)
 
-        img = BytesIO(svg2png(bytestring=svg_board))
+        # metadata = PngInfo()
+        # metadata.add_text("MyNewString", pgn)
+        bytesImg = BytesIO() 
+        img.save(bytesImg, format='PNG')
+        print(bytesImg)
+        img_file= File(bytesImg, filename="chess.png")
 
-        # print(img)
-        # img = open("chess.png", "rb")
-        img_file= File(img, filename="chess.png")
         await ctx.send(file=img_file)
 
     # def load_game(self, pgn):
