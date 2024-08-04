@@ -1,16 +1,14 @@
-from discord.ext import commands
 import logging
 from typing import Optional
 
-from discord.ext.commands import Bot, Context, clean_content
-from cogs.commands.openaiadmin import is_author_banned_openai
-from discord import AllowedMentions
-
-from config import CONFIG
-from discord import AllowedMentions
-from utils.utils import get_name_and_content, split_into_messages
-
 import openai
+from discord import AllowedMentions
+from discord.ext import commands
+from discord.ext.commands import Bot, Context
+
+from cogs.commands.openaiadmin import is_author_banned_openai
+from config import CONFIG
+from utils.utils import split_into_messages
 
 LONG_HELP_TEXT = """
 Too much yapping? Summarise what people have said using the power of the GPT overlords!
@@ -28,6 +26,7 @@ def clean(msg, *prefixes):
         msg = msg.strip().removeprefix(pre)
     return msg.strip()
 
+
 class Summarise(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -36,14 +35,16 @@ class Summarise(commands.Cog):
         self.system_prompt = "People yap too much, I don't want to read all of it. In 200 words or less give me the gist of what is being said. Note that the messages are in reverse chronological order:"
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def tldr(self, ctx: Context, number_of_messages: int=100, gpt4: bool=False ):
+    async def tldr(
+        self, ctx: Context, number_of_messages: int = 100, gpt4: bool = False
+    ):
         number_of_messages = 400 if number_of_messages > 400 else number_of_messages
 
         # avoid banned users
         if not await is_author_banned_openai(ctx):
             return
 
-        # get the last "number_of_messages" messages from the current channel and build the prompt 
+        # get the last "number_of_messages" messages from the current channel and build the prompt
         curr_channel = ctx.guild.get_channel(ctx.channel.id)
         messages = curr_channel.history(limit=number_of_messages)
         messages = await self.create_message(messages)
@@ -55,7 +56,6 @@ class Summarise(commands.Cog):
                 prev = ctx.message
                 for content in split_into_messages(response):
                     prev = await prev.reply(content, allowed_mentions=mentions)
-
 
     async def dispatch_api(self, messages, gpt4) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
@@ -72,19 +72,19 @@ class Summarise(commands.Cog):
             reply = clean(reply, "Apollo: ", "apollo: ", name)
         return reply
 
-
     async def create_message(self, message_chain):
         # get initial prompt
         initial = self.system_prompt + "\n"
-        
+
         # for each message, append it to the prompt as follows --- author : message \n
         async for msg in message_chain:
             if CONFIG.AI_INCLUDE_NAMES and msg.author != self.bot.user:
-                initial+= msg.author.name + ":" + msg.content + "\n"
+                initial += msg.author.name + ":" + msg.content + "\n"
 
         messages = [dict(role="system", content=initial)]
 
         return messages
+
 
 async def setup(bot: Bot):
     await bot.add_cog(Summarise(bot))
