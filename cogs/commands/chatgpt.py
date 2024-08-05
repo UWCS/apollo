@@ -20,7 +20,7 @@ Apollo is smarter than you think...
 
 GPT will be given the full chain of replied messages, *it does not look at latest messages*.
 If you want to set a custom initial prompt, use `!prompt <prompt>` then reply to that.
-This defaults to gpt3.5, if you need gpt4o, use `--gpt4` to switch (will inherit down conversation)
+This defaults to gpt 4o mini, if you need gpt4o full, use `--full` to switch (will inherit down conversation)
 """
 
 SHORT_HELP_TEXT = "Apollo is smarter than you think..."
@@ -41,7 +41,7 @@ class ChatGPT(commands.Cog):
         self.bot = bot
 
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.model = "gpt-3.5-turbo"
+        self.model = "gpt-4o-mini"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon."
@@ -55,7 +55,7 @@ class ChatGPT(commands.Cog):
         await ctx.message.add_reaction("✅")
 
     @commands.hybrid_command(
-        help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, usage="[--gpt4] <message ...>"
+        help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, usage="[--full] <message ...>"
     )
     async def chat(self, ctx: Context, message: str):
         await self.cmd(ctx, message)
@@ -126,9 +126,9 @@ class ChatGPT(commands.Cog):
         )
         if initial_msg.startswith(prompt_cmd):
             initial = clean(initial_msg, prompt_cmd)
-            if initial.startswith("--gpt4"):
+            if initial.startswith("--full"):
                 gpt4 = True
-                initial = clean(initial, "--gpt4")
+                initial = clean(initial, "--full")
             message_chain = message_chain[1:]
         else:
             initial = self.system_prompt
@@ -145,9 +145,9 @@ class ChatGPT(commands.Cog):
             # Skip empty messages (if you want to invoke on a pre-existing chain)
             if not (content := clean(content, chat_cmd)):
                 continue
-            if content.startswith("--gpt4"):
+            if content.startswith("--full"):
                 gpt4 = True
-                content = clean(content, "--gpt4")
+                content = clean(content, "--full")
             # Add name to start of message for user msgs
             if CONFIG.AI_INCLUDE_NAMES and (
                 isinstance(msg, str) or msg.author != self.bot.user
@@ -157,7 +157,7 @@ class ChatGPT(commands.Cog):
                     if not isinstance(msg, str)
                     else (ctx.author.display_name, content)
                 )
-                content = f"{name}: {clean(content, chat_cmd, '--gpt4')}"
+                content = f"{name}: {clean(content, chat_cmd, '--full')}"
 
             messages.append(dict(role=role, content=content))
         return messages, gpt4
