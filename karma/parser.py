@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-from parsita import TextParsers, opt, reg, rep
+from parsita import ParserContext, opt, reg, rep
 from parsita.util import constant
 
 from utils.utils import filter_out_none
@@ -50,7 +50,7 @@ def make_op_regex(o):
     return rf"{non_op_pre}{o}{non_op_post}{allowed_post}"
 
 
-class KarmaParser(TextParsers):
+class KarmaParser(ParserContext):
     anything = reg(r".") > constant(None)
 
     word_topic = reg(r'[^"\s]+?(?=[+-]{2})')

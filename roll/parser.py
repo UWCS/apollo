@@ -1,7 +1,7 @@
 # ruff:  noqa: F821 some abuse of python's binding mechanism goes on here I think
 import re
 
-from parsita import ParseError, TextParsers, lit, opt, reg, rep, rep1, rep1sep, repsep
+from parsita import ParserContext, ParseError, lit, opt, reg, rep, rep1, rep1sep, repsep
 from parsita.util import constant
 
 from roll.ast import (
@@ -127,7 +127,7 @@ def function(xs):
     return Assignment(xs[0], xs[1])
 
 
-class ProgramParser(TextParsers):
+class ProgramParser(ParserContext):
     # Actual grammar
     def split1(item, separator):
         return item & rep(separator & item)
@@ -202,7 +202,7 @@ class ProgramParser(TextParsers):
     main = program
 
 
-class DiscordParser(TextParsers):
+class DiscordParser(ParserContext):
     """Removes surrounding code blocks before the program can reach the main parser"""
 
     main = (

@@ -14,6 +14,7 @@ class ArgSniffer(Sniffer):
 # Default delimiter order
 delimiters = ["\n", ";", ",", " "]
 
+
 # Split voting choice arguments
 def split_args(input: str, dels=None) -> List[str]:
     if dels is None:

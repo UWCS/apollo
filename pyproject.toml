@@ -1,58 +1,35 @@
-[tool.black]
-line-length = 88
-target_version = ['py310']
-include = '\.pyi?$'
-exclude = '''
+[tool.poetry]
+name = "apollo"
+version = "0.1.0"
+description = "UWCS Discord Bot"
+authors = ["UWCS Warwick <tech@uwcs.co.uk>"]
+readme = "README.md"
 
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | env
-    | _build
-    | buck-out
-    | build
-    | dist
-    | .venv
-    | venv
-  )/
-)
-'''
+[tool.poetry.dependencies]
+python = "^3.12"
+discord-py = "^2.4.0"
+pyyaml = "^6.0.1"
+dateparser = "^1.2.0"
+sqlalchemy = "^2.0.31"
+sqlalchemy-utils = "^0.41.2"
+psycopg = {extras = ["binary"], version = "^3.2.1"}
+parsita = "^2.1.1"
+beautifulsoup4 = "^4.12.3"
+markdown = "^3.6"
+humanize = "^4.10.0"
+markovify = "^0.9.4"
+pillow = "^10.4.0"
+deep-translator = "^1.11.4"
+matplotlib = "^3.9.0"
+openai = "^1.39.0"
+icalendar = "^5.0.13"
 
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra"
-testpaths = ["tests"]
-python_files = "test_*.py"
-
-[tool.pyright]
-pythonVersion = "3.10"
-pythonPlatform = "Linux"
-ignore = [
-  "cogs/**/*",               # everything, cut this down over time
-  "karma/**/*",
-  "migrations/versions",
-  "utils/announce_utils.py",
-  "roll/**/*",
-  "tests/**/*",
-  "voting/**/*",
-  "utils/custom_help.py",
-]
-# https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
-
-typeCheckingMode = "strict"
-useLibraryCodeForTypes = true
-reportMissingTypeStubs = false
-reportImportCycles = false         # this is actually a big issue but the bad module structure makes it hard to resolve
-reportMissingParameterType = false
+[tool.poetry.scripts]
+apollo = "apollo:entrypoint"
 
 [tool.ruff]
-target-version = "py310"
-lint.select = ["E", "F", "I"] # defaults plus isort
-lint.ignore = ["E501"]
+ignore = ["F403"]
 
-exclude = ["migrations/versions/*", "models/__init__.py"]
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -219,9 +219,11 @@ class TokenVariable(IToken):
     def substitute(self, old_to_new):
         return TokenVariable(
             self.name,
-            old_to_new[self.identifier]
-            if self.identifier in old_to_new
-            else self.identifier,
+            (
+                old_to_new[self.identifier]
+                if self.identifier in old_to_new
+                else self.identifier
+            ),
         )
 
     @trace

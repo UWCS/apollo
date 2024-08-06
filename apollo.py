@@ -152,5 +152,10 @@ async def on_command_error(ctx: Context[Bot], error: Exception):
         raise reraise
 
 
-if __name__ == "__main__":
+def entrypoint():
+    """Entrypoint for poetry script"""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    entrypoint()
