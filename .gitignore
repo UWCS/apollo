@@ -171,3 +171,9 @@ tmp/
 
 /resources/rooms/images
 general.txt
+
+# Nix
+/result
+/.direnv
+/.devenv
+/.pre-commit-config.yaml
