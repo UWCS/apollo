@@ -144,7 +144,7 @@ ERROR_TEST_CASES = [
     (r"(-1)d10", rollerr.NegativeDiceCountError),
     (r"2d(-4)", rollerr.NegativeDiceSidesError),
     (r"1$(2->1)", rollerr.CaseFailureError),
-    (r"1/0", rollerr.ZeroDivisionError)
+    (r"1/0", rollerr.ZeroDivisionError),
     # (r"^x=x$x", Loop)
     # (r"^x=x$1", ???)
     # (r"^x=y;y=x$x+y", Loop)

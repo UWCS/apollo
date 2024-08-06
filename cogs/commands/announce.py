@@ -302,7 +302,9 @@ async def preview_edit_menu(
 
     class AcceptButton(ui.Button):
         def __init__(self):
-            super().__init__(label="Accept", emoji="✅", style=discord.ButtonStyle.green)
+            super().__init__(
+                label="Accept", emoji="✅", style=discord.ButtonStyle.green
+            )
 
         async def callback(self, interaction: Interaction):
             global success
