@@ -35,6 +35,8 @@ config:
   portainer_api_key: portainer
   # Liege Chancellor User ID
   liege_chancellor_id: 1234
+  # whether to load general.txt and markov chains
+  markov_enabled: False
 
   # Configuration
   # Level of messages logged to file
