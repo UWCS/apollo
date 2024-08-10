@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -39,9 +40,7 @@ def clean(msg, *prefixes):
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.model = "gpt-4o-mini"
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon."
@@ -57,7 +56,7 @@ class ChatGPT(commands.Cog):
     @commands.hybrid_command(
         help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT, usage="[--full] <message ...>"
     )
-    async def chat(self, ctx: Context, message: str):
+    async def chat(self, ctx: Context, *, message: str):
         await self.cmd(ctx, message)
 
     @commands.Cog.listener()
@@ -76,33 +75,29 @@ class ChatGPT(commands.Cog):
                 return
 
         ctx = await self.bot.get_context(message)
-        await self.cmd(ctx)
+        await self.cmd(ctx, message)
 
-    async def cmd(self, ctx: Context, message: Optional[str] = None):
+    async def cmd(self, ctx: Context, message: str):
         if not await is_author_banned_openai(ctx):
             return
 
         # Create history chain
-        messages, gpt4 = (
-            await self.create_history(message, ctx)
-            if message
-            else await self.create_history(ctx.message)
-        )
+        messages, full = await self.create_history(message, ctx)
         if not messages or await self.in_cooldown(ctx):
             return
 
         # If valid, dispatch to OpenAI and reply
         async with ctx.typing():
-            response = await self.dispatch_api(messages, gpt4)
+            response = await self.dispatch_api(messages, full)
             if response:
                 prev = ctx
                 for content in split_into_messages(response):
                     prev = await prev.reply(content, allowed_mentions=mentions)
 
-    async def create_history(self, message, ctx=None):
+    async def create_history(self, message, ctx):
         # if message is string then slash command
-        message_chain = await self.get_message_chain(message)
-        gpt4 = False
+        message_chain = await self.get_message_chain(message, ctx)
+        full = False
 
         # If a message in the chain triggered a !chat or !prompt or /chat
         def is_cmd(m):
@@ -127,7 +122,7 @@ class ChatGPT(commands.Cog):
         if initial_msg.startswith(prompt_cmd):
             initial = clean(initial_msg, prompt_cmd)
             if initial.startswith("--full"):
-                gpt4 = True
+                full = True
                 initial = clean(initial, "--full")
             message_chain = message_chain[1:]
         else:
@@ -146,21 +141,39 @@ class ChatGPT(commands.Cog):
             if not (content := clean(content, chat_cmd)):
                 continue
             if content.startswith("--full"):
-                gpt4 = True
+                full = True
                 content = clean(content, "--full")
-            # Add name to start of message for user msgs
-            if CONFIG.AI_INCLUDE_NAMES and (
-                isinstance(msg, str) or msg.author != self.bot.user
-            ):
-                name, content = (
-                    get_name_and_content(msg)
-                    if not isinstance(msg, str)
-                    else (ctx.author.display_name, content)
-                )
-                content = f"{name}: {clean(content, chat_cmd, '--full')}"
 
-            messages.append(dict(role=role, content=content))
-        return messages, gpt4
+            if re.match(
+                r"https://cdn.discordapp.com/attachments/\d+/\d+/\w+\.\w+", content
+            ):
+                messages.append(
+                    dict(
+                        role=role,
+                        content=[
+                            {
+                                "type": "image_url",
+                                "image_url": {"url": content, "detail": "low"},
+                            }
+                        ],
+                    )
+                )
+            else:
+                # Add name to start of message for user msgs
+                if CONFIG.AI_INCLUDE_NAMES and (
+                    isinstance(msg, str) or msg.author != self.bot.user
+                ):
+                    name, content = (
+                        get_name_and_content(msg)
+                        if not isinstance(msg, str)
+                        else (ctx.author.display_name, content)
+                    )
+                    content = f"{name}: {clean(content, chat_cmd, '--full')}"
+                messages.append(
+                    dict(role=role, content=[{"type": "text", "text": content}])
+                )
+
+        return messages, full
 
     async def in_cooldown(self, ctx):
         # If is in allowed channel
@@ -182,11 +195,11 @@ class ChatGPT(commands.Cog):
         self.cooldowns[ctx.channel.id] = now
         return False
 
-    async def dispatch_api(self, messages, gpt4) -> Optional[str]:
-        logging.info(f"Making OpenAI request: {messages}")
+    async def dispatch_api(self, messages, full) -> Optional[str]:
 
         # Make request
-        model = "gpt-4o" if gpt4 else self.model
+        logging.info(f"Making OpenAI request: {messages}")
+        model = "gpt-4o" if full else "gpt-4o-mini"
         response = await openai.ChatCompletion.acreate(model=model, messages=messages)
         logging.info(f"OpenAI Response: {response}")
 
@@ -199,17 +212,29 @@ class ChatGPT(commands.Cog):
         return reply
 
     async def get_message_chain(
-        self, message: discord.Message | str
+        self, message: discord.Message | str, ctx: Context
     ) -> list[discord.Message | str]:
         """
         Traverses a chain of replies to get a thread of chat messages between a user and Apollo.
         """
         if message is None:
             return []
-        if isinstance(message, str):
-            return [message]
-        previous = await self.fetch_previous(message)
-        return (await self.get_message_chain(previous)) + [message]
+        previous = (
+            await self.fetch_previous(message)
+            if isinstance(message, discord.Message)
+            else None
+        )
+        append = [message]
+
+        attachments = (
+            message.attachments
+            if isinstance(message, discord.Message)
+            else ctx.message.attachments
+        )
+        for attachment in attachments:
+            if attachment.content_type.startswith("image"):
+                append.append(attachment.url)
+        return (await self.get_message_chain(previous, ctx)) + append
 
     async def fetch_previous(
         self, message: discord.Message
