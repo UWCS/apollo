@@ -17,9 +17,7 @@ Too much yapping? Summarise what people have said using the power of the GPT ove
 SHORT_HELP_TEXT = """Summarise messages."""
 
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
-chat_cmd = CONFIG.PREFIX + "chat"
-summarise_cmd = CONFIG.PREFIX + "summarise"
-
+model = "gpt-4o-mini"
 
 def clean(msg, *prefixes):
     for pre in prefixes:
@@ -31,17 +29,16 @@ class Summarise(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         openai.api_key = CONFIG.OPENAI_API_KEY
-        self.model = "gpt-3.5-turbo"
         self.system_prompt = "People yap too much, I don't want to read all of it. In 200 words or less give me the gist of what is being said. Note that the messages are in reverse chronological order:"
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tldr(
-        self, ctx: Context, number_of_messages: int = 100, gpt4: bool = False
-    ):
+        self, ctx: Context, number_of_messages: int = 100):
         number_of_messages = 400 if number_of_messages > 400 else number_of_messages
 
         # avoid banned users
         if not await is_author_banned_openai(ctx):
+            await ctx.send("You are banned from OpenAI!")
             return
 
         # get the last "number_of_messages" messages from the current channel and build the prompt
@@ -51,17 +48,16 @@ class Summarise(commands.Cog):
 
         # send the prompt to the ai overlords to process
         async with ctx.typing():
-            response = await self.dispatch_api(messages, gpt4)
+            response = await self.dispatch_api(messages)
             if response:
                 prev = ctx.message
                 for content in split_into_messages(response):
                     prev = await prev.reply(content, allowed_mentions=mentions)
 
-    async def dispatch_api(self, messages, gpt4) -> Optional[str]:
+    async def dispatch_api(self, messages) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
 
         # Make request
-        model = "gpt-4" if gpt4 else self.model
         response = await openai.ChatCompletion.acreate(model=model, messages=messages)
         logging.info(f"OpenAI Response: {response}")
 
