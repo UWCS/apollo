@@ -25,6 +25,7 @@ EXTENSIONS = [
         "cogs.commands.chatgpt",
         "cogs.commands.dalle",
         "cogs.commands.date",
+        "cogs.commands.eightball",
         "cogs.commands.event_sync",
         "cogs.commands.flip",
         "cogs.commands.karma_admin",
