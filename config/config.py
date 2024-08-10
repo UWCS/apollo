@@ -27,6 +27,7 @@ class Config:
         self.AI_SYSTEM_PROMPT: str = parsed.get("ai_system_prompt")
         self.PORTAINER_API_KEY: str = parsed.get("portainer_api_key")
         self.LIEGE_CHANCELLOR_ID: int = parsed.get("liege_chancellor_id")
+        self.MARKOV_ENABLED: bool = parsed.get("markov_enabled")
 
         # Configuration
         self.LOG_LEVEL: str = parsed.get("log_level")
