@@ -42,6 +42,7 @@ EXTENSIONS = [
     "cogs.commands.run",
     "cogs.commands.roomsearch",
     "cogs.commands.say",
+    "cogs.commands.summarise",
     "cogs.commands.system",
     "cogs.commands.tex",
     "cogs.commands.vote",
