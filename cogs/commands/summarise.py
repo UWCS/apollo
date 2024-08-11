@@ -19,6 +19,8 @@ SHORT_HELP_TEXT = """Summarise messages."""
 mentions = AllowedMentions(everyone=False, users=False, roles=False, replied_user=True)
 model = "gpt-4o-mini"
 
+
+
 def clean(msg, *prefixes):
     for pre in prefixes:
         msg = msg.strip().removeprefix(pre)
@@ -31,20 +33,30 @@ class Summarise(commands.Cog):
         openai.api_key = CONFIG.OPENAI_API_KEY
         self.system_prompt = "People yap too much, I don't want to read all of it. In 200 words or less give me the gist of what is being said. Note that the messages are in reverse chronological order:"
 
+    def build_prompt(self, response_word_limit, bullet_points, channel_name):
+
+        response_word_limit = 500 if response_word_limit > 500 else response_word_limit
+        bullet_points = "Put it in bullet points for readability." if bullet_points else ""
+        prompt = f"""People yap too much, I don't want to read all of it. The topic is something related to {channel_name}. In {response_word_limit} words or less give me the gist of what is being said. {bullet_points} Note that the messages are in reverse chronological order:
+        """
+        return prompt
+
+    @commands.cooldown(CONFIG.SUMMARISE_LIMIT, CONFIG.SUMMARISE_COOLDOWN * 60, commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tldr(
-        self, ctx: Context, number_of_messages: int = 100):
+        self, ctx: Context, number_of_messages: int = 100, response_word_limit: int = 100, bullet_point_output: bool = False ):
         number_of_messages = 400 if number_of_messages > 400 else number_of_messages
-
+        
+        
         # avoid banned users
         if not await is_author_banned_openai(ctx):
             await ctx.send("You are banned from OpenAI!")
             return
 
         # get the last "number_of_messages" messages from the current channel and build the prompt
-        curr_channel = ctx.guild.get_channel(ctx.channel.id)
-        messages = curr_channel.history(limit=number_of_messages)
-        messages = await self.create_message(messages)
+        prompt = self.build_prompt(response_word_limit, bullet_point_output, ctx.channel)
+        messages = ctx.channel.history(limit=number_of_messages)
+        messages = await self.create_message(messages, prompt)
 
         # send the prompt to the ai overlords to process
         async with ctx.typing():
@@ -68,9 +80,9 @@ class Summarise(commands.Cog):
             reply = clean(reply, "Apollo: ", "apollo: ", name)
         return reply
 
-    async def create_message(self, message_chain):
+    async def create_message(self, message_chain, prompt):
         # get initial prompt
-        initial = self.system_prompt + "\n"
+        initial = prompt + "\n"
 
         # for each message, append it to the prompt as follows --- author : message \n
         async for msg in message_chain:

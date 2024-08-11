@@ -35,6 +35,10 @@ config:
   portainer_api_key: portainer
   # Liege Chancellor User ID
   liege_chancellor_id: 1234
+  # Summarise Use Limit
+  summarise_limit: 3
+  # Summarise Cooldown Period (minutes)
+  summarise_cooldown: 10
 
   # Configuration
   # Level of messages logged to file
