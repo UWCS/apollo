@@ -39,6 +39,8 @@ config:
   summarise_limit: 3
   # Summarise Cooldown Period (minutes)
   summarise_cooldown: 10
+  # whether to load general.txt and markov chains
+  markov_enabled: False
 
   # Configuration
   # Level of messages logged to file
