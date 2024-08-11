@@ -29,6 +29,7 @@ class Config:
         self.LIEGE_CHANCELLOR_ID: int = parsed.get("liege_chancellor_id")
         self.SUMMARISE_LIMIT: int = parsed.get("summarise_limit")
         self.SUMMARISE_COOLDOWN: int = parsed.get("summarise_cooldown")
+        self.MARKOV_ENABLED: bool = parsed.get("markov_enabled")
 
         # Configuration
         self.LOG_LEVEL: str = parsed.get("log_level")
