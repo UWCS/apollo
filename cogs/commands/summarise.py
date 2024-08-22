@@ -42,10 +42,9 @@ class Summarise(commands.Cog):
     @commands.cooldown(CONFIG.SUMMARISE_LIMIT, CONFIG.SUMMARISE_COOLDOWN * 60, commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tldr(
-        self, ctx: Context, number_of_messages: int = 100, bullet_point_output: bool = False ):
+        self, ctx: Context, number_of_messages: int = 100, bullet_point_output: bool = False, private_view: bool = False):
         number_of_messages = 400 if number_of_messages > 400 else number_of_messages
-        
-        
+
         # avoid banned users
         if not await is_author_banned_openai(ctx):
             await ctx.send("You are banned from OpenAI!")
@@ -60,9 +59,8 @@ class Summarise(commands.Cog):
         async with ctx.typing():
             response = await self.dispatch_api(messages)
             if response:
-                prev = ctx.message
                 for content in split_into_messages(response):
-                    prev = await prev.reply(content, allowed_mentions=mentions)
+                        await ctx.send(content, allowed_mentions=mentions, ephemeral=private_view)
 
     async def dispatch_api(self, messages) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
