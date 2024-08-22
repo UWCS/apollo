@@ -1,3 +1,4 @@
+import contextlib
 import logging
 from typing import Optional
 from datetime import datetime, timedelta, timezone
@@ -41,10 +42,17 @@ class Summarise(commands.Cog):
 
 
 
+    
+    def optional_context_manager(self, use: bool, cm: callable):
+        if use:
+            return cm()
+        
+        return contextlib.nullcontext()
+
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tldr(
-        self, ctx: Context, number_of_messages: int = 100, bullet_point_output: bool = False ):
+        self, ctx: Context, number_of_messages: int = 100, bullet_point_output: bool = False, private_view: bool = False):
         if await self.in_cooldown(ctx):
             return
 
@@ -62,12 +70,13 @@ class Summarise(commands.Cog):
         messages = await self.create_message(messages, prompt, ctx)
 
         # send the prompt to the ai overlords to process
-        async with ctx.typing():
+        async with self.optional_context_manager(not private_view, ctx.typing):
             response = await self.dispatch_api(messages)
             if response:
-                prev = ctx.message
+                prev = ctx
                 for content in split_into_messages(response):
-                    prev = await prev.reply(content, allowed_mentions=mentions)
+                    prev = await prev.reply(content, allowed_mentions=mentions, ephemeral=private_view)
+
 
 
     async def in_cooldown(self, ctx):
@@ -125,6 +134,7 @@ class Summarise(commands.Cog):
         bullet_points = "Put it in bullet points for readability." if bullet_points else ""
         prompt = f"""People yap too much, I don't want to read all of it. The topic is related to {channel_name}. In {response_size} words or less give me the gist of what is being said. {bullet_points} Note that the messages are in reverse chronological order:
         """
+        print(prompt)
         return prompt
 
     def sigmoid(self, x):
