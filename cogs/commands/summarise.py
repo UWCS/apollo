@@ -1,7 +1,8 @@
 import contextlib
 import logging
-from typing import Optional
 from datetime import datetime, timedelta, timezone
+from math import ceil, exp
+from typing import Optional
 
 import openai
 from discord import AllowedMentions
@@ -10,7 +11,6 @@ from discord.ext.commands import Bot, Context
 
 from cogs.commands.openaiadmin import is_author_banned_openai
 from config import CONFIG
-from math import exp, ceil
 from utils.utils import split_into_messages
 
 LONG_HELP_TEXT = """
