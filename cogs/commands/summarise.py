@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from datetime import datetime, timedelta, timezone
 
 import openai
 from discord import AllowedMentions
@@ -35,18 +36,17 @@ def clean(msg, *prefixes):
 class Summarise(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.cooldowns = {}
         openai.api_key = CONFIG.OPENAI_API_KEY
 
 
 
 
-    
-
-    @commands.cooldown(CONFIG.SUMMARISE_LIMIT, CONFIG.SUMMARISE_COOLDOWN * 60, commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def tldr(
         self, ctx: Context, number_of_messages: int = 100, bullet_point_output: bool = False ):
-        
+        if await self.in_cooldown(ctx):
+            return
 
         number_of_messages = CONFIG.SUMMARISE_MESSAGE_LIMIT if number_of_messages > CONFIG.SUMMARISE_MESSAGE_LIMIT else number_of_messages
         
@@ -68,6 +68,28 @@ class Summarise(commands.Cog):
                 prev = ctx.message
                 for content in split_into_messages(response):
                     prev = await prev.reply(content, allowed_mentions=mentions)
+
+
+    async def in_cooldown(self, ctx):
+        now = datetime.now(timezone.utc)
+        # channel based cooldown
+        if self.cooldowns.get(ctx.channel.id):
+            # check that message limit hasn't been reached
+            if CONFIG.SUMMARISE_LIMIT  <= self.cooldowns[ctx.channel.id][1]:
+
+                message_time = self.cooldowns[ctx.channel.id][0]
+                cutoff = message_time + timedelta(minutes=CONFIG.SUMMARISE_COOLDOWN)
+                # check that message time + cooldown time period is still in the future
+                if now < cutoff:
+                    await ctx.reply("STFU!! Wait " + str(int((cutoff - now).total_seconds())) + " Seconds. You are on Cool Down." )
+                    return True
+                else:
+                    self.cooldowns[ctx.channel.id] = [now, 1] # reset the cooldown
+            else:
+                self.cooldowns[ctx.channel.id][1]+=1
+        else:
+            self.cooldowns[ctx.channel.id] = [now, 1]
+        return False
 
     async def dispatch_api(self, messages) -> Optional[str]:
         logging.info(f"Making OpenAI request: {messages}")
