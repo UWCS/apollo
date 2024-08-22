@@ -134,7 +134,6 @@ class Summarise(commands.Cog):
         bullet_points = "Put it in bullet points for readability." if bullet_points else ""
         prompt = f"""People yap too much, I don't want to read all of it. The topic is related to {channel_name}. In {response_size} words or less give me the gist of what is being said. {bullet_points} Note that the messages are in reverse chronological order:
         """
-        print(prompt)
         return prompt
 
     def sigmoid(self, x):
