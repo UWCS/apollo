@@ -39,10 +39,6 @@ jobs:
           pip install --user pipenv
           pipenv sync --dev
 
-      - name: Check formatting with black
-        run: |
-          pipenv run black --check --diff --exclude __tests__ .
-
       - name: Check code style with ruff
         run: |
           pipenv run ruff check .

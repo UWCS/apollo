@@ -31,6 +31,9 @@ class OnMessage(commands.Cog):
                     r"https?://(?:old\.|www\.)?reddit\.com",
                     "https://rxddit.com",
                 )
+                await self.scan_replace(
+                    message, r"https?://www\.instagram\.com", "https://ddinstagram.com"
+                )
 
     async def thanks(self, message: Message):
         # to whoever sees this, you're welcome for the not having a fuck off massive indented if

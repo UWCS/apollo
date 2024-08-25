@@ -5,13 +5,16 @@ from deep_translator import GoogleTranslator
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
 
+from config import CONFIG
+
 
 class Misc(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        with open("general.txt") as f:
-            text = f.read()
-        self.model = markovify.Text(text)
+        if CONFIG.MARKOV_ENABLED:
+            with open("general.txt") as f:
+                text = f.read()
+            self.model = markovify.Text(text)
 
     @commands.hybrid_command()
     async def zed0(self, ctx: Context):
@@ -133,6 +136,9 @@ class Misc(commands.Cog):
     @commands.hybrid_command()
     async def markov(self, ctx: Context):
         """Generate a sentence using a markov chain model"""
+        if not CONFIG.MARKOV_ENABLED:
+            await ctx.send("Markov chains are disabled.")
+            return
         await ctx.send(self.model.make_sentence())
 
     translate_help = """

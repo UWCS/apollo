@@ -26,7 +26,10 @@ class Config:
         self.AI_CHAT_CHANNELS: list[int] = parsed.get("ai_chat_channels")
         self.AI_SYSTEM_PROMPT: str = parsed.get("ai_system_prompt")
         self.PORTAINER_API_KEY: str = parsed.get("portainer_api_key")
-        self.LORD_CHANCELLOR_ID: int = parsed.get("lord_chancellor_id")
+        self.LIEGE_CHANCELLOR_ID: int = parsed.get("liege_chancellor_id")
+        self.SUMMARISE_LIMIT: int = parsed.get("summarise_limit")
+        self.SUMMARISE_COOLDOWN: int = parsed.get("summarise_cooldown")
+        self.MARKOV_ENABLED: bool = parsed.get("markov_enabled")
 
         # Configuration
         self.LOG_LEVEL: str = parsed.get("log_level")

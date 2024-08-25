@@ -17,7 +17,7 @@ from utils import get_database_user
 LONG_HELP_TEXT = """
 Hapy birthday!!!!
 
-As is tradtion, wish our dear lord chancellor of the computer a happy birthday
+As is tradtion, wish our dear liege chancellor of the computer a happy birthday
 """
 
 
@@ -40,7 +40,7 @@ class Birthday(commands.Cog):
 
     @birthday.command(help=LONG_HELP_TEXT, brief="HAPPY BIRTHDAY!!!!")
     async def wish(self, ctx: Context):
-        """Adds 1 to the age of the Lord Chancellor and wishes them a happy birthday"""
+        """Adds 1 to the age of the Liege Chancellor and wishes them a happy birthday"""
         first = False
         current_date = utc.localize(datetime.now()).astimezone(
             timezone("Europe/London")
@@ -57,18 +57,18 @@ class Birthday(commands.Cog):
             except (SQLAlchemyError, OperationalError):
                 pass
         await ctx.reply(
-            f"Happy birthday <@{CONFIG.LORD_CHANCELLOR_ID}>!!!!! <:ferris_party:1016463393156247623> {f' You are now {self.age} years old' if first else ''}"
+            f"Happy birthday <@{CONFIG.LIEGE_CHANCELLOR_ID}>!!!!! <:ferris_party:1016463393156247623> {f' You are now {self.age} years old' if first else ''}"
         )
 
-    @birthday.command(help=LONG_HELP_TEXT, brief="Lord Chancellor age")
+    @birthday.command(help=LONG_HELP_TEXT, brief="Liege Chancellor age")
     async def age(self, ctx: Context):
-        """Get the current age of the Lord Chancellor"""
-        name = self.bot.get_user(CONFIG.LORD_CHANCELLOR_ID).name
+        """Get the current age of the Liege Chancellor"""
+        name = self.bot.get_user(CONFIG.LIEGE_CHANCELLOR_ID).name
         await ctx.reply(f"{name} is {self.age}")
 
     @birthday.command(help=LONG_HELP_TEXT, brief="User happy birthday count")
     async def user(self, ctx: Context, user: User):
-        """How many times has someone wished the Lord Chancellor a happy birthday?"""
+        """How many times has someone wished the Liege Chancellor a happy birthday?"""
         db_user = get_database_user(user)
         num = (
             db_session.query(db_Birthday)
@@ -76,12 +76,12 @@ class Birthday(commands.Cog):
             .count()
         )
         await ctx.reply(
-            f"{user.name} has wished the Lord Chancellor a happy birthday {num} times"
+            f"{user.name} has wished the Liege Chancellor a happy birthday {num} times"
         )
 
     @birthday.command(help=LONG_HELP_TEXT, brief="leaderboard")
     async def leaderboard(self, ctx: Context):
-        """Who has wished the Lord Chancellor a happy birthday the most?"""
+        """Who has wished the Liege Chancellor a happy birthday the most?"""
         leaderboard = (
             db_session.query(db_Birthday.user_id, func.count(db_Birthday.user_id))
             .group_by(db_Birthday.user_id)

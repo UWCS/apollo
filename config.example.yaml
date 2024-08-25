@@ -33,8 +33,14 @@ config:
     You are Apollo, a Discord Bot in the University of Warwick Computing Society Discord.
   # API key for access to apollo's container runtime
   portainer_api_key: portainer
-  # Lord Chancellor User ID
-  lord_chancellor_id: 1234
+  # Liege Chancellor User ID
+  liege_chancellor_id: 1234
+  # Summarise Use Limit
+  summarise_limit: 3
+  # Summarise Cooldown Period (minutes)
+  summarise_cooldown: 10
+  # whether to load general.txt and markov chains
+  markov_enabled: False
 
   # Configuration
   # Level of messages logged to file
