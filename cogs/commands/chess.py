@@ -2,8 +2,9 @@ from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
 from discord import File as discord_file, Interaction, SelectOption
-from discord.ui import View, Select, button, Button, select 
+from discord.ui import View, Select, button, Button, select
 from collections import defaultdict
+from math import ceil
 
 import chess.pgn
 import chess.svg
@@ -32,19 +33,34 @@ piece_mappings = {"B":"Bishop", "K": "King", "P": "Pawn", "N":"Knight", "R": "Ro
 
 
 class FileSelection(Select):
-    def __init__(self,legal_moves, piece):
+    def __init__(self, legal_moves, piece):
+
+        self.items_per_page = 25
         
-        moves = [SelectOption(label=move,value=move) for move in legal_moves[piece]]
-        super().__init__(options=moves, placeholder="Select Piece", max_values=1)
+        self.page = -1
+        
+        self.moves = [SelectOption(label=move,value=move) for move in legal_moves[piece]]
+
+        
+        super().__init__(options=self.switch_page(), placeholder="Select a Square")
     
+    def switch_page(self):
+        self.page = (self.page + 1) % ceil(len(self.moves)/self.items_per_page)    
+        start = self.page * self.items_per_page
+        end = start + self.items_per_page if len(self.moves) > start + self.items_per_page else len(self.moves)
+
+        return self.moves[start:end]
+    
+    # async def callback(self, interaction: Interaction):
+
 
 
 
 class PieceSelection(Select):
-    def __init__(self,legal_moves):
-        self.legal_moves = legal_moves 
+    def __init__(self, legal_moves):
+        self.legal_moves = legal_moves
         moves = [SelectOption(label=piece_mappings[move],value=move) for move in legal_moves.keys()]
-        super().__init__(options=moves, placeholder="Select Piece", max_values=1)
+        super().__init__(options=moves, max_values=1)
 
     async def callback(self, interaction: Interaction):
         self.placeholder = piece_mappings[self.values[0]]
@@ -52,16 +68,36 @@ class PieceSelection(Select):
         await interaction.response.defer()
         
         
+class MoveSelectionNext(Button):
+
+    def __init__(self,piece):
+        self.piece = piece
+        super().__init__(label=">", row=3)
+
+    async def callback(self, interaction: Interaction):
         
-        
+        await self.view.refresh_select_menu(self.piece)
+        await interaction.response.edit_message(view=self.view)
+
+
+# class MoveSelectionBack(Button):        
+#     def __init__(self, view : ButtonInteractions):
+#         super().__init__(label="<")
+#         self.view = view
+
+#     async def callback(self, interaction: Interaction):
+#         self.view.page -= 1
+#         await interaction.response.edit_message(view=self.view)
+
 
 
 
 
 class ButtonInteractions(View): 
     
-    def __init__(self, board):
+    def __init__(self, board, legal_moves):
         super().__init__()
+        self.legal_moves = legal_moves
         self.board = board
         self.forward_stack = []
 
@@ -76,11 +112,24 @@ class ButtonInteractions(View):
         await self.message.edit(view=self)
         await interaction.response.edit_message(attachments=[img])
 
-    async def respond_piece(self, interaction: Interaction, select_items: Select, legal_moves):
+    async def refresh_select_menu(self, piece):
+        
+
+
+        
+
+        self.children[3].options = self.children[3].switch_page()
+
+    async def respond_piece(self, interaction: Interaction, piece: Select, legal_moves):
         self.children[2].disabled = True
-        file_selection = FileSelection(legal_moves, select_items)
+        file_selection = FileSelection(self.legal_moves, piece)
         self.add_item(file_selection)
+        if len(legal_moves[piece]) > 25:
+            self.add_item(MoveSelectionNext(piece))
         await interaction.message.edit(view=self)
+
+    # async def update(self):
+    #     self.children
 
     @button(label="<-")
     async def left(self, interaction: Interaction, button : Button):
@@ -148,8 +197,9 @@ class Chess(commands.Cog):
         for move in board.legal_moves:
             square = chess.parse_square(str(move)[:2])
             piece = board.piece_at(square=square)
-            legal_moves[str(piece)].append(str(move))
-        view = ButtonInteractions(board)
+            legal_moves[str(piece)].append(str(board.san(move)))
+
+        view = ButtonInteractions(board, legal_moves)
         view.add_item(PieceSelection(legal_moves))
         svg_board = chess.svg.board(board)
         bytesImage = BytesIO(svg2png(bytestring=svg_board))
