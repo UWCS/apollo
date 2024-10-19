@@ -1,7 +1,7 @@
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
 
-from discord import File as discord_file, Interaction, SelectOption
+from discord import File as discord_file, Interaction, SelectOption, Embed
 from discord.ui import View, Select, button, Button, select
 from collections import defaultdict
 from math import ceil
@@ -23,6 +23,21 @@ SHORT_HELP_TEXT = """Make the bot repeat after you."""
 piece_mappings = {"B":"Bishop", "K": "King", "P": "Pawn", "N":"Knight", "R": "Rook", "Q":"Queen",
                     "b":"Bishop", "k": "King", "p": "Pawn", "n":"Knight", "r": "Rook", "q":"Queen"
                 }
+
+def header_message_format(pgn, last_move):
+
+    game = chess.pgn.read_game(StringIO(pgn))
+    game_header = game.headers
+    header_template = """ 
+
+# **Event:** {event_name}     
+**Date**: {date}
+**White:** {white}          **Black**: {black}
+**Last Move**: {last_move}
+**{color} to move**
+    """ 
+    return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, color=game.turn())
+
 
 
 ########################## Select Target Position of Piece Class ###################################
@@ -206,7 +221,7 @@ class MainViewManager(View):
                 self.__switch_page_btn = NextPageButtonWrapper(piece)
                 self.add_item(self.__switch_page_btn)
             self.__switch_page_btn.disabled = False
-        else:
+        elif self.__switch_page_btn:
             self.__switch_page_btn.disabled = None
 
         # update view
@@ -293,7 +308,7 @@ class Chess(commands.Cog):
         # default command
         if not ctx.invoked_subcommand:
             
-            await self.initialise_board(ctx, None, analysis_mode)
+            await self.initialise_board(ctx, None, analysis_mode, None, None)
 
 
     # load chessboard from pgn subcommand
@@ -306,7 +321,7 @@ class Chess(commands.Cog):
         for move in game.mainline_moves():
             board.push(move)
         
-        await self.initialise_board(ctx, board, analysis_mode)
+        await self.initialise_board(ctx, board, analysis_mode, move, pgn)
     
 
     # run analysis mode on a board given a pgn, reply from an existing board in chat, or empty board 
@@ -328,9 +343,9 @@ class Chess(commands.Cog):
                     for move in game.mainline_moves():
                         board.push(move)
 
-                    await self.initialise_board(ctx, board, True)
+                    await self.initialise_board(ctx, board, True, move, pgn)
             else:
-                await self.initialise_board(ctx, None, True)
+                await self.initialise_board(ctx, None, True, None, pgn)
         else:
 
             game = chess.pgn.read_game(StringIO(pgn))
@@ -338,19 +353,20 @@ class Chess(commands.Cog):
             
             for move in game.mainline_moves():
                 board.push(move)
-            await self.initialise_board(ctx, board, True)
+            await self.initialise_board(ctx, board, True, move, pgn)
 
 
 
 
 
-    async def initialise_board(self, ctx: Context, board, analysis_mode):
+    async def initialise_board(self, ctx: Context, board, analysis_mode, last_move, pgn):
         
         board = board if board else chess.Board()
         
         # get pgn from board
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
-        pgn = chess.pgn.Game.from_board(board).accept(exporter)
+        pgn = pgn if pgn else chess.pgn.Game.from_board(board).accept(exporter)
+        print(pgn)
 
         # initialise the view manager with the board
         view = MainViewManager(board, analysis_mode)
@@ -358,8 +374,10 @@ class Chess(commands.Cog):
         # generate image of board
         svg_board = chess.svg.board(board)
         bytesImage = BytesIO(svg2png(bytestring=svg_board))
-        img = discord_file(bytesImage, filename="board.png", description=pgn)
-        message = await ctx.send(file=img, view=view)
+        img = discord_file(bytesImage, filename="board.png", description="pgn")
+        embed = Embed(description=pgn)
+        print(img)
+        message = await ctx.send( header_message_format(pgn, last_move), file=img, embed=embed, suppress_embeds=True, view=view)
         
         # store the message sent in the view manager to edit later
         view.message = message
