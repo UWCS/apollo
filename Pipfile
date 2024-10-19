@@ -29,6 +29,8 @@ psycopg = {extras = ["binary"], version = "~=3.1"}
 pytimeparse = "*"
 markovify = "*"
 deep-translator = "*"
+chess = "*"
+cairosvg = "*"
 
 [dev-packages]
 pytest = "~=6.2"
