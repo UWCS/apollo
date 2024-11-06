@@ -9,7 +9,8 @@ from math import ceil
 import chess.pgn
 import chess.svg
 from cairosvg import svg2png
-
+from pickle import dumps as pickle_dump ,loads as pickle_load
+from datetime import datetime
 from io import StringIO, BytesIO
 
 
@@ -24,10 +25,13 @@ piece_mappings = {"B":"Bishop", "K": "King", "P": "Pawn", "N":"Knight", "R": "Ro
                     "b":"Bishop", "k": "King", "p": "Pawn", "n":"Knight", "r": "Rook", "q":"Queen"
                 }
 
-def header_message_format(pgn, last_move):
+def header_message_format(pgn, last_move, turn, game_header=None):
 
     game = chess.pgn.read_game(StringIO(pgn))
-    game_header = game.headers
+    if not game_header:
+        game_header = game.headers
+    color = "White" if turn else "Black"
+    
     header_template = """ 
 
 # **Event:** {event_name}     
@@ -36,7 +40,7 @@ def header_message_format(pgn, last_move):
 **Last Move**: {last_move}
 **{color} to move**
     """ 
-    return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, color=game.turn())
+    return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, color=color)
 
 
 
@@ -116,7 +120,7 @@ class MainViewManager(View):
     
 
     # initiliase the view manager for a specific board
-    def __init__(self, board, analysis_mode : bool):
+    def __init__(self, board, game, analysis_mode : bool):
 
         super().__init__()
         
@@ -130,7 +134,8 @@ class MainViewManager(View):
         self.__switch_page_btn = None                               # For >25 moves
         self.__forward_stack = []
         self.__next_move_btn.disabled = True
-
+        self.__game_headers = game.headers
+        self.__last_move = None
         # disable prev/next move if analysis mode is not enabled
         if not analysis_mode:
             self.__prev_move_btn.disabled = True
@@ -163,34 +168,59 @@ class MainViewManager(View):
 
         # get pgn from board
         exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
-        pgn = chess.pgn.Game.from_board(self.__board).accept(exporter)
+        game = chess.pgn.Game.from_board(self.__board)
+        game.headers=self.__game_headers
+        game.headers["Black"] = interaction.user.display_name if game.headers["Black"] == "?" and self.__board.turn else game.headers["Black"]
+        pgn = game.accept(exporter)
+        # generate discord image file of board with implicit description being the game's pgn
+        img = discord_file(bytesImage, filename="board.png", description=pgn[:1024])
+        self.message.attachments = [img]
+        for i in range(len(pgn)//1024):
+            self.message.attachments.append(discord_file("1pximage.png", filename="1.png", description=pgn[1024*i:1024*(i+1)]))
 
-        # generate discord image file of board with implicit description being the game's pgn 
-        img = discord_file(bytesImage, filename="board.png", description=pgn)
         
         # update the legal moves
-        self.__legal_moves = self.calculate_legal_moves()
-        # update and enable piece selection menu with new legal moves
-        self.__piece_select_menu.options = self.__piece_select_menu.generate_select_pieces(self.__legal_moves)
-        self.__piece_select_menu.disabled = False
-        self.__piece_select_menu.placeholder = "Select Piece"
+        if not self.__board.is_checkmate() and not self.__board.is_stalemate() and not self.__board.is_insufficient_material():
 
-        # disable target square select menu if enabled
-        if self.__target_square_select_menu:
-            self.__target_square_select_menu.page = -1
-            self.__target_square_select_menu.disabled = True
+
+            self.__legal_moves = self.calculate_legal_moves()
+            # update and enable piece selection menu with new legal moves
+            self.__piece_select_menu.options = self.__piece_select_menu.generate_select_pieces(self.__legal_moves)
+            self.__piece_select_menu.disabled = False
+            self.__piece_select_menu.placeholder = "Select Piece"
+
+            # disable target square select menu if enabled
+            if self.__target_square_select_menu:
+                self.__target_square_select_menu.page = -1
+                self.__target_square_select_menu.disabled = True
+            
+            # disable page switching button (for >25 moves)
+            if self.__switch_page_btn: 
+                self.__switch_page_btn.disabled = True
+            
+            if self.__forward_stack: 
+                    self.__next_move_btn.disabled = False
+            else:
+                    self.__next_move_btn.disabled = True
+
+            if self.__board.move_stack:
+                self.__prev_move_btn.disabled = False
+            else:
+                self.__prev_move_btn.disabled = True
+        # else:
+        #     if self.__board
         
-        # disable page switching button (for >25 moves)
-        if self.__switch_page_btn: 
-            self.__switch_page_btn.disabled = True
-        
+
         # update view on discord
-        await self.message.edit(view=self)
-        await interaction.response.edit_message(attachments=[img])
+        # = img
+        await self.message.edit(content= header_message_format(pgn, self.__last_move, self.__board.turn, self.__game_headers),view=self)
+        await interaction.response.edit_message(attachments=self.message.attachments)
 
     # play a move given standard algebraic notation
     async def play_move(self, move, interaction : Interaction):
+        self.__last_move = move
         self.__board.push(self.__board.parse_san(move))
+        self.__forward_stack.clear()
         await self.reload_board(interaction)
 
 
@@ -228,6 +258,8 @@ class MainViewManager(View):
         await interaction.message.edit(view=self)
 
 
+
+
     # take back a move  
     @button(label="<-")
     async def next_move_btn_handler(self, interaction: Interaction, button : Button):
@@ -251,7 +283,10 @@ class MainViewManager(View):
         self.__forward_stack.append(self.__board.peek()) # add move to forward stack
         self.__board.pop() # pop last move from board's move stack
         self.__next_move_btn.disabled = False # enable next move button
-        
+        if self.__board.move_stack:
+            move = self.__board.pop()
+            self.__last_move = self.__board.san(move)
+            self.__board.push_san(self.__last_move)
         # disable button if there are no more previous moves
         if not self.__board.move_stack:
                 self.__prev_move_btn.disabled = True
@@ -281,6 +316,7 @@ class MainViewManager(View):
         # when move stack is not empty
 
         # play the move 
+        self.__last_move = self.__board.san(self.__forward_stack[-1])
         self.__board.push(self.__forward_stack.pop())
         # enable "take back a move" button
         self.__prev_move_btn.disabled = False
@@ -308,7 +344,7 @@ class Chess(commands.Cog):
         # default command
         if not ctx.invoked_subcommand:
             
-            await self.initialise_board(ctx, None, analysis_mode, None, None)
+            await self.initialise_board(ctx, None, True, None)
 
 
     # load chessboard from pgn subcommand
@@ -316,70 +352,73 @@ class Chess(commands.Cog):
     async def load(self, ctx : Context, *, pgn: str, analysis_mode: bool = True):
         
         game = chess.pgn.read_game(StringIO(pgn))
-        board = game.board()
-        
-        for move in game.mainline_moves():
-            board.push(move)
-        
-        await self.initialise_board(ctx, board, analysis_mode, move, pgn)
+        await self.initialise_board(ctx, game, True, pgn)
     
 
     # run analysis mode on a board given a pgn, reply from an existing board in chat, or empty board 
     @chess.command(help="")
-    async def analysis(self, ctx: Context, pgn = None):
+    async def analysis(self, ctx: Context, *, pgn = None):
         if not pgn:
             if ctx.message.reference:
                 reply = await ctx.channel.fetch_message(ctx.message.reference.message_id)
                 if reply.attachments and reply.attachments[0].content_type == "image/png":
-                    pgn = reply.attachments[0].description
+                    pgn = ""
+                    for a in attachments:
+                        pgn += a.description
 
                     
                     game = chess.pgn.read_game(StringIO(pgn))
-                    if not game:
-                        await ctx.reply("Cannot read game!")
-                    
-                    board = game.board()
-                    
-                    for move in game.mainline_moves():
-                        board.push(move)
 
-                    await self.initialise_board(ctx, board, True, move, pgn)
+                    await self.initialise_board(ctx, game, True, pgn)
             else:
-                await self.initialise_board(ctx, None, True, None, pgn)
+                await self.initialise_board(ctx, None, True, pgn)
         else:
 
             game = chess.pgn.read_game(StringIO(pgn))
+            await self.initialise_board(ctx, game, True, pgn)
+
+
+
+    # @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    # async def read(self, ctx: Context):
+    #     message = await ctx.channel.fetch_message(ctx.message.reference.message_id)
+    #     print(message.attachments)
+
+
+    async def initialise_board(self, ctx: Context, game, analysis_mode, pgn):
+        last_move = ""
+        if game:
             board = game.board()
-            
             for move in game.mainline_moves():
-                board.push(move)
-            await self.initialise_board(ctx, board, True, move, pgn)
-
-
-
-
-
-    async def initialise_board(self, ctx: Context, board, analysis_mode, last_move, pgn):
-        
-        board = board if board else chess.Board()
+                    last_move = board.san(move)
+                    board.push(move)
+        else:
+            game = chess.pgn.Game()
+            game.headers["Date"] =  datetime.now().strftime("%Y.%m.%d")
+            game.headers["Event"] = ctx.author.display_name +"'s Event"
+            game.headers["White"] = ctx.author.display_name
+            
+            
+            board = chess.Board()
+            exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
+            pgn = game.accept(exporter)
         
         # get pgn from board
-        exporter = chess.pgn.StringExporter(headers=True, variations=True, comments=True)
-        pgn = pgn if pgn else chess.pgn.Game.from_board(board).accept(exporter)
-        print(pgn)
-
+        
         # initialise the view manager with the board
-        view = MainViewManager(board, analysis_mode)
+        view = MainViewManager(board, game, analysis_mode)
 
         # generate image of board
         svg_board = chess.svg.board(board)
         bytesImage = BytesIO(svg2png(bytestring=svg_board))
-        img = discord_file(bytesImage, filename="board.png", description="pgn")
-        embed = Embed(description=pgn)
-        print(img)
-        message = await ctx.send( header_message_format(pgn, last_move), file=img, embed=embed, suppress_embeds=True, view=view)
+        img = [discord_file(bytesImage, filename="board.png", description=pgn[:1024])]
+        for i in range(len(pgn)//1024):
+            img.append(discord_file("1pximage.png", filename="1.png", description=pgn[1024*i:1024*(i+1)]))
+            
+        message = await ctx.send( header_message_format(pgn, last_move, board.turn), files=img, view=view)
         
         # store the message sent in the view manager to edit later
+
         view.message = message
         await view.wait()
 
