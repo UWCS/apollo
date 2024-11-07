@@ -22,6 +22,7 @@ EXTENSIONS = [
     "cogs.commands.announce",
     "cogs.commands.birthday",
     "cogs.commands.counting",
+    "cogs.commands.chess",
     "cogs.commands.chatgpt",
     "cogs.commands.dalle",
     "cogs.commands.date",
