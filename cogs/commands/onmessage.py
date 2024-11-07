@@ -5,11 +5,6 @@ from discord.abc import GuildChannel
 from discord.ext import commands
 from discord.ext.commands import Bot, Cog
 
-from config import CONFIG
-from karma.karma import process_karma
-from models import db_session
-
-
 class OnMessage(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
@@ -64,21 +59,6 @@ class OnMessage(commands.Cog):
         ):
             return
 
-        # get all command prefixes
-        command_prefixes = self.bot.command_prefix(self.bot, message)
-        # if message is not command, check for karma
-        if not any(message.content.startswith(prefix) for prefix in command_prefixes):
-            # process karma if apropriate
-            if search(r"\+\+|--|\+\-", message.content):
-                reply = process_karma(
-                    message, message.id, db_session, CONFIG.KARMA_TIMEOUT
-                )
-                # if message is a valid karma
-                if reply:
-                    return
-        else:
-            # message is command, so don't run
-            return
         return await message.add_reaction("💜")
 
     async def scan_replace(self, message: Message, regex, replace):
