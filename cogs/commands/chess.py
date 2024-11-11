@@ -194,7 +194,7 @@ class MainViewManager(View):
         img = discord_file(bytesImage, filename="board.png", description=pgn[:1024])
         self.message.attachments = [img]
         for i in range(len(pgn)//1024):
-            self.message.attachments.append(discord_file("1pximage.png", filename="1.png", description=pgn[1024*i:1024*(i+1)]))
+            self.message.attachments.append(discord_file("1pximage.png", filename="1.png", description=pgn[1024*(i+1):1024*(i+2)]))
 
         end = ""
 
@@ -441,8 +441,7 @@ class Chess(commands.Cog):
         bytesImage = BytesIO(svg2png(bytestring=svg_board))
         img = [discord_file(bytesImage, filename="board.png", description=pgn[:1024])]
         for i in range(len(pgn)//1024):
-            img.append(discord_file("1pximage.png", filename="1.png", description=pgn[1024*i:1024*(i+1)]))
-            
+            img.append(discord_file("1pximage.png", filename="1.png", description=pgn[1024*(i+1):1024*(i+2)]))
         message = await ctx.send( header_message_format(pgn, last_move, board.turn), files=img, view=view)
         
         # store the message in the view manager to edit later
