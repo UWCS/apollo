@@ -1,5 +1,6 @@
 FROM python:3.10 AS builder
 
+
 RUN pip install --user pipenv
 
 # Tell pipenv to create venv in the current directory
@@ -21,6 +22,7 @@ RUN echo $(date -Is) >> .version
 
 FROM python:3.10-slim AS runtime
 
+
 WORKDIR /app
 
 # copy venv into runtime
@@ -39,5 +41,8 @@ COPY . /app
 
 # build default alembic config into container, we rarely want to change this
 RUN /bin/bash -c 'if [[ ! -f alembic.ini ]]; then mv alembic.example.ini alembic.ini; fi'
+
+RUN apt-get update
+RUN apt-get install -y python3-cairo
 
 CMD [ "python", "apollo.py" ] 

@@ -24,7 +24,7 @@ def header_message_format(pgn, last_move, turn, game_header=None, end=""):
     game = chess.pgn.read_game(StringIO(pgn))
     if not game_header:
         game_header = game.headers
-    color = "White" if turn else "Black"
+    colour = "White" if turn else "Black"
     
     # if game is not over, use default format
     if end == "":
@@ -34,12 +34,12 @@ def header_message_format(pgn, last_move, turn, game_header=None, end=""):
 **Date**: {date}
 **White:** {white}          **Black**: {black}
 **Last Move**: {last_move}
-**{color} to move** 
+**{colour} to move** 
         """ 
-        return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, color=color)
+        return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, colour=colour)
     else:
         # if game is over, set checkmate or draw accordingly
-        anti_color = "Black" if turn else "White"
+        anti_colour = "Black" if turn else "White"
         if end == "C":
             state = "checkmated"
         elif end == "D":
@@ -50,9 +50,9 @@ def header_message_format(pgn, last_move, turn, game_header=None, end=""):
 **Date**: {date}
 **White:** {white}          **Black**: {black}
 **Last Move**: {last_move}
-**{anti_color} {state} {color}** 
+**{anti_colour} {state} {colour}** 
         """ 
-        return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, color=color, state=state, anti_color=anti_color)
+        return header_template.format(event_name=game_header["Event"], date=game_header["Date"], white=game_header["White"], black=game_header["Black"], last_move=last_move, colour=colour, state=state, anti_colour=anti_colour)
 
 
 
