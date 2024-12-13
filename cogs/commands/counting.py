@@ -66,7 +66,7 @@ class Counting(Cog):
             # Used to make sure someone else replies
             last_player = msg.author
 
-            while True:
+            while self.currently_playing:
                 # Wait for the next numeric message sent by a different person in the same channel
                 def check_dec_player(m):
                     return check_dec(m) and m.author != last_player
@@ -205,8 +205,11 @@ class Counting(Cog):
 
     @user.error
     async def user_error(self, ctx: Context, err):
+        self.currently_playing = False
         await ctx.send(err)
-
+    @counting.error
+    async def counting_error(self, ctx: Context, err):
+        self.currently_playing = False
 
 async def setup(bot: Bot):
     await bot.add_cog(Counting(bot))
