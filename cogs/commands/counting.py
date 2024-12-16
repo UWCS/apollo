@@ -93,7 +93,7 @@ class Counting(Cog):
                             f"This chain lasted {length} consecutive messages."
                         )
                         break
-                    except:
+                    except discord.errors.NotFound:
                         # If the last message count be found, an error is thrown, and the message was deleted - name/shame
                         ctx.send(f"Oops! {get_name_string(last_message)} deleted their message. The next number is {count + step}")
 
