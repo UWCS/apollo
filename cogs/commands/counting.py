@@ -5,6 +5,7 @@ from decimal import Decimal
 from discord import User
 from discord.ext import commands
 from discord.ext.commands import Bot, BucketType, Cog, Context, cooldown
+from discord.errors import NotFound
 from sqlalchemy.exc import SQLAlchemyError
 
 from models import db_session
@@ -93,7 +94,7 @@ class Counting(Cog):
                             f"This chain lasted {length} consecutive messages."
                         )
                         break
-                    except discord.errors.NotFound:
+                    except NotFound:
                         # If the last message count be found, an error is thrown, and the message was deleted - name/shame
                         ctx.send(f"Oops! {get_name_string(last_message)} deleted their message. The next number is {count + step}")
 
