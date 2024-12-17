@@ -45,7 +45,7 @@ class OnMessage(commands.Cog):
             replied_message = await message.channel.fetch_message(
                 message.reference.message_id
             )
-            if replied_message.author != self.bot.user.id:
+            if replied_message.author.id != self.bot.user.id:
                 return
         elif (
             previous_message.author.id != self.bot.user.id
@@ -59,6 +59,7 @@ class OnMessage(commands.Cog):
             search(r"\b" + thank + r"\b", message.content.lower()) for thank in thanks
         ):
             return
+
         return await message.add_reaction("💜")
 
     async def scan_replace(self, message: Message, regex, replace):
