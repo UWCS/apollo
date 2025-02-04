@@ -1,6 +1,8 @@
 import datetime
 import io
+import re
 from html import unescape
+from pprint import pprint
 
 import discord
 from discord.ext import commands
@@ -10,14 +12,27 @@ from pytz import timezone
 
 from models import db_session
 from models.event_sync import EventLink
-from utils.utils import get_from_url, is_compsoc_exec_in_guild
+from utils.utils import get_json_from_url, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Sync events to our website uwcs.co.uk/events."""
 
 SHORT_HELP_TEXT = """Sync events"""
 
-ICAL_URL = "https://uwcs.co.uk/uwcs.ical"
+ICAL_URL = "https://oengus.io/api/v2/marathons/wasd2025/schedules/for-slug/wasd2025"
+
+def duration(duration_str):
+    match = re.match(
+        r'P((?P<years>\d+)Y)?((?P<months>\d+)M)?((?P<weeks>\d+)W)?((?P<days>\d+)D)?(T((?P<hours>\d+)H)?((?P<minutes>\d+)M)?((?P<seconds>\d+)S)?)?',
+        duration_str
+    ).groupdict()
+    return int(match['years'] or 0)*365*24*3600 + \
+        int(match['months'] or 0)*30*24*3600 + \
+        int(match['weeks'] or 0)*7*24*3600 + \
+        int(match['days'] or 0)*24*3600 + \
+        int(match['hours'] or 0)*3600 + \
+        int(match['minutes'] or 0)*60 + \
+        int(match['seconds'] or 0)
 
 
 class Sync(commands.Cog):
@@ -34,48 +49,45 @@ class Sync(commands.Cog):
         await ctx.send(f"Syncing events from {now} to {before}")
 
         # Fetch and parse ical from website
-        r = await get_from_url(ICAL_URL)
-        await ctx.send("Got ical")
-        c = io.BytesIO(r)
-        cal = Calendar.from_ical(c.getvalue())
+        cal = await get_json_from_url("https://oengus.io/api/v2/marathons/wasd2025/schedules/for-slug/wasd2025")
+        if logging: await ctx.send("Got JSON")
+        
         db_links = db_session.query(EventLink).all()
         links = {e.uid: e for e in db_links}
 
         dc_events = await ctx.guild.fetch_scheduled_events()
         dc_events = {e.id: e for e in dc_events}
 
-        # Add events
-        for ev in cal.walk():
-            if ev.name != "VEVENT":
-                continue
+        pprint(links)
 
-            t = (
-                ev.decoded("dtstart")
-                .replace(tzinfo=None)
-                .astimezone(timezone("Europe/London"))
-            )
-            print(ev.get("summary"), t, before)
+        pprint(dc_events)
+
+        # Add events
+        for ev in cal["lines"]:
+            if not ev.get("runners"): continue
+
+            t = datetime.datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%SZ")
+            t = t.astimezone(timezone("UTC"))
+            print(ev["game"], t, before, now)
             if t < now:
                 await self.log_event(ctx, ev, t, logging, "in the past")
                 continue
             if t > before:
                 await self.log_event(ctx, ev, t, logging, "outside time frme")
                 continue
-            await self.update_event(ctx, ev, links, dc_events)
+            await self.update_event(ctx, ev, links, dc_events, logging)
         await ctx.send("Done :)")
 
     async def log_event(self, ctx, ev, t, logging, reason):
         if logging:
-            await ctx.send(
-                f"Skipping event {ev.get('summary')} at time {t} as it is {reason}"
-            )
+            await ctx.send(f"Skipping event  at time {t} as it is {reason}")
 
-    async def update_event(self, ctx, ev, links, dc_events):
+    async def update_event(self, ctx, ev, links, dc_events, logging):
         """Check discord events for match, update if existing, otherwise create it"""
-        event_args = self.ical_event_to_dc_args(ev)
+        event_args = await self.ical_event_to_dc_args(ev, ctx)
 
         # Check for existing
-        uid = ev.get("uid")
+        uid = str(ev["id"])
         link = links.get(uid)
 
         # Attempt to find existing event
@@ -87,34 +99,75 @@ class Sync(commands.Cog):
         if not event:
             # Create new event
             event = await ctx.guild.create_scheduled_event(**event_args)
-            await ctx.send(
-                f"Created event **{ev.get('summary')}** at event {event.url}"
+            if logging: await ctx.send(
+                f"Created event **{ev.get('game')}** at event {event.url}"
             )
         else:
             # Don't edit if no change
             if self.check_event_equiv(event_args, event):
                 # Updat existing event
                 await event.edit(**event_args)
-                await ctx.send(
-                    f"Updated event **{ev.get('summary')}** at event {event.url}"
+                if logging: await ctx.send(
+                    f"Updated event **{ev.get('game')}** at event {event.url}"
                 )
             else:
                 # Don't change event
-                await ctx.send(f"No change for event **{ev.get('summary')}**")
+                if logging: await ctx.send(f"No change for event **{ev.get('game')}**")
 
         self.update_db_link(uid, event.id, link)
 
-    @staticmethod
-    def ical_event_to_dc_args(ev):
+    async def find_person(self, person, ctx):
+        basic_name = person["runnerName"]
+
+        if not basic_name: return None
+
+        custom = {
+            "IronScorpion": "iron_scorpion",
+            "OblivionWing": "oblivionwing."
+        }
+
+        username = custom.get(basic_name)
+
+        if not username:
+            profile = person.get("profile", {})
+            for conn in profile.get("connections", []):
+                if conn["platform"] == "DISCORD":
+                        username = conn["username"]
+                        if "#" in username: username = username.split("#")[0]
+        if not username: username = basic_name
+
+        try:
+            user = await commands.UserConverter().convert(ctx, username)
+            return user.mention
+        except:
+            print(username, username.lower())
+            try:
+                user = await commands.UserConverter().convert(ctx, username.lower())
+                return user.mention
+            except: pass
+        return basic_name
+
+
+    async def ical_event_to_dc_args(self, ev, ctx):
         """Construct args for discord event from the ical event"""
-        desc = unescape(f"{ev.get('description')}\n\nSee more at {ev.get('url')}")
+        # desc = ev["category"] + "\nWith " + (" vs. ".join(map(lambda t: " & ".join(map(lambda p: p["name"], t["players"])), ev.get("runners", []))))
+        usernames = []
+        for player in ev["runners"] or []:
+            name = await self.find_person(player, ctx)
+            usernames.append(name)
+        
+        players = " vs ".join(usernames)
+        start = datetime.datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%SZ")
+        start = start.astimezone(timezone("UTC"))
+        dur = duration(ev["estimate"])
+        end = start + datetime.timedelta(seconds=dur if dur > 1 else 1)
         return {
-            "name": unescape(str(ev.get("summary"))),
-            "description": desc,
-            "start_time": ev.decoded("dtstart"),
-            "end_time": ev.decoded("dtend"),
+            "name": ev["game"] + ("" if not ev.get("type") == "RACE" else " - Race"),
+            "description": ev["category"] + ("\nwith " if len(usernames) <= 1 else "\n") + players,
+            "start_time": start,
+            "end_time": end,
             "entity_type": discord.EntityType.external,
-            "location": str(ev.get("location")),
+            "location": "Esports Centre, University of Warwick",
         }
 
     @staticmethod
