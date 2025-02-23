@@ -47,11 +47,12 @@ class OnMessage(commands.Cog):
             )
             if replied_message.author.id != self.bot.user.id:
                 return
-        elif (
-            previous_message.author.id != self.bot.user.id
-            and "apollo" not in message.content.lower()
-        ):
+        #elif (
+            #previous_message.author.id != self.bot.user.id
+            # and "apollo" not in message.content.lower()
+        #):
             # can only thank replies to bot
+        else:
             return
         thanks = ["thx", "thanks", "thank you", "ty"]
         # only heart if thanks matches word in message
