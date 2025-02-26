@@ -2,7 +2,9 @@ import heapq
 import time
 
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content
+from discord.ext.commands import Bot, Context, clean_content, check
+
+from utils.utils import is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Create a Market to Trade!
@@ -127,6 +129,7 @@ class MarketCog(commands.Cog):
         self.live_markets = {}
 
     # !market new_market "Stock Name"
+    @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def new_market(self, ctx: Context, *, market: clean_content):
         if market in self.live_markets:
@@ -203,6 +206,7 @@ class MarketCog(commands.Cog):
         
         await ctx.reply(str(positions), ephemeral=True)
         
+    @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def close_market(self, ctx: Context, valuation: float, *, market: clean_content):
         if market not in self.live_markets:
