@@ -2,7 +2,7 @@ import heapq
 import time
 
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, clean_content, check
+from discord.ext.commands import Bot, Context, check, clean_content
 
 from utils.utils import is_compsoc_exec_in_guild
 
