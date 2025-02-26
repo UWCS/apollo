@@ -37,9 +37,9 @@ class OnMessage(commands.Cog):
             # dont thank itself
             return
         # Get the previous message (list comprehension my beloved)
-        previous_message = [
-            message async for message in message.channel.history(limit=2)
-        ][1]
+        # previous_message = [
+        #     message async for message in message.channel.history(limit=2)
+        # ][1]
         if message.reference and message.reference.message_id:
             # dont thank replies to something that isnt the bot
             replied_message = await message.channel.fetch_message(

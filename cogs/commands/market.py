@@ -1,7 +1,8 @@
-from discord.ext import commands, tasks
+import heapq
+import time
+
+from discord.ext import commands
 from discord.ext.commands import Bot, Context, clean_content
-from discord.ui import Button, View, button, TextInput, text_input
-from discord import Interaction
 
 LONG_HELP_TEXT = """
 Create a Market to Trade!
@@ -9,8 +10,6 @@ Create a Market to Trade!
 
 SHORT_HELP_TEXT = """Make the bot repeat after you."""
 
-import heapq
-import time
 
 class Order:
     def __init__(self, price, order_type, user_id):
