@@ -111,18 +111,52 @@ class Market:
         return list(self.asks)
     
     def __str__(self):
-        best_bid = str(round(self.bids[0].price, 2)) if len(self.bids) > 0 else 'None'
-        best_ask = str(round(self.asks[0].price, 2)) if len(self.asks) > 0 else 'None'
-        
-        return_string = f"{self.stock_name}\n"
-        return_string += "Best Bid: " + best_bid + "\n"
-        return_string += "Best Ask: " + best_ask + "\n"
-        return_string += "Last Trade: " + str(self.last_trade)
-        
-        return return_string
-    
-    
-    
+        """
+        Want something of the format:
+        # Order Book
+        bid volume (no. of bids) | price | ask volume (no. of asks)
+        123                      | 20.25 | 321
+        (blank - no bids)        | 10.10 | 123
+        123                      | 5.20  | (blank - no asks)
+
+        # Previous Trades
+        (whatever)
+        """
+
+        # Count bids and asks for each price level
+        bid_counts = {}
+        ask_counts = {}
+        for bid in self.bids:
+            bid_counts[bid.price] = bid_counts.get(bid.price, 0) + 1
+        for ask in self.asks:
+            ask_counts[ask.price] = ask_counts.get(ask.price, 0) + 1
+
+        # Get price levels; highest first
+        all_prices = sorted(set(bid_counts.keys()).union(set(ask_counts.keys())), reverse=True)
+
+        # Build string
+        order_book_lines = []
+        if len(all_prices) == 0:
+            order_book_lines.append("No outstanding orders\n")
+        else:
+            order_book_lines.append("```")
+            order_book_lines.append(f"{'Bid Volume':<15} | {'Price':<10} | {'Ask Volume'}")
+
+            for price in all_prices:
+                bid_vol = bid_counts.get(price, " " * 15)
+                ask_vol = ask_counts.get(price, " " * 10)
+                formatted_price = f"{price:.2f}"
+                order_book_lines.append(f"{str(bid_vol):<15} | {str(formatted_price):<10} | {str(ask_vol)}")
+
+            order_book_lines.append("```")
+
+        ret_str = f"📊 **{self.stock_name} Order Book** 📊\n" + "\n".join(order_book_lines) + "\n"
+
+        # TODO: Orders done; now previous trades
+        ret_str += f"Last Trade: {self.last_trade}"
+        return ret_str
+
+
 class MarketCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
