@@ -78,8 +78,8 @@ class Market:
             bid.price = earliest_trade.price
             ask.price = earliest_trade.price
                 
-            self.trade_history[bid.user_id].append(ask)
-            self.trade_history[ask.user_id].append(bid)
+            self.trade_history[bid.user_id].append(bid)
+            self.trade_history[ask.user_id].append(ask)
             
             self.last_trade = f"<@{bid.user_id}> bought from <@{ask.user_id}> at {bid.price}"
             
