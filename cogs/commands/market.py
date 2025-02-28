@@ -107,9 +107,8 @@ class Market:
             
         return user_to_profit
 
-    def is_open() {
+    def is_open(self):
         return self.open()
-    }
     
     def current_bids(self):
         return list(self.bids)
