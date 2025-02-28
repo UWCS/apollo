@@ -48,6 +48,7 @@ class Market:
         self.trade_history: dict[str, list[Order]] = {}
         
         self.last_trade = None
+        self.open = True
         
     def bid(self, price, user_id):
         self.bids.append(Order(price, 'bid', user_id))
@@ -101,8 +102,14 @@ class Market:
                     user_valuation -= valuation
                     
             user_to_profit[user] = user_valuation
+        
+        self.open = False
             
         return user_to_profit
+
+    def is_open() {
+        return self.open()
+    }
     
     def current_bids(self):
         return list(self.bids)
@@ -113,6 +120,9 @@ class Market:
     def __str__(self):
         """
         Want something of the format:
+        # Market Status
+        (whether market is open or closed)
+
         # Order Book
         bid volume (no. of bids) | price | ask volume (no. of asks)
         123                      | 20.25 | 321
@@ -122,6 +132,9 @@ class Market:
         # Previous Trades
         (whatever)
         """
+
+        ret_str = "Market is: "
+        ret_str += "OPEN\n\n" if self.open else "CLOSED\n\n"
 
         # Count bids and asks for each price level
         bid_counts = {}
@@ -150,7 +163,7 @@ class Market:
 
             order_book_lines.append("```")
 
-        ret_str = f"📊 **{self.stock_name} Order Book** 📊\n" + "\n".join(order_book_lines) + "\n"
+        ret_str += f"📊 **{self.stock_name} Order Book** 📊\n" + "\n".join(order_book_lines) + "\n"
 
         # TODO: Orders done; now previous trades
         ret_str += f"Last Trade: {self.last_trade}"
@@ -197,6 +210,10 @@ class MarketCog(commands.Cog):
             return
         
         market_obj = self.live_markets[market]
+
+        if not market_obj.is_open():
+            await ctx.reply("Market is closed", ephemeral=True)
+            return
         
         did_trade = market_obj.bid(price, ctx.author.id)
         
@@ -210,8 +227,13 @@ class MarketCog(commands.Cog):
         if market not in self.live_markets:
             await ctx.reply("Market does not exist", ephemeral=True)
             return
-        
+
         market_obj = self.live_markets[market]
+
+        if not market_obj.is_open():
+            await ctx.reply("Market is closed", ephemeral=True)
+            return
+        
         
         did_trade = market_obj.ask(price, ctx.author.id)
         
