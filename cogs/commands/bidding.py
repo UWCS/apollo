@@ -142,18 +142,18 @@ class BidCog(commands.Cog):
         
         winners_str = "**Winning Users**\n"
         for role,bid in winning_bids.values():
-            winning_str += f"{role}: <@{bid.user_id}> ({bid.price})\n"
+            winners_str += f"{role}: <@{bid.user_id}> ({bid.price})\n"
 
         self.bids.open = False
             
-        await ctx.reply(winning_str, ephemeral=False)
+        await ctx.reply(winners_str, ephemeral=False)
 
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def reset(self):
+    async def reset(self, ctx: Context):
         self.bids = None
         await ctx.send("Bidding reset")
 
 
-async def setup(bot: Bot, ctx: Context):
+async def setup(bot: Bot):
     await bot.add_cog(BidCog(bot))
