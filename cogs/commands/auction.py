@@ -60,8 +60,8 @@ class Auction:
         self.auctions[role.title()].sort(reverse=True)
         return bid.order_time
 
-    # To ensure incentive compatibility, we implement the Second-Price Vickery Auction
-    # The highest bid wins, but the price is the second highest bid
+    # To ensure incentive compatibility, we implement the Second-Price Vickrey Auction
+    # The highest bid wins, but the price is the value of the second highest bid
     def close(self):
         # Get the winning bid for each role, as well as the price
         winning_bids = {}
@@ -109,7 +109,7 @@ class AuctionCog(commands.Cog):
         await ctx.send("Auction created")
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def view_market(self, ctx: Context):
+    async def view_auction(self, ctx: Context):
         if self.auction is None:
             await ctx.reply("Auction does not exist, it may have been reset", ephemeral=True)
             return
@@ -122,7 +122,7 @@ class AuctionCog(commands.Cog):
         await ctx.reply(bids_str, ephemeral=True)
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def bid_market(self, ctx: Context, price: int):
+    async def bid_auction(self, ctx: Context, price: int):
         """You would place a bid by using this command
         '!auction <role> <price>'
         """
@@ -142,7 +142,7 @@ class AuctionCog(commands.Cog):
         
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def close_market(self, ctx: Context):
+    async def close_auction(self, ctx: Context):
         if self.auction is None:
             await ctx.reply("Auction does not exist, it may have been reset", ephemeral=True)
             return
