@@ -152,7 +152,7 @@ class AuctionCog(commands.Cog):
             await ctx.reply("Auction is closed", ephemeral=True)
             return
         
-        winning_bids = self.auction.close_market()
+        winning_bids = self.auction.close()
         
         winners_str = "**Winning Users**\n"
         for role,bid in winning_bids.values():
@@ -164,7 +164,7 @@ class AuctionCog(commands.Cog):
 
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def reset(self, ctx: Context):
+    async def reset_auction(self, ctx: Context):
         self.auction = None
         await ctx.send("Auction reset")
 
