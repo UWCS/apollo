@@ -58,7 +58,6 @@ class Auction:
         bid = Bid(price, user_id)
         self.auctions[role.title()].append(bid)
         self.auctions[role.title()].sort(reverse=True)
-        return bid.order_time
 
     # To ensure incentive compatibility, we implement the Second-Price Vickrey Auction
     # The highest bid wins, but the price is the value of the second highest bid
@@ -134,7 +133,7 @@ class AuctionCog(commands.Cog):
             await ctx.reply("Auction is closed", ephemeral=True)
             return
         
-        placed_bid = self.auction.bid(price, ctx.author.id)
+        self.auction.bid(price, ctx.author.id)
         
         await ctx.reply("Bid placed", ephemeral=True)
         
