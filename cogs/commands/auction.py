@@ -66,12 +66,13 @@ class Auction:
         # Get the winning bid for each role, as well as the price
         winning_bids = {}
         for role in self.auctions.keys():
-            if len(winning_bids[role]) > 0:
+            if len(self.auctions[role]) > 0:
                 winning_bid = self.auctions[role][0]
                 for bid in self.auctions[role][1:]:
                     if bid.price != winning_bid.price:
                         winning_bids[role] = (winning_bid, bid.price)
                         break
+                winning_bids[role] = (winning_bid, winning_bid.price)
                         
             else:
                 winning_bids[role] = None
@@ -136,9 +137,6 @@ class AuctionCog(commands.Cog):
         placed_bid = self.auction.bid(price, ctx.author.id)
         
         await ctx.reply("Bid placed", ephemeral=True)
-        
-        if placed_bid is not None:
-            await ctx.reply(placed_bid, ephemeral=False)
         
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
