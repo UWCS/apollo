@@ -155,8 +155,12 @@ class AuctionCog(commands.Cog):
         winning_bids = self.auction.close()
         
         winners_str = "**Winning Users**\n"
-        for role,bid in winning_bids.values():
-            winners_str += f"{role}: <@{bid[0].user_id}> bid {bid[0].price} and pays {bid[1]}\n"
+        for role in winning_bids.keys():
+            bid = winning_bids[role]
+            if bid is not None:
+                winners_str += f"{role}: <@{bid[0].user_id}> bid {bid[0].price} and pays {bid[1]}\n"
+            else:
+                winners_str += f"{role} had no bids\n"
 
         self.auction.open = False
             
