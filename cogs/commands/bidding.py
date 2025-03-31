@@ -1,8 +1,7 @@
-import heapq
 import time
 
 from discord.ext import commands
-from discord.ext.commands import Bot, Context, check, clean_content
+from discord.ext.commands import Bot, Context, check
 
 from utils.utils import is_compsoc_exec_in_guild
 
@@ -98,11 +97,11 @@ class BidCog(commands.Cog):
     async def new_market(self, ctx: Context):       
         self.bids = Bids()
         
-        await ctx.send(f"Bidding created")
+        await ctx.send("Bidding created")
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def view_market(self, ctx: Context):
-        if self.bids == None:
+        if self.bids is None:
             await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
             return
         
@@ -115,7 +114,10 @@ class BidCog(commands.Cog):
         """You would place a bid by using this command
         '!bid <role> <price>'
         """
-        if self.bids.open == False:
+        if self.bids is None:
+            await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
+            return
+        if not self.bids.open:
             await ctx.reply("Bidding is closed", ephemeral=True)
             return
         
@@ -129,7 +131,10 @@ class BidCog(commands.Cog):
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def close_market(self, ctx: Context, valuation: float):
-        if self.bids.open == False:
+        if self.bids is None:
+            await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
+            return
+        if not self.bids.open:
             await ctx.reply("Bidding is closed", ephemeral=True)
             return
         
@@ -137,11 +142,11 @@ class BidCog(commands.Cog):
         
         winners_str = "**Winning Users**\n"
         for role,bid in winning_bids.values():
-            profit_str += f"{role}: <@{bid.user_id}> ({bid.price})\n"
+            winning_str += f"{role}: <@{bid.user_id}> ({bid.price})\n"
 
         self.bids.open = False
             
-        await ctx.reply(profit_str, ephemeral=False)
+        await ctx.reply(winning_str, ephemeral=False)
 
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
@@ -150,5 +155,5 @@ class BidCog(commands.Cog):
         await ctx.send("Bidding reset")
 
 
-async def setup(bot: Bot):
+async def setup(bot: Bot, ctx: Context):
     await bot.add_cog(BidCog(bot))
