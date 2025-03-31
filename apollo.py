@@ -50,6 +50,7 @@ EXTENSIONS = [
     "cogs.commands.widen",
     "cogs.commands.xkcd",
     "cogs.commands.market",
+    "cogs.commands.bidding",
     "cogs.channel_checker",
     "cogs.database",
     "cogs.irc",
