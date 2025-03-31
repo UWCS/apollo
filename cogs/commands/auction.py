@@ -1,4 +1,5 @@
 import time
+import datetime
 
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check
@@ -89,9 +90,10 @@ class Auction:
         """
 
         ret_str = "📊 **Winning Bids** 📊\n\n"
+        ret_str += "**Role** | **Valuation (Time placed)** | **Number of bids**\n"
         for role in self.auctions.keys():
             if len(self.auctions[role]) > 0:
-                ret_str += f"{role} | {self.auctions[role][0].price} ({self.auctions[role][0].order_time}) | ({len(self.auctions[role])})\n"
+                ret_str += f"{role} | {self.auctions[role][0].price} ({datetime.datetime.fromtimestamp(self.auctions[role][0].order_time).isoformat()}) | {len(self.auctions[role])}\n"
             else:
                 ret_str += f"{role} | No bids\n"
 
@@ -139,6 +141,7 @@ class AuctionCog(commands.Cog):
         code = self.auction.bid(role, price, ctx.author.id)
         if code == 1:
             await ctx.reply("Bid does not match an item, check spelling", ephemeral=True)
+            return
         
         await ctx.reply("Bid placed", ephemeral=True)
         
