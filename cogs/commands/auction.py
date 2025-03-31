@@ -32,11 +32,11 @@ class Bid:
         return self.price > other.price
         
     def __str__(self):
-        return f'{self.order_time} <@{self.price}> <@{self.user_id}>'
+        return f'{self.order_time} {self.price} <@{self.user_id}>'
 
-class Bids:
+class Auction:
     def __init__(self):        
-        self.bids = {
+        self.auctions = {
             "President" : [],
             "Treasurer" : [],
             "Welfare" : [],
@@ -51,19 +51,28 @@ class Bids:
             "Publicity" : []
         }
         self.open = True
-        
+    
+    # A bid corresponds to the number of minutes a user is willing to be timed out for to get the role for a day
+    # The higher the bid, the more time they are willing to be timed out for
     def bid(self, role, price, user_id):
         bid = Bid(price, user_id)
-        self.bids[role.title()].append(bid)
-        self.bids[role.title()].sort(reverse=True)
+        self.auctions[role.title()].append(bid)
+        self.auctions[role.title()].sort(reverse=True)
         return bid.order_time
-            
-    def close(self, valuation):
-        # Get the highest and earliest bid for each role
+
+    # To ensure incentive compatibility, we implement the Second-Price Vickery Auction
+    # The highest bid wins, but the price is the second highest bid
+    def close(self):
+        # Get the winning bid for each role, as well as the price
         winning_bids = {}
-        for role in self.bids.keys():
+        for role in self.auctions.keys():
             if len(winning_bids[role]) > 0:
-                winning_bids[role] = self.bids[role][0]
+                winning_bid = self.auctions[role][0]
+                for bid in self.auctions[role][1:]:
+                    if bid.price != winning_bid.price:
+                        winning_bids[role] = (winning_bid, bid.price)
+                        break
+                        
             else:
                 winning_bids[role] = None
 
@@ -76,52 +85,55 @@ class Bids:
         # You get the idea
         """
 
-        ret_str = "📊 **Current Winning Bids** 📊\n\n"
-        for role in self.bids.keys():
-            if len(self.bids[role]) > 0:
-                ret_str += f"{role} | {self.bids[role][0].price} ({self.bids[role][0].order_time}) | ({len(self.bids[role])})\n"
+        ret_str = "📊 **Winning Bids** 📊\n\n"
+        for role in self.auctions.keys():
+            if len(self.auctions[role]) > 0:
+                ret_str += f"{role} | {self.auctions[role][0].price} ({self.auctions[role][0].order_time}) | ({len(self.auctions[role])})\n"
             else:
                 ret_str += f"{role} | No bids\n"
 
         return ret_str
 
 
-class BidCog(commands.Cog):
+class AuctionCog(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.bids = None
+        self.auction = None
 
-    # !bid new_bid
+    # !auction new_auction
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def new_market(self, ctx: Context):       
-        self.bids = Bids()
+    async def new_auction(self, ctx: Context):       
+        self.auction = Auction()
         
-        await ctx.send("Bidding created")
+        await ctx.send("Auction created")
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def view_market(self, ctx: Context):
-        if self.bids is None:
-            await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
+        if self.auction is None:
+            await ctx.reply("Auction does not exist, it may have been reset", ephemeral=True)
+            return
+        if self.auction.open:
+            await ctx.reply("Bids cannot be viewed while auction is open", ephemeral=True)
             return
         
-        bids_str = str(self.bids)
+        bids_str = str(self.auction)
         
         await ctx.reply(bids_str, ephemeral=True)
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def bid_market(self, ctx: Context, price: float):
+    async def bid_market(self, ctx: Context, price: int):
         """You would place a bid by using this command
-        '!bid <role> <price>'
+        '!auction <role> <price>'
         """
-        if self.bids is None:
-            await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
+        if self.auction is None:
+            await ctx.reply("Auction does not exist, it may have been reset", ephemeral=True)
             return
-        if not self.bids.open:
-            await ctx.reply("Bidding is closed", ephemeral=True)
+        if not self.auction.open:
+            await ctx.reply("Auction is closed", ephemeral=True)
             return
         
-        placed_bid = self.bids.bid(price, ctx.author.id)
+        placed_bid = self.auction.bid(price, ctx.author.id)
         
         await ctx.reply("Bid placed", ephemeral=True)
         
@@ -130,30 +142,30 @@ class BidCog(commands.Cog):
         
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def close_market(self, ctx: Context, valuation: float):
-        if self.bids is None:
-            await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
+    async def close_market(self, ctx: Context):
+        if self.auction is None:
+            await ctx.reply("Auction does not exist, it may have been reset", ephemeral=True)
             return
-        if not self.bids.open:
-            await ctx.reply("Bidding is closed", ephemeral=True)
+        if not self.auction.open:
+            await ctx.reply("Auction is closed", ephemeral=True)
             return
         
-        winning_bids = self.bids.close_market(valuation)
+        winning_bids = self.auction.close_market()
         
         winners_str = "**Winning Users**\n"
         for role,bid in winning_bids.values():
-            winners_str += f"{role}: <@{bid.user_id}> ({bid.price})\n"
+            winners_str += f"{role}: <@{bid[0].user_id}> bid {bid[0].price} and pays {bid[1]}\n"
 
-        self.bids.open = False
+        self.auction.open = False
             
         await ctx.reply(winners_str, ephemeral=False)
 
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def reset(self, ctx: Context):
-        self.bids = None
-        await ctx.send("Bidding reset")
+        self.auction = None
+        await ctx.send("Auction reset")
 
 
 async def setup(bot: Bot):
-    await bot.add_cog(BidCog(bot))
+    await bot.add_cog(AuctionCog(bot))
