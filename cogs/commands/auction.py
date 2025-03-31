@@ -56,8 +56,11 @@ class Auction:
     # The higher the bid, the more time they are willing to be timed out for
     def bid(self, role, price, user_id):
         bid = Bid(price, user_id)
+        if role.title() not in self.auctions.keys():
+            return 1
         self.auctions[role.title()].append(bid)
         self.auctions[role.title()].sort(reverse=True)
+        return 0
 
     # To ensure incentive compatibility, we implement the Second-Price Vickrey Auction
     # The highest bid wins, but the price is the value of the second highest bid
@@ -122,7 +125,7 @@ class AuctionCog(commands.Cog):
         await ctx.reply(bids_str, ephemeral=True)
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def bid_auction(self, ctx: Context, price: int):
+    async def bid_auction(self, ctx: Context, role: str, price: int):
         """You would place a bid by using this command
         '!auction <role> <price>'
         """
@@ -133,7 +136,9 @@ class AuctionCog(commands.Cog):
             await ctx.reply("Auction is closed", ephemeral=True)
             return
         
-        self.auction.bid(price, ctx.author.id)
+        code = self.auction.bid(role, price, ctx.author.id)
+        if code == 1:
+            await ctx.reply("Bid does not match an item, check spelling", ephemeral=True)
         
         await ctx.reply("Bid placed", ephemeral=True)
         
