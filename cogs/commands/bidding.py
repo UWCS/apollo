@@ -95,13 +95,13 @@ class BidCog(commands.Cog):
     # !bid new_bid
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def new_market(self, ctx: Context, *):       
+    async def new_market(self, ctx: Context):       
         self.bids = Bids()
         
         await ctx.send(f"Bidding created")
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def view_market(self, ctx: Context, *):
+    async def view_market(self, ctx: Context):
         if self.bids == None:
             await ctx.reply("Bidding does not exist, it may have been reset", ephemeral=True)
             return
@@ -111,7 +111,7 @@ class BidCog(commands.Cog):
         await ctx.reply(bids_str, ephemeral=True)
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def bid_market(self, ctx: Context, price: float, *):
+    async def bid_market(self, ctx: Context, price: float):
         """You would place a bid by using this command
         '!bid <role> <price>'
         """
@@ -128,7 +128,7 @@ class BidCog(commands.Cog):
         
     @check(is_compsoc_exec_in_guild)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def close_market(self, ctx: Context, valuation: float, *):
+    async def close_market(self, ctx: Context, valuation: float):
         if self.bids.open == False:
             await ctx.reply("Bidding is closed", ephemeral=True)
             return
