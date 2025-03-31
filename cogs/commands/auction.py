@@ -75,8 +75,8 @@ class Auction:
                     if bid.price != winning_bid.price:
                         winning_bids[role] = (winning_bid, bid.price)
                         break
-                winning_bids[role] = (winning_bid, winning_bid.price)
-                        
+                if role not in winning_bids.keys():
+                    winning_bids[role] = (winning_bid, winning_bid.price)
             else:
                 winning_bids[role] = None
 
