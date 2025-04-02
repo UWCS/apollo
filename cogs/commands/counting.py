@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from discord import User
+from discord.errors import NotFound
 from discord.ext import commands
 from discord.ext.commands import Bot, BucketType, Cog, Context, cooldown
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,7 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from models import db_session
 from models.counting import CountingRun, CountingUser
 from models.user import User as UserModel
-from utils import get_database_user_from_id, is_decimal
+from utils import get_database_user_from_id, get_name_string, is_decimal
 
 LONG_HELP_TEXT = """
 Starts a counting game where each player must name the next number in the sequence until someone names an invalid number
@@ -63,16 +64,15 @@ class Counting(Cog):
             # Dict for users to correct replies
             # NB no points for the first user - the initial message cannot be wrong
             players = dict()
-            # Used to make sure someone else replies
-            last_player = msg.author
+            # last_message replaces last_player
+            last_message = msg
 
             while self.currently_playing:
                 # Wait for the next numeric message sent by a different person in the same channel
                 def check_dec_player(m):
-                    return check_dec(m) and m.author != last_player
+                    return check_dec(m) and m.author != last_message.author
 
                 msg = await self.bot.wait_for("message", check=check_dec_player)
-                last_player = msg.author
                 value = Decimal(msg.content)
                 if msg.author.id not in players:
                     players[msg.author.id] = 0
@@ -80,16 +80,22 @@ class Counting(Cog):
                     # If the number is correct, increase the count and length.
                     count += step
                     length += 1
+                    last_message = msg
                     players[msg.author.id] += 1
                     await msg.add_reaction("✅")
                 else:
-                    # Otherwise, break the chain.
-                    await msg.add_reaction("❌")
-                    await ctx.send(
-                        f"Gone wrong at {count}! The next number was {count + step}.\n"
-                        f"This chain lasted {length} consecutive messages."
-                    )
-                    break
+                    try:
+                        # Try to fetch last message, if this causes an error then the message doesnt exist and has been deleted
+                        await ctx.fetch_message(last_message.id)
+                        await msg.add_reaction("❌")
+                        await ctx.send(
+                            f"Gone wrong at {count}! The next number was {count + step}.\n"
+                            f"This chain lasted {length} consecutive messages."
+                        )
+                        break
+                    except NotFound:
+                        # If the message has been deleted then say so, and continue the game
+                        await ctx.send(f"Oops. It seems {get_name_string(last_message)} deleted their message. The next number is {count + step}")
 
             # Save this run to the database
             ended_at = datetime.utcnow()
