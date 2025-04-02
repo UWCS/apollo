@@ -118,6 +118,12 @@ async def sync(ctx: Context[Bot]) -> None:
     synced = await ctx.bot.tree.sync()
     await ctx.reply(f"Synced {len(synced)} commands globally to the current guild.")
 
+@bot.command()
+@commands.guild_only()
+@check(is_compsoc_exec_in_guild)
+async def kill(ctx: Context[Bot]) -> None:
+    await ctx.reply("Shutting down Apollo!", ephemeral=True)
+    await ctx.bot.close()
 
 @bot.event
 async def on_command_error(ctx: Context[Bot], error: Exception):
