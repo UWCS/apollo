@@ -15,7 +15,7 @@ SHORT_HELP_TEXT = """Make the bot repeat after you."""
 
 
 class Order:
-    def __init__(self, price, order_type, user_id, qty, order_time=time.time()):
+    def __init__(self, price, order_type, user_id, qty, order_time):
         self.user_id = user_id
         self.price = price
         self.order_type = order_type
@@ -52,22 +52,17 @@ class Market:
         self.last_trade = None
         self.open = True
         
-    def bid(self, price, user_id, qty):
-        self.bids.append(Order(price, 'bid', user_id, qty))
-        heapq.heapify(self.bids)
+    def bid(self, price, user_id, qty, time=time.time()):
+        heapq.heappush(self.bids, Order(price, 'bid', user_id, qty, time))
         return self.match()
         
-    def ask(self, price, user_id, qty):
-        self.asks.append(Order(price, 'ask', user_id, qty))
-        heapq.heapify(self.asks)
+    def ask(self, price, user_id, qty, time=time.time()):
+        heapq.heappush(self.asks, Order(price, 'ask', user_id, qty, time))
         return self.match()
         
     def match(self):
-        if len(self.bids) == 0 or len(self.asks) == 0:
-            return None
-        
         matched = []
-        while self.bids[0].price >= self.asks[0].price:
+        while len(self.bids) > 0 and len(self.asks) > 0 and self.bids[0].price >= self.asks[0].price:
             bid = heapq.heappop(self.bids)
             ask = heapq.heappop(self.asks)
             qty = min(bid.qty, ask.qty)
@@ -83,8 +78,8 @@ class Market:
             bid.price = earliest_trade.price
             ask.price = earliest_trade.price
 
-            bought = Order(earliest_trade.price, 'bid', bid.price, qty)
-            sold   = Order(earliest_trade.price, 'ask', ask.user_id, qty)
+            bought = Order(earliest_trade.price, 'bid', bid.price, qty, bid.order_time)
+            sold   = Order(earliest_trade.price, 'ask', ask.user_id, qty, ask.order_time)
                 
             self.trade_history[bid.user_id].append(bought)
             self.trade_history[ask.user_id].append(sold)
