@@ -75,16 +75,13 @@ class Market:
                 
             earliest_trade = min(bid, ask, key=lambda x: x.order_time)
             
-            bid.price = earliest_trade.price
-            ask.price = earliest_trade.price
-
-            bought = Order(earliest_trade.price, 'bid', bid.price, qty, bid.order_time)
+            bought = Order(earliest_trade.price, 'bid', bid.user_id, qty, bid.order_time)
             sold   = Order(earliest_trade.price, 'ask', ask.user_id, qty, ask.order_time)
                 
             self.trade_history[bid.user_id].append(bought)
             self.trade_history[ask.user_id].append(sold)
             
-            self.last_trade = f"<@{bid.user_id}> bought {qty} from <@{ask.user_id}> at {bid.price}"
+            self.last_trade = f"<@{bid.user_id}> bought {qty} from <@{ask.user_id}> at {bought.price}"
 
             if ask.qty > qty:
                 heapq.heappush(self.asks, Order(ask.price, 'ask', ask.user_id, ask.qty - qty, ask.order_time))
@@ -164,7 +161,7 @@ class Market:
                 bid_vol = bid_counts.get(price, [" " * 15] * 2)
                 ask_vol = ask_counts.get(price, [" " * 10] * 2)
                 formatted_price = f"{price:.2f}"
-                order_book_lines.append(f"{str(bid_vol[0])} | {str(bid_vol[1]):<15} | {str(formatted_price):<10} | {str(ask_vol[1]):<15} | {str(ask_vol)[0]}")
+                order_book_lines.append(f"{str(bid_vol[0]):<15} | {str(bid_vol[1]):<15} | {str(formatted_price):<10} | {str(ask_vol[1]):<15} | {str(ask_vol[0])}")
 
             order_book_lines.append("```")
 

@@ -10,11 +10,14 @@ def test_can_place_orders():
     assert len(m.bids) == 1
     
     assert str(m) == """Market is: OPEN
+
 📊 **TEST Order Book** 📊
-Bid Orders | Bid Volume | Price | Ask Volume | Ask Orders
-           |            | 102   |          7 |          2
-1          |          3 | 101   |            |           
-"""
+```
+Bid Orders      | Bid Volume      | Price      | Ask Volume      | Ask Orders
+                |                 | 102.00     | 5               | 2
+1               | 3               | 101.00     |                 |           
+```
+Last Trade: None"""
 
 def test_single_match():
     m = Market("test")
@@ -46,6 +49,7 @@ def test_multi_match():
     assert m.asks[0].user_id == 3
     assert len(m.trade_history[1]) == 1
     assert len(m.trade_history[2]) == 1
+    assert 3 not in m.trade_history
     assert len(m.trade_history[4]) == 2
 
 def test_turning():
@@ -63,11 +67,10 @@ def test_multi_level_clear():
     assert m.ask(101, 1, 1, 2) is None
     assert m.ask(102, 1, 1, 3) is None
     assert m.ask(103, 1, 100, 4) is None
-    assert m.bid(103, 2, 10, 4) == """<@2> bought 1 from <@1> at 100
+    assert m.bid(103, 2, 10, 5) == """<@2> bought 1 from <@1> at 100
 <@2> bought 1 from <@1> at 101
 <@2> bought 1 from <@1> at 102
-<@2> bought 7 from <@1> at 103
-"""
+<@2> bought 7 from <@1> at 103"""
     assert len(m.bids) == 0
     assert len(m.asks) == 1
     assert m.asks[0].qty == 93
