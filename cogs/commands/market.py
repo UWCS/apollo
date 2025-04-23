@@ -15,12 +15,12 @@ SHORT_HELP_TEXT = """Make the bot repeat after you."""
 
 
 class Order:
-    def __init__(self, price, order_type, user_id, qty):
+    def __init__(self, price, order_type, user_id, qty, order_time=time.time()):
         self.user_id = user_id
         self.price = price
         self.order_type = order_type
         self.qty = qty
-        self.order_time = time.time()
+        self.order_time = order_time
         
     def __lt__(self, other):
         if self.order_type == 'ask':
@@ -92,9 +92,9 @@ class Market:
             self.last_trade = f"<@{bid.user_id}> bought {qty} from <@{ask.user_id}> at {bid.price}"
 
             if ask.qty > qty:
-                heapq.heappush(self.asks, Order(ask.price, 'ask', ask.user_id, ask.qty - qty))
+                heapq.heappush(self.asks, Order(ask.price, 'ask', ask.user_id, ask.qty - qty, ask.order_time))
             elif bid.qty > qty:
-                heapq.heappush(self.bids, Order(bid.price, 'bid', bid.user_id, bid.qty - qty))
+                heapq.heappush(self.bids, Order(bid.price, 'bid', bid.user_id, bid.qty - qty, bid.order_time))
 
             matched.append(self.last_trade)
 
