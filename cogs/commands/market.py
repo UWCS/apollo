@@ -52,12 +52,14 @@ class Market:
         self.last_trade = None
         self.open = True
         
-    def bid(self, price, user_id, qty, time=time.time()):
-        heapq.heappush(self.bids, Order(price, 'bid', user_id, qty, time))
+    def bid(self, price, user_id, qty, order_time=None):
+        order_time = time.time() if order_time is None else order_time
+        heapq.heappush(self.bids, Order(price, 'bid', user_id, qty, order_time))
         return self.match()
         
-    def ask(self, price, user_id, qty, time=time.time()):
-        heapq.heappush(self.asks, Order(price, 'ask', user_id, qty, time))
+    def ask(self, price, user_id, qty, order_time=None):
+        order_time = time.time() if order_time is None else order_time
+        heapq.heappush(self.asks, Order(price, 'ask', user_id, qty, order_time))
         return self.match()
         
     def match(self):
@@ -226,7 +228,7 @@ class MarketCog(commands.Cog):
         
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def ask_market(self, ctx: Context, price: float, qty: int, *, market: clean_content):
-        """You would place a bid by using this command
+        """You would place an ask by using this command
         '!ask_market 123.4 15 "AAPL"'
         """
 

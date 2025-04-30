@@ -77,3 +77,10 @@ def test_multi_level_clear():
     assert m.asks[0].price == 103
     assert len(m.trade_history[1]) == 4
     assert len(m.trade_history[2]) == 4
+
+def test_times():
+    m = Market("test")
+    assert m.ask(100, 1 ,1) is None
+    assert m.ask(101, 2, 1) is None
+    assert len(set([o.order_time for o in m.asks])) == len(m.asks)
+    assert m.bid(100, 2, 1) == "<@2> bought 1 from <@1> at 100"
