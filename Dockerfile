@@ -9,7 +9,7 @@ ENV PIPENV_VENV_IN_PROJECT=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# only copy in lockfile - install from locked deps
+COPY Pipfile /app/Pipfile
 COPY Pipfile.lock /app/Pipfile.lock
 
 WORKDIR /app
