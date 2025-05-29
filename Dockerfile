@@ -6,8 +6,8 @@ RUN pip install --user pipenv
 # Tell pipenv to create venv in the current directory
 ENV PIPENV_VENV_IN_PROJECT=1
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 # only copy in lockfile - install from locked deps
 COPY Pipfile.lock /app/Pipfile.lock
