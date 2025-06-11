@@ -35,10 +35,12 @@ config:
   portainer_api_key: portainer
   # Liege Chancellor User ID
   liege_chancellor_id: 1234
-  # Summarise Use Limit
+  # Summarise/TLDR Command Usage Limit
   summarise_limit: 3
-  # Summarise Cooldown Period (minutes)
+  # Summarise/TLDR Command Cooldown Period (minutes)
   summarise_cooldown: 10
+  # Summarise/TLDR Command Message Limit
+  summarise_message_limit : 400
   # whether to load general.txt and markov chains
   markov_enabled: False
 
