@@ -60,13 +60,17 @@ class XKCD(commands.Cog):
     async def xkcd_search(self, ctx: Context, query: str):
         """searches for a comic by title"""
 
+        # Load comics if not already loaded
         if not self.comics:
             self.comics = await self.get_all_comics()
+        # Okay something went wrong
         if not self.comics:
             return await ctx.reply("Error: could not get comics list", ephemeral=True)
         
+        # Search for query in titles
         results = [f"{title} ({comic_id})" for comic_id, title in self.comics.items() if query.lower() in title.lower()]
         
+        # Return results
         if not results:
             return await ctx.reply(f"No comics found with title containing '{query}'", ephemeral=True)
         
@@ -85,11 +89,12 @@ class XKCD(commands.Cog):
     async def get_all_comics(self) -> dict[int, str] | None:
         """gets a dictionary of all comic ids and their titles"""
         
+        # Pattern to match lines giving comic id and title
         pattern = re.compile(r'<a\s+href="/(\d+)/"[^>]*>(.*?)</a>')
 
         https_response = requests.get("https://xkcd.com/archive/")
         if https_response.status_code != 200:
-            raise SystemExit
+            return None
 
         html_text = https_response.text
         lines = [line for line in html_text.splitlines() if line != '']
@@ -98,6 +103,7 @@ class XKCD(commands.Cog):
         # flatten results since findall returns list of tuples
         results = [match for sub in results for match in sub]
 
+        # Create dictionary from list of tuples
         comics = {int(comic_id): title for comic_id, title in results}
         
         return comics
