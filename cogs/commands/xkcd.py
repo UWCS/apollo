@@ -13,7 +13,7 @@ LONG_HELP_TEXT = """
 For all your xkcd needs
 
 Use /xkcd <comicID> to gets the image of a comic with a specific ID.
-Use /xkcd_search <query> to search for a comic by title.
+Use /xkcd search <query> to search for a comic by title.
 Or just use /xkcd to get a random comic.
 If an invalid arguement is made a random comic is returned
 """
@@ -26,7 +26,7 @@ class XKCD(commands.Cog):
         self.bot = bot
         self.comics = None
 
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def xkcd(self, ctx: Context, comic_id: int | None = None):
         """gets either a random comic or a specific one"""
         max_comic_id = await self.get_recent_comic()  # gets the most recent comic's id
@@ -56,8 +56,8 @@ class XKCD(commands.Cog):
         msg = f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>"
         await ctx.reply(msg, file=comic_img)
     
-    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
-    async def xkcd_search(self, ctx: Context, query: str):
+    @xkcd.command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    async def search(self, ctx: Context, query: str):
         """searches for a comic by title"""
 
         # Load comics if not already loaded
