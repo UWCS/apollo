@@ -1,7 +1,10 @@
+import datetime
 import json
 import random
+import re
 
-from discord.ext import commands
+import requests
+from discord.ext import commands, tasks
 from discord.ext.commands import Bot, Context
 
 import utils
@@ -10,6 +13,7 @@ LONG_HELP_TEXT = """
 For all your xkcd needs
 
 Use /xkcd <comicID> to gets the image of a comic with a specific ID.
+Use /xkcd_search <query> to search for a comic by title.
 Or just use /xkcd to get a random comic.
 If an invalid arguement is made a random comic is returned
 """
@@ -20,6 +24,7 @@ SHORT_HELP_TEXT = "For all your xkcd needs"
 class XKCD(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
+        self.comics = None
 
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def xkcd(self, ctx: Context, comic_id: int | None = None):
@@ -50,6 +55,25 @@ class XKCD(commands.Cog):
         comic_title = comic_json["safe_title"]
         msg = f"**{comic_title}**, available at <https://xkcd.com/{comic_id}/>"
         await ctx.reply(msg, file=comic_img)
+    
+    @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
+    async def xkcd_search(self, ctx: Context, query: str):
+        """searches for a comic by title"""
+
+        if not self.comics:
+            self.comics = await self.get_all_comics()
+        if not self.comics:
+            return await ctx.reply("Error: could not get comics list", ephemeral=True)
+        
+        results = [f"{title} ({comic_id})" for comic_id, title in self.comics.items() if query.lower() in title.lower()]
+        
+        if not results:
+            return await ctx.reply(f"No comics found with title containing '{query}'", ephemeral=True)
+        
+        ret_str = f"Found {len(results)} comics with title containing '{query}':\n" + "\n".join(results)
+
+        return await ctx.reply(ret_str, ephemeral=True)
+        
 
     async def get_recent_comic(self) -> int | None:
         """gets the most recent comic id"""
@@ -57,6 +81,38 @@ class XKCD(commands.Cog):
         if xkcd_response:
             return xkcd_response["num"]
         return None
+    
+    async def get_all_comics(self) -> dict[int, str] | None:
+        """gets a dictionary of all comic ids and their titles"""
+        
+        pattern = re.compile(r'<a\s+href="/(\d+)/"[^>]*>(.*?)</a>')
+
+        https_response = requests.get("https://xkcd.com/archive/")
+        if https_response.status_code != 200:
+            raise SystemExit
+
+        html_text = https_response.text
+        lines = [line for line in html_text.splitlines() if line != '']
+        results = [pattern.findall(item) for item in lines]
+
+        # flatten results since findall returns list of tuples
+        results = [match for sub in results for match in sub]
+
+        comics = {int(comic_id): title for comic_id, title in results}
+        
+        return comics
+    
+    @tasks.loop(time=datetime.time(hour=4, minute=0, tzinfo=datetime.timezone.utc))
+    async def update_comics(self):
+        """updates the comics dictionary daily"""
+
+        xkcd_response = await utils.get_json_from_url("https://xkcd.com/info.0.json")
+        if not xkcd_response:
+            return None
+        max_comic_id = sorted(self.comics.keys())[-1]
+
+        if max_comic_id < xkcd_response["num"]:
+            self.comics[xkcd_response["num"]] = xkcd_response["safe_title"]
 
 
 async def setup(bot: Bot):
