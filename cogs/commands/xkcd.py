@@ -65,18 +65,18 @@ class XKCD(commands.Cog):
             self.comics = await self.get_all_comics()
         # Okay something went wrong
         if not self.comics:
-            return await ctx.reply("Error: could not get comics list", ephemeral=True)
+            return await ctx.reply("Error: could not get comics list")
         
         # Search for query in titles
         results = [f"{title} ({comic_id})" for comic_id, title in self.comics.items() if query.lower() in title.lower()]
         
         # Return results
         if not results:
-            return await ctx.reply(f"No comics found with title containing '{query}'", ephemeral=True)
+            return await ctx.reply(f"No comics found with title containing '{query}'")
         
         ret_str = f"Found {len(results)} comics with title containing '{query}':\n" + "\n".join(results)
 
-        return await ctx.reply(ret_str, ephemeral=True)
+        return await ctx.reply(ret_str)
         
 
     async def get_recent_comic(self) -> int | None:
@@ -117,8 +117,16 @@ class XKCD(commands.Cog):
             return None
         max_comic_id = sorted(self.comics.keys())[-1]
 
-        if max_comic_id < xkcd_response["num"]:
-            self.comics[xkcd_response["num"]] = xkcd_response["safe_title"]
+        # No new comics
+        if xkcd_response["num"] == max_comic_id:
+            return
+        
+        # Add any new comics since last update
+        self.comics[xkcd_response["num"]] = xkcd_response["safe_title"]
+        for comic_id in range(max_comic_id + 1, xkcd_response["num"]):
+            comic_response = await utils.get_json_from_url(f"https://xkcd.com/{comic_id}/info.0.json")
+            if comic_response:
+                self.comics[comic_id] = comic_response["safe_title"]
 
 
 async def setup(bot: Bot):
