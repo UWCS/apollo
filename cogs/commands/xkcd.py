@@ -24,7 +24,7 @@ SHORT_HELP_TEXT = "For all your xkcd needs"
 class XKCD(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        self.comics = None
+        self.comics = {}
 
     @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def xkcd(self, ctx: Context, comic_id: int | None = None):
