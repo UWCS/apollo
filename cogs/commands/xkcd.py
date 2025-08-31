@@ -25,6 +25,11 @@ class XKCD(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         self.comics = {}
+    
+    @commands.Cog.listener()
+    async def on_ready(self):
+        if not self.update_comics.is_running():
+            self.update_comics.start()
 
     @commands.hybrid_group(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     async def xkcd(self, ctx: Context, comic_id: int | None = None):
@@ -78,7 +83,6 @@ class XKCD(commands.Cog):
 
         return await ctx.reply(ret_str)
         
-
     async def get_recent_comic(self) -> int | None:
         """gets the most recent comic id"""
         xkcd_response = await utils.get_json_from_url("https://xkcd.com/info.0.json")
@@ -96,8 +100,7 @@ class XKCD(commands.Cog):
         if https_response.status_code != 200:
             return None
 
-        html_text = https_response.text
-        lines = [line for line in html_text.splitlines() if line != '']
+        lines = [line for line in https_response.text.splitlines()]
         results = [pattern.findall(item) for item in lines]
 
         # flatten results since findall returns list of tuples
@@ -105,12 +108,22 @@ class XKCD(commands.Cog):
 
         # Create dictionary from list of tuples
         comics = {int(comic_id): title for comic_id, title in results}
+
+        # Add the most recent comic which might not be in the archive page yet
+        xkcd_response = await utils.get_json_from_url("https://xkcd.com/info.0.json")
+        if xkcd_response:
+            comics[xkcd_response["num"]] = xkcd_response["safe_title"]
         
         return comics
     
     @tasks.loop(time=datetime.time(hour=4, minute=0, tzinfo=datetime.timezone.utc))
     async def update_comics(self):
         """updates the comics dictionary daily"""
+
+        # No comics loaded yet, faster way to load all comics
+        if not self.comics:
+            self.comics = await self.get_all_comics()
+            return
 
         xkcd_response = await utils.get_json_from_url("https://xkcd.com/info.0.json")
         if not xkcd_response:
