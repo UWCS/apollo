@@ -1,23 +1,20 @@
-import datetime
-import io
-from html import unescape
+from datetime import datetime, timedelta
 
 import discord
 from discord.ext import commands
 from discord.ext.commands import Bot, Context
-from icalendar import Calendar
 from pytz import timezone
 
 from models import db_session
 from models.event_sync import EventLink
-from utils.utils import get_from_url, is_compsoc_exec_in_guild
+from utils.utils import get_json_from_url, is_compsoc_exec_in_guild
 
 LONG_HELP_TEXT = """
 Sync events to our website uwcs.co.uk/events."""
 
 SHORT_HELP_TEXT = """Sync events"""
 
-ICAL_URL = "https://uwcs.co.uk/uwcs.ical"
+ENDPOINT = "https://events.uwcs.co.uk/api/events/days/"
 
 
 class Sync(commands.Cog):
@@ -27,55 +24,40 @@ class Sync(commands.Cog):
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @commands.check(is_compsoc_exec_in_guild)
     async def event(self, ctx: Context, days: int = 7, logging: bool = False):
-        now = datetime.datetime.now(timezone("Europe/London"))
-        # datetime's main module also being called datetime is annoying
-        before = now + datetime.timedelta(days=days)
+        now = datetime.now(timezone("Europe/London"))
+        before = now + timedelta(days=days)
 
         await ctx.send(f"Syncing events from {now} to {before}")
 
-        # Fetch and parse ical from website
-        r = await get_from_url(ICAL_URL)
-        await ctx.send("Got ical")
-        c = io.BytesIO(r)
-        cal = Calendar.from_ical(c.getvalue())
+        # get events from api
+        events = await get_json_from_url(ENDPOINT + f"?days={days}")
+
+        await ctx.send(f"Found {len(events)} event(s)")
+
+        # set up link to db
         db_links = db_session.query(EventLink).all()
         links = {e.uid: e for e in db_links}
 
+        # get existing events from discord
         dc_events = await ctx.guild.fetch_scheduled_events()
         dc_events = {e.id: e for e in dc_events}
 
+        if not events:
+            await ctx.send("No events found :(")
+            return
+
         # Add events
-        for ev in cal.walk():
-            if ev.name != "VEVENT":
-                continue
-
-            t = (
-                ev.decoded("dtstart")
-                .replace(tzinfo=None)
-                .astimezone(timezone("Europe/London"))
-            )
-            print(ev.get("summary"), t, before)
-            if t < now:
-                await self.log_event(ctx, ev, t, logging, "in the past")
-                continue
-            if t > before:
-                await self.log_event(ctx, ev, t, logging, "outside time frme")
-                continue
+        for ev in events:
             await self.update_event(ctx, ev, links, dc_events)
-        await ctx.send("Done :)")
 
-    async def log_event(self, ctx, ev, t, logging, reason):
-        if logging:
-            await ctx.send(
-                f"Skipping event {ev.get('summary')} at time {t} as it is {reason}"
-            )
+        await ctx.send("Done :)")
 
     async def update_event(self, ctx, ev, links, dc_events):
         """Check discord events for match, update if existing, otherwise create it"""
-        event_args = self.ical_event_to_dc_args(ev)
+        event_args = self.api_event_to_dc_args(ev)
 
         # Check for existing
-        uid = ev.get("uid")
+        uid = ev.get("url")
         link = links.get(uid)
 
         # Attempt to find existing event
@@ -87,9 +69,7 @@ class Sync(commands.Cog):
         if not event:
             # Create new event
             event = await ctx.guild.create_scheduled_event(**event_args)
-            await ctx.send(
-                f"Created event **{ev.get('summary')}** at event {event.url}"
-            )
+            await ctx.send(f"Created event **{ev.get('name')}** at event {event.url}")
         else:
             # Don't edit if no change
             if self.check_event_equiv(event_args, event):
@@ -105,16 +85,25 @@ class Sync(commands.Cog):
         self.update_db_link(uid, event.id, link)
 
     @staticmethod
-    def ical_event_to_dc_args(ev):
-        """Construct args for discord event from the ical event"""
-        desc = unescape(f"{ev.get('description')}\n\nSee more at {ev.get('url')}")
+    def api_event_to_dc_args(ev):
+        """Construct args for discord event from the api event"""
+        description = (
+            (ev.get("description")[:500] + "...")
+            if len(ev.get("description")) > 500
+            else ev.get("description")
+        )
+        description += f"\n\nSee more at {ev.get('url')}"
         return {
-            "name": unescape(str(ev.get("summary"))),
-            "description": desc,
-            "start_time": ev.decoded("dtstart"),
-            "end_time": ev.decoded("dtend"),
+            "name": ev.get("name"),
+            "description": description,
+            "start_time": datetime.strptime(
+                ev.get("start_time"), "%Y-%m-%dT%H:%M"
+            ).astimezone(timezone("Europe/London")),
+            "end_time": datetime.strptime(
+                ev.get("end_time"), "%Y-%m-%dT%H:%M"
+            ).astimezone(timezone("Europe/London")),
             "entity_type": discord.EntityType.external,
-            "location": str(ev.get("location")),
+            "location": ev.get("location"),
         }
 
     @staticmethod
@@ -136,7 +125,7 @@ class Sync(commands.Cog):
     @staticmethod
     def update_db_link(uid, event_id, link):
         """Update database record. If new, create, otherwise update"""
-        now = datetime.datetime.now(timezone("Europe/London"))
+        now = datetime.now(timezone("Europe/London"))
         if not link:
             link = EventLink(uid=uid, discord_event=event_id, last_modified=now)
             db_session.add(link)
