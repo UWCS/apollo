@@ -98,10 +98,10 @@ class Sync(commands.Cog):
             "description": description,
             "start_time": datetime.strptime(
                 ev.get("start_time"), "%Y-%m-%dT%H:%M"
-            ).astimezone(timezone("Europe/London")),
-            "end_time": datetime.strptime(
-                ev.get("end_time"), "%Y-%m-%dT%H:%M"
-            ).astimezone(timezone("Europe/London")),
+            ).replace(tzinfo=timezone("Europe/London")),
+            "end_time": datetime.strptime(ev.get("end_time"), "%Y-%m-%dT%H:%M").replace(
+                tzinfo=timezone("Europe/London")
+            ),
             "entity_type": discord.EntityType.external,
             "location": ev.get("location"),
         }
