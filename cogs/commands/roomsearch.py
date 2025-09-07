@@ -155,7 +155,7 @@ class RoomSearch(commands.Cog):
 
     def get_map_url(self, room):
         """Constructs url for campus map for room"""
-        return f"https://campus.warwick.ac.uk/?slid={room.get('extRef').get('id')}"
+        return f"https://warwick.ac.uk/sitebuilder2/api/campus_map/location/{room.get('_id')}"
 
     def get_info_url(self, room):
         """Constructs url for ITS info on room"""
