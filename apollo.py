@@ -51,6 +51,7 @@ EXTENSIONS = [
     "cogs.commands.xkcd",
     "cogs.commands.market",
     "cogs.commands.auction",
+    "cogs.commands.unpaywall",
     "cogs.channel_checker",
     "cogs.database",
     "cogs.irc",
