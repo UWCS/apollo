@@ -28,7 +28,7 @@ class OnMessage(commands.Cog):
                     "https://rxddit.com",
                 )
                 await self.scan_replace(
-                    message, r"https?://www\.instagram\.com", "https://ddinstagram.com"
+                    message, r"https?://www\.instagram\.com", "https://uuinstagram.com"
                 )
 
     async def thanks(self, message: Message):
