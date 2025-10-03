@@ -16,6 +16,8 @@ SHORT_HELP_TEXT = """Sync events"""
 
 ENDPOINT = "https://events.uwcs.co.uk/api/events/days/"
 
+LONDON = timezone("Europe/London")
+
 
 class Sync(commands.Cog):
     def __init__(self, bot: Bot):
@@ -24,7 +26,7 @@ class Sync(commands.Cog):
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @commands.check(is_compsoc_exec_in_guild)
     async def event(self, ctx: Context, days: int = 7, logging: bool = False):
-        now = datetime.now(timezone("Europe/London"))
+        now = datetime.now(LONDON)
         before = now + timedelta(days=days)
 
         await ctx.send(f"Syncing events from {now} to {before}")
@@ -73,7 +75,7 @@ class Sync(commands.Cog):
         else:
             # Don't edit if no change
             if self.check_event_equiv(event_args, event):
-                # Updat existing event
+                # Update existing event
                 await event.edit(**event_args)
                 await ctx.send(
                     f"Updated event **{ev.get('summary')}** at event {event.url}"
@@ -96,12 +98,10 @@ class Sync(commands.Cog):
         return {
             "name": ev.get("name"),
             "description": description,
-            "start_time": datetime.strptime(
-                ev.get("start_time"), "%Y-%m-%dT%H:%M"
-            ).replace(tzinfo=timezone("Europe/London")),
-            "end_time": datetime.strptime(ev.get("end_time"), "%Y-%m-%dT%H:%M").replace(
-                tzinfo=timezone("Europe/London")
-            ),
+            # depends on Fulcrum API providing tz-aware dts
+            # this handling fine despite py3.10 quirks
+            "start_time": datetime.fromisoformat(ev.get("start_time")),
+            "end_time": datetime.fromisoformat(ev.get("end_time")),
             "entity_type": discord.EntityType.external,
             "location": ev.get("location"),
         }
@@ -125,7 +125,7 @@ class Sync(commands.Cog):
     @staticmethod
     def update_db_link(uid, event_id, link):
         """Update database record. If new, create, otherwise update"""
-        now = datetime.now(timezone("Europe/London"))
+        now = datetime.now(LONDON)
         if not link:
             link = EventLink(uid=uid, discord_event=event_id, last_modified=now)
             db_session.add(link)
