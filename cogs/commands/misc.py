@@ -127,6 +127,12 @@ class Misc(commands.Cog):
         await ctx.send("https://github.com/UWCS/apollo")
 
     @commands.hybrid_command()
+    async def milk(self, ctx: Context):
+        """Link the Milk Monday video"""
+        await ctx.send("https://youtu.be/wkEiZWLW96o")
+
+
+    @commands.hybrid_command()
     async def babbage(self, ctx: Context):
         await ctx.send(
             "Pray, Mr. Babbage, if you put into the machine wrong figures, will the right answers come out?"
