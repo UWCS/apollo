@@ -78,11 +78,11 @@ class Sync(commands.Cog):
                 # Update existing event
                 await event.edit(**event_args)
                 await ctx.send(
-                    f"Updated event **{ev.get('summary')}** at event {event.url}"
+                    f"Updated event **{ev.get('name')}** at event {event.url}"
                 )
             else:
                 # Don't change event
-                await ctx.send(f"No change for event **{ev.get('summary')}**")
+                await ctx.send(f"No change for event **{ev.get('name')}**")
 
         self.update_db_link(uid, event.id, link)
 
