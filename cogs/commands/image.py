@@ -1,27 +1,28 @@
 import logging
 from enum import Enum
+from io import BytesIO
 
 import discord
-import openai
 from discord.ext import commands
 from discord.ext.commands import Bot, Context, check, clean_content
+from openai import AsyncOpenAI
 
-import utils
 from cogs.commands.openaiadmin import is_author_banned_openai
 from config import CONFIG
+from utils import get_file_from_url
 
 LONG_HELP_TEXT = """
 Apollo is more creative than you think...
 
-Apollo can now generate images using openAI's DALL-E model.
-To use, simply type `!dalle <prompt>` or `/dalle <prompt>`. Apollo will then generate an image based on the prompt.
-Once generated buttons can be used to regenerate the image (create a new image based on the prompt) or create a variant of the the most recent image.
+Apollo can now generate images using openAI's image generation model.
+To use, simply type `!image <prompt>` or `/image <prompt>`. Apollo will then generate an image based on the prompt.
 """
 
 SHORT_HELP_TEXT = "Apollo is more creative than you think..."
 
 
-IMAGE_RESOLUTION = "256x256"  # resolution of images (maybe change later?) (you're welcome treasurer btw)
+IMAGE_RESOLUTION = "1024x1024"
+MODEL = "gpt-image-1.5"
 
 
 def get_cooldown(ctx: Context):
@@ -36,15 +37,15 @@ def get_cooldown(ctx: Context):
     return commands.Cooldown(1, 60)
 
 
-class Dalle(commands.Cog):
+class Image(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        openai.api_key = CONFIG.OPENAI_API_KEY
+        self.openai_client = AsyncOpenAI(api_key=CONFIG.OPENAI_API_KEY)
 
     @commands.dynamic_cooldown(get_cooldown, type=commands.BucketType.channel)
     @commands.hybrid_command(help=LONG_HELP_TEXT, brief=SHORT_HELP_TEXT)
     @check(is_author_banned_openai)
-    async def dalle(self, ctx: Context, *, prompt: str):
+    async def image(self, ctx: Context, *, prompt: str):
         """Generates an image based on the prompt using DALL-E"""
 
         prompt = await clean_content().convert(ctx, prompt)
@@ -55,34 +56,37 @@ class Dalle(commands.Cog):
             return
 
         async with ctx.typing():  # show typing whilst generating image
-            url = await self.generate_image(prompt)
-            image = await utils.get_file_from_url(url)
+            image = await self.generate_image(prompt, [])
         if image is None:  # if image is not created error
             return await ctx.reply(
                 "Failed to generate image :wah:", mention_author=True
             )
-        view = DalleView(timeout=None, bot=self.bot)  # otherwise reply with image
+        view = ImageView(timeout=None, bot=self.bot)  # otherwise reply with image
         await ctx.reply(prompt, file=image, mention_author=True, view=view)
 
-    async def generate_image(self, prompt: str):
-        """gets image from openAI and returns url for that image"""
+    async def generate_image(self, prompt: str, previous_images: list[bytes]):
+        """gets image from openAI and returns that image"""
         logging.info(f"Generating image with prompt: {prompt}")
-        response = await openai.Image.acreate(
-            prompt=prompt,
-            n=1,
-            size=IMAGE_RESOLUTION,  # maybe change later? (you're welcome treasurer btw)
-        )
-        return response["data"][0]["url"]
 
-    @staticmethod
-    async def generate_variant(image: bytes):
-        """generates a variant of the image"""
-        response = await openai.Image.acreate_variation(
-            image=image,
-            n=1,
-            size=IMAGE_RESOLUTION,
+        def bytes_to_file(file_bytes: bytes):
+            f = BytesIO(file_bytes)
+            f.name = "image.png"
+            return f
+
+        response = (
+            await self.openai_client.images.generate(
+                model=MODEL, prompt=prompt, size=IMAGE_RESOLUTION
+            )
+            if previous_images == []
+            else await self.openai_client.images.edit(
+                model=MODEL,
+                prompt=prompt,
+                image=list(map(bytes_to_file, previous_images)),
+                size=IMAGE_RESOLUTION,
+            )
         )
-        return response["data"][0]["url"]
+        logging.info(f"OpenAI Image Response: {response}")
+        return await get_file_from_url(response.data[0].url)
 
 
 class Mode(Enum):  # enums for the different modess
@@ -90,10 +94,10 @@ class Mode(Enum):  # enums for the different modess
     VARIANT = "Creating variant"
 
 
-class DalleView(discord.ui.View):
+class ImageView(discord.ui.View):
     def __init__(self, timeout: float | None, bot: Bot) -> None:
         super().__init__(timeout=timeout)
-        self.dalle_cog = bot.get_cog("Dalle")  # get dalle cog to use image generation
+        self.image_cog = bot.get_cog("Image")  # get image cog to use image generation
 
     @discord.ui.button(label="Regenerate", style=discord.ButtonStyle.primary)
     async def regenerate(
@@ -119,15 +123,25 @@ class DalleView(discord.ui.View):
         await interaction.response.edit_message(
             content=f"{mode.value} ⌛", view=self
         )  # send initial confirmation (discord needs response within 30s)
-        message = interaction.message  # gets message for use later
-        new_url = ""
-        if mode == Mode.REGENERATING:  # generates new image
-            new_url = await self.dalle_cog.generate_image(message.content)
-        elif mode == Mode.VARIANT:  # creates variant of image
-            new_url = await self.dalle_cog.generate_variant(
-                await utils.get_from_url(message.attachments[-1].url)
+
+        # get image
+        message = interaction.message
+        previous_images = []
+        for attachment in message.attachments:
+            previous_images.append(await attachment.read())
+        new_image = await self.image_cog.generate_image(
+            prompt=message.content,
+            previous_images=previous_images if mode == Mode.VARIANT else [],
+        )
+        if new_image is None:
+            await interaction.followup.edit_message(
+                message.id,
+                content="Failed to generate image :wah:",
+                view=self,
             )
-        new_file = await utils.get_file_from_url(new_url)  # makes the new file
+            self.edit_buttons(False)  # re-enables buttons
+            return
+
         self.edit_buttons(False)  # re-enables buttons
         if len(message.attachments) == 10:
             # discord only allows 10 attachments per message so we need to send a new message
@@ -140,12 +154,12 @@ class DalleView(discord.ui.View):
                 self.add_item(item)
             await interaction.followup.send(
                 message.content,
-                file=new_file,
+                file=new_image,
                 view=self,
             )
         else:
             # otherwise we can just edit the message
-            await message.add_files(new_file)
+            await message.add_files(new_image)
             self.edit_buttons(False)  # for some reason need to re-enable buttons again
             await interaction.followup.edit_message(
                 message.id, content=message.content, view=self
@@ -161,4 +175,4 @@ class DalleView(discord.ui.View):
 
 
 async def setup(bot: Bot):
-    await bot.add_cog(Dalle(bot))
+    await bot.add_cog(Image(bot))
