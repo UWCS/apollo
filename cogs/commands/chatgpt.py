@@ -188,7 +188,7 @@ class ChatGPT(commands.Cog):
         # Limit with 60s cooldown
         now = datetime.now(timezone.utc)
         if self.cooldowns.get(ctx.channel.id):
-            cutoff = now - timedelta(seconds=60)
+            cutoff = now - timedelta(seconds=10)
             if ctx.message.created_at > cutoff:
                 await ctx.message.add_reaction("⏱️")
                 return True
