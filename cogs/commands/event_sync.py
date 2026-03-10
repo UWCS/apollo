@@ -50,6 +50,8 @@ class Sync(commands.Cog):
 
         # Add events
         for ev in events:
+            if datetime.fromisoformat(ev.get("start_time")) < datetime.now(LONDON):
+                continue
             await self.update_event(ctx, ev, links, dc_events)
 
         await ctx.send("Done :)")
