@@ -24,6 +24,8 @@ config:
   UWCS_bot_log_channel_id: 1234
   # IRC bridge bot ID
   UWCS_discord_bridge_bot_id: 1337
+  # Role ID for bot pings
+  UWCS_bot_ping_role_id: 1234213
   # API Key for chatgpt integration
   openai_api_key: openai
   # Whether to include usernames as part of a prompt

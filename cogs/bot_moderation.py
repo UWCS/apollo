@@ -33,7 +33,7 @@ class BotModeration(Cog):
         )
         
         await message.delete()
-        await channel.send(" ".join([f"<@&{exec_role}>" for exec_role in CONFIG.UWCS_EXEC_ROLE_IDS]), embed=embed)
+        await channel.send(f"<@&{CONFIG.UWCS_BOT_PING_ROLE_ID}>", embed=embed)
         await message.author.timeout(timedelta(days=1))
 
 async def setup(bot: Bot):
