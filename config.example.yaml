@@ -20,6 +20,8 @@ config:
   UWCS_roles_channel_id: 123
   # Channel for the channel movement checker
   UWCS_exec_spam_channel_id: 1234
+  # Channel for message logs
+  UWCS_bot_log_channel_id: 1234
   # IRC bridge bot ID
   UWCS_discord_bridge_bot_id: 1337
   # API Key for chatgpt integration
