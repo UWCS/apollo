@@ -4,13 +4,13 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import discord
-import openai
 from discord import AllowedMentions
 from discord.ext import commands
 from discord.ext.commands import (
     Bot,
     Context,
 )
+from openai import AsyncOpenAI
 
 from cogs.commands.openaiadmin import is_author_banned_openai
 from config import CONFIG
@@ -40,7 +40,7 @@ def clean(msg, *prefixes):
 class ChatGPT(commands.Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        openai.api_key = CONFIG.OPENAI_API_KEY
+        self.openai_client = AsyncOpenAI(api_key=CONFIG.OPENAI_API_KEY)
         self.system_prompt = CONFIG.AI_SYSTEM_PROMPT
         if CONFIG.AI_INCLUDE_NAMES:
             self.system_prompt += "\nYou are in a Discord chat room, each message is prepended by the name of the message's author separated by a colon."
@@ -196,11 +196,12 @@ class ChatGPT(commands.Cog):
         return False
 
     async def dispatch_api(self, messages, full) -> Optional[str]:
-
         # Make request
         logging.info(f"Making OpenAI request: {messages}")
         model = "gpt-4.1" if full else "gpt-4.1-mini"
-        response = await openai.ChatCompletion.acreate(model=model, messages=messages)
+        response = await self.openai_client.chat.completions.create(
+            model=model, messages=messages
+        )
         logging.info(f"OpenAI Response: {response}")
 
         # Remove prefix that chatgpt might add
