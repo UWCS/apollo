@@ -15,7 +15,6 @@ class Config:
         self.DISCORD_TOKEN: str = parsed.get("discord_token")
         self.BOT_SECRET_KEY: str = parsed.get("db_secret_key")
         self.DATABASE_CONNECTION: str = parsed.get("database_connection")
-        self.TIMEZONE: str = parsed.get("timezone")
 
         # Optional
         self.UWCS_WELCOME_CHANNEL_ID: int = parsed.get("UWCS_welcome_channel_id")
