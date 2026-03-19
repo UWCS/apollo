@@ -56,7 +56,7 @@ EXTENSIONS = [
     "cogs.database",
     "cogs.irc",
     "cogs.parallelism",
-    "cogs.welcome",
+    "cogs.welcome"
 ]
 
 
