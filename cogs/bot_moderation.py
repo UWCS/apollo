@@ -1,6 +1,3 @@
-import asyncio
-import difflib
-
 from datetime import datetime, timedelta
 
 import discord
@@ -8,15 +5,6 @@ from discord import Embed, Color
 from discord.ext.commands import Bot, Cog
 
 from config import CONFIG
-
-async def not_in_blacklisted_channel(ctx: Context):
-    return (
-        await is_compsoc_exec_in_guild(ctx)
-        or db_session.query(IgnoredChannel)
-        .filter(IgnoredChannel.channel == ctx.channel.id)
-        .first()
-        is None
-    )
 
 class Database(Cog):
     def __init__(self, bot: Bot):
@@ -31,14 +19,14 @@ class Database(Cog):
         is_giving_away = 'giving away' in message.content.lower()
 
         if not joined_recently or not (contains_everyone or is_giving_away):
-            break
+            return
 
         channel = self.bot.get_channel(CONFIG.UWCS_MESSAGE_LOG_CHANNEL_ID)
 
         embed_colour = Color.from_rgb(61, 83, 255)
         embed_title = f'@{message.author.global_name}, ID: {message.author.id}'
         embed_description = f'User suspected to be a bot, joined_recently: {joined_recently}, contains_everyone: {contains_everyone}, is_giving_away: {is_giving_away}'
-        embed = discord.Embed(
+        embed = Embed(
             title=embed_title, color=embed_colour, embed_description=embed_description
         )
         
