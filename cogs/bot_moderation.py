@@ -20,7 +20,7 @@ class Database(Cog):
         if not joined_recently or not (contains_everyone or is_giving_away):
             return
 
-        channel = self.bot.get_channel(CONFIG.UWCS_MESSAGE_LOG_CHANNEL_ID)
+        channel = self.bot.get_channel(CONFIG.UWCS_BOT_LOG_CHANNEL_ID)
 
         embed_colour = Color.from_rgb(61, 83, 255)
         embed_title = f'@{message.author.global_name}, ID: {message.author.id}'
