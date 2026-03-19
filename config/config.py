@@ -20,6 +20,7 @@ class Config:
         self.UWCS_WELCOME_CHANNEL_ID: int = parsed.get("UWCS_welcome_channel_id")
         self.UWCS_ROLES_CHANNEL_ID: int = parsed.get("UWCS_roles_channel_id")
         self.UWCS_EXEC_SPAM_CHANNEL_ID: int = parsed.get("UWCS_exec_spam_channel_id")
+        self.UWCS_MESSAGE_LOG_CHANNEL_ID: int = parsed.get("UWCS_message_log_channel_id")
         self.UWCS_DISCORD_BRIDGE_BOT_ID: int = parsed.get("UWCS_discord_bridge_bot_id")
         self.OPENAI_API_KEY: str = parsed.get("openai_api_key")
         self.AI_INCLUDE_NAMES: bool = parsed.get("ai_include_names")
