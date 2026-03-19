@@ -7,7 +7,7 @@ from discord.ext.commands import Bot, Cog
 from config import CONFIG
 
 
-class Database(Cog):
+class BotModeration(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         
@@ -30,7 +30,7 @@ class Database(Cog):
         )
         
         await message.delete()
-        await channel.send(f'<@&{CONFIG.UWCS_EXEC_ROLE_IDS[1]}>', embed=embed)
+        await channel.send(f'{' '.join([f'<@&{exec_role}>' for exec_role in CONFIG.UWCS_EXEC_ROLE_IDS])}', embed=embed)
         await message.author.timeout(timedelta(days=1))
 
 async def setup(bot: Bot):
