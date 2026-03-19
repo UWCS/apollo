@@ -3,7 +3,6 @@ from datetime import datetime, timedelta
 import discord
 from discord import Color, Embed
 from discord.ext.commands import Bot, Cog
-
 from pytz import timezone
 
 from config import CONFIG
