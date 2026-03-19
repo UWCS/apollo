@@ -1,16 +1,15 @@
 from datetime import datetime, timedelta
 
 import discord
-from discord import Embed, Color
+from discord import Color, Embed
 from discord.ext.commands import Bot, Cog
 
 from config import CONFIG
 
+
 class Database(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
-        # Set up a global check that we're not in a blacklisted channel
-        self.bot.add_check(not_in_blacklisted_channel)
         
     @Cog.listener()
     async def on_message(self, message: discord.Message):
