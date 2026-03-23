@@ -390,7 +390,7 @@ class Quotes(commands.Cog):
         quoted_message = await channel.fetch_message(payload.message_id)
 
         await self.quote_discord_user(
-            payload.member.mention, quoted_message, quoted_message
+            payload.member.mention, quoted_message, quoted_message, True
         )
 
     async def quote_discord_user(
@@ -398,6 +398,7 @@ class Quotes(commands.Cog):
         requester: discord.Member,
         quoted_message: discord.Message,
         reply_to: discord.Message,
+        from_react = False
     ):
         """Modified version of original quote add, has more context and creates mention"""
         # Get mention for DB. Modified from MentionConverter
@@ -425,8 +426,10 @@ class Quotes(commands.Cog):
                 result += "Quote already exists."
             else:
                 result += MYSTERY_ERROR
-
-        await reply_to.reply(result, mention_author=False)
+        
+        # Skip multiple clicks of quote react
+        if not (from_react and "Quote already exists." in result):            
+            await reply_to.reply(result, mention_author=False)
 
     @quote.command()
     async def delete(self, ctx: Context, query: QuoteIDConverter):
