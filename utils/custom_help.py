@@ -28,15 +28,15 @@ class SimplePrettyHelp(commands.HelpCommand):
             )
 
         await self.get_destination().send(
-            embed=discord.Embed.from_dict(
+            embeds=[discord.Embed.from_dict(
                 {
                     "color": self.color,
-                    "fields": cog_fields,
+                    "fields": cog_fields[i:i+25],
                     "footer": {
                         "text": "For more information on a command : !help [command]"
                     },
                 }
-            )
+            ) for i in range(0, len(cog_fields), 25)]
         )
 
     async def send_command_help(self, command):
