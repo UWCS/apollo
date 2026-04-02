@@ -30,7 +30,7 @@ def discord_channel_key(channel):
     if isinstance(channel, discord.CategoryChannel):
         return channel.position, -1
     return (
-        channel.category.position,
+        0 if getattr(channel, "category") is None else channel.category.position,  # Slightly dirty guard against channels not in a category
         1 if isinstance(channel, discord.VoiceChannel) else 0,  # Text before voice
         channel.position,
         channel.id,
