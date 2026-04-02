@@ -7,7 +7,7 @@ from discord.ext.commands import Bot, Cog
 from config import CONFIG
 
 
-class Database(Cog):
+class BotModeration(Cog):
     def __init__(self, bot: Bot):
         self.bot = bot
         
@@ -34,4 +34,4 @@ class Database(Cog):
         await message.author.timeout(timedelta(days=1))
 
 async def setup(bot: Bot):
-    await bot.add_cog(Database(bot))
+    await bot.add_cog(BotModeration(bot))
