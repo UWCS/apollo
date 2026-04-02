@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import discord
 from discord import Color, Embed
@@ -13,7 +13,8 @@ class BotModeration(Cog):
         
     @Cog.listener()
     async def on_message(self, message: discord.Message):
-        joined_recently = message.author.joined_at > datetime.now() - timedelta(days=7)
+        # compare in UTC since joined_at will be in UTC
+        joined_recently = message.author.joined_at > datetime.now(timezone.utc) - timedelta(days=7)
         contains_everyone = '@everyone' in message.content
         is_giving_away = 'giving away' in message.content.lower()
 
