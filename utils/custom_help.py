@@ -1,19 +1,21 @@
-import discord
-from discord.ext import commands
+from typing import Any, Mapping
+
+from discord import Embed
+from discord.ext.commands import Cog, Command, Group, HelpCommand
 
 
 # Modified from https://pypi.org/project/discord-simple-pretty-help/
-class SimplePrettyHelp(commands.HelpCommand):
-    def __init__(self, color=0x5865F2):
+class SimplePrettyHelp(HelpCommand):
+    def __init__(self, colour: int = 0x5865F2) -> None:
         super().__init__()
-        self.color = color
+        self.colour = colour
 
-    async def send_bot_help(self, mapping: dict[commands.Cog, list[commands.Command]]):
+    async def send_bot_help(self, mapping: Mapping[Cog | None, list[Command[Any, ..., Any]]]) -> None:
         """Main help menu"""
 
-        cog_fields = []
+        cog_fields: list[dict[str, str | bool]] = []
         for cog, cmds in mapping.items():
-            name = getattr(cog, "qualified_name", "Others")
+            name: str = getattr(cog, "qualified_name", "Others")
             if name == "Misc" or not cmds:
                 continue
             cog_fields.append(
@@ -28,9 +30,9 @@ class SimplePrettyHelp(commands.HelpCommand):
             )
 
         await self.get_destination().send(
-            embed=discord.Embed.from_dict(
+            embed=Embed.from_dict(
                 {
-                    "color": self.color,
+                    "colour": self.colour,
                     "fields": cog_fields,
                     "footer": {
                         "text": "For more information on a command : !help [command]"
@@ -39,9 +41,9 @@ class SimplePrettyHelp(commands.HelpCommand):
             )
         )
 
-    async def send_command_help(self, command):
+    async def send_command_help(self, command: Command[Any, ..., Any]) -> None:
         """Command help menu"""
-        print(repr(command))
+        #print(repr(command))
         fields = [
             {
                 "name": "Usage",
@@ -76,9 +78,9 @@ class SimplePrettyHelp(commands.HelpCommand):
             )
 
         await self.get_destination().send(
-            embed=discord.Embed.from_dict(
+            embed=Embed.from_dict(
                 {
-                    "color": self.color,
+                    "colour": self.colour,
                     "title": command.name,
                     "description": command.help or command.brief or "",
                     "fields": fields,
@@ -86,7 +88,7 @@ class SimplePrettyHelp(commands.HelpCommand):
             )
         )
 
-    async def send_group_help(self, group):
+    async def send_group_help(self, group: Group[Any, ..., Any]) -> None:
         """Group help menu"""
         fields = [
             {
@@ -96,6 +98,7 @@ class SimplePrettyHelp(commands.HelpCommand):
                 ),
             }
         ]
+
         if group.clean_params:
             fields.append(
                 {
@@ -110,6 +113,7 @@ class SimplePrettyHelp(commands.HelpCommand):
                     or "⠀No arguments",
                 }
             )
+
         if group.commands:
             fields.append(
                 {
@@ -124,6 +128,7 @@ class SimplePrettyHelp(commands.HelpCommand):
                     or "⠀No subcommands",
                 }
             )
+
         if group.aliases:
             fields.append(
                 {
@@ -131,10 +136,11 @@ class SimplePrettyHelp(commands.HelpCommand):
                     "value": ", ".join([f"`{alias}`" for alias in group.aliases]),
                 }
             )
+
         await self.get_destination().send(
-            embed=discord.Embed.from_dict(
+            embed=Embed.from_dict(
                 {
-                    "color": self.color,
+                    "colour": self.colour,
                     "title": group.name,
                     "description": group.brief or "",
                     "fields": fields,
@@ -145,13 +151,13 @@ class SimplePrettyHelp(commands.HelpCommand):
             )
         )
 
-    async def send_cog_help(self, cog):
+    async def send_cog_help(self, cog: Cog) -> None:
         """Cog help menu"""
 
         await self.get_destination().send(
-            embed=discord.Embed.from_dict(
+            embed=Embed.from_dict(
                 {
-                    "color": self.color,
+                    "colour": self.colour,
                     "title": cog.qualified_name,
                     "description": cog.description,
                     "fields": [

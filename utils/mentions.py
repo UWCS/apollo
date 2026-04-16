@@ -1,11 +1,12 @@
 from enum import Enum
-from typing import Any
+from typing import Any, Type, TypeVar
 
-from discord.ext import commands
+from discord.ext.commands import AutoShardedBot, Bot, Context, Converter
 from discord.ext.commands.converter import MemberConverter
 
 import utils
 
+T = TypeVar("T", bound="Mention")
 
 class MentionType(Enum):
     ID = 0
@@ -13,38 +14,36 @@ class MentionType(Enum):
 
 
 class Mention:
-    def __init__(self, type: MentionType, id: int | None, string: str | None):
+    def __init__(self, type: MentionType, id: int | None, string: str | None) -> None:
         self.type = type
         self.id = id
         self.string = string
 
-    def __eq__(self, other_m: object) -> bool:
-        if not isinstance(other_m, Mention):
-            return False
-        return all(
-            [
-                self.type == other_m.type,
-                self.id == other_m.id,
-                self.string == other_m.string,
-            ]
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Mention):
+            return NotImplemented
+        return (
+            self.type == other.type
+            and self.id == other.id
+            and self.string == other.string
         )
 
-    def is_id_type(self):
+    def is_id_type(self) -> bool:
         return self.type == MentionType.ID
 
-    @staticmethod
-    def id_mention(id: int):
-        return Mention(MentionType.ID, id, None)
+    @classmethod
+    def id_mention(cls: Type[T], id: int) -> T:
+        return cls(MentionType.ID, id, None)
 
-    @staticmethod
-    def string_mention(string: str):
-        return Mention(MentionType.STRING, None, string)
+    @classmethod
+    def string_mention(cls: Type[T], string: str) -> T:
+        return cls(MentionType.STRING, None, string)
 
 
-class MentionConverter(commands.Converter[Any]):
+class MentionConverter(Converter[Any]):
     async def convert(
         self,
-        ctx: commands.Context[commands.Bot | commands.AutoShardedBot],
+        ctx: Context[Bot | AutoShardedBot],
         argument: str,
     ) -> Mention:
         member_converter = MemberConverter()

@@ -11,11 +11,9 @@ ignore = [
   "cogs/**/*",               # everything, cut this down over time
   "karma/**/*",
   "migrations/versions",
-  "utils/announce_utils.py",
   "roll/**/*",
   "tests/**/*",
-  "voting/**/*",
-  "utils/custom_help.py",
+  "voting/**/*"
 ]
 # https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
 

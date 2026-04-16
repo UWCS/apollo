@@ -5,12 +5,24 @@ import re
 import textwrap
 from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from enum import Enum
 from io import BytesIO
-from typing import Any, Callable, Coroutine, Iterable, ParamSpec, Tuple, TypeAlias
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Generator,
+    Iterable,
+    ParamSpec,
+    Type,
+    TypeVar,
+)
 
 import aiohttp
 import dateparser
 import discord
+from discord import File, Guild, Member, Message
+from discord.abc import Snowflake
 from discord.ext.commands import Bot, Context
 from pytz import timezone, utc
 
@@ -18,26 +30,27 @@ from config import CONFIG
 from models import db_session
 from models.user import User
 
-from .typing import Identifiable
+from .typing import JSON, is_context
 
+E = TypeVar("E", bound="EnumGet")
 
-class EnumGet:
+class EnumGet(Enum):
     """Only use this if you're an enum inheriting it!"""
 
     @classmethod
-    def get(cls, argument: str, default: str | None = None):
-        values: dict[str, str] = {e.name.casefold(): e.name for e in list(cls)}  # type: ignore
+    def get(cls: Type[E], argument: str, default: E | None = None) -> E | None:
+        values: dict[str, str] = {e.name.casefold(): e.name for e in cls}
         casefolded = argument.casefold()
         if casefolded not in values:
             return default
         else:
-            return cls[values[casefolded]]  # type: ignore
+            return cls[values[casefolded]]
 
 
 def clean_brackets(
     string: str,
-    brackets: Iterable[Tuple[str, str]] = (("(", ")"),),
-):
+    brackets: Iterable[tuple[str, str]] = (("(", ")"),),
+) -> str:
     """Removes matching brackets from the outside of a string
     Only supports single-character brackets
     """
@@ -46,11 +59,11 @@ def clean_brackets(
     return string
 
 
-def filter_out_none(iterable: Iterable[Any], /):
+def filter_out_none(iterable: Iterable[Any], /) -> Generator[Any, None, None]:
     return (i for i in iterable if i is not None)
 
 
-def format_list(el: list[Any], /):
+def format_list(el: list[Any], /) -> str:
     if len(el) == 1:
         return f"{el[0]}"
     elif len(el) == 2:
@@ -59,7 +72,7 @@ def format_list(el: list[Any], /):
         return f'{", ".join(el[:-1])}, and {el[-1]}'
 
 
-def format_list_of_members(members: Iterable[discord.Member], /, *, ping: bool = True):
+def format_list_of_members(members: Iterable[Member], /, *, ping: bool = True) -> str:
     if ping:
         el = [member.mention for member in members]
     else:
@@ -71,11 +84,11 @@ def get_database_user_from_id(id_: int, /) -> User | None:
     return db_session.query(User).filter(User.user_uid == id_).one_or_none()
 
 
-def get_database_user(user: Identifiable, /) -> User | None:
+def get_database_user(user: Snowflake, /) -> User | None:
     return get_database_user_from_id(user.id)
 
 
-def get_name_string(message: discord.Message):
+def get_name_string(message: Message) -> str:
     # if message.clean_content.startswith("**<"): <-- FOR TESTING
     if user_is_irc_bot(message):
         return message.clean_content.split(" ")[0][3:-3]
@@ -83,7 +96,7 @@ def get_name_string(message: discord.Message):
         return f"{message.author.mention}"
 
 
-def get_name_and_content(message: discord.Message):
+def get_name_and_content(message: Message) -> tuple[str, str]:
     if user_is_irc_bot(message):
         words = message.clean_content.split(" ")
         return words[0][3:-3], " ".join(words[1:])
@@ -91,7 +104,7 @@ def get_name_and_content(message: discord.Message):
         return message.author.display_name, message.clean_content
 
 
-async def is_compsoc_exec_in_guild(ctx: Context[Bot], /):
+async def is_compsoc_exec_in_guild(ctx: Context[Bot], /) -> bool:
     """Check whether a member is an exec in the UWCS Discord"""
     compsoc_guild = next(
         (guild for guild in ctx.bot.guilds if guild.id == CONFIG.UWCS_DISCORD_ID), None
@@ -108,7 +121,7 @@ async def is_compsoc_exec_in_guild(ctx: Context[Bot], /):
     return any(roles)
 
 
-def is_decimal(num: Any):
+def is_decimal(num: Any) -> bool:
     try:
         Decimal(num)
         return True
@@ -116,7 +129,7 @@ def is_decimal(num: Any):
         return False
 
 
-def parse_time(time: str, /):
+def parse_time(time: str, /) -> datetime | None:
     # dateparser.parse returns None if it cannot parse
     parsed_time = dateparser.parse(
         time,
@@ -184,22 +197,22 @@ def parse_time(time: str, /):
     return parsed_time
 
 
-def pluralise(el: list[Any], /, word: str, single: str = "", plural: str = "s"):
+def pluralise(el: list[Any], /, word: str, single: str = "", plural: str = "s") -> str:
     if len(el) > 1:
         return word + plural
     else:
         return word + single
 
 
-def user_is_irc_bot(ctx: Context[Bot] | discord.Message) -> bool:
+def user_is_irc_bot(ctx: Context[Bot] | Message) -> bool:
     return ctx.author.id == CONFIG.UWCS_DISCORD_BRIDGE_BOT_ID
 
 
-def replace_external_emoji(guild: discord.Guild, string: str):
+def replace_external_emoji(guild: Guild, string: str) -> str:
     """References to external emojis aren't updated by default. Can be used so bot only emojis don't pollute server pool"""
     from apollo import bot
 
-    def emotes(match: re.Match[str]):
+    def emotes(match: re.Match[str]) -> str | Any:
         # If emoji body
         if match.group(2):
             # Prioritize local emoji
@@ -213,7 +226,7 @@ def replace_external_emoji(guild: discord.Guild, string: str):
     return re.sub("(^|[^<]):([-_a-zA-Z0-9]+):", emotes, string)
 
 
-def split_into_messages(sections: str | list[str], limit: int = 2000):
+def split_into_messages(sections: str | list[str], limit: int = 2000) -> list[str]:
     """Split a string (or list of sections) into small enough chunks to send (2000 chars)"""
     if isinstance(sections, str):
         sections = [sections]
@@ -265,7 +278,6 @@ def split_by(
             result.append(accum.strip("\n"))
         return result
 
-
 P = ParamSpec("P")
 
 
@@ -281,7 +293,7 @@ def wait_react(
     async def decorator(*args: P.args, **kwargs: P.kwargs):
         ctx: Context[Bot] | None = None
         for arg in args:
-            if isinstance(arg, Context):
+            if is_context(arg):
                 ctx = arg
                 break
         if ctx is None:
@@ -307,7 +319,7 @@ def done_react(
     async def decorator(*args: P.args, **kwargs: P.kwargs):
         ctx: Context[Bot] | None = None
         for arg in args:
-            if isinstance(arg, Context):
+            if is_context(arg):
                 ctx = arg
                 break
         if ctx is None:
@@ -319,18 +331,18 @@ def done_react(
     return decorator
 
 
-def rerun_to_confirm(key_name: str, confirm_msg="Re-run to confirm"):
+def rerun_to_confirm(key_name: str, confirm_msg: str = "Re-run to confirm") -> Callable[[Callable[P, Coroutine[Any, Any, object]]], Callable[P, Coroutine[Any, Any, Message | None]]]:
     """
-    Records the first run of the command, only actuall runs command on confirmatory second run
+    Records the first run of the command, only actually runs command on confirmatory second run
     """
     first_run_times = {}
 
-    def decorator_actual(func: Callable[P, Coroutine[Any, Any, None]]):
+    def decorator_actual(func: Callable[P, Coroutine[Any, Any, object]]) -> Callable[P, Coroutine[Any, Any, Message | None]]:
         @functools.wraps(func)
-        async def decorator(*args: P.args, **kwargs: P.kwargs):
+        async def decorator(*args: P.args, **kwargs: P.kwargs) -> Message | None:
             ctx: Context[Bot] | None = None
             for arg in args:
-                if isinstance(arg, Context):
+                if is_context(arg):
                     ctx = arg
                     break
             if ctx is None:
@@ -373,9 +385,6 @@ async def get_from_url(url: str, headers: dict[str, Any] | None = None) -> bytes
                 return None
 
 
-JSON: TypeAlias = dict[str, "JSON"] | list["JSON"] | str | int | float | bool | None
-
-
 async def get_json_from_url(url: str, headers: dict[str, str] | None = None) -> JSON:
     """gets json from url"""
     response = await get_from_url(url, headers)
@@ -386,11 +395,11 @@ async def get_json_from_url(url: str, headers: dict[str, str] | None = None) -> 
 
 async def get_file_from_url(
     url: str, filename: str = "image.png"
-) -> discord.File | None:
+) -> File | None:
     """gets an image from a url and returns as a discord file"""
     response = await get_from_url(url)
     if response is None:
         return None
-    return discord.File(
+    return File(
         BytesIO(response), filename=filename
     )  # convert response to files

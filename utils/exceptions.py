@@ -8,7 +8,7 @@ class WarningError(Exception, ABC):
     """
 
     @abstractmethod
-    def __init__(self, out: str, message: str):
+    def __init__(self, out: str, message: str) -> None:
         self.out = out
         self.message = message
         super().__init__(message)
@@ -21,7 +21,7 @@ class OutputTooLargeError(WarningError):
         self,
         out: str = "Your requested output was too large!",
         message: str = "Maximum Discord message length exceeded",
-    ):
+    ) -> None:
         super().__init__(out, message)
 
 
