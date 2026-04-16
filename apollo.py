@@ -89,7 +89,7 @@ async def on_ready():
 
 async def main():
     logging.basicConfig(
-        level=logging.getLevelName(CONFIG.LOG_LEVEL),
+        level=getattr(logging, CONFIG.LOG_LEVEL, logging.INFO),
         format="[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s",
         handlers=[
             logging.FileHandler("apollo.log"),
