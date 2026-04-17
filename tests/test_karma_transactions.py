@@ -1,10 +1,14 @@
+from typing import Any, Iterable
+
 import pytest
+from discord import Message
+from pretend import stub
 
 from karma.parser import KarmaItem, KarmaOperation
 from karma.transaction import KarmaTransaction, filter_transactions, make_transactions
 from tests.stubs import make_irc_message_stub, make_message_stub
 
-MAKE_TEST_CASES = {
+MAKE_TEST_CASES: dict[str, tuple[list[Any], stub, list[Any]]] = {
     # Simple cases
     "no item": (
         [],
@@ -73,12 +77,12 @@ MAKE_TEST_CASES = {
     MAKE_TEST_CASES.values(),
     ids=MAKE_TEST_CASES.keys(),
 )
-def test_make_transactions(items, message, expected):
+def test_make_transactions(items: Iterable[KarmaItem], message: Message, expected: list[KarmaTransaction]) -> None:
     actual = make_transactions(items, message)
     assert actual == expected
 
 
-FILTER_TEST_CASES = {
+FILTER_TEST_CASES: dict[str, tuple[list[KarmaTransaction], list[Any]]] = {
     # Cases that should be filtered out
     "empty topic": (
         [KarmaTransaction(KarmaItem("", KarmaOperation.POSITIVE, None), False)],
@@ -119,6 +123,6 @@ FILTER_TEST_CASES = {
 @pytest.mark.parametrize(
     ["items", "expected"], FILTER_TEST_CASES.values(), ids=FILTER_TEST_CASES.keys()
 )
-def test_filter_transactions(items, expected):
+def test_filter_transactions(items: Iterable[KarmaTransaction], expected: list[KarmaTransaction]) -> None:
     actual = filter_transactions(items)
     assert actual == expected

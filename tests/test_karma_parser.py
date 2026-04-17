@@ -1,10 +1,11 @@
 from textwrap import dedent
+from typing import Any
 
 import pytest
 
 from karma.parser import KarmaItem, KarmaOperation, parse_message_content
 
-TEST_CASES = {
+TEST_CASES: dict[str, tuple[str, list[Any]]] = {
     # Cases with no karma
     "empty": ("", []),
     "no karma": ("Hello, world!", []),
@@ -229,6 +230,6 @@ TEST_CASES = {
 @pytest.mark.parametrize(
     ["message", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
 )
-def test_parser(message, expected):
+def test_parser(message: str, expected: list[KarmaItem]):
     actual = parse_message_content(message)
     assert actual == expected

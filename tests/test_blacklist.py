@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Iterable
 
 import pytest
 from alembic import command
@@ -44,7 +44,7 @@ def database():
 
 
 # interesting: pyright thinks empty list is list[unknown], hence why this cannot auto-deduce
-TEST_CASES: dict[str, Tuple[list[KarmaTransaction], list[KarmaTransaction]]] = {
+TEST_CASES: dict[str, tuple[list[KarmaTransaction], list[KarmaTransaction]]] = {
     # Make sure the blacklist does not interfere with regular karma parsing
     "not in blacklist": (
         [KarmaTransaction(KarmaItem("foobar", KarmaOperation.POSITIVE, None), False)],
@@ -115,6 +115,6 @@ TEST_CASES: dict[str, Tuple[list[KarmaTransaction], list[KarmaTransaction]]] = {
 @pytest.mark.parametrize(
     ["transactions", "expected"], TEST_CASES.values(), ids=TEST_CASES.keys()
 )
-def test_blacklist(database, transactions, expected):
+def test_blacklist(database: Session, transactions: Iterable[KarmaTransaction], expected: Iterable[KarmaTransaction]) -> None:
     actual = apply_blacklist(transactions, database)
     assert actual == expected

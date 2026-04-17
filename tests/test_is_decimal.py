@@ -2,7 +2,7 @@ import pytest
 
 from utils import is_decimal
 
-TEST_CASES = [
+TEST_CASES: list[tuple[str | bool, bool]] = [
     ("", False),
     ("1", True),
     ("0", True),
@@ -50,6 +50,6 @@ TEST_CASES = [
 
 
 @pytest.mark.parametrize(["string", "expected"], TEST_CASES)
-def test_is_decimal(string, expected):
+def test_is_decimal(string: str | bool, expected: bool) -> None:
     actual = is_decimal(string)
     assert actual == expected

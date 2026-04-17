@@ -6,7 +6,7 @@ from discord.ext.commands import Bot
 from cogs.commands.eightball import EightBall
 
 
-def test_eightball_no_question():
+def test_eightball_no_question() -> None:
     eightball = EightBall(Bot("/", intents=Intents()), Random(1), [])
 
     assert (
@@ -15,13 +15,13 @@ def test_eightball_no_question():
     )
 
 
-def test_eightball_question_with_fixed_randomness():
+def test_eightball_question_with_fixed_randomness() -> None:
     eightball = EightBall(
         Bot("/", intents=Intents()), Random(1), ["Yes", "No", "Maybe"]
     )
 
     answers = [
-        eightball.execute("test", ["Should", "I", "eat", "cake?"]) for i in range(0, 7)
+        eightball.execute("test", ["Should", "I", "eat", "cake?"]) for _ in range(0, 7)
     ]
 
     assert answers == [

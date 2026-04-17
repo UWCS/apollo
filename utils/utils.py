@@ -290,7 +290,7 @@ def wait_react(
     """
 
     @functools.wraps(func)
-    async def decorator(*args: P.args, **kwargs: P.kwargs):
+    async def decorator(*args: P.args, **kwargs: P.kwargs) -> None:
         ctx: Context[Bot] | None = None
         for arg in args:
             if is_context(arg):
@@ -316,7 +316,7 @@ def done_react(
     """
 
     @functools.wraps(func)
-    async def decorator(*args: P.args, **kwargs: P.kwargs):
+    async def decorator(*args: P.args, **kwargs: P.kwargs) -> None:
         ctx: Context[Bot] | None = None
         for arg in args:
             if is_context(arg):

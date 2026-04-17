@@ -2,7 +2,7 @@ import pytest
 
 from utils.utils import split_into_messages
 
-SIMPLE_TEST_CASES = [
+SIMPLE_TEST_CASES: list[tuple[str, int, list[str]]] = [
     ("Line 1", 20, ["Line 1"]),
     ("Line 1\n", 20, ["Line 1"]),
     ("Line 1\nLine 2", 20, ["Line 1\nLine 2"]),
@@ -33,6 +33,6 @@ SIMPLE_TEST_CASES = [
 
 
 @pytest.mark.parametrize(["string", "limit", "expected"], SIMPLE_TEST_CASES)
-def test_message_split(string, limit, expected):
+def test_message_split(string: str | list[str], limit: int, expected: list[str]) -> None:
     actual = split_into_messages(string, limit)
     assert actual == expected

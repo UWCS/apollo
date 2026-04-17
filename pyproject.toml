@@ -12,7 +12,10 @@ ignore = [
   "karma/**/*",
   "migrations/versions",
   "roll/**/*",
-  "tests/**/*",
+  "tests/test_arg_parse.py",
+  "tests/test_karma.py",
+  "tests/test_roll.py",
+#  "tests/**/*",
   "voting/**/*"
 ]
 # https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults
