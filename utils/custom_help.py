@@ -27,17 +27,25 @@ class SimplePrettyHelp(commands.HelpCommand):
                 }
             )
 
-        await self.get_destination().send(
-            embed=discord.Embed.from_dict(
-                {
-                    "color": self.color,
-                    "fields": cog_fields,
-                    "footer": {
-                        "text": "For more information on a command : !help [command]"
-                    },
-                }
+        ## embeds can only have 25 fields
+        ## per https://docs.discord.com/developers/resources/message#embed-object
+        embeds = []
+        for i in range(0, len(cog_fields), 25):
+            ## create embeds for each slice of 25
+            embeds.append(
+                discord.Embed.from_dict(
+                    {
+                        "color": self.color,
+                        "fields": cog_fields[i:i+25],
+                        "footer": {
+                            "text": "For more information on a command : !help [command]"
+                        },
+                    }
+                )
             )
-        )
+
+        ## send all embeds
+        await self.get_destination().send(embeds=embeds)
 
     async def send_command_help(self, command):
         """Command help menu"""
