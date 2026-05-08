@@ -14,7 +14,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.exc import SQLAlchemyError
 
 from config import CONFIG
-from models.models import db_session
+from models import db_session
 from models.system import EventKind, SystemEvent
 from utils import is_compsoc_exec_in_guild
 

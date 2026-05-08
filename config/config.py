@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 import yaml
 
@@ -42,7 +43,7 @@ class Config:
             "announcement_search_interval"
         )
         self.ANNOUNCEMENT_IMPERSONATE: int = parsed.get("announcement_impersonate")
-        self.UNICODE_NORMALISATION_FORM: str = "NFKD"
+        self.UNICODE_NORMALISATION_FORM: Literal["NFKD"] = "NFKD"
         self.PYROMANIAC_URL: str = parsed.get("pyromaniac_url")
 
         # Unused

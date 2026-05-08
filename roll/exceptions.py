@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 
+from roll.ast import IToken
 from utils import clean_brackets
 from utils.exceptions import InternalError, WarningError
 
 
-def trace2log(trace):
+def trace2log(trace: list[IToken | str]) -> str:
     trace = trace[1:]  # The first element is always an empty let statement
     if len(trace) > 5:  # Limit the size of the trace to reduce error message size
         trace = trace[:2] + ["..."] + trace[-3:]
@@ -21,7 +22,7 @@ class RunTimeError(Exception, ABC):
     """Raised when an error occurs while evaluating a program"""
 
     @abstractmethod
-    def __init__(self, trace, message="{trace}"):
+    def __init__(self, trace: list[IToken | str], message="{trace}") -> None:
         self.message = message.format(trace=trace2log(trace))
         super().__init__(self.message)
 
@@ -30,7 +31,7 @@ class UndefinedIdentifierError(RunTimeError):
     """Raised when an unexpected identifier is detected"""
 
     def __init__(
-        self, trace, identifier, message="'{id}' is not defined in scope\n{trace}"
+        self, trace: list[IToken | str], identifier: str, message="'{id}' is not defined in scope\n{trace}"
     ):
         self.message = message.format(trace=trace2log(trace), id=identifier)
         super().__init__([], self.message)
@@ -39,14 +40,14 @@ class UndefinedIdentifierError(RunTimeError):
 class CaseFailureError(RunTimeError):
     """Raised when the value given to a case statement has no matching pattern"""
 
-    def __init__(self, trace, message="Case for input not found\n{trace}"):
+    def __init__(self, trace: list[IToken | str], message="Case for input not found\n{trace}") -> None:
         super().__init__(trace, message)
 
 
 class ZeroDivisionError(RunTimeError):
     """Raised when dividing by zero"""
 
-    def __init__(self, trace, message="Division by zero\n{trace}"):
+    def __init__(self, trace: list[IToken | str], message="Division by zero\n{trace}") -> None:
         super().__init__(trace, message)
 
 
@@ -55,7 +56,7 @@ class ExcessiveDiceRollsError(WarningError):
 
     def __init__(
         self,
-        trace,
+        trace: list[IToken | str],
         out="You requested an excessive number of dice rolls.",
         message="Number of total dice rolls exceeded limit\n{trace}",
     ):
@@ -66,7 +67,7 @@ class DiceInputError(RunTimeError, ABC):
     """Raised when there is an issue with the inputs of a die roll"""
 
     @abstractmethod
-    def __init__(self, trace, value, message="{value}\n{trace}"):
+    def __init__(self, trace: list[IToken | str], value: float, message="{value}\n{trace}"):
         self.message = message.format(trace=trace2log(trace), value=value)
         super().__init__([], self.message)
 
@@ -82,8 +83,8 @@ class FloatingPointDiceCountError(FloatingPointDiceInputError):
 
     def __init__(
         self,
-        trace,
-        value,
+        trace: list[IToken | str],
+        value: float,
         message="Requested dice roll had a non-integer count: {value}\n{trace}",
     ):
         super().__init__(trace, value, message)
@@ -94,8 +95,8 @@ class FloatingPointDiceSidesError(FloatingPointDiceInputError):
 
     def __init__(
         self,
-        trace,
-        value,
+        trace: list[IToken | str],
+        value: float,
         message="Requested dice roll had a non-integer number of sides: {value}\n{trace}",
     ):
         super().__init__(trace, value, message)
@@ -110,14 +111,14 @@ class ZeroDiceInputError(DiceInputError, ABC):
 class ZeroDiceCountError(ZeroDiceInputError):
     """Raised when the number of rolls of a die roll is zero"""
 
-    def __init__(self, trace, message="Requested dice roll a count of zero\n{trace}"):
+    def __init__(self, trace: list[IToken | str], message="Requested dice roll a count of zero\n{trace}"):
         super().__init__(trace, 0, message)
 
 
 class ZeroDiceSidesError(ZeroDiceInputError):
     """Raised when the number of sides of a die roll is zero"""
 
-    def __init__(self, trace, message="Requested dice roll had zero sides\n{trace}"):
+    def __init__(self, trace: list[IToken | str], message="Requested dice roll had zero sides\n{trace}"):
         super().__init__(trace, 0, message)
 
 
@@ -132,10 +133,10 @@ class NegativeDiceCountError(NegativeDiceInputError):
 
     def __init__(
         self,
-        trace,
-        value,
+        trace: list[IToken | str],
+        value: float,
         message="Requested dice roll had a negative count: {value}\n{trace}",
-    ):
+    ) -> None:
         super().__init__(trace, value, message)
 
 
@@ -144,10 +145,10 @@ class NegativeDiceSidesError(NegativeDiceInputError):
 
     def __init__(
         self,
-        trace,
-        value,
+        trace: list[IToken | str],
+        value: float,
         message="Requested dice roll had a negative number of sides: {value}\n{trace}",
-    ):
+    ) -> None:
         super().__init__(trace, value, message)
 
 
@@ -157,7 +158,7 @@ class NegativeDiceSidesError(NegativeDiceInputError):
 class NoValueDefinedError(InternalError):
     """Raised when a parser token does not define a "value" attribute"""
 
-    def __init__(self, trace, message='Parser token has no "value" attribute\n{trace}'):
+    def __init__(self, trace: list[IToken | str], message='Parser token has no "value" attribute\n{trace}') -> None:
         self.message = message.format(trace=trace2log(trace))
         super().__init__(self.message)
 
@@ -166,7 +167,7 @@ class NoRollCountDefinedError(InternalError):
     """Raised when a parser token does not define a "roll_count" attribute"""
 
     def __init__(
-        self, trace, message='Parser token has no "roll_count" attribute\n{trace}'
-    ):
+        self, trace: list[IToken | str], message='Parser token has no "roll_count" attribute\n{trace}'
+    ) -> None:
         self.message = message.format(trace=trace2log(trace))
         super().__init__(self.message)

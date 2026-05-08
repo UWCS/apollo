@@ -17,7 +17,7 @@ from models.user import User
 @pytest.fixture(scope="module")
 def database():
     # Locate the testing config for Alembic
-    config = Config(os.path.join(os.path.dirname(__file__), "../alembic.tests.ini"))
+    config: Config = Config(os.path.join(os.path.dirname(__file__), "../alembic.tests.ini"))
 
     # Set the migration secret key here
     if not os.environ.get("SECRET_KEY", None):
@@ -26,10 +26,13 @@ def database():
     # Start up the in-memory database instance
     db_engine = create_engine("sqlite:///:memory:", future=True)
     Base.metadata.create_all(db_engine)
-    db_session = Session(bind=db_engine, future=True)
 
-    # Mark it as up-to-date with migrations
-    command.stamp(config, "head")
+    with db_engine.connect() as connection:
+        config.attributes["connection"] = connection  # type: ignore
+        command.stamp(config, "head")
+
+
+    db_session = Session(bind=db_engine, future=True)
 
     # Add some blacklisted karma items and a user who added them
     user = User(user_uid=1, username="Foo")

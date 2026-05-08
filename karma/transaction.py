@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from itertools import groupby
 from typing import Iterable, List
 
-from discord import Message
+from discord import Message, User
 from sqlalchemy.orm import Session
 
 from karma.parser import KarmaItem
@@ -16,9 +16,11 @@ def is_self_karma(karma_item: KarmaItem, message: Message) -> bool:
         username = message.clean_content.split(" ")[0][3:-3].casefold()
         return username == topic
     else:
-        username = message.author.name.casefold()
+        username: str = message.author.name.casefold()
         if username == topic:
             return True
+
+        assert not isinstance(message.author, User)
         if message.author.nick is None:
             return False
         else:
@@ -31,15 +33,15 @@ class KarmaTransaction:
     self_karma: bool
 
     @staticmethod
-    def from_item(karma_item: KarmaItem, message: Message):
+    def from_item(karma_item: KarmaItem, message: Message) -> "KarmaTransaction":
         self_karma = is_self_karma(karma_item, message)
         return KarmaTransaction(karma_item, self_karma)
 
     @staticmethod
-    def try_from_item(karma_item: KarmaItem, message: Message, db_session: Session):
+    def try_from_item(karma_item: KarmaItem, message: Message, db_session: Session) -> "KarmaTransaction | None":
         """Try to create a karma item, returning None if the topic is on the blacklist"""
 
-        def query():
+        def query() -> BlockedKarma | None:
             """This function serves to lazily query the database."""
             return (
                 db_session.query(BlockedKarma)
@@ -56,7 +58,7 @@ class KarmaTransaction:
 def make_transactions(
     karma_items: Iterable[KarmaItem], message: Message
 ) -> List[KarmaTransaction]:
-    def key(karma_item: KarmaItem):
+    def key(karma_item: KarmaItem) -> str:
         return karma_item.topic
 
     # We only accept one change per topic in any given batch, so discard the rest with `next`
@@ -87,7 +89,7 @@ def filter_transactions(
 def apply_blacklist(
     transactions: Iterable[KarmaTransaction], db_session: Session
 ) -> List[KarmaTransaction]:
-    def is_on_blacklist(karma_transaction: KarmaTransaction):
+    def is_on_blacklist(karma_transaction: KarmaTransaction) -> bool:
         """Query the database to test whether an item is on the blacklist.
 
         Returns true when the item is on the blacklist.

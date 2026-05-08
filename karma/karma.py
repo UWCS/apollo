@@ -1,6 +1,7 @@
 import logging
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from typing import Iterator
 
 from discord import Message
 from sqlalchemy import desc
@@ -19,15 +20,16 @@ from karma.transaction import (
 )
 from models.channel_settings import MiniKarmaChannel
 from models.karma import Karma, KarmaChange
+from models.user import User
 from utils import filter_out_none, get_database_user, get_name_string
 
 
-def is_in_cooldown(last_change, timeout):
-    timeout_time = datetime.utcnow() - timedelta(seconds=timeout)
+def is_in_cooldown(last_change: KarmaChange, timeout: int):
+    timeout_time = datetime.now(timezone.utc) - timedelta(seconds=timeout)
     return last_change.created_at > timeout_time
 
 
-def process_karma(message: Message, message_id: int, db_session: Session, timeout: int):
+def process_karma(message: Message, message_id: int, db_session: Session, timeout: int) -> str:
     reply = ""
 
     # Parse the message for karma modifications
@@ -43,7 +45,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     # TODO: Protect from byte-limit length chars
 
     # Get karma-ing user
-    user = get_database_user(message.author)
+    user: User | None = get_database_user(message.author)
 
     # Get whether the channel is on mini karma or not
     channel = (
@@ -56,19 +58,19 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     else:
         karma_mode = MiniKarmaMode.Mini
 
-    def own_karma_error(topic):
+    def own_karma_error(topic: str) -> str:
         if karma_mode == MiniKarmaMode.Normal:
             return f' • Could not change "{topic}" because you cannot change your own karma! :angry:'
         else:
             return f'could not change "**{topic}**" (own name)'
 
-    def internal_error(topic):
+    def internal_error(topic: str) -> str:
         if karma_mode == MiniKarmaMode.Normal:
             return f' • Could not create "{topic}" due to an internal error.'
         else:
             return f'could not change "**{topic}**" (internal error)'
 
-    def cooldown_error(topic, td):
+    def cooldown_error(topic: str, td: timedelta) -> str:
         # Tell the user that the item is on cooldown
         if td.seconds < 60:
             seconds_plural = f"second{'s' if td.seconds != 1 else ''}"
@@ -85,7 +87,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 f'could not change "**{topic}**" (cooldown, last edit {duration} ago)'
             )
 
-    def success_item(tr: KarmaTransaction):
+    def success_item(tr: KarmaTransaction) -> str:
         # Give some sass if someone is trying to downvote the bot
         if (
             tr.karma_item.topic.casefold() == "apollo"
@@ -122,8 +124,8 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
     else:
         transaction_plural = ""
 
-    items = []
-    errors = []
+    items: list[str] = []
+    errors: list[str] = []
 
     # Iterate over the transactions to write them to the database
     for transaction in transactions:
@@ -139,8 +141,8 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             errors.append(own_karma_error(truncated_name))
             continue
 
-        def topic_transformations():
-            def query(t):
+        def topic_transformations() -> Iterator[Karma | None]:
+            def query(t: str) -> Karma | None:
                 return db_session.query(Karma).filter(Karma.name.ilike(t)).one_or_none()
 
             topic = transaction.karma_item.topic.casefold()
@@ -159,7 +161,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             yield query(topic.replace("_", " "))
 
         # Get the karma item from the database if it exists
-        karma_item = next(filter_out_none(topic_transformations()), None)
+        karma_item = next(iter(filter_out_none(topic_transformations())), None)
 
         # Update or create the karma item
         if not karma_item:
@@ -181,13 +183,13 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
             .first()
         )
 
+        assert user is not None
         if not last_change:
             # If the bot is being downvoted then the karma can only go up
             if transaction.karma_item.topic.casefold() == "apollo":
                 new_score = abs(transaction.karma_item.operation.value)
             else:
                 new_score = transaction.karma_item.operation.value
-
             karma_change = KarmaChange(
                 karma_id=karma_item.id,
                 user_id=user.id,
@@ -195,7 +197,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 reason=transaction.karma_item.reason,
                 change=new_score,
                 score=new_score,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             db_session.add(karma_change)
             try:
@@ -206,7 +208,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 errors.append(internal_error(truncated_name))
                 continue
         else:
-            time_delta = datetime.utcnow() - last_change.created_at
+            time_delta = datetime.now(timezone.utc) - last_change.created_at
             if is_in_cooldown(last_change, timeout):
                 errors.append(cooldown_error(truncated_name, time_delta))
                 continue
@@ -226,7 +228,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                 reason=transaction.karma_item.reason,
                 score=new_score,
                 change=(new_score - last_change.score),
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
             )
             db_session.add(karma_change)
             try:
@@ -242,7 +244,7 @@ def process_karma(message: Message, message_id: int, db_session: Session, timeou
                     reason=transaction.karma_item.reason,
                     score=new_score,
                     change=(new_score - last_change.score),
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                 )
                 db_session.add(karma_change)
                 try:

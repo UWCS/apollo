@@ -4,7 +4,7 @@ from parsita import ParseError
 import roll.exceptions as rollerr
 from roll.parser import parse_program
 
-SIMPLE_TEST_CASES = [
+SIMPLE_TEST_CASES: list[tuple[str, int] | tuple[str, str] | tuple[str, float]] = [
     #  Literals
     (r"1", 1),
     (r"200123500000000", 200123500000000),
@@ -101,7 +101,7 @@ SIMPLE_TEST_CASES = [
     (r"( 15 + 1 ) / 2 ; 1 ; 2 ; 3 ; 4", 8),
 ]
 
-SIMPLE_ND_TEST_CASES = [
+SIMPLE_ND_TEST_CASES: list[tuple[str, range] | tuple[str, list[int]]] = [
     (r"1d6", range(1, 7)),
     (r"1d1000", range(1, 1001)),
     (r"1d1", [1]),
@@ -111,7 +111,7 @@ SIMPLE_ND_TEST_CASES = [
     (r"(2d6)d(1d20)", range(2, 241)),
 ]
 
-FUNCTION_TEST_CASES = [
+FUNCTION_TEST_CASES: list[tuple[str, int] | tuple[str, str]] = [
     (r"@id = \x->x;id 1", 1),
     (r"@rec = \x -> x?rec x-1:0;rec 1", 0),
     (r"@fact = \x -> x ? x*(fact x-1) : 1 ; fact 10", 3628800),
@@ -124,7 +124,7 @@ FUNCTION_TEST_CASES = [
     (r"double;double;@double = 'two'", "two"),
 ]
 
-ERROR_TEST_CASES = [
+ERROR_TEST_CASES: list[tuple[str, type[Exception]]] = [
     (r"1+++", ParseError),
     (r'"asdf', ParseError),
     (r'newt"', ParseError),
@@ -153,25 +153,25 @@ ERROR_TEST_CASES = [
 
 
 @pytest.mark.parametrize(["string", "expected"], SIMPLE_TEST_CASES)
-def test_roll_deterministic(string, expected):
-    actual = parse_program(string).reduce()[0].pure
+def test_roll_deterministic(string: str, expected: int | str | float) -> None:
+    actual: int | str | float = parse_program(string).reduce()[0].pure
     assert actual == expected
 
 
 @pytest.mark.parametrize(["string", "expected"], SIMPLE_ND_TEST_CASES)
-def test_roll_nd(string, expected):
-    for i in range(100):
+def test_roll_nd(string: str, expected: range | list[int]) -> None:
+    for _ in range(100):
         actual = parse_program(string).reduce()[0].pure
         assert actual in expected
 
 
 @pytest.mark.parametrize(["string", "expected"], FUNCTION_TEST_CASES)
-def test_roll_functions(string, expected):
+def test_roll_functions(string: str, expected: int | str) -> None:
     actual = parse_program(string).reduce()[0].pure
     assert actual == expected
 
 
-@pytest.mark.parametrize(["string", "error"], ERROR_TEST_CASES)
-def test_roll_errors(string, error):
-    with pytest.raises(error):
+@pytest.mark.parametrize(["string", "_"], ERROR_TEST_CASES)
+def test_roll_errors(string: str, _) -> None:
+    with pytest.raises(Exception) as _:
         parse_program(string).reduce()

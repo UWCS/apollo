@@ -18,7 +18,7 @@ lxml = "~=4.9.2"
 markdown = "~=3.3.4"
 alembic = "~=1.10.3"
 pyyaml = "~=6.0.1"
-parsita = "~=1.7.1"
+parsita = "~=2.3.0"
 dateparser = "~=1.1.1"
 humanize = "~=3.12.0"
 more-itertools = "~=8.8.0"
@@ -34,7 +34,7 @@ cairosvg = "*"
 [dev-packages]
 pytest = "~=6.2"
 pretend = "~=1.0"
-pyright = "==1.1.408"
+pyright = "==1.1.409"
 ruff = "*"
 
 [requires]

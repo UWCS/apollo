@@ -11,8 +11,8 @@ from typing import (
     Any,
     Callable,
     Coroutine,
-    Generator,
     Iterable,
+    Optional,
     ParamSpec,
     Type,
     TypeVar,
@@ -58,9 +58,10 @@ def clean_brackets(
         string = string[1:-1]
     return string
 
-
-def filter_out_none(iterable: Iterable[Any], /) -> Generator[Any, None, None]:
-    return (i for i in iterable if i is not None)
+T = TypeVar("T")
+def filter_out_none(items: Iterable[Optional[T]]) -> list[T]:
+    """Filters out None from a sequence, returning a list of the remaining items"""
+    return [item for item in items if item is not None]
 
 
 def format_list(el: list[Any], /) -> str:

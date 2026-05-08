@@ -9,13 +9,8 @@ pythonVersion = "3.10"
 pythonPlatform = "Linux"
 ignore = [
   "cogs/**/*",               # everything, cut this down over time
-  "karma/**/*",
   "migrations/versions",
-  "roll/**/*",
   "tests/test_arg_parse.py",
-  "tests/test_karma.py",
-  "tests/test_roll.py",
-#  "tests/**/*",
   "voting/**/*"
 ]
 # https://microsoft.github.io/pyright/#/configuration?id=diagnostic-rule-defaults

@@ -1,8 +1,21 @@
 # ruff:  noqa: F821 some abuse of python's binding mechanism goes on here I think
 import re
+from typing import Any, Callable, Sequence, TypeVar, cast
 
-from parsita import ParseError, TextParsers, lit, opt, reg, rep, rep1, rep1sep, repsep
-from parsita.util import constant
+from parsita import (
+    Failure,
+    ParseError,
+    Parser,
+    ParserContext,
+    fwd,
+    lit,
+    opt,
+    reg,
+    rep,
+    rep1,
+    rep1sep,
+    repsep,
+)
 
 from roll.ast import (
     Assignment,
@@ -21,10 +34,10 @@ from roll.ast import (
 )
 
 
-def bin_operator(xs):
+def bin_operator(xs: Sequence[Any]) -> Any:
     """xs = [item, [[sep, item], ... ]]"""
 
-    def rec_operator(left, pairs):
+    def rec_operator(left: Any, pairs: list[list[Any]]) -> Any:
         if len(pairs) == 0:
             return left
         op = TokenOperator(pairs[0][0], [left, pairs[0][1]])
@@ -37,10 +50,10 @@ def bin_operator(xs):
     return rec_operator(item, suffix)
 
 
-def bin_operator_right(xs):
+def bin_operator_right(xs: Sequence[Any]) -> Any:
     """xs = [item, [[sep, item], ... ]]"""
 
-    def rec_operator(pairs, right):
+    def rec_operator(pairs: list[list[Any]], right: Any) -> Any:
         if len(pairs) == 0:
             return right
         op = TokenOperator(pairs[-1][0], [pairs[-1][1], right])
@@ -57,14 +70,15 @@ def bin_operator_right(xs):
     return rec_operator(prefix, right)
 
 
-def mon_operator(xs):
+def mon_operator(xs: Any) -> Any:
     """xs = [unary_op, unary] OR primary"""
     if not isinstance(xs, list):
         return xs
-    return TokenOperator(xs[0], [xs[1]])
+
+    return TokenOperator(cast(Operator, xs[0]), [xs[1]])
 
 
-def maybe_dice(xs):
+def maybe_dice(xs: Sequence[Any]) -> Any:
     """unary & opt("d" >> unary)
     xs = [unary, [unary]]
     """
@@ -73,7 +87,7 @@ def maybe_dice(xs):
     return TokenRoll(xs[0], xs[1][0])
 
 
-def maybe_ternary(xs):
+def maybe_ternary(xs: Sequence[Any]) -> Any:
     """case & opt("?" >> expr << ":" & expr)
     xs = [case, []]
     """
@@ -82,7 +96,7 @@ def maybe_ternary(xs):
     return TokenTernary(xs[0], xs[1][0][0], xs[1][0][1])
 
 
-def maybe_case(xs):
+def maybe_case(xs: Sequence[Any]) -> Any:
     """unary & opt(":" >> "(" >> rep1sep(case_pair, ";") << ")")
     xs = [unary, [[]]]
     """
@@ -91,10 +105,10 @@ def maybe_case(xs):
     return TokenCase(xs[0], xs[1][0])
 
 
-def let(xs):
+def let(xs: Sequence[Any]) -> TokenLet:
     """assignment = identifier << "=" & expr
-    let_stmt = "let" >> rep1sep(assignment, ";") << "in" & expr
-    xs = [[[id, expr]*], expr]
+    let_stmt = "^" >> rep1sep(assignment, ";") << "$" & expr
+    xs = [[(id, expr)*], expr]
     """
     decls = xs[0]
     expr = xs[1]
@@ -102,7 +116,7 @@ def let(xs):
     return TokenLet(new_env, expr)
 
 
-def anon(xs):
+def anon(xs: Sequence[Any]) -> TokenFunction:
     """rep1(identifier) & expr
     xs = [[id], expr]
     """
@@ -113,119 +127,147 @@ def anon(xs):
     return TokenFunction(ids[0], anon([ids[1:], expr]))
 
 
-def maybe_application(xs):
+def maybe_application(xs: Sequence[Any]) -> Any:
     """xs = [expr, expr, ...]"""
     if len(xs) == 1:
         return xs[0]
-    return TokenApplication(xs[0], xs[1:])
+    return TokenApplication(xs[0], list(xs)[1:])
 
 
-def function(xs):
+def function(xs: Sequence[Any]) -> Assignment:
     """identifier & func_decl
     xs = [id, expr]
     """
     return Assignment(xs[0], xs[1])
 
+def split1(item: Any, separator: Any) -> Any:
+    return item & rep(separator & item)
 
-class ProgramParser(TextParsers):
+
+def split(item: Any, separator: Any) -> Any:
+    return opt(split1(item, separator))
+
+def tstr(s: str) -> TokenString:
+    return TokenString(s[1:-1])
+
+def num_sign(x: float | int) -> float | int:
+    return -x
+
+def make_prog(blocks: Sequence[Any]) -> Program:
+    return Program(list(blocks))
+
+T = TypeVar("T")
+
+def const(val: T) -> Callable[[str], T]:
+    def inner(_: str) -> T:
+        return val
+    return inner
+
+class ProgramParser(ParserContext, whitespace=r"\s*"):
     # Actual grammar
-    def split1(item, separator):
-        return item & rep(separator & item)
+    identifier: Parser[str, str] = reg(r"[a-zA-Z]\w*")
 
-    def split(item, separator):
-        return opt(split1(item, separator))
+    string: Parser[str, TokenString] = reg(r'".*?(?<!\\)(\\\\)*?"') | reg(r"'.*?(?<!\\)(\\\\)*?'") > tstr
 
-    identifier = reg(r"[a-zA-Z]\w*")
+    num_int: Parser[str, int] = reg(r"\d+") > int
+    num_float: Parser[str, float] = reg(r"(\d*\.\d+|\d+\.\d*)") > float
+    num_positive: Parser[str, float | int] = num_float | num_int
 
-    string = reg(r'".*?(?<!\\)(\\\\)*?"') | reg(r"'.*?(?<!\\)(\\\\)*?'") > (
-        lambda s: TokenString(s[1:-1])
-    )
+    num: Parser[str, float | int] = fwd()
 
-    num_int = reg(r"\d+") > int
-    num_float = reg(r"(\d*\.\d+|\d+\.\d*)") > float
-    num_positive = num_float | num_int
-    num_negative = "-" >> num > (lambda x: -x)
-    num = num_negative | num_positive
-    number = num > TokenNumber
+    num_negative: Parser[str, float | int] = "-" >> num > num_sign
+    num.define(num_negative | num_positive)
+    number: Parser[str, TokenNumber] = num > TokenNumber
 
-    op_eq = lit("==") > constant(Operator.EQ)
-    op_ne = lit("!=") > constant(Operator.NE)
-    op_ge = lit(">=") > constant(Operator.GE)
-    op_gt = lit(">") > constant(Operator.GT)
-    op_le = lit("<=") > constant(Operator.LE)
-    op_lt = lit("<") > constant(Operator.LT)
-    op_and = lit("&") > constant(Operator.AND)
-    op_or = lit("|") > constant(Operator.OR)
-    op_add = lit("+") > constant(Operator.ADD)
-    op_sub = lit("-") > constant(Operator.SUB)
-    op_mul = lit("*") > constant(Operator.MUL)
-    op_div = lit("/") > constant(Operator.DIV)
-    op_pow = lit("^") > constant(Operator.POW)
-    op_not = lit("!") > constant(Operator.NOT)
-    op_neg = lit("-") > constant(Operator.NEG)
+    op_eq: Parser[str, Operator] = lit("==") > const(Operator.EQ)
+    op_ne: Parser[str, Operator] = lit("!=") > const(Operator.NE)
+    op_ge: Parser[str, Operator] = lit(">=") > const(Operator.GE)
+    op_gt: Parser[str, Operator] = lit(">") > const(Operator.GT)
+    op_le: Parser[str, Operator] = lit("<=") > const(Operator.LE)
+    op_lt: Parser[str, Operator] = lit("<") > const(Operator.LT)
+    op_and: Parser[str, Operator] = lit("&") > const(Operator.AND)
+    op_or: Parser[str, Operator] = lit("|") > const(Operator.OR)
+    op_add: Parser[str, Operator] = lit("+") > const(Operator.ADD)
+    op_sub: Parser[str, Operator] = lit("-") > const(Operator.SUB)
+    op_mul: Parser[str, Operator] = lit("*") > const(Operator.MUL)
+    op_div: Parser[str, Operator] = lit("/") > const(Operator.DIV)
+    op_pow: Parser[str, Operator] = lit("^") > const(Operator.POW)
+    op_not: Parser[str, Operator] = lit("!") > const(Operator.NOT)
+    op_neg: Parser[str, Operator] = lit("-") > const(Operator.NEG)
 
-    equality_op = op_eq | op_ne
-    comparison_op = op_ge | op_gt | op_le | op_lt
-    logic_op = op_and | op_or
-    term_op = op_add | op_sub
-    factor_op = op_mul | op_div
-    power_op = op_pow
-    unary_op = op_neg | op_not
+    equality_op: Parser[str, Operator] = op_eq | op_ne
+    comparison_op: Parser[str, Operator] = op_ge | op_gt | op_le | op_lt
+    logic_op: Parser[str, Operator] = op_and | op_or
+    term_op: Parser[str, Operator] = op_add | op_sub
+    factor_op: Parser[str, Operator] = op_mul | op_div
+    power_op: Parser[str, Operator] = op_pow
+    unary_op: Parser[str, Operator] = op_neg | op_not
 
-    case_pair = expr << "->" & expr
+    expr: Parser[str, Any] = fwd()
+    unary: Parser[str, Any] = fwd()
 
-    assignment = identifier << "=" & expr
-    let_stmt = "^" >> rep1sep(assignment, ";") << "$" & expr > let
+    case_pair: Parser[str, Sequence[Any]] = expr << "->" & expr
 
-    anon_func = (lit("\\") | lit("\\\\")) >> rep1(identifier) & "->" >> expr > anon
+    assignment: Parser[str, Sequence[Any]] = identifier << "=" & expr
+    let_stmt: Parser[str, TokenLet] = ("^" >> rep1sep(assignment, ";") << "$" & expr) > let
 
-    variable = identifier > TokenVariable
+    anon_func: Parser[str, Any] = (lit("\\") | lit("\\\\")) >> rep1(identifier) & "->" >> expr > anon
 
-    expr = rep1sep(equality, reg(r"\s*")) > maybe_application
-    equality = split1(comparison, equality_op) > bin_operator
-    comparison = split1(logic, comparison_op) > bin_operator
-    logic = split1(term, logic_op) > bin_operator
-    term = split1(factor, term_op) > bin_operator
-    factor = split1(power, factor_op) > bin_operator
-    power = split1(ternary, power_op) > bin_operator_right
-    ternary = case & opt("?" >> expr << ":" & expr) > maybe_ternary
-    case = dice & opt(lit("$") >> "(" >> rep1sep(case_pair, ";") << ")") > maybe_case
-    dice = unary & opt("d" >> unary) > maybe_dice
-    unary = unary_op & unary | primary > mon_operator
-    primary = number | string | bracketed | let_stmt | anon_func | variable
-    bracketed = "(" >> expr << ")"
+    variable: Parser[str, Any] = identifier > TokenVariable
 
-    func = identifier & "=" >> expr > function
+    bracketed: Parser[str, Any] = "(" >> expr << ")"
 
-    program = repsep("@" >> func | expr, ";") << opt(";") > Program
+    primary: Parser[str, Any] = number | string | bracketed | let_stmt | anon_func | variable
 
-    main = program
+    unary.define(unary_op & unary | primary > mon_operator)
+    dice: Parser[str, Any] = unary & opt("d" >> unary) > maybe_dice
+    case: Parser[str, Any] = dice & opt(lit("$") >> "(" >> rep1sep(case_pair, ";") << ")") > maybe_case
+    ternary: Parser[str, Any] = case & opt("?" >> expr << ":" & expr) > maybe_ternary
+
+    power: Parser[str, Any] = split1(ternary, power_op) > bin_operator_right
+    factor: Parser[str, Any] = split1(power, factor_op) > bin_operator
+    term: Parser[str, Any] = split1(factor, term_op) > bin_operator
+    logic: Parser[str, Any] = split1(term, logic_op) > bin_operator
+    comparison: Parser[str, Any] = split1(logic, comparison_op) > bin_operator
+    equality: Parser[str, Any] = split1(comparison, equality_op) > bin_operator
+
+    expr.define(rep1sep(equality, reg(r"\s*")) > maybe_application)
+
+    func: Parser[str, Any] = identifier & "=" >> expr > function
+
+    program: Parser[str, Program] = (repsep("@" >> func | expr, ";") << opt(";")) > make_prog
+
+    main: Parser[str, Program] = program
 
 
-class DiscordParser(TextParsers):
+class DiscordParser(ParserContext, whitespace=r"\s*"):
     """Removes surrounding code blocks before the program can reach the main parser"""
 
     main = (
         "```" >> reg(r"(?s).*?(?=```)") << "```"
         | "`" >> reg(r"(?s).*?(?=`)") << "`"
-        | reg(r"[^`](?s).*")
+        | reg(r"(?s)[^`].*")
     )
 
 
-def parse_program(source: str):
-    try:
-        no_blocks = DiscordParser.main.parse(source).or_die()
-    except ParseError:
-        raise ParseError("Unclosed code blocks")
-    try:
-        ast = ProgramParser.main.parse(no_blocks).or_die()
-    except ParseError as e:
-        raise ParseError(format_parse_error(e, source))
-    return ast
+def parse_program(source: str) -> Program:
+    parsed_blocks = DiscordParser.main.parse(source)
+
+    if isinstance(parsed_blocks, Failure):
+        raise Exception("Unclosed code blocks")
+    
+    no_blocks = parsed_blocks.unwrap()
+
+    ast = ProgramParser.main.parse(no_blocks)
+
+    if isinstance(ast, Failure):
+        raise Exception(format_parse_error(ast.failure(), source))
+    
+    return ast.unwrap()
 
 
-def format_parse_error(err, source):
-    found = re.search(r"(?<=but found ').*?(?=')", err.message)
+def format_parse_error(err: ParseError, source: str) -> str:
+    found = re.search(r"(?<=but found ').*?(?=')", str(err))
     if found is None:
         last_line = source.split("\n")[-1]
         pointer = last_line + "\n" + " " * (len(last_line) - 1) + "^"
@@ -233,8 +275,8 @@ def format_parse_error(err, source):
     else:
         found = found.group(0)
         try:
-            line = re.findall(r"(?<=Line )\d+", err.message)[-1]
-            char = re.findall(r"(?<=character )\d+", err.message)[-1]
+            line = re.findall(r"(?<=Line )\d+", str(err))[-1]
+            char = re.findall(r"(?<=character )\d+", str(err))[-1]
             pointer = (
                 source.split("\n")[int(line) - 1] + "\n" + " " * (int(char) - 1) + "^"
             )
