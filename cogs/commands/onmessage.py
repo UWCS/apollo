@@ -20,16 +20,16 @@ class OnMessage(commands.Cog):
             ):
                 await self.thanks(message)
                 await self.scan_replace(
-                    message, r"https?://(twitter\.com|x\.com)", "https://fxtwitter.com"
+                   message, r"https?://(twitter\.com|x\.com)", "https://fxtwitter.com"
                 )
-                await self.scan_replace(
-                    message,
-                    r"https?://(?:old\.|www\.)?reddit\.com",
-                    "https://rxddit.com",
-                )
-                await self.scan_replace(
-                    message, r"https?://www\.instagram\.com", "https://uuinstagram.com"
-                )
+                # await self.scan_replace(
+                #    message,
+                #    r"https?://(?:old\.|www\.)?reddit\.com",
+                #    "https://rxddit.com",
+                # )
+                # await self.scan_replace(
+                #    message, r"https?://www\.instagram\.com", "https://uuinstagram.com"
+                # )
 
     async def thanks(self, message: Message):
         # to whoever sees this, you're welcome for the not having a fuck off massive indented if
