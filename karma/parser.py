@@ -53,8 +53,11 @@ def make_op_regex(o):
 class KarmaParser(TextParsers):
     anything = reg(r".") > constant(None)
 
+    quotes = reg(r'["“”]')
+
     word_topic = reg(r'[^"\s]+?(?=[+-]{2})')
-    string_topic = reg(r'".*?(?<!\\)(\\\\)*?"(?=[+-]{2})')
+    string_topic = quotes & reg(r".*?(?<!\\)(\\\\)*?") & quotes & reg(r"(?=[+-]{2})")
+
     topic = (word_topic > (lambda t: [t, False])) | (
         string_topic > (lambda t: [t[1:-1], True])
     )
@@ -67,7 +70,9 @@ class KarmaParser(TextParsers):
     operator = op_positive | op_neutral | op_negative
 
     bracket_reason = reg(r"\(.+?\)") > (lambda s: s[1:-1])
-    quote_reason = reg(r'".*?(?<!\\)(\\\\)*?"(?![+-]{2})') > (lambda s: s[1:-1])
+    quote_reason = reg(r"\".*?(?<!\\)(\\\\)*?\"(?![+-]{2})") > (
+        lambda s: s[1:-1]
+    )
     reason_words = reg(r"(?i)because") | reg(r"(?i)for")
     text_reason = reason_words >> (reg(r'[^",]+') | quote_reason)
     reason = bracket_reason | quote_reason | text_reason
